@@ -1,37 +1,13 @@
-from trafpy.src.dists import plot_dists 
+from trafpy.generator.src.dists import plot_dists 
+from trafpu.src import tools
 
 import pandas as pd
 import numpy as np
 np.set_printoptions(threshold=np.inf)
 from scipy.stats import skewnorm
 from scipy import stats
-
-
-def save_data(path, data):
-    '''
-    Save data to desired destination. Will always save as csv.
-
-    Args:
-    - path (str): path + filename (optional to ass .csv extension)
-    - data: data to be saved as csv
-    '''
-    if path[-4:] != '.csv':
-        path = path+'.csv'
-
-    if type(data) == dict:
-        try:
-            df = pd.DataFrame(data)
-        except ValueError:
-            # dict values are scalars
-            df = pd.DataFrame(data, index=[0])
-    
-    if type(data) == dict:
-        df.to_csv(path)
-    else:
-        try:
-            np.savetxt(path, data, delimiter=',')
-        except TypeError:
-            np.savetxt(path, data, delimiter=',', fmt='%s')
+import math
+import matplotlib.pyplot as plt
 
 
 def convert_key_occurrences_to_data(keys, num_occurrences):
@@ -61,13 +37,18 @@ def convert_data_to_key_occurrences(data):
 
     
 
-def x_round(x, round_to_nearest=1, num_decimal_places=2):
+def x_round(x, round_to_nearest=1, num_decimal_places=2, print_data=False):
     '''
     Takes a rand var value x and rounds to nearest specified value (by default,
     will round x to nearest integer)
     '''
     factor = round(1/round_to_nearest, num_decimal_places)
     rounded = round(round(x*factor)/factor, num_decimal_places)
+
+    if print_data:
+        print('\nOriginal val: {}'.format(x))
+        print('Round to nearest: {}'.format(round_to_nearest))
+        print('Rounded val: {}'.format(rounded))
 
     return rounded
     
@@ -105,7 +86,7 @@ def gen_uniform_val_dist(min_val,
     if print_data:
         print('Prob dist:\n{}'.format(prob_dist))
     if path_to_save is not None:
-        val_dists.save_data(path, node_dist)
+        tools.pickle_data(path, node_dist)
     if plot_fig or show_fig:
         min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
         num_occurrences = [int(val*(1/min_prob)) for val in list(prob_dist.values())]
@@ -201,7 +182,7 @@ def gen_multimodal_val_dist(min_val,
         skew_data.append(list(data))
 
     skew_data = [y for x in skew_data for y in x] # flatten
-    
+
     unique_vals, pmf = gen_discrete_prob_dist(rand_vars=skew_data, 
                                               round_to_nearest=round_to_nearest,
                                               num_decimal_places=num_decimal_places)
@@ -211,7 +192,7 @@ def gen_multimodal_val_dist(min_val,
     if print_data:
         print('Prob dist:\n{}'.format(prob_dist))
     if path_to_save is not None:
-        val_dists.save_data(path, node_dist)
+        tools.pickle_data(path, node_dist)
     if plot_fig or show_fig:
         min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
         num_occurrences = [int(val*(1/min_prob)) for val in list(prob_dist.values())]
@@ -238,7 +219,7 @@ def gen_skewnorm_data(a, loc, scale, min_val, max_val, num_samples):
             counter += 1
             if counter > 10000:
                 sys.exit('scale too high for required max-min range')
-    return list(data.astype(int))
+    return list(data.astype(float))
 
 
 def gen_rand_vars_from_discretised_dist(unique_vars, 
@@ -250,7 +231,7 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                     p=probabilities)
     
     if path_to_save is not None:
-        save_data(path_to_save, sampled_vars)
+        tools.pickle_data(path_to_save, sampled_vars)
     
     return sampled_vars
 
@@ -293,7 +274,7 @@ def gen_val_dist_data(val_dist,
     np.random.shuffle(vals) # randomly shuffle order
     
     if path_to_save is not None:
-        save_data(path_to_save, vals)
+        tools.pickle_data(path_to_save, vals)
     
     return vals
 
@@ -323,7 +304,7 @@ def gen_discrete_prob_dist(rand_vars,
     '''
     if round_to_nearest is not None:
         # discretise vars
-        discretised_rand_vars = [x_round(rand_var,round_to_nearest,num_decimal_places) for rand_var in rand_vars]  
+        discretised_rand_vars = [x_round(rand_var,round_to_nearest,num_decimal_places,print_data=False) for rand_var in rand_vars]  
     else:
         # no further discretisation required
         discretised_rand_vars = rand_vars
@@ -353,7 +334,7 @@ def gen_discrete_prob_dist(rand_vars,
     pmf = list(counter_dict.values())
     
     if path_to_save is not None:
-        save_data(path_to_save, prob_dist)
+        tools.pickle_data(path_to_save, prob_dist)
 
     return xk, pmf
 
@@ -381,7 +362,7 @@ def gen_weibull_dist(_alpha, _lambda, size):
 def gen_named_val_dist(dist, 
                        params, 
                        size=30000, 
-                       return_data=True, 
+                       return_data=False, 
                        round_to_nearest=None, 
                        path_to_save=None,
                        plot_fig=False,
@@ -391,7 +372,11 @@ def gen_named_val_dist(dist,
                        rand_var_name='Random Variable',
                        prob_rand_var_less_than=None,
                        num_bins=0,
-                       print_data=False): 
+                       print_data=False):
+    '''
+    If return_data==True, will return data sampled from distribution (array). 
+    If return_data==False, will return distribution (dict).
+    '''
     if dist == 'exponential':
         rand_vars = gen_exponential_dist(_beta=params['_beta'], 
                                          size=size)
@@ -418,7 +403,7 @@ def gen_named_val_dist(dist,
     if print_data:
         print('Prob dist:\n{}'.format(prob_dist))
     if path_to_save is not None:
-        val_dists.save_data(path, node_dist)
+        tools.pickle_data(path, node_dist)
     if plot_fig or show_fig:
         min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
         num_occurrences = [int(val*(1/min_prob)) for val in list(prob_dist.values())]

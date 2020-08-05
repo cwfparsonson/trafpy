@@ -1,5 +1,5 @@
-from trafpy.src.dists import val_dists, node_dists
-from trafpy.src import tools
+from trafpy.generator.src.dists import val_dists, node_dists
+from trafpy.generator.src import tools
 
 import numpy as np
 import networkx as nx
@@ -47,7 +47,6 @@ def set_job_op_run_times(job,
 def allocate_job_flow_attrs(job, 
                             job_idx, 
                             job_ids, 
-                            poss_flow_sizes, 
                             flow_size_dist, 
                             jobs=None):
     '''
@@ -86,6 +85,11 @@ def allocate_job_flow_attrs(job,
                 # if src == dst, is still a dependency but not a data dependency,
                 # therefore can register this as a control dependency
                 flow_size=0
+
+            if job.edges[flow]['dependency'] == 1:
+                dependency_type = 'data_dep'
+            else:
+                dependency_type = 'control_dep'
             
             flow_stats={'sn': tuple(list(src))[0],
                         'dn': tuple(list(dst))[0],
@@ -99,6 +103,7 @@ def allocate_job_flow_attrs(job,
                         'child_dependency_flow_ids': child_dep_flow_ids,
                         'parent_op': parent_op,
                         'child_op': child_op,
+                        'dependency_type': dependency_type,
                         'establish': None, # None
                         'event_time': None} # None
             
@@ -306,8 +311,6 @@ def create_job_centric_demand_data(num_demands,
     else:
         establish = np.ones((num_demands))
 
-    poss_flow_sizes = np.arange(min(flow_size_dist.keys()), max(flow_size_dist.keys())+1)
-    
     # use node dist to allocate each op to machine
     if print_data:
         print('Allocating each op to a machine...')
@@ -326,7 +329,7 @@ def create_job_centric_demand_data(num_demands,
     job_idx = 0
     if use_multiprocessing:
         pool = multiprocessing.Pool(processes=num_processes,maxtasksperchild=maxtasksperchild)
-        results = [pool.apply_async(allocate_job_flow_attrs, args=(job, job_idx, job_ids, poss_flow_sizes, flow_size_dist, None,)) for job, job_idx in zip(jobs[:num_demands],range(len(jobs[:num_demands])))]
+        results = [pool.apply_async(allocate_job_flow_attrs, args=(job, job_idx, job_ids, flow_size_dist, None,)) for job, job_idx in zip(jobs[:num_demands],range(len(jobs[:num_demands])))]
         pool.close()
         pool.join()
         output = [p.get() for p in results]
@@ -334,7 +337,7 @@ def create_job_centric_demand_data(num_demands,
         jobs[:num_demands] = output
     else:
         for job in jobs[:num_demands]:
-            allocate_job_flow_attrs(job, job_idx, job_ids, poss_flow_sizes, flow_size_dist)
+            allocate_job_flow_attrs(job, job_idx, job_ids, flow_size_dist)
             job_idx += 1
     end = time.time()
     if print_data:
@@ -383,7 +386,24 @@ def create_job_centric_demand_data(num_demands,
 
 
 
+def gen_job_event_dict(demand_data, event_iter):
+    job = demand_data['job'][event_iter]
+    establish = demand_data['establish'][event_iter]
+    time_arrived = demand_data['event_time'][event_iter]
+    
+    flow_stats = {flow: job.get_edge_data(flow[0], flow[1]) for flow in job.edges} 
+    for flow in flow_stats:
+        flow_stats[flow]['attr_dict']['establish'] = establish
+    
+    flow_dicts = [tools.gen_event_dict(flow_stats[flow]['attr_dict']) for flow in flow_stats]
 
+    event_dict = {'job_id': demand_data['job_id'][event_iter],
+                  'establish': establish,
+                  'time_arrived': time_arrived,
+                  'time_completed': None,
+                  'flow_dicts': flow_dicts}
+
+    return event_dict
 
 
 

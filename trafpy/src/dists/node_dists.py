@@ -1,4 +1,5 @@
-from trafpy.src.dists import plot_dists, val_dists 
+from trafpy.generator.src.dists import plot_dists
+from trafpy.generator.src import tools
 
 import sys
 import numpy as np
@@ -79,7 +80,7 @@ def gen_uniform_node_dist(eps,
         print('Normalised matrix:\n{}'.format(node_dist))
         print('Normalised matrix sum: {}'.format(matrix_sum))
     if path_to_save is not None:
-        val_dists.save_data(path, node_dist)
+        tools.pickle_data(path, node_dist)
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
                                         node_to_index_dict=node_to_index, 
@@ -138,7 +139,7 @@ def gen_uniform_multinomial_exp_node_dist(eps,
         print('Normalised matrix:\n{}'.format(node_dist))
         print('Normalised matrix sum: {}'.format(matrix_sum))
     if path_to_save is not None:
-        val_dists.save_data(path, node_dist)
+        tools.pickle_data(path, node_dist)
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
                                         node_to_index_dict=node_to_index, 
@@ -283,7 +284,7 @@ def gen_multimodal_node_dist(eps,
         print('Normalised matrix:\n{}'.format(node_dist))
         print('Normalised matrix sum: {}'.format(matrix_sum))
     if path_to_save is not None:
-        val_dists.save_data(path, node_dist)
+        tools.pickle_data(path, node_dist)
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
                                         node_to_index_dict=node_to_index, 
@@ -459,7 +460,7 @@ def gen_multimodal_node_pair_dist(eps,
         print('Normalised matrix:\n{}'.format(node_dist))
         print('Normalised matrix sum: {}'.format(matrix_sum))
     if path_to_save is not None:
-        val_dists.save_data(path, node_dist)
+        tools.pickle_data(path, node_dist)
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
                                         node_to_index_dict=node_to_index, 
@@ -469,7 +470,57 @@ def gen_multimodal_node_pair_dist(eps,
 
     else:
         return node_dist
+   
+
+def gen_node_demands(eps,
+                     node_dist, 
+                     num_demands, 
+                     duplicate=False,
+                     path_to_save=None):
+    matrix_sum = np.round(np.sum(node_dist),2)
+    assert matrix_sum == 1, \
+        'demand dist matrix must sum to 1, but is {}'.format(matrix_sum)
     
+    # init
+    if duplicate:
+        sn = np.array(np.zeros((2*num_demands)),dtype=object)
+        dn = np.array(np.zeros((2*num_demands)), dtype=object)
+    else:
+        sn = np.array(np.zeros((num_demands)),dtype=object)
+        dn = np.array(np.zeros((num_demands)), dtype=object)
+
+    # source nodes
+    sn[:num_demands] = gen_demand_nodes(eps=eps,
+                                        node_dist=node_dist,
+                                        size=num_demands, 
+                                        axis=0)
+    if duplicate:
+        sn[num_demands:] = sn[:num_demands]
+
+    # destination nodes
+    dn[:num_demands] = gen_demand_nodes(eps=eps,
+                                        node_dist=node_dist, 
+                                        size=num_demands, 
+                                        axis=1)
+    if duplicate:
+        dn[num_demands:] = dn[:num_demands]
+
+    # remove any src-dst conflicts
+    for request in np.arange(num_demands):
+        while sn[request] == dn[request]:
+            dn[request] = gen_demand_nodes(eps=eps,
+                                           node_dist=node_dist, 
+                                           size=1, 
+                                           axis=1)[0]
+    if duplicate:
+        dn[num_demands:] = dn[:num_demands] # duplicate
+
+    if path_to_save is not None:
+        data = {'sn': sn, 'dn': dn}
+        tools.pickle_data(path_to_save, data)
+
+    return sn, dn
+
 
 def gen_demand_nodes(eps,
                      node_dist, 
@@ -496,7 +547,7 @@ def gen_demand_nodes(eps,
                                         axis=axis)).astype(object)
     
     if path_to_save is not None:
-        save_data(path_to_save, nodes)
+        tools.pickle_data(path_to_save, nodes)
     
     return nodes
 

@@ -68,8 +68,7 @@ def plot_val_dist(rand_vars,
              bins=plotbins,
              color='tab:red',
              edgecolor='tab:red',
-             alpha=alpha,
-             label='Empirical data')
+             alpha=alpha)
     
     if dist_fit_line is None:
         pass
@@ -86,7 +85,6 @@ def plot_val_dist(rand_vars,
         shape, loc, scale = stats.pareto.fit(rand_vars, floc=0)
         y = stats.pareto.pdf(plotbins, shape, loc, scale)
 
-    plt.legend(loc='upper right')
     plt.xlabel(rand_var_name)
     plt.ylabel('Probability Density')
     try:
