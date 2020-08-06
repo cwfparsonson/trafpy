@@ -10,11 +10,11 @@ MAX_NUM_OPS = 200 # 200 7000 1000
 C =  1.5 # 0.475 1.5
 MIN_INTERARRIVAL = 1
 MAX_INTERARRIVAL = 1e8
-SLOT_SIZE = 1000 # 0.2
-MAX_F = None
-MAX_TIME = 0.4
+SLOT_SIZE = 10000 # 0.2
+MAX_FLOWS = None
+MAX_TIME = None # 0.4
 ENDPOINT_LABEL = 'server'
-ENDPOINT_LABELS = ['ep_'+str(ep) for ep in range(5)]
+ENDPOINT_LABELS = [ENDPOINT_LABEL+'_'+str(ep) for ep in range(5)]
 PATH_FIGURES = '../figures/'
 PATH_PICKLES = '../pickles/demand/tf_graphs/real/'
 
