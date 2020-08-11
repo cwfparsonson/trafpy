@@ -53,7 +53,7 @@ def plot_val_dist(rand_vars,
         alpha=1.0
     
     # PROBABILITY DENSITY
-    plt.figure(figsize=(15,5))
+    fig = plt.figure(figsize=(15,5))
     plt.style.use('ggplot')
     plt.subplot(1,2,1)
     if logscale:
@@ -129,7 +129,7 @@ def plot_val_dist(rand_vars,
     if show_fig:
         plt.show()
 
-
+    return fig
 
 
 
