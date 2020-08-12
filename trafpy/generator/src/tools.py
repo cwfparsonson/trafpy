@@ -5,6 +5,7 @@ import bz2
 import time
 import multiprocessing
 import networkx as nx
+import os
 
 
 def get_network_params(eps):

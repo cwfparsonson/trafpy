@@ -9,6 +9,10 @@ from scipy import stats
 import math
 import matplotlib.pyplot as plt
 
+import ipywidgets as widgets
+from ipywidgets import interact, interactive, interactive_output, interact_manual, fixed
+from IPython.display import display, clear_output
+
 
 def convert_key_occurrences_to_data(keys, num_occurrences):
     data = []
@@ -86,7 +90,7 @@ def gen_uniform_val_dist(min_val,
     if print_data:
         print('Prob dist:\n{}'.format(prob_dist))
     if path_to_save is not None:
-        tools.pickle_data(path, node_dist)
+        tools.pickle_data(path_to_save, node_dist)
     if plot_fig or show_fig:
         min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
         num_occurrences = [int(val*(1/min_prob)) for val in list(prob_dist.values())]
@@ -192,7 +196,7 @@ def gen_multimodal_val_dist(min_val,
     if print_data:
         print('Prob dist:\n{}'.format(prob_dist))
     if path_to_save is not None:
-        tools.pickle_data(path, node_dist)
+        tools.pickle_data(path_to_save, node_dist)
     if plot_fig or show_fig:
         min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
         num_occurrences = [int(val*(1/min_prob)) for val in list(prob_dist.values())]
@@ -339,28 +343,96 @@ def gen_discrete_prob_dist(rand_vars,
     return xk, pmf
 
 
-def gen_exponential_dist(_beta, size):
+def gen_exponential_dist(_beta, 
+                         size,
+                         interactive_params=None):
     rand_vars = np.random.exponential(_beta,size=size)
+
+    if interactive_params is not None:
+        # gen interactive plot
+        logscale=False
+        transparent=False
+
+        data_description = stats.describe(rand_vars) 
+        print('Characteristics of generated distribution:\n{}'.format(data_description))
+        
+        plot_dists.plot_val_dist(rand_vars, 
+                                 xlim=interactive_params['xlim'], 
+                                 logscale=logscale,
+                                 transparent=transparent,
+                                 dist_fit_line='exponential', 
+                                 rand_var_name=interactive_params['rand_var_name'],
+                                 prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
+
     return rand_vars
 
 
-def gen_lognormal_dist(_mu, _sigma, size):
+def gen_lognormal_dist(_mu, _sigma, size, interactive_params=None):
     rand_vars = stats.lognorm.rvs(s=_sigma, scale=math.exp(_mu), size=size)
+
+    if interactive_params is not None:
+        # gen interactive plot
+        logscale=False
+        transparent=False
+
+        data_description = stats.describe(rand_vars) 
+        print('Characteristics of generated distribution:\n{}'.format(data_description))
+        
+        plot_dists.plot_val_dist(rand_vars, 
+                                 xlim=interactive_params['xlim'], 
+                                 logscale=logscale,
+                                 transparent=transparent,
+                                 dist_fit_line='lognormal',
+                                 rand_var_name=interactive_params['rand_var_name'],
+                                 prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
     return rand_vars
 
 
-def gen_pareto_dist(_alpha, _mode, size):
+def gen_pareto_dist(_alpha, _mode, size, interactive_params=None):
     rand_vars = stats.pareto.rvs(b=_alpha, loc=0, scale=_mode, size=size)
+    
+    if interactive_params is not None:
+        # gen interactive plot
+        logscale=False
+        transparent=False
+
+        data_description = stats.describe(rand_vars) 
+        print('Characteristics of generated distribution:\n{}'.format(data_description))
+        
+        plot_dists.plot_val_dist(rand_vars, 
+                                 xlim=interactive_params['xlim'], 
+                                 logscale=logscale,
+                                 transparent=transparent,
+                                 dist_fit_line='pareto', 
+                                 rand_var_name=interactive_params['rand_var_name'],
+                                 prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
     return rand_vars
 
 
-def gen_weibull_dist(_alpha, _lambda, size):
+def gen_weibull_dist(_alpha, _lambda, size, interactive_params=None):
     rand_vars = (np.random.weibull(_alpha, size=size)) * _lambda
+
+    if interactive_params is not None:
+        # gen interactive plot
+        logscale=False
+        transparent=False
+
+        data_description = stats.describe(rand_vars) 
+        print('Characteristics of generated distribution:\n{}'.format(data_description))
+        
+        plot_dists.plot_val_dist(rand_vars, 
+                                 xlim=interactive_params['xlim'], 
+                                 logscale=logscale,
+                                 transparent=transparent,
+                                 dist_fit_line='weibull', 
+                                 rand_var_name=interactive_params['rand_var_name'],
+                                 prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
     return rand_vars
 
 
 def gen_named_val_dist(dist, 
-                       params, 
+                       params=None, 
+                       interactive_plot=False,
                        size=30000, 
                        return_data=False, 
                        round_to_nearest=None, 
@@ -377,53 +449,118 @@ def gen_named_val_dist(dist,
     If return_data==True, will return data sampled from distribution (array). 
     If return_data==False, will return distribution (dict).
     '''
+    if params is None:
+        assert interactive_plot == True, 'if not using interactive, provide params dict'
+        show_fig = False # dont show standard fig, only interactive
+        # num_bins_widget = widgets.IntText(description='bins:',value=0,step=1,disabled=False)
+    if params is not None:
+        assert interactive_plot == False, 'cannot provide params dict if using interactive'
+
     if dist == 'exponential':
-        rand_vars = gen_exponential_dist(_beta=params['_beta'], 
-                                         size=size)
+        if interactive_plot:
+            _beta_exp_widget = widgets.FloatText(description='_beta:',value=0.1,step=0.01,disabled=False)
+            rand_vars = interactive(gen_exponential_dist,
+                                    {'manual': True},
+                                    _beta=_beta_exp_widget,
+                                    size=fixed(size),
+                                    interactive_params=fixed({'xlim': xlim, 
+                                                              'rand_var_name': rand_var_name,
+                                                              'prob_rand_var_less_than': prob_rand_var_less_than,
+                                                              'num_bins': num_bins}))
+        else:
+            rand_vars = gen_exponential_dist(_beta=params['_beta'], 
+                                             size=size)
+
     elif dist == 'lognormal':
-        rand_vars = gen_lognormal_dist(_mu=params['_mu'],
-                                       _sigma=params['_sigma'],
-                                       size=size)
+        if interactive_plot:
+            _mu_lognormal_widget = widgets.FloatText(description='_mu:',value=0.1,step=0.05,disabled=False)
+            _sigma_lognormal_widget = widgets.FloatText(description='_sigma:',value=1.0,step=0.1,disabled=False)
+            rand_vars = interactive(gen_lognormal_dist,
+                                    {'manual': True},
+                                    _mu=_mu_lognormal_widget,
+                                    _sigma=_sigma_lognormal_widget,
+                                    size=fixed(size),
+                                    interactive_params=fixed({'xlim': xlim, 
+                                                              'rand_var_name': rand_var_name,
+                                                              'prob_rand_var_less_than': prob_rand_var_less_than,
+                                                              'num_bins': num_bins}))
+        else:
+            rand_vars = gen_lognormal_dist(_mu=params['_mu'],
+                                           _sigma=params['_sigma'],
+                                           size=size)
+
     elif dist == 'weibull':
-        rand_vars = gen_weibull_dist(_alpha=params['_alpha'],
-                                     _lambda=params['_lambda'],
-                                     size=size)
+        if interactive_plot:
+            _alpha_weibull_widget = widgets.FloatText(description='_alpha:',value=5,step=0.1,disabled=False)
+            _lambda_weibull_widget = widgets.FloatText(description='_lambda:',value=0.5,step=0.1,disabled=False)
+            rand_vars = interactive(gen_weibull_dist,
+                                    {'manual': True},
+                                    _alpha=_alpha_weibull_widget,
+                                    _lambda=_lambda_weibull_widget,
+                                    size=fixed(size),
+                                    interactive_params=fixed({'xlim': xlim, 
+                                                              'rand_var_name': rand_var_name,
+                                                              'prob_rand_var_less_than': prob_rand_var_less_than,
+                                                              'num_bins': num_bins}))
+        else:
+            rand_vars = gen_weibull_dist(_alpha=params['_alpha'],
+                                         _lambda=params['_lambda'],
+                                         size=size)
+
     elif dist == 'pareto':
-        rand_vars = gen_pareto_dist(_alpha=params['_alpha'],
-                                    _mode=params['_mode'],
-                                    size=size)
+        if interactive_plot:
+            _alpha_pareto_widget = widgets.FloatText(description='_alpha:',value=1.5,step=0.005,disabled=False)
+            _mode_pareto_widget = widgets.FloatText(description='_mode:',value=3.0,step=0.1,disabled=False)
+            rand_vars = interactive(gen_pareto_dist,
+                                    {'manual': True},
+                                    _alpha=_alpha_pareto_widget,
+                                    _mode=_mode_pareto_widget,
+                                    size=fixed(size),
+                                    interactive_params=fixed({'xlim': xlim, 
+                                                              'rand_var_name': rand_var_name,
+                                                              'prob_rand_var_less_than': prob_rand_var_less_than,
+                                                              'num_bins': num_bins}))
+        else:
+            rand_vars = gen_pareto_dist(_alpha=params['_alpha'],
+                                        _mode=params['_mode'],
+                                        size=size)
+
     else:
         sys.exist('Must provide valid name distribution to use')
-    
+   
+    if interactive_plot:
+        display(rand_vars)
+        return rand_vars
 
-    unique_vals, pmf = gen_discrete_prob_dist(rand_vars,
-                                              round_to_nearest=round_to_nearest)
-    prob_dist = {unique_var: prob for unique_var, prob in zip(unique_vals, pmf)}
-
-    if print_data:
-        print('Prob dist:\n{}'.format(prob_dist))
-    if path_to_save is not None:
-        tools.pickle_data(path, node_dist)
-    if plot_fig or show_fig:
-        min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
-        num_occurrences = [int(val*(1/min_prob)) for val in list(prob_dist.values())]
-        data = convert_key_occurrences_to_data(unique_vals,num_occurrences)
-        fig = plot_dists.plot_val_dist(rand_vars=data, 
-                                       xlim=xlim,
-                                       logscale=logscale,
-                                       rand_var_name=rand_var_name,
-                                       prob_rand_var_less_than=prob_rand_var_less_than,
-                                       num_bins=num_bins,
-                                       show_fig=show_fig)
-        if return_data:
-            return rand_vars, fig
-        else:
-            return prob_dist, fig
     else:
-        if return_data:
-            return rand_vars
+        unique_vals, pmf = gen_discrete_prob_dist(rand_vars,
+                                                  round_to_nearest=round_to_nearest)
+        prob_dist = {unique_var: prob for unique_var, prob in zip(unique_vals, pmf)}
+
+        if print_data:
+            print('Prob dist:\n{}'.format(prob_dist))
+        if path_to_save is not None:
+            tools.pickle_data(path_to_save, node_dist)
+        if plot_fig or show_fig:
+            min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
+            num_occurrences = [int(val*(1/min_prob)) for val in list(prob_dist.values())]
+            data = convert_key_occurrences_to_data(unique_vals,num_occurrences)
+            fig = plot_dists.plot_val_dist(rand_vars=data, 
+                                           xlim=xlim,
+                                           logscale=logscale,
+                                           rand_var_name=rand_var_name,
+                                           prob_rand_var_less_than=prob_rand_var_less_than,
+                                           num_bins=num_bins,
+                                           show_fig=show_fig)
+            if return_data:
+                return rand_vars, fig
+            else:
+                return prob_dist, fig
         else:
-            return prob_dist
+            if return_data:
+                return rand_vars
+            else:
+                return prob_dist
 
 
 
