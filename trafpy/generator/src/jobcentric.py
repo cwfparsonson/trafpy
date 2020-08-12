@@ -7,6 +7,7 @@ import time
 import multiprocessing
 import math
 import random
+import matplotlib.pyplot as plt
 
 
 def set_job_op_run_times(job, 
@@ -406,17 +407,169 @@ def gen_job_event_dict(demand_data, event_iter):
     return event_dict
 
 
+def get_job_dependency_stats(job):
+    '''
+    Get stats of all dependencies in a single job and returns as a list.
+    ''' 
+    job_dep_stats = []
+    for op in job.nodes:
+        deps = job.out_edges(op)
+        for dep in deps:
+            dep_stats = job.get_edge_data(dep[0],dep[1])
+            job_dep_stats.append(dep_stats)
+
+    return job_dep_stats 
+            
+
+def get_job_demand_data_dependency_stats(demand_data):
+    '''
+    Gets stats of all dependencies of each job in demand_data. Returns these
+    stats as a dict {job_id: dependency_stats}
+    '''
+    dep_stats = {job_id: [] for job_id in demand_data['job_id']}
+    for idx in range(len(demand_data['job_id'])):
+        job_id = demand_data['job_id'][idx]
+        job = demand_data['job'][idx]
+        stats = get_job_dependency_stats(job)
+        dep_stats[job_id] = stats
+
+    return dep_stats
 
 
 
 
+def draw_job_graph(job, 
+                   node_size=500, 
+                   font_size=15, 
+                   linewidths=1, 
+                   fig_scale=1,
+                   draw_labels=True,
+                   show_fig=False,
+                   directed_graph=True):
+    '''
+    Draws single job graph
+    '''
+    pos=nx.nx_agraph.graphviz_layout(job,prog='dot',root='source')
+    
+    srcsnk = []
+    ops = []
+    for node in job.nodes:
+        if node == 'source' or node == 'sink':
+            srcsnk.append(node)
+        else:
+            ops.append(node)
+
+    if directed_graph:
+        data_deps = []
+        control_deps = []
+        for edge in job.edges:
+            if job.edges[edge]['dependency'] == 1:
+                # data dependency
+                data_deps.append(edge)
+            else:
+                # control dependency
+                control_deps.append(edge)
+
+    fig = plt.figure(figsize=[15*fig_scale,15*fig_scale])
+    # nodes
+    nx.draw_networkx_nodes(job,
+                           pos,
+                           nodelist=srcsnk,
+                           node_size=node_size,
+                           node_color='#47c974',
+                           linewidths=linewidths,
+                           label='Source/Sink')
+    nx.draw_networkx_nodes(job,
+                           pos,
+                           nodelist=ops,
+                           node_size=node_size,
+                           node_color='#bd3631',
+                           linewidths=linewidths,
+                           label='Op')
+    # edges
+    if directed_graph:
+        nx.draw_networkx_edges(job,
+                               pos, 
+                               edgelist=data_deps,
+                               edge_color='#379bbf',
+                               width=1,
+                               label='Data dependency')
+        nx.draw_networkx_edges(job,
+                               pos,
+                               edgelist=control_deps,
+                               edge_color='k',
+                               width=1,
+                               label='Control dependency')
+    else:
+        nx.draw_networkx_edges(job,
+                               pos,
+                               edgelist=job.edges,
+                               edge_color='k',
+                               width=1,
+                               label='Dependency')
+    # labels
+    if draw_labels:
+        nx.draw_networkx_labels(job,
+                                pos, 
+                                font_size=font_size,
+                                font_color='k',
+                                font_family='sans-serif',
+                                font_weight='normal',
+                                alpha=1.0)
+    else:
+        pass
+    
+    plt.legend(labelspacing=2)
+    if show_fig:
+        plt.show()
+    plt.close()
+
+    return fig
 
 
 
+def draw_job_graphs(demand_data=None,
+                    job_graphs=[],
+                    node_size=500,
+                    font_size=15,
+                    linewidths=1,
+                    fig_scale=1.25,
+                    draw_labels=True,
+                    show_fig=False,
+                    path_to_save=None):
+    '''
+    Draws list of specified job graphs. If no job graphs specified,
+    plots all job graphs
+    '''
 
+    if len(job_graphs) == 0:
+        # plot all job graphs
+        job_graphs = demand_data['job']
+    else:
+        # job graphs to plot already specified
+        assert demand_data is not None, 'must provide job demand data or list of job graphs'
 
+    figs = []
+    plotted_jobs = [] # record plotted jobs so dont double plot est==0/1
+    for job in job_graphs:
+        if job not in plotted_jobs:
+            figs.append(draw_job_graph(job,
+                                       node_size=node_size,
+                                       font_size=font_size,
+                                       linewidths=linewidths,
+                                       fig_scale=fig_scale,
+                                       show_fig=show_fig,
+                                       draw_labels=draw_labels))
+            plotted_jobs.append(job)
+        else:
+            # already plotted job
+            pass
 
+    # save job graphs
+    if path_to_save is not None:
+        tools.pickle_data(path_to_save, figs)
 
+    return figs
 
 
 

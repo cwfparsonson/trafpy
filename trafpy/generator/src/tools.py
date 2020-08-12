@@ -3,6 +3,24 @@ from trafpy.generator.src.demand import *
 import pickle
 import bz2
 import time
+import multiprocessing
+import networkx as nx
+
+
+def get_network_params(eps):
+    '''
+    Returns basic params of network
+    '''
+    num_nodes = len(eps)
+    num_pairs = np.int(((num_nodes**2) - num_nodes)/2)
+    node_indices = [index for index in range(num_nodes)]
+    iterables = zip(eps, node_indices)
+    node_to_index = {node: index for node, index in iterables}
+    iterables = zip(node_indices, eps)
+    index_to_node = {index: node for index, node in iterables}
+    
+    return num_nodes, num_pairs, node_to_index, index_to_node
+
 
 def gen_event_times(interarrival_times, 
                     duration_times=None,
@@ -192,3 +210,37 @@ def unpickle_data(path_to_load,
     return demand_data
 
 
+def calc_graph_diameter(graph):
+    diameter = nx.algorithms.distance_measures.extrema_bounding(to_undirected_graph(graph), compute='diameter')
+    return diameter
+
+def calc_graph_diameters(graphs, multiprocessing_type='none', print_times=False):
+        start = time.time()
+        if multiprocessing_type=='pool':
+            pool = multiprocessing.Pool(multiprocessing.cpu_count())
+            results = [pool.apply_async(calc_graph_diameter, args=(graph,)) for graph in graphs]
+            pool.close()
+            pool.join()
+            diameters = [p.get() for p in results]
+        elif multiprocessing_type=='none':
+            diameters = [calc_graph_diameter(graph) for graph in graphs]
+        end=time.time()
+        if print_times:
+            print('Time to calc diameters of {} graphs: {}'.format(len(graphs), end-start))
+
+        return diameters
+    
+def to_undirected_graph(directed_graph):
+    '''
+    Converts directed graph to an undirected graph
+    '''
+    edges = directed_graph.edges()
+    nodes = directed_graph.nodes()
+    
+    undirected_graph = nx.Graph()
+    for node in nodes:
+        undirected_graph.add_node(node)
+    for edge in edges:
+        undirected_graph.add_edge(edge[0], edge[1])
+
+    return undirected_graph

@@ -1,6 +1,39 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 
+
+def gen_arbitrary_graph(ep_label=None, num_eps=10):
+    '''
+    Generates an arbitrary graph with num_eps nodes labelled as ep_label###
+
+    Note that no edges are formed in this graph; it is purely for ep name 
+    indexing purposes when using Demand class. This is useful where want to
+    use the demand class but not necessarily with a carefully crafted networkx
+    graph that accurately mimics the network you will use for the demands
+    '''
+    Graph = nx.Graph()
+    Graph.add_nodes_from([node for node in range(num_eps)])
+    
+    if ep_label is None:
+        servers = [str(i) for i in range(num_eps)]
+    else:
+        servers = [ep_label+'_'+str(i) for i in range(num_eps)]
+    relabel_mapping = {node: label for node, label in zip(range(num_eps),servers)}
+    Graph = nx.relabel_nodes(Graph, relabel_mapping)
+    eps = []
+    for node in list(Graph.nodes):
+        try:
+            if ep_label in node:
+                eps.append(node)
+        except TypeError:
+            # ep_label is None
+            eps.append(node)
+    Graph.graph['endpoints'] = eps
+    
+    return Graph
+
+
+
 def gen_nsfnet_graph(ep_label='server', num_channels=2, channel_capacity=10):
     '''
     Generates the standard 14-node NSFNET topology (a U.S. core network)

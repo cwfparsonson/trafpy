@@ -5,25 +5,14 @@ import sys
 import numpy as np
 
 
-def get_network_params(eps):
-    '''
-    Returns basic params of network
-    '''
-    num_nodes = len(eps)
-    num_pairs = np.int(((num_nodes**2) - num_nodes)/2)
-    node_indices = [index for index in range(num_nodes)]
-    iterables = zip(eps, node_indices)
-    node_to_index = {node: index for node, index in iterables}
-    iterables = zip(node_indices, eps)
-    index_to_node = {index: node for index, node in iterables}
-    
-    return num_nodes, num_pairs, node_to_index, index_to_node
 
 
-def assign_probs_to_matrix(eps, probs, matrix):
-    num_nodes, num_pairs, node_to_index, index_to_node = get_network_params(eps)
+def assign_probs_to_matrix(eps, probs, matrix=None):
+    if matrix is None:
+        matrix = np.zeros((len(eps),len(eps)))
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
     
-    iter = np.nditer(probs)
+    iter = np.nditer(np.array(probs))
     for src in eps:
         for dst in eps:
             if src == dst:
@@ -60,7 +49,7 @@ def gen_uniform_node_dist(eps,
     - (optional) fig: plotted figure
     '''
     # init network params
-    num_nodes, num_pairs, node_to_index, index_to_node = get_network_params(eps)
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
     node_dist = np.zeros((num_nodes, num_nodes))
     
     # uniform prob each pair chosen
@@ -83,7 +72,6 @@ def gen_uniform_node_dist(eps,
         tools.pickle_data(path, node_dist)
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
-                                        node_to_index_dict=node_to_index, 
                                         eps=eps,
                                         show_fig=show_fig)
         return node_dist, fig
@@ -115,7 +103,7 @@ def gen_uniform_multinomial_exp_node_dist(eps,
     - (optional) fig: plotted figure
     '''
     # initialise graph params
-    num_nodes, num_pairs, node_to_index, index_to_node = get_network_params(eps)
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
     node_dist = np.zeros((num_nodes, num_nodes))
     prob_pair_chosen = np.ones((num_pairs))/((num_pairs))
 
@@ -142,7 +130,6 @@ def gen_uniform_multinomial_exp_node_dist(eps,
         tools.pickle_data(path, node_dist)
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
-                                        node_to_index_dict=node_to_index, 
                                         eps=eps,
                                         show_fig=show_fig)
         return node_dist, fig
@@ -183,7 +170,7 @@ def gen_multimodal_node_dist(eps,
     - (optional) fig: plotted figure
     ''' 
     # initialise graph params
-    num_nodes, num_pairs, node_to_index, index_to_node = get_network_params(eps)
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
     node_dist = np.zeros((num_nodes, num_nodes))
     
     if num_skewed_nodes is None:
@@ -287,7 +274,6 @@ def gen_multimodal_node_dist(eps,
         tools.pickle_data(path, node_dist)
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
-                                        node_to_index_dict=node_to_index, 
                                         eps=eps,
                                         show_fig=show_fig)
         return node_dist, fig
@@ -327,7 +313,7 @@ def gen_multimodal_node_pair_dist(eps,
     - (optional) fig: plotted figure
     '''
     # initialise graph params
-    num_nodes, num_pairs, node_to_index, index_to_node = get_network_params(eps)
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
     node_dist = np.zeros((num_nodes, num_nodes))
     
     if num_skewed_pairs is None:
@@ -463,7 +449,6 @@ def gen_multimodal_node_pair_dist(eps,
         tools.pickle_data(path, node_dist)
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
-                                        node_to_index_dict=node_to_index, 
                                         eps=eps,
                                         show_fig=show_fig)
         return node_dist, fig

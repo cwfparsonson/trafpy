@@ -1,14 +1,30 @@
 import numpy as np
+import copy
 np.set_printoptions(threshold=np.inf)
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
+from trafpy.generator.src import tools
+from trafpy.generator.src.dists import val_dists 
+from trafpy.generator.src.dists import node_dists 
+
 
 
 def plot_node_dist(node_dist, 
-                   node_to_index_dict, 
-                   eps, 
+                   eps=None,
+                   node_to_index_dict=None,
                    add_labels=False, 
                    show_fig=False):
+    '''
+    node_dist must either be a 2d numpy matrix of probabilities or a 1d list/array 
+    of node pair probabilities
+    '''
+    if type(node_dist[0]) == str and eps is None:
+        eps = list(set(node_dist))
+    else:
+        assert eps is not None, 'must provide list of end points as arg if node_dist contains no endpoint labels.'
+
+    if node_to_index_dict is None:
+        _,_,node_to_index_dict,_=tools.get_network_params(eps) 
     fig = plt.figure()
     plt.matshow(node_dist, cmap='coolwarm')
     cbar = plt.colorbar()
@@ -42,6 +58,7 @@ def plot_val_dist(rand_vars,
                   rand_var_name='Random Variable', 
                   prob_rand_var_less_than=None,
                   num_bins=0,
+                  plot_cdf=True,
                   show_fig=False):
     if num_bins==0:
         histo, bins = np.histogram(rand_vars,density=True,bins='auto')
@@ -66,6 +83,7 @@ def plot_val_dist(rand_vars,
     
     plt.hist(rand_vars,
              bins=plotbins,
+             align='left',
              color='tab:red',
              edgecolor='tab:red',
              alpha=alpha)
@@ -92,32 +110,33 @@ def plot_val_dist(rand_vars,
     except NameError:
         pass
     
-    # CDF
-    # empirical hist
-    plt.subplot(1,2,2)
-    if logscale:
-        ax = plt.gca()
-        ax.set_xscale('log')
-    else:
-        pass
-    n,bins_temp,patches = plt.hist(rand_vars, 
-                                   bins=plotbins, 
-                                   cumulative=True,
-                                   density=True,
-                                   histtype='step',
-                                   color='tab:red',
-                                   edgecolor='tab:red')
-    patches[0].set_xy(patches[0].get_xy()[:-1])
-    # theoretical line
-    ecdf = ECDF(rand_vars)
-    plt.plot(ecdf.x, ecdf.y, alpha=0.5, color='tab:blue')
-    plt.xlabel(rand_var_name)
-    plt.ylabel('CDF')
-    try:
-        plt.xlim(xlim)
-    except NameError:
-        pass
-    plt.ylim(top=1)
+    if plot_cdf:
+        # CDF
+        # empirical hist
+        plt.subplot(1,2,2)
+        if logscale:
+            ax = plt.gca()
+            ax.set_xscale('log')
+        else:
+            pass
+        n,bins_temp,patches = plt.hist(rand_vars, 
+                                       bins=plotbins, 
+                                       cumulative=True,
+                                       density=True,
+                                       histtype='step',
+                                       color='tab:red',
+                                       edgecolor='tab:red')
+        patches[0].set_xy(patches[0].get_xy()[:-1])
+        # theoretical line
+        ecdf = ECDF(rand_vars)
+        plt.plot(ecdf.x, ecdf.y, alpha=0.5, color='tab:blue')
+        plt.xlabel(rand_var_name)
+        plt.ylabel('CDF')
+        try:
+            plt.xlim(xlim)
+        except NameError:
+            pass
+        plt.ylim(top=1)
     
     # PRINT ANY EXTRA ANALYSIS OF DISTRIBUTION
     if prob_rand_var_less_than is None:
