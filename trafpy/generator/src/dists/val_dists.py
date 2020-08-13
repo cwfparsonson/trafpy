@@ -107,18 +107,170 @@ def gen_uniform_val_dist(min_val,
     else:
         return prob_dist
     
+def gen_skew_dists(min_val,
+                   max_val,
+                   num_modes=2,
+                   xlim=None,
+                   rand_var_name='Unknown',
+                   round_to_nearest=None,
+                   num_decimal_places=0.2):
+    
+    # initialise widget and data dicts
+    widget_dict = {mode_iter: {'num_bins_widget': widgets.IntText(description='bins:',value=0,step=1,disabled=False),
+                               'num_samples_widget': widgets.BoundedIntText(description='Samples:',min=10,max=30000,value=10000,disabled=False),
+                               'loc_widget': widgets.BoundedIntText(description='Location:',min=min_val,max=max_val,value=max_val/2,disabled=False),
+                               'skew_widget': widgets.FloatText(description='Skew:',value=0.0,step=0.1,disabled=False),
+                               'scale_widget': widgets.FloatText(description='Scale:',value=10.0,step=0.1,disabled=False,)}
+                               for mode_iter in range(num_modes)}
+    data_dict = {mode_iter: None for mode_iter in range(num_modes)}
+    
+    # customise skews
+    locations = [None for i in range(num_modes)]
+    skews = [None for i in range(num_modes)]
+    scales = [None for i in range(num_modes)]
+    num_skew_samples = [None for i in range(num_modes)]
+    for mode_iter in range(num_modes):
+        data_dict[mode_iter] = interactive(gen_skew_data, 
+                                           {'manual': True},
+                                           num_bins=widget_dict[mode_iter]['num_bins_widget'],
+                                           num_skew_samples=widget_dict[mode_iter]['num_samples_widget'],
+                                           location=widget_dict[mode_iter]['loc_widget'],
+                                           skew=widget_dict[mode_iter]['skew_widget'],
+                                           scale=widget_dict[mode_iter]['scale_widget'],
+                                           min_val=fixed(min_val),
+                                           max_val=fixed(max_val),
+                                           xlim=fixed(xlim),
+                                           rand_var_name=fixed(rand_var_name),
+                                           round_to_nearest=fixed(round_to_nearest),
+                                           num_decimal_places=fixed(num_decimal_places))
+
+        
+        # DISPLAY
+        display(data_dict[mode_iter])
+    
+    return data_dict
+
+
+def gen_skew_data(location, 
+                  skew, 
+                  scale, 
+                  min_val,
+                  max_val,
+                  num_skew_samples,
+                  xlim=None, 
+                  logscale=False,
+                  transparent=False,
+                  rand_var_name='Unknown',
+                  num_bins=0,
+                  round_to_nearest=None,
+                  num_decimal_places=0.2):
+    skew_data = []
+    
+    data = gen_skewnorm_data(a=skew,
+                             loc=location,
+                             scale=scale,
+                             min_val=min_val,
+                             max_val=max_val,
+                             num_samples=num_skew_samples)
+    skew_data.append(list(data))
+    
+    skew_data = [y for x in skew_data for y in x] # flatten
+    if round_to_nearest is not None:
+        # discretise
+        skew_data = [x_round(i,round_to_nearest,num_decimal_places) for i in skew_data]
+    else:
+        pass
+
+    data_description = stats.describe(skew_data) 
+    print('Characteristics of generated distribution:\n{}'.format(data_description))
+    
+    plot_dists.plot_val_dist(skew_data, 
+                             xlim=xlim, 
+                             logscale=logscale,
+                             transparent=transparent,
+                             rand_var_name=rand_var_name)
+
+    return skew_data
+
+def combine_multiple_mode_dists(data_dict,
+                                min_val,
+                                max_val,
+                                xlim=None,
+                                rand_var_name='Unknown',
+                                round_to_nearest=None,
+                                num_decimal_places=0.2):
+    bg_factor = widgets.FloatText(min=0,max=10,step=0.001,value=0.5)
+    num_bins_widget = widgets.IntText(description='bins:',value=0,step=1,disabled=False)
+    
+    prob_dist = interactive(combine_skews,
+                           {'manual': True},
+                           min_val=fixed(min_val),
+                           max_val=fixed(max_val),
+                           data_dict=fixed(data_dict), 
+                           bg_factor=bg_factor,
+                           xlim=fixed(xlim),
+                           rand_var_name=fixed(rand_var_name),
+                           num_bins=num_bins_widget,
+                           round_to_nearest=fixed(round_to_nearest),
+                           num_decimal_places=fixed(num_decimal_places))
+    
+    # DISPLAY
+    display(prob_dist)
+
+    return prob_dist
+
+def combine_skews(data_dict, 
+                  min_val,
+                  max_val,
+                  bg_factor=0.5,
+                  xlim=None,
+                  logscale=False,
+                  transparent=False,
+                  rand_var_name='Unknown',
+                  num_bins=0,
+                  round_to_nearest=None,
+                  num_decimal_places=0.2):
+    locations = []
+    skews = []
+    scales = []
+    num_skew_samples = []
+    for mode_iter in range(len(data_dict)):
+        print('Chosen skew {} stats: {}'.format(mode_iter+1,data_dict[mode_iter].kwargs))
+        locations.append(data_dict[mode_iter].kwargs['location'])
+        skews.append(data_dict[mode_iter].kwargs['skew'])
+        scales.append(data_dict[mode_iter].kwargs['scale'])
+        num_skew_samples.append(data_dict[mode_iter].kwargs['num_skew_samples'])
+    
+    prob_dist, fig, data = gen_multimodal_val_dist(min_val=min_val,
+                                                  max_val=max_val,
+                                                  locations=locations, 
+                                                  skews=skews, 
+                                                  scales=scales, 
+                                                  bg_factor=bg_factor,
+                                                  num_skew_samples=num_skew_samples,
+                                                  round_to_nearest=round_to_nearest,
+                                                  return_data=True,
+                                                  plot_fig=True,
+                                                  num_bins=num_bins,
+                                                  num_decimal_places=num_decimal_places)
+    
+    data_description = stats.describe(data) 
+    print('Characteristics of generated distribution:\n{}'.format(data_description))
+    
+    return prob_dist
 
 
 def gen_multimodal_val_dist(min_val,
                             max_val,
-                            locations = [40,80],
-                            skews = [5.0,-5.0],
-                            scales = [10,10],
-                            num_skew_samples = [10000,650],
+                            locations=[],
+                            skews=[],
+                            scales=[],
+                            num_skew_samples=[],
                             bg_factor=0.5,
                             round_to_nearest=None,
                             num_decimal_places=2,
                             path_to_save=None,
+                            return_data=False,
                             plot_fig=False,
                             show_fig=False,
                             xlim=None,
@@ -166,7 +318,7 @@ def gen_multimodal_val_dist(min_val,
             num_skew_samples.append(10000)
 
     num_bg_samples = int(sum(num_skew_samples)*bg_factor)
-    num_skews = len(locations)
+    num_modes = len(locations)
 
     poss_vals = np.arange(min_val,max_val+separation,separation)
     baseline_probs = np.ones((len(poss_vals)))/len(poss_vals)
@@ -176,13 +328,13 @@ def gen_multimodal_val_dist(min_val,
 
     skew_data = []
     skew_data.append(baseline_vals)
-    for skew_iter in range(num_skews):
-        data = gen_skewnorm_data(a=skews[skew_iter],
-                                 loc=locations[skew_iter],
-                                 scale=scales[skew_iter],
+    for mode_iter in range(num_modes):
+        data = gen_skewnorm_data(a=skews[mode_iter],
+                                 loc=locations[mode_iter],
+                                 scale=scales[mode_iter],
                                  min_val=min_val,
                                  max_val=max_val,
-                                 num_samples=num_skew_samples[skew_iter])
+                                 num_samples=num_skew_samples[mode_iter])
         skew_data.append(list(data))
 
     skew_data = [y for x in skew_data for y in x] # flatten
@@ -208,10 +360,16 @@ def gen_multimodal_val_dist(min_val,
                                        prob_rand_var_less_than=prob_rand_var_less_than,
                                        num_bins=num_bins,
                                        show_fig=show_fig)
-        return prob_dist, fig
+        if return_data:
+            return prob_dist, fig, data
+        else:
+            return prob_dist, fig
 
     else:
-        return prob_dist
+        if return_data:
+            return prob_dist, data
+        else:
+            return prob_dist
 
 
 def gen_skewnorm_data(a, loc, scale, min_val, max_val, num_samples):

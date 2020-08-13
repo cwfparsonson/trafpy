@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from trafpy.generator.src.demand import *
 import pickle
 import bz2
@@ -151,6 +152,52 @@ def gen_event_dict(demand_data, event_iter=None):
                   'k_shortest_paths': None}
 
     return event_dict
+
+
+
+def save_data_as_csv(path_to_save,
+                     data,
+                     overwrite=False,
+                     print_times=True):
+    start = time.time()
+    if path_to_save[-4:] != '.csv':
+        append_csv = True
+        filename = path_to_save + '.csv'
+    else:
+        append_csv = False
+        filename = path_to_save
+    if overwrite:
+        # overwrite prev saved file
+        pass
+    else:
+        # avoid overwriting
+        v = 2
+        while os.path.exists(str(filename)):
+            if append_csv:
+                filename = path_to_save+'_v{}'.format(v)+'.csv'
+            else:
+                filename = path_to_save[:-7]+'_v{}'.format(v)+'.csv'
+            v += 1
+   
+    if type(data) == dict:
+        try:
+            df = pd.DataFrame(data)
+        except ValueError:
+            # dict values are scalars
+            df = pd.DataFrame(data, index=[0])
+    
+    if type(data) == dict:
+        df.to_csv(filename)
+    else:
+        try:
+            np.savetxt(filename, data, delimiter=',')
+        except TypeError:
+            np.savetxt(filename, data, delimiter=',', fmt='%s')
+    
+    end = time.time()
+    if print_times: 
+        print('Time to save data to {}: {} s'.format(filename, end-start))
+
 
 
 def pickle_data(path_to_save,
