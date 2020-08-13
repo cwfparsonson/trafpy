@@ -1,4 +1,4 @@
-from trafpy.generator.src import graphs
+from trafpy.generator.src import networks
 import numpy as np
 import copy
 import pickle

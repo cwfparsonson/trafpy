@@ -9,9 +9,9 @@ trafpy/generator/src/__init__.py
 trafpy/generator/src/builder.py
 trafpy/generator/src/demand.py
 trafpy/generator/src/flowcentric.py
-trafpy/generator/src/graphs.py
 trafpy/generator/src/interactive.py
 trafpy/generator/src/jobcentric.py
+trafpy/generator/src/networks.py
 trafpy/generator/src/tools.py
 trafpy/generator/src/dists/__init__.py
 trafpy/generator/src/dists/node_dists.py
