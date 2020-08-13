@@ -33,7 +33,8 @@ release = '0.0.1'
 import sphinx_rtd_theme
 
 extensions = [
-        'sphinx_rtd_theme'
+        'sphinx_rtd_theme',
+        'nb2plots'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

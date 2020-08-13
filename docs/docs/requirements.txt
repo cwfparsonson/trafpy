@@ -1,0 +1,3 @@
+sphinx
+nb2plots
+sphinx_rtd_theme

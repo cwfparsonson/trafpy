@@ -15,6 +15,16 @@ from IPython.display import display, clear_output
 
 
 def convert_key_occurrences_to_data(keys, num_occurrences):
+    '''Converts value keys and their number of occurrences into random vars.
+
+    Args:
+        keys (list): Random variable values
+        num_occurrences (list): Number of each random variable to generate.
+
+    Returns:
+        data (list): Random variables generated
+
+    '''
     data = []
     idx = 0
     for key in keys:
@@ -28,6 +38,16 @@ def convert_key_occurrences_to_data(keys, num_occurrences):
 
 
 def convert_data_to_key_occurrences(data):
+    '''Converts random variable data into value keys and correponsing occurrences.
+
+    Args:
+        data (list): Random variables to convert into key-num_occurrences pairs
+
+    Returns:
+        counter_dict (dict): Random variable value - number of occurrences key -
+            value pairs generated from random variable data.
+    
+    '''
     # count number of times each var occurs in data
     counter_dict = {}
     for var in data:
@@ -42,10 +62,7 @@ def convert_data_to_key_occurrences(data):
     
 
 def x_round(x, round_to_nearest=1, num_decimal_places=2, print_data=False):
-    '''
-    Takes a rand var value x and rounds to nearest specified value (by default,
-    will round x to nearest integer)
-    '''
+    '''Rounds variable to nearest specified value.'''
     factor = round(1/round_to_nearest, num_decimal_places)
     rounded = round(round(x*factor)/factor, num_decimal_places)
 
@@ -61,15 +78,26 @@ def gen_uniform_val_dist(min_val,
                          max_val,
                          round_to_nearest=None,
                          num_decimal_places=2,
+                         occurrence_multiplier=100,
                          path_to_save=None,
                          plot_fig=False,
                          show_fig=False,
+                         return_data=False,
                          xlim=None,
                          logscale=False,
                          rand_var_name='Random Variable',
                          prob_rand_var_less_than=None,
                          num_bins=0,
                          print_data=False):
+    '''Generates a uniform distribution of random variable values.
+
+    Uniform distributions are the most simple distribution. Each random variable
+    value in a uniform distribution has an equal probability of occurring.
+
+    Args:
+        min_val (int/float): 
+    
+    '''
     if round_to_nearest is None:
         # assume separation between vals is 1 unit
         separation = 1
@@ -93,19 +121,25 @@ def gen_uniform_val_dist(min_val,
         tools.pickle_data(path_to_save, node_dist)
     if plot_fig or show_fig:
         min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
-        num_occurrences = [int(val*(1/min_prob)) for val in list(prob_dist.values())]
-        data = convert_key_occurrences_to_data(unique_vals,num_occurrences)
-        fig = plot_dists.plot_val_dist(rand_vars=data, 
+        num_occurrences = [int(val*(1/min_prob)*occurrence_multiplier) for val in list(prob_dist.values())]
+        rand_vars = convert_key_occurrences_to_data(unique_vals,num_occurrences)
+        fig = plot_dists.plot_val_dist(rand_vars=rand_vars, 
                                        xlim=xlim,
                                        logscale=logscale,
                                        rand_var_name=rand_var_name,
                                        prob_rand_var_less_than=prob_rand_var_less_than,
                                        num_bins=num_bins,
                                        show_fig=show_fig)
-        return prob_dist, fig
+        if return_data:
+            return prob_dist, rand_vars, fig
+        else:
+            return prob_dist, fig
 
     else:
-        return prob_dist
+        if return_data:
+            return prob_dist, rand_vars
+        else:
+            return prob_dist
     
 def gen_skew_dists(min_val,
                    max_val,
@@ -268,6 +302,7 @@ def gen_multimodal_val_dist(min_val,
                             num_skew_samples=[],
                             bg_factor=0.5,
                             round_to_nearest=None,
+                            occurrence_multiplier=10,
                             num_decimal_places=2,
                             path_to_save=None,
                             return_data=False,
@@ -351,9 +386,9 @@ def gen_multimodal_val_dist(min_val,
         tools.pickle_data(path_to_save, node_dist)
     if plot_fig or show_fig:
         min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
-        num_occurrences = [int(val*(1/min_prob)) for val in list(prob_dist.values())]
-        data = convert_key_occurrences_to_data(unique_vals,num_occurrences)
-        fig = plot_dists.plot_val_dist(rand_vars=data, 
+        num_occurrences = [int(val*(1/min_prob)*occurrence_multiplier) for val in list(prob_dist.values())]
+        rand_vars = convert_key_occurrences_to_data(unique_vals,num_occurrences)
+        fig = plot_dists.plot_val_dist(rand_vars=rand_vars, 
                                        xlim=xlim,
                                        logscale=logscale,
                                        rand_var_name=rand_var_name,
@@ -361,13 +396,13 @@ def gen_multimodal_val_dist(min_val,
                                        num_bins=num_bins,
                                        show_fig=show_fig)
         if return_data:
-            return prob_dist, fig, data
+            return prob_dist, rand_vars, fig
         else:
             return prob_dist, fig
 
     else:
         if return_data:
-            return prob_dist, data
+            return prob_dist, rand_vars 
         else:
             return prob_dist
 
@@ -592,6 +627,7 @@ def gen_named_val_dist(dist,
                        params=None, 
                        interactive_plot=False,
                        size=30000, 
+                       occurrence_multiplier=100,
                        return_data=False, 
                        round_to_nearest=None, 
                        path_to_save=None,
@@ -701,7 +737,7 @@ def gen_named_val_dist(dist,
             tools.pickle_data(path_to_save, node_dist)
         if plot_fig or show_fig:
             min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
-            num_occurrences = [int(val*(1/min_prob)) for val in list(prob_dist.values())]
+            num_occurrences = [int(val*(1/min_prob)*occurrence_multiplier) for val in list(prob_dist.values())]
             data = convert_key_occurrences_to_data(unique_vals,num_occurrences)
             fig = plot_dists.plot_val_dist(rand_vars=data, 
                                            xlim=xlim,
@@ -711,12 +747,12 @@ def gen_named_val_dist(dist,
                                            num_bins=num_bins,
                                            show_fig=show_fig)
             if return_data:
-                return rand_vars, fig
+                return prob_dist, rand_vars, fig
             else:
                 return prob_dist, fig
         else:
             if return_data:
-                return rand_vars
+                return prob_dist, rand_vars
             else:
                 return prob_dist
 

@@ -84,7 +84,7 @@ def plot_val_dist(rand_vars,
     
     plt.hist(rand_vars,
              bins=plotbins,
-             align='left',
+             align='mid',
              color='tab:red',
              edgecolor='tab:red',
              alpha=alpha)

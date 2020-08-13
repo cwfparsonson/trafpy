@@ -84,7 +84,14 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorial</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#trafpy-generator">TrafPy Generator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#trafpy-generator">TrafPy Generator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#value-distributions">Value Distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#node-distributions">Node Distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#networks">Networks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flow-centric-traffic-demands">Flow-Centric Traffic Demands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#job-centric-traffic-demands">Job-Centric Traffic Demands</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#visually-shaping-trafpy-distributions">Visually Shaping TrafPy Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#trafpy-manager">TrafPy Manager</a></li>
 </ul>
@@ -160,15 +167,118 @@
 <p>This guide can help you start with TrafPy.</p>
 <div class="section" id="trafpy-generator">
 <h2>TrafPy Generator<a class="headerlink" href="#trafpy-generator" title="Permalink to this headline">¶</a></h2>
-<p>Import the TrafPy generator module:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
+<p>Import the TrafPy generator module.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
 </pre></div>
 </div>
+<p>Network traffic patterns can be characterised by probability distributions. By
+accurately describing a probability distribution, one can sample from it to generate
+arbitrary amounts of realistic network traffic.</p>
+<div class="section" id="value-distributions">
+<h3>Value Distributions<a class="headerlink" href="#value-distributions" title="Permalink to this headline">¶</a></h3>
+<p>The most simple probability distribution for random variable values is the
+<strong>uniform distribution</strong>, where each random variable value has an equal probability
+of occurring</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">101</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-2.png">png</a>, <a class="reference external" href=".//Tutorial-2.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-2.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-2.png" src="_images/Tutorial-2.png" />
+</div>
+<p>TrafPy probability distributions are defined as Python dictionaries with
+value-probability key-value pairs</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">Uniform</span> <span class="n">probability</span> <span class="n">distribution</span><span class="p">:</span>\<span class="n">n</span><span class="p">{}</span><span class="s1">&#39;.format(prob_dist))</span>
+<span class="go">Uniform probability distribution:</span>
+<span class="go">{1: 0.01, 2: 0.01, 3: 0.01, 4: 0.01, 5: 0.01, 6: 0.01, 7: 0.01, 8: 0.01, 9: 0.01, 10: 0.01, 11: 0.01, 12: 0.01, 13: 0.01, 14: 0.01, 15: 0.01, 16: 0.01, 17: 0.01, 18: 0.01, 19: 0.01, 20: 0.01, 21: 0.01, 22: 0.01, 23: 0.01, 24: 0.01, 25: 0.01, 26: 0.01, 27: 0.01, 28: 0.01, 29: 0.01, 30: 0.01, 31: 0.01, 32: 0.01, 33: 0.01, 34: 0.01, 35: 0.01, 36: 0.01, 37: 0.01, 38: 0.01, 39: 0.01, 40: 0.01, 41: 0.01, 42: 0.01, 43: 0.01, 44: 0.01, 45: 0.01, 46: 0.01, 47: 0.01, 48: 0.01, 49: 0.01, 50: 0.01, 51: 0.01, 52: 0.01, 53: 0.01, 54: 0.01, 55: 0.01, 56: 0.01, 57: 0.01, 58: 0.01, 59: 0.01, 60: 0.01, 61: 0.01, 62: 0.01, 63: 0.01, 64: 0.01, 65: 0.01, 66: 0.01, 67: 0.01, 68: 0.01, 69: 0.01, 70: 0.01, 71: 0.01, 72: 0.01, 73: 0.01, 74: 0.01, 75: 0.01, 76: 0.01, 77: 0.01, 78: 0.01, 79: 0.01, 80: 0.01, 81: 0.01, 82: 0.01, 83: 0.01, 84: 0.01, 85: 0.01, 86: 0.01, 87: 0.01, 88: 0.01, 89: 0.01, 90: 0.01, 91: 0.01, 92: 0.01, 93: 0.01, 94: 0.01, 95: 0.01, 96: 0.01, 97: 0.01, 98: 0.01, 99: 0.01, 100: 0.01}</span>
+</pre></div>
+</div>
+<p>and the probability density plot is constructed by sampling random variables from the discrete probability distribution.</p>
+<p>Demand characteristics of real network traffic patterns are rarely uniform. However,
+they can often be described by certain well-defined <strong>named distributions</strong>. These
+named distributions are themselves characterised by just a few parameters, making them
+easy to reproduce.</p>
+<p>Named distributions supported by TrafPy include the <em>exponential distribution</em></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;exponential&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_beta&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-4.png">png</a>, <a class="reference external" href=".//Tutorial-4.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-4.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-4.png" src="_images/Tutorial-4.png" />
+</div>
+<p>the <em>log-normal distribution</em></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;lognormal&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_mu&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;_sigma&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-5.png">png</a>, <a class="reference external" href=".//Tutorial-5.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-5.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-5.png" src="_images/Tutorial-5.png" />
+</div>
+<p>the <em>Weibull distribution</em></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;weibull&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_alpha&#39;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="s1">&#39;_lambda&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">3.5</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-6.png">png</a>, <a class="reference external" href=".//Tutorial-6.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-6.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-6.png" src="_images/Tutorial-6.png" />
+</div>
+<p>and the <em>pareto distribution</em></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;pareto&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_alpha&#39;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s1">&#39;_mode&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-7.png">png</a>, <a class="reference external" href=".//Tutorial-7.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-7.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-7.png" src="_images/Tutorial-7.png" />
+</div>
+<p>However, some demand characteristics cannot be accurately described by these named
+distributions. Instead, they are described by arbitrary <strong>multimodal distributions</strong>,
+which are distributions with more than one <strong>mode</strong> which may or may not have some amount
+of <strong>skewness</strong> and/or <strong>kurtosis</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">max_val</span><span class="o">=</span><span class="mi">7000</span><span class="p">,</span><span class="n">locations</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="mi">4000</span><span class="p">],</span><span class="n">skews</span><span class="o">=</span><span class="p">[</span><span class="mi">6</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="n">scales</span><span class="o">=</span><span class="p">[</span><span class="mi">150</span><span class="p">,</span><span class="mi">1500</span><span class="p">],</span><span class="n">num_skew_samples</span><span class="o">=</span><span class="p">[</span><span class="mi">10000</span><span class="p">,</span><span class="mi">650</span><span class="p">],</span><span class="n">bg_factor</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span><span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">10000</span><span class="p">],</span><span class="n">num_bins</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-8.png">png</a>, <a class="reference external" href=".//Tutorial-8.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-8.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-8.png" src="_images/Tutorial-8.png" />
+</div>
+<p>Later in this tutorial, we will see how to visually shape a multimodal distribution
+using TrafPy, allowing for almost any distribution to be generated.</p>
+</div>
+<div class="section" id="node-distributions">
+<h3>Node Distributions<a class="headerlink" href="#node-distributions" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="networks">
+<h3>Networks<a class="headerlink" href="#networks" title="Permalink to this headline">¶</a></h3>
 <p>By definition, a network is a collection of nodes (vertices) which together
 form pairs of nodes connected by links (edges). Some or all of these nodes can
-act as <strong>sources</strong> and <strong>destinations</strong> for network traffic <strong>demands</strong> which
-request to be sent from a source to a destination. Such network nodes are referred
-to as <strong>endpoints</strong>.</p>
+act as <strong>sources</strong> and <strong>destinations</strong> for network traffic <strong>demands</strong>. Such
+network nodes are referred to as <strong>endpoints</strong>. Endpoints might be separated by
+multiple links and nodes, some of which may be endpoints and some not.</p>
+<p>Generate a simple 5-node network.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-9.png">png</a>, <a class="reference external" href=".//Tutorial-9.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-9.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-9.png" src="_images/Tutorial-9.png" />
+</div>
+<p>A single demand in a network can be considered as either a <strong>flow</strong> or a computation
+graph (a <strong>job</strong>) whose dependencies (edges) may form flows. Both flow-centric
+and job-centric network traffic demand generation and management are supported
+by TrafPy.</p>
+</div>
+<div class="section" id="flow-centric-traffic-demands">
+<h3>Flow-Centric Traffic Demands<a class="headerlink" href="#flow-centric-traffic-demands" title="Permalink to this headline">¶</a></h3>
+<p>A flow is some information being sent from a source node to a destination node
+in a network (e.g. a data centre network).</p>
+<p>Common flow characteristics include:</p>
+<ul class="simple">
+<li><p>flow size</p></li>
+</ul>
+</div>
+<div class="section" id="job-centric-traffic-demands">
+<h3>Job-Centric Traffic Demands<a class="headerlink" href="#job-centric-traffic-demands" title="Permalink to this headline">¶</a></h3>
+</div>
 </div>
 <div class="section" id="visually-shaping-trafpy-distributions">
 <h2>Visually Shaping TrafPy Distributions<a class="headerlink" href="#visually-shaping-trafpy-distributions" title="Permalink to this headline">¶</a></h2>

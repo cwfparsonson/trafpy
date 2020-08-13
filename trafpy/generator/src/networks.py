@@ -34,7 +34,10 @@ def gen_arbitrary_network(ep_label=None, num_eps=10):
 
 
 
-def gen_nsfnet_network(ep_label='server', num_channels=2, channel_capacity=10):
+def gen_nsfnet_network(ep_label='server', 
+                       num_channels=2, 
+                       channel_capacity=10,
+                       show_fig=False):
     '''
     Generates the standard 14-node NSFNET topology (a U.S. core network)
     
@@ -87,11 +90,15 @@ def gen_nsfnet_network(ep_label='server', num_channels=2, channel_capacity=10):
                             num_channels, 
                             node_labels=[ep_label],
                             topology_type='14_node_nsfnet')
-    
+    if show_fig:
+        plot_network(network, show_fig=True)
     
     return network
 
-def gen_simple_network(ep_label='server', num_channels=2, channel_capacity=10):
+def gen_simple_network(ep_label='server', 
+                       num_channels=2, 
+                       channel_capacity=10,
+                       show_fig=False):
     '''
     Generates very simple 5-node topology
 
@@ -127,6 +134,9 @@ def gen_simple_network(ep_label='server', num_channels=2, channel_capacity=10):
                             num_channels, 
                             node_labels=[ep_label],
                             topology_type='5_node_simple_network')
+
+    if show_fig:
+        plot_network(network, show_fig=True)
 
     
     return network
@@ -368,11 +378,19 @@ def add_edges_capacity_attrs(network,
     nx.set_edge_attributes(network, attrs)
 
 
-def plot_network(network, path_figure, name='network.png', with_labels=True):
-    plt.figure()
-    nx.draw(network, with_labels=with_labels, font_weight='bold')
-    plt.savefig(path_figure + name)
+def plot_network(network,
+                 path_figure=None, 
+                 show_fig=False,
+                 name='network.png', 
+                 with_labels=True):
+    fig = plt.figure()
+    nx.draw(network, with_labels=with_labels)
+    if path_figure is not None:
+        plt.savefig(path_figure + name)
+    if show_fig:
+        plt.show()
 
+    return fig
 
 
 if __name__ == '__main__':
