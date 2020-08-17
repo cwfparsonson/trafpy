@@ -328,13 +328,29 @@ form pairs of nodes connected by links (edges). Some or all of these nodes can
 act as <strong>sources</strong> and <strong>destinations</strong> for network traffic <strong>demands</strong>. Such
 network nodes are referred to as <strong>endpoints</strong>. Endpoints might be separated by
 multiple links and nodes, some of which may be endpoints and some not.</p>
-<p>Generate a simple 5-node network.</p>
+<p>Generate a simple 5-node network</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>(<a class="reference external" href=".//Tutorial-15.png">png</a>, <a class="reference external" href=".//Tutorial-15.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-15.pdf">pdf</a>)</p>
 <div class="figure align-default">
 <img alt="_images/Tutorial-15.png" src="_images/Tutorial-15.png" />
+</div>
+<p>or the 14-node NSFNET network</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_nsfnet_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-16.png">png</a>, <a class="reference external" href=".//Tutorial-16.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-16.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-16.png" src="_images/Tutorial-16.png" />
+</div>
+<p>or a fat-tree network</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_fat_tree</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-17.png">png</a>, <a class="reference external" href=".//Tutorial-17.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-17.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-17.png" src="_images/Tutorial-17.png" />
 </div>
 <p>A single demand in a network can be considered as either a <strong>flow</strong> or a computation
 graph (a <strong>job</strong>) whose dependencies (edges) may form flows. Both flow-centric

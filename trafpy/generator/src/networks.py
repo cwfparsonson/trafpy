@@ -1,15 +1,27 @@
+'''Module for generating and plotting networks.'''
+
+from trafpy.generator.src import tools
+import copy
 import networkx as nx
 import matplotlib.pyplot as plt
 
 
 def gen_arbitrary_network(ep_label=None, num_eps=10):
-    '''
-    Generates an arbitrary network with num_eps nodes labelled as ep_label###
+    '''Generates an arbitrary network with num_eps nodes labelled as ep_label.
 
     Note that no edges are formed in this network; it is purely for ep name 
     indexing purposes when using Demand class. This is useful where want to
     use the demand class but not necessarily with a carefully crafted networkx
     graph that accurately mimics the network you will use for the demands
+
+    Args:
+        ep_label (str,int,float): Endpoint label (e.g. 'server'). All endpoints will have
+            ep_label appended to the start of their label (e.g. 'server_0', 'server_1', ...).
+        num_eps (int): Number of endpoints in network.
+
+    Returns:
+        networkx graph: network object
+
     '''
     network = nx.Graph()
     network.add_nodes_from([node for node in range(num_eps)])
@@ -38,16 +50,19 @@ def gen_nsfnet_network(ep_label='server',
                        num_channels=2, 
                        channel_capacity=10,
                        show_fig=False):
-    '''
-    Generates the standard 14-node NSFNET topology (a U.S. core network)
+    '''Generates the standard 14-node NSFNET topology (a U.S. core network).
     
     Args:
-    - ep_label (str,int,float): label to apply to end points in network
-    - num_channels (int,float): number of channels on each link in network
-    - channel_capacity (int,float): byte capacity per channel
+        ep_label (str,int,float): Endpoint label (e.g. 'server'). All endpoints will have
+            ep_label appended to the start of their label (e.g. 'server_0', 'server_1', ...).
+        num_channels (int,float): Number of channels on each link in network.
+        channel_capacity (int,float): Byte capacity per channel.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            display fig.
 
     Returns:
-    - network (object)
+        networkx graph: network object
+
     '''
     channel_names = gen_channel_names(num_channels)
     network = nx.Graph()
@@ -99,16 +114,19 @@ def gen_simple_network(ep_label='server',
                        num_channels=2, 
                        channel_capacity=10,
                        show_fig=False):
-    '''
-    Generates very simple 5-node topology
+    '''Generates very simple 5-node topology.
 
     Args:
-    - ep_label (str,int,float): label to apply to end points in network
-    - num_channels (int,float): number of channels on each link in network
-    - channel_capacity (int,float): byte capacity per channel
+        ep_label (str,int,float): Endpoint label (e.g. 'server'). All endpoints will have
+            ep_label appended to the start of their label (e.g. 'server_0', 'server_1', ...).
+        num_channels (int,float): Number of channels on each link in network.
+        channel_capacity (int,float): Byte capacity per channel.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            display fig.
 
     Returns:
-    - network (object)
+        networkx graph: network object
+
     '''
     network = nx.Graph()
     network.add_nodes_from([node for node in range(5)])
@@ -142,15 +160,16 @@ def gen_simple_network(ep_label='server',
     return network
 
 def get_endpoints(network, ep_label):
-    '''
-    Gets list of endpoints of network
+    '''Gets list of endpoints of network.
 
     Args:
-    - network (object)
-    - ep_label (str): label of end points
+        network (networkx graph): Networkx object.
+        ep_label (str,int,float): Endpoint label (e.g. 'server'). All endpoints will have
+            ep_label appended to the start of their label (e.g. 'server_0', 'server_1', ...).
 
     Returns:
-    - eps (list): list of eps
+        eps (list): List of endpoints.
+
     '''
     eps = []
     for node in list(network.nodes):
@@ -168,13 +187,14 @@ def gen_fat_tree(k=4,
                  num_channels = 2,
                  server_to_edge_channel_capacity=10,
                  edge_to_agg_channel_capacity=40,
-                 agg_to_core_channel_capacity=100):
-    '''
-    Generates a data centre network with a 3-layer fat tree topology
-    Resource for building: 
-    https://blogchinmaya.blogspot.com/2017/04/what-is-fat-tree
+                 agg_to_core_channel_capacity=100,
+                 show_fig=False):
+    '''Generates a data centre network with a 3-layer fat tree topology.
+    
+    Resource for building: https://blogchinmaya.blogspot.com/2017/04/what-is-fat-tree
     
     Parameters of network:
+
     - number of core switches = (k/2)^2
     - number of pods = k
     - number of aggregate switches = (k^2)/2
@@ -182,18 +202,20 @@ def gen_fat_tree(k=4,
     - number of servers = (k^3)/4
 
     Args:
-    - k (int): number of ports/links on each switch
-    - ep_label (str,int): label to assign to end point nodes
-    - edge_label (str,int): label to assign to edge switch nodes
-    - aggregate_label (str,int): label to assign to edge switch nodes
-    - core_label (str,int): label to assign to core switch nodes
-    - num_channels (int, float): number of channels on each link in network
-    - server_to_edge_channel_capacity (int,float): byte capacity per channel
-    - edge_to_agg_channel_capacity (int,float): byte capacity per channel
-    - agg_to_core_channel_capacity (int,float): byte capacity per channel
+        k (int): Number of ports/links on each switch
+        ep_label (str,int,float): Endpoint label (e.g. 'server'). All endpoints will have
+            ep_label appended to the start of their label (e.g. 'server_0', 'server_1', ...).
+        edge_label (str,int): Label to assign to edge switch nodes
+        aggregate_label (str,int): Label to assign to edge switch nodes
+        core_label (str,int): Label to assign to core switch nodes
+        num_channels (int, float): Number of channels on each link in network
+        server_to_edge_channel_capacity (int,float): Byte capacity per channel
+        edge_to_agg_channel_capacity (int,float): Byte capacity per channel
+        agg_to_core_channel_capacity (int,float): Byte capacity per channel
 
     Returns:
-    - fat_tree_network (object)
+        networkx graph: network object
+
     '''
     channel_names = gen_channel_names(num_channels)
 
@@ -297,18 +319,14 @@ def gen_fat_tree(k=4,
                                          core_label],
                             topology_type='fat_tree')
 
+    if show_fig:
+        plot_network(fat_tree_network, show_fig=True)
 
     return fat_tree_network
 
 
 def init_global_network_attrs(network, max_nw_capacity, num_channels, topology_type='unknown', node_labels=['server']):
-    '''
-    Initialises the standard global network attributes of a given network
-
-    Args:
-    - network (object): network object
-    - max_nw_capacity (int,float): max byte capacity of the network
-    '''
+    '''Initialises the standard global network attributes of a given network.'''
     network.graph['num_channels_per_link'] = num_channels
     network.graph['max_nw_capacity'] = max_nw_capacity
     network.graph['curr_nw_capacity_used'] = 0
@@ -320,24 +338,22 @@ def init_global_network_attrs(network, max_nw_capacity, num_channels, topology_t
 
 
 def gen_channel_names(num_channels):
-    '''
-    Generates channel names for channels on each link in network
-    '''
+    '''Generates channel names for channels on each link in network.'''
     channels = [channel+1 for channel in range(num_channels)]
     channel_names = ['channel_' + str(channel) for channel in channels]
     
     return channel_names
 
 def add_edge_capacity_attrs(network, edge, channel_names, channel_capacity):
-    '''
-    Adds channels and corresponding max channel bytes to single edge in 
-    network
+    '''Adds channels and corresponding max channel bytes to single edge in network.
     
     Args:
-    - network (object): network containing edges
-    - edge (tuple): node-node pair in a tuple
-    - channel_names (list of str): list of channel names to add to edge
-    - channel_capacity (int, float): capacity to allocate to each channel
+        network (networkx graph): Network containing edges to whiich attrs will
+            be added.
+        edge (tuple): Node-node edge pair.
+        channel_names (list): List of channel names to add to edge.
+        channel_capacity (int,float): Capacity to allocate to each channel.
+
     '''
     attrs = {edge:
                 {'channels': {channel: channel_capacity for channel in channel_names},
@@ -352,9 +368,7 @@ def add_edges_capacity_attrs(network,
                              edges,
                              channel_names,
                              channel_capacity):
-    '''
-    Adds channels and corresponding max channel capacitys to single edge in 
-    network
+    '''Adds channels & max channel capacitys to single edge in network.
     
     To access e.g. the edge going from node 0 to node 1 (edge (0, 1)), you
     would index the network with network[0][1]
@@ -363,10 +377,12 @@ def add_edges_capacity_attrs(network,
     would do network[0][1]['channels']['channel_1']
     
     Args:
-    - network (object): network containing edges
-    - edges (list of tuples): list of node pairs in tuples
-    - channel_names (list of str): list of channel names to add to edge
-    - channel_capacity (int, float): capacity to allocate to each channel
+        network (networkx graph): Network containing edges to which attrs will
+            be added.
+        edges (list): List of node pairs in tuples.
+        channel_names (list of str): List of channel names to add to edge.
+        channel_capacity (int, float): Capacity to allocate to each channel.
+
     '''
     attrs = {edge: 
                 {'channels': 
@@ -376,17 +392,135 @@ def add_edges_capacity_attrs(network,
                  } for edge in edges}
 
     nx.set_edge_attributes(network, attrs)
+  
+
+def get_node_type_dict(network, node_types=[]):
+    '''Gets dict where keys are node types, values are list of nodes for each node type in graph.'''
+    network_nodes = []
+    for network_node in network.nodes:
+        network_nodes.append(network_node)
+    network_nodes_dict = {node_type: [] for node_type in node_types}
+    for n in network_nodes:
+        for node_type in node_types:
+            if node_type in n:
+                network_nodes_dict[node_type].append(n)
+            else:
+                # not this node type
+                pass
+    
+    return network_nodes_dict
+
+
+def get_fat_tree_positions(net, width_scale=500, height_scale=10):
+    '''Gets networkx positions of nodes in fat tree network for plotting.'''
+    pos = {}
+
+    node_type_dict = get_node_type_dict(net, net.graph['node_labels'])
+    node_types = list(node_type_dict.keys())
+    
+    heights = {} # dict for heigh separation between fat tree layers
+    widths = {} # dict for width separation between nodes within layers
+    h = iter([1, 2, 3, 4]) # server, edge, agg, core heights
+    for node_type in node_types: 
+        heights[node_type] = next(h)
+        widths[node_type] = 1/(len(node_type_dict[node_type])+1)
+        idx = 0
+        for node in node_type_dict[node_type]:
+            pos[node] = ((idx+1)*widths[node_type]*width_scale,heights[node_type]*height_scale)
+            idx += 1
+
+    return pos
+   
+
+def init_network_node_positions(net):
+    '''Initialises network node positions for plotting.'''
+    if net.graph['topology_type'] == 'fat_tree':
+        pos = get_fat_tree_positions(net)
+
+    else:
+        pos = nx.nx_agraph.graphviz_layout(net, prog='neato')
+    
+    return pos
 
 
 def plot_network(network,
-                 path_figure=None, 
-                 show_fig=False,
-                 name='network.png', 
-                 with_labels=True):
-    fig = plt.figure()
-    nx.draw(network, with_labels=with_labels)
-    if path_figure is not None:
-        plt.savefig(path_figure + name)
+                 draw_node_labels=True,
+                 ep_label='server',
+                 network_node_size=2000,
+                 font_size=30,
+                 linewidths=1,
+                 fig_scale=2,
+                 path_to_save=None, 
+                 show_fig=False):
+    '''Plots networkx graph.
+
+    Recognises special fat tree network and applies appropriate node positioning,
+    labelling, colouring etc.
+
+    Args:
+        network (networkx graph): Network object to be plotted.
+        draw_node_labels (bool): Whether or not to draw node labels on plot. 
+        ep_label (str,int,float): Endpoint label (e.g. 'server'). All endpoints will have
+            ep_label appended to the start of their label (e.g. 'server_0', 'server_1', ...).
+        network_node_size (int,float): Size of plotted nodes.
+        font_size (int,float): Size of of font of plotted labels etc.
+        linewidths (int,float): Width of edges in network.
+        fig_scale (int,float): Scaling factor to apply to plotted network.
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated plot. E.g. path_to_save='data/my_plot'
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            return and display fig.
+        
+    Returns:
+        matplotlib.figure.Figure: node distribution plotted as a 2d matrix. 
+
+    '''
+    
+    net_node_positions = init_network_node_positions(copy.deepcopy(network))
+
+    fig = plt.figure(figsize=[15*fig_scale,15*fig_scale])
+
+    # add nodes and edges
+    pos = {}
+    network_nodes = []
+    network_nodes_dict = get_node_type_dict(network, network.graph['node_labels'])
+    for nodes in list(network_nodes_dict.values()):
+        for network_node in nodes:
+            pos[network_node] = net_node_positions[network_node]
+            
+    # network nodes
+    node_colours = iter(['#36a0c7', '#e8b017', '#6115a3', '#160e63']) # server, edge, agg, core
+    for node_type in network.graph['node_labels']:
+        nx.draw_networkx_nodes(network, 
+                               pos, 
+                               nodelist=network_nodes_dict[node_type],
+                               node_size=network_node_size, 
+                               node_color=next(node_colours), 
+                               linewidths=linewidths, 
+                               label=node_type)
+    if draw_node_labels:
+        # nodes
+        nx.draw_networkx_labels(network, 
+                                pos, 
+                                font_size=font_size, 
+                                font_color='k', 
+                                font_family='sans-serif', 
+                                font_weight='normal', 
+                                alpha=1.0)
+    
+    # fibre links
+    fibre_links = list(network.edges)
+    nx.draw_networkx_edges(network, 
+                           pos,
+                           edgelist=fibre_links,
+                           edge_color='k',
+                           width=3,
+                           label='Fibre link')
+
+
+    if path_to_save is not None:
+        tools.pickle_data(path_to_save, fig)
+
     if show_fig:
         plt.show()
 

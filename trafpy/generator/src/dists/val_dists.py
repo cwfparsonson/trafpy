@@ -464,6 +464,7 @@ def gen_multimodal_val_dist(min_val,
             to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
         plot_fig (bool): Whether or not to plot fig. If True, will return fig.
         show_fig (bool): Whether or not to plot and show fig. If True, will
+        tuple
             return and display fig.
         return_data (bool) Whether or not to return random variable data sampled
             from generated distribution.

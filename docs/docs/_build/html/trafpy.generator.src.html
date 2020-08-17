@@ -312,124 +312,237 @@ If not doing multiprocessing, leave attr as jobs=None</p>
 </div>
 <div class="section" id="module-trafpy.generator.src.networks">
 <span id="trafpy-generator-src-networks-module"></span><h2>trafpy.generator.src.networks module<a class="headerlink" href="#module-trafpy.generator.src.networks" title="Permalink to this headline">¶</a></h2>
+<p>Module for generating and plotting networks.</p>
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.add_edge_capacity_attrs">
 <code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">add_edge_capacity_attrs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em>, <em class="sig-param"><span class="n">edge</span></em>, <em class="sig-param"><span class="n">channel_names</span></em>, <em class="sig-param"><span class="n">channel_capacity</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.add_edge_capacity_attrs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds channels and corresponding max channel bytes to single edge in
-network</p>
-<p>Args:
-- network (object): network containing edges
-- edge (tuple): node-node pair in a tuple
-- channel_names (list of str): list of channel names to add to edge
-- channel_capacity (int, float): capacity to allocate to each channel</p>
+<dd><p>Adds channels and corresponding max channel bytes to single edge in network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>network</strong> (<em>networkx graph</em>) – Network containing edges to whiich attrs will
+be added.</p></li>
+<li><p><strong>edge</strong> (<em>tuple</em>) – Node-node edge pair.</p></li>
+<li><p><strong>channel_names</strong> (<em>list</em>) – List of channel names to add to edge.</p></li>
+<li><p><strong>channel_capacity</strong> (<em>int</em><em>,</em><em>float</em>) – Capacity to allocate to each channel.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.add_edges_capacity_attrs">
 <code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">add_edges_capacity_attrs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em>, <em class="sig-param"><span class="n">edges</span></em>, <em class="sig-param"><span class="n">channel_names</span></em>, <em class="sig-param"><span class="n">channel_capacity</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.add_edges_capacity_attrs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds channels and corresponding max channel capacitys to single edge in
-network</p>
+<dd><p>Adds channels &amp; max channel capacitys to single edge in network.</p>
 <p>To access e.g. the edge going from node 0 to node 1 (edge (0, 1)), you
 would index the network with network[0][1]</p>
 <p>To access e.g. the channel_1 attribute of this particular (0, 1) edge, you
 would do network[0][1][‘channels’][‘channel_1’]</p>
-<p>Args:
-- network (object): network containing edges
-- edges (list of tuples): list of node pairs in tuples
-- channel_names (list of str): list of channel names to add to edge
-- channel_capacity (int, float): capacity to allocate to each channel</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>network</strong> (<em>networkx graph</em>) – Network containing edges to which attrs will
+be added.</p></li>
+<li><p><strong>edges</strong> (<em>list</em>) – List of node pairs in tuples.</p></li>
+<li><p><strong>channel_names</strong> (<em>list of str</em>) – List of channel names to add to edge.</p></li>
+<li><p><strong>channel_capacity</strong> (<em>int</em><em>, </em><em>float</em>) – Capacity to allocate to each channel.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.gen_arbitrary_network">
 <code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">gen_arbitrary_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ep_label</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_eps</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.gen_arbitrary_network" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates an arbitrary network with num_eps nodes labelled as ep_label###</p>
+<dd><p>Generates an arbitrary network with num_eps nodes labelled as ep_label.</p>
 <p>Note that no edges are formed in this network; it is purely for ep name
 indexing purposes when using Demand class. This is useful where want to
 use the demand class but not necessarily with a carefully crafted networkx
 graph that accurately mimics the network you will use for the demands</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ep_label</strong> (<em>str</em><em>,</em><em>int</em><em>,</em><em>float</em>) – Endpoint label (e.g. ‘server’). All endpoints will have
+ep_label appended to the start of their label (e.g. ‘server_0’, ‘server_1’, …).</p></li>
+<li><p><strong>num_eps</strong> (<em>int</em>) – Number of endpoints in network.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>network object</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>networkx graph</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.gen_channel_names">
 <code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">gen_channel_names</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_channels</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.gen_channel_names" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates channel names for channels on each link in network</p>
+<dd><p>Generates channel names for channels on each link in network.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.gen_fat_tree">
-<code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">gen_fat_tree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">k</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">ep_label</span><span class="o">=</span><span class="default_value">'server'</span></em>, <em class="sig-param"><span class="n">edge_label</span><span class="o">=</span><span class="default_value">'edge'</span></em>, <em class="sig-param"><span class="n">aggregate_label</span><span class="o">=</span><span class="default_value">'agg'</span></em>, <em class="sig-param"><span class="n">core_label</span><span class="o">=</span><span class="default_value">'core'</span></em>, <em class="sig-param"><span class="n">num_channels</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">server_to_edge_channel_capacity</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">edge_to_agg_channel_capacity</span><span class="o">=</span><span class="default_value">40</span></em>, <em class="sig-param"><span class="n">agg_to_core_channel_capacity</span><span class="o">=</span><span class="default_value">100</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.gen_fat_tree" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates a data centre network with a 3-layer fat tree topology
-Resource for building:
-<a class="reference external" href="https://blogchinmaya.blogspot.com/2017/04/what-is-fat-tree">https://blogchinmaya.blogspot.com/2017/04/what-is-fat-tree</a></p>
-<p>Parameters of network:
-- number of core switches = (k/2)^2
-- number of pods = k
-- number of aggregate switches = (k^2)/2
-- number of edge switches = (k^2)/2
-- number of servers = (k^3)/4</p>
-<p>Args:
-- k (int): number of ports/links on each switch
-- ep_label (str,int): label to assign to end point nodes
-- edge_label (str,int): label to assign to edge switch nodes
-- aggregate_label (str,int): label to assign to edge switch nodes
-- core_label (str,int): label to assign to core switch nodes
-- num_channels (int, float): number of channels on each link in network
-- server_to_edge_channel_capacity (int,float): byte capacity per channel
-- edge_to_agg_channel_capacity (int,float): byte capacity per channel
-- agg_to_core_channel_capacity (int,float): byte capacity per channel</p>
-<p>Returns:
-- fat_tree_network (object)</p>
+<code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">gen_fat_tree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">k</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">ep_label</span><span class="o">=</span><span class="default_value">'server'</span></em>, <em class="sig-param"><span class="n">edge_label</span><span class="o">=</span><span class="default_value">'edge'</span></em>, <em class="sig-param"><span class="n">aggregate_label</span><span class="o">=</span><span class="default_value">'agg'</span></em>, <em class="sig-param"><span class="n">core_label</span><span class="o">=</span><span class="default_value">'core'</span></em>, <em class="sig-param"><span class="n">num_channels</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">server_to_edge_channel_capacity</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">edge_to_agg_channel_capacity</span><span class="o">=</span><span class="default_value">40</span></em>, <em class="sig-param"><span class="n">agg_to_core_channel_capacity</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.gen_fat_tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a data centre network with a 3-layer fat tree topology.</p>
+<p>Resource for building: <a class="reference external" href="https://blogchinmaya.blogspot.com/2017/04/what-is-fat-tree">https://blogchinmaya.blogspot.com/2017/04/what-is-fat-tree</a></p>
+<p>Parameters of network:</p>
+<ul class="simple">
+<li><p>number of core switches = (k/2)^2</p></li>
+<li><p>number of pods = k</p></li>
+<li><p>number of aggregate switches = (k^2)/2</p></li>
+<li><p>number of edge switches = (k^2)/2</p></li>
+<li><p>number of servers = (k^3)/4</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> (<em>int</em>) – Number of ports/links on each switch</p></li>
+<li><p><strong>ep_label</strong> (<em>str</em><em>,</em><em>int</em><em>,</em><em>float</em>) – Endpoint label (e.g. ‘server’). All endpoints will have
+ep_label appended to the start of their label (e.g. ‘server_0’, ‘server_1’, …).</p></li>
+<li><p><strong>edge_label</strong> (<em>str</em><em>,</em><em>int</em>) – Label to assign to edge switch nodes</p></li>
+<li><p><strong>aggregate_label</strong> (<em>str</em><em>,</em><em>int</em>) – Label to assign to edge switch nodes</p></li>
+<li><p><strong>core_label</strong> (<em>str</em><em>,</em><em>int</em>) – Label to assign to core switch nodes</p></li>
+<li><p><strong>num_channels</strong> (<em>int</em><em>, </em><em>float</em>) – Number of channels on each link in network</p></li>
+<li><p><strong>server_to_edge_channel_capacity</strong> (<em>int</em><em>,</em><em>float</em>) – Byte capacity per channel</p></li>
+<li><p><strong>edge_to_agg_channel_capacity</strong> (<em>int</em><em>,</em><em>float</em>) – Byte capacity per channel</p></li>
+<li><p><strong>agg_to_core_channel_capacity</strong> (<em>int</em><em>,</em><em>float</em>) – Byte capacity per channel</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>network object</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>networkx graph</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.gen_nsfnet_network">
 <code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">gen_nsfnet_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ep_label</span><span class="o">=</span><span class="default_value">'server'</span></em>, <em class="sig-param"><span class="n">num_channels</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">channel_capacity</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.gen_nsfnet_network" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates the standard 14-node NSFNET topology (a U.S. core network)</p>
-<p>Args:
-- ep_label (str,int,float): label to apply to end points in network
-- num_channels (int,float): number of channels on each link in network
-- channel_capacity (int,float): byte capacity per channel</p>
-<p>Returns:
-- network (object)</p>
+<dd><p>Generates the standard 14-node NSFNET topology (a U.S. core network).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ep_label</strong> (<em>str</em><em>,</em><em>int</em><em>,</em><em>float</em>) – Endpoint label (e.g. ‘server’). All endpoints will have
+ep_label appended to the start of their label (e.g. ‘server_0’, ‘server_1’, …).</p></li>
+<li><p><strong>num_channels</strong> (<em>int</em><em>,</em><em>float</em>) – Number of channels on each link in network.</p></li>
+<li><p><strong>channel_capacity</strong> (<em>int</em><em>,</em><em>float</em>) – Byte capacity per channel.</p></li>
+<li><p><strong>show_fig</strong> (<em>bool</em>) – Whether or not to plot and show fig. If True, will
+display fig.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>network object</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>networkx graph</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.gen_simple_network">
 <code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">gen_simple_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ep_label</span><span class="o">=</span><span class="default_value">'server'</span></em>, <em class="sig-param"><span class="n">num_channels</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">channel_capacity</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.gen_simple_network" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates very simple 5-node topology</p>
-<p>Args:
-- ep_label (str,int,float): label to apply to end points in network
-- num_channels (int,float): number of channels on each link in network
-- channel_capacity (int,float): byte capacity per channel</p>
-<p>Returns:
-- network (object)</p>
+<dd><p>Generates very simple 5-node topology.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ep_label</strong> (<em>str</em><em>,</em><em>int</em><em>,</em><em>float</em>) – Endpoint label (e.g. ‘server’). All endpoints will have
+ep_label appended to the start of their label (e.g. ‘server_0’, ‘server_1’, …).</p></li>
+<li><p><strong>num_channels</strong> (<em>int</em><em>,</em><em>float</em>) – Number of channels on each link in network.</p></li>
+<li><p><strong>channel_capacity</strong> (<em>int</em><em>,</em><em>float</em>) – Byte capacity per channel.</p></li>
+<li><p><strong>show_fig</strong> (<em>bool</em>) – Whether or not to plot and show fig. If True, will
+display fig.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>network object</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>networkx graph</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.get_endpoints">
 <code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">get_endpoints</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em>, <em class="sig-param"><span class="n">ep_label</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.get_endpoints" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets list of endpoints of network</p>
-<p>Args:
-- network (object)
-- ep_label (str): label of end points</p>
-<p>Returns:
-- eps (list): list of eps</p>
+<dd><p>Gets list of endpoints of network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>network</strong> (<em>networkx graph</em>) – Networkx object.</p></li>
+<li><p><strong>ep_label</strong> (<em>str</em><em>,</em><em>int</em><em>,</em><em>float</em>) – Endpoint label (e.g. ‘server’). All endpoints will have
+ep_label appended to the start of their label (e.g. ‘server_0’, ‘server_1’, …).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List of endpoints.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>eps (list)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.networks.get_fat_tree_positions">
+<code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">get_fat_tree_positions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net</span></em>, <em class="sig-param"><span class="n">width_scale</span><span class="o">=</span><span class="default_value">500</span></em>, <em class="sig-param"><span class="n">height_scale</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.get_fat_tree_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets networkx positions of nodes in fat tree network for plotting.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.networks.get_node_type_dict">
+<code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">get_node_type_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em>, <em class="sig-param"><span class="n">node_types</span><span class="o">=</span><span class="default_value">[]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.get_node_type_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets dict where keys are node types, values are list of nodes for each node type in graph.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.init_global_network_attrs">
 <code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">init_global_network_attrs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em>, <em class="sig-param"><span class="n">max_nw_capacity</span></em>, <em class="sig-param"><span class="n">num_channels</span></em>, <em class="sig-param"><span class="n">topology_type</span><span class="o">=</span><span class="default_value">'unknown'</span></em>, <em class="sig-param"><span class="n">node_labels</span><span class="o">=</span><span class="default_value">['server']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.init_global_network_attrs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialises the standard global network attributes of a given network</p>
-<p>Args:
-- network (object): network object
-- max_nw_capacity (int,float): max byte capacity of the network</p>
+<dd><p>Initialises the standard global network attributes of a given network.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.networks.init_network_node_positions">
+<code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">init_network_node_positions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.init_network_node_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialises network node positions for plotting.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.plot_network">
-<code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">plot_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em>, <em class="sig-param"><span class="n">path_figure</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'network.png'</span></em>, <em class="sig-param"><span class="n">with_labels</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.plot_network" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">plot_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em>, <em class="sig-param"><span class="n">draw_node_labels</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">ep_label</span><span class="o">=</span><span class="default_value">'server'</span></em>, <em class="sig-param"><span class="n">network_node_size</span><span class="o">=</span><span class="default_value">2000</span></em>, <em class="sig-param"><span class="n">font_size</span><span class="o">=</span><span class="default_value">30</span></em>, <em class="sig-param"><span class="n">linewidths</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">fig_scale</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.networks.plot_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots networkx graph.</p>
+<p>Recognises special fat tree network and applies appropriate node positioning,
+labelling, colouring etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>network</strong> (<em>networkx graph</em>) – Network object to be plotted.</p></li>
+<li><p><strong>draw_node_labels</strong> (<em>bool</em>) – Whether or not to draw node labels on plot.</p></li>
+<li><p><strong>ep_label</strong> (<em>str</em><em>,</em><em>int</em><em>,</em><em>float</em>) – Endpoint label (e.g. ‘server’). All endpoints will have
+ep_label appended to the start of their label (e.g. ‘server_0’, ‘server_1’, …).</p></li>
+<li><p><strong>network_node_size</strong> (<em>int</em><em>,</em><em>float</em>) – Size of plotted nodes.</p></li>
+<li><p><strong>font_size</strong> (<em>int</em><em>,</em><em>float</em>) – Size of of font of plotted labels etc.</p></li>
+<li><p><strong>linewidths</strong> (<em>int</em><em>,</em><em>float</em>) – Width of edges in network.</p></li>
+<li><p><strong>fig_scale</strong> (<em>int</em><em>,</em><em>float</em>) – Scaling factor to apply to plotted network.</p></li>
+<li><p><strong>path_to_save</strong> (<em>str</em>) – Path to directory (with file name included) in which
+to save generated plot. E.g. path_to_save=’data/my_plot’</p></li>
+<li><p><strong>show_fig</strong> (<em>bool</em>) – Whether or not to plot and show fig. If True, will
+return and display fig.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>node distribution plotted as a 2d matrix.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 <div class="section" id="module-trafpy.generator.src.tools">
