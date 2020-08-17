@@ -1,3 +1,5 @@
+'''Module for generating value distributions.'''
+
 from trafpy.generator.src.dists import plot_dists 
 from trafpy.generator.src import tools
 
@@ -18,11 +20,11 @@ def convert_key_occurrences_to_data(keys, num_occurrences):
     '''Converts value keys and their number of occurrences into random vars.
 
     Args:
-        keys (list): Random variable values
+        keys (list): Random variable values.
         num_occurrences (list): Number of each random variable to generate.
 
     Returns:
-        data (list): Random variables generated
+        list: Random variables generated.
 
     '''
     data = []
@@ -38,14 +40,14 @@ def convert_key_occurrences_to_data(keys, num_occurrences):
 
 
 def convert_data_to_key_occurrences(data):
-    '''Converts random variable data into value keys and correponsing occurrences.
+    '''Converts random variable data into value keys and corresponding occurrences.
 
     Args:
-        data (list): Random variables to convert into key-num_occurrences pairs
+        data (list): Random variables to convert into key-num_occurrences pairs.
 
     Returns:
-        counter_dict (dict): Random variable value - number of occurrences key -
-            value pairs generated from random variable data.
+        dict: Random variable value - number of occurrences key-value pairs 
+        generated from random variable data.
     
     '''
     # count number of times each var occurs in data
@@ -95,7 +97,51 @@ def gen_uniform_val_dist(min_val,
     value in a uniform distribution has an equal probability of occurring.
 
     Args:
-        min_val (int/float): 
+        min_val (int/float): Minimum random variable value.
+        max_val (int/float): Maximum random variable value.
+        round_to_nearest (int/float): Value to round random variables to nearest.
+            E.g. if round_to_nearest=0.2, will round each random variable to 
+            nearest 0.2.
+        num_decimal_places (int): Number of decimal places to random variable
+            values. Need to explicitly state otherwise Python's floating point 
+            arithmetic will cause spurious unique random variable value errors
+            when discretising.
+        occurrence_multiplier (int/float): When sampling random variables from
+            distribution to create plot and random variable data, use this
+            multiplier to determine number of data points to sample. A higher 
+            value will cause the random variable data to match the probability
+            distribution more closely, but will take longer to generate.
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
+        plot_fig (bool): Whether or not to plot fig. If True, will return fig.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            return and display fig.
+        return_data (bool) Whether or not to return random variable data sampled
+            from generated distribution.
+        xlim (list): X-axis limits of plot. E.g. xlim=[0,10] to plot random
+            variable values between 0 and 10.
+        logscale (bool): Whether or not plot should have logscale x-axis and bins.
+        rand_var_name (str): Name of random variable to label plot's x-axis.
+        prob_rand_var_less_than (list): List of values for which to print the
+            probability that a variable sampled randomly from the generated 
+            distribution will be less than. This is useful for replicating 
+            distributions from the literature. E.g. prob_rand_var_less_than=[3.7,5.8]
+            will return the probability that a randomly chosen variable is less
+            than 3.7 and 5.8 respectively.
+        num_bins (int): Number of bins to use in plot. Default is 0, in which
+            case the number of bins chosen will be automatically selected.
+        print_data (bool): Whether or not to print extra information about the
+            generated data.
+
+    Returns:
+        tuple: Tuple containing:
+            - **prob_dist** (*dict*): Probability distribution whose key-value pairs are 
+              random variable value-probability pairs. 
+            - **rand_vars** (*list, optional*): Random variable values sampled from the 
+              generated probability distribution. To return, set return_data=True.
+            - **fig** (*matplotlib.figure.Figure, optional*): Probability density 
+              and cumulative distribution function plot. To return, set show_fig=True 
+              and/or plot_fig=True.
     
     '''
     if round_to_nearest is None:
@@ -198,6 +244,38 @@ def gen_skew_data(location,
                   num_bins=0,
                   round_to_nearest=None,
                   num_decimal_places=0.2):
+    '''Generates and plots skewed data for interactive multimodal distributions.
+
+    Args:
+        location (int/float): Position value of skewed distribution (mean shape
+            parameter).
+        skew (int/float): Skew value of skewed distribution (skewness shape
+            parameter).
+        scale (int/float): Scale value of skewed distribution (standard deviation
+        scale (int/float): Scale value of skewed distribution (standard deviation
+            shape parameter).
+            shape parameter).
+        num_skew_samples (int): Number of random variables to sample from distribution
+            to generate skew data and plot.
+        xlim (list): X-axis limits of plot. E.g. xlim=[0,10] to plot random
+            variable values between 0 and 10.
+        logscale (bool): Whether or not plot should have logscale x-axis and bins.
+        transparent (bool): Whether or not to make plot bins slightly transparent.
+        rand_var_name (str): Name of random variable to label plot's x-axis.
+        num_bins (int): Number of bins to use in plot. Default is 0, in which
+            case the number of bins chosen will be automatically selected.
+        round_to_nearest (int/float): Value to round random variables to nearest.
+            E.g. if round_to_nearest=0.2, will round each random variable to 
+            nearest 0.2.
+        num_decimal_places (int): Number of decimal places to random variable
+            values. Need to explicitly state otherwise Python's floating point 
+            arithmetic will cause spurious unique random variable value errors
+            when discretising.
+
+    Returns:
+        list: Random variable values sampled from distribution.
+
+    '''
     skew_data = []
     
     data = gen_skewnorm_data(a=skew,
@@ -264,6 +342,36 @@ def combine_skews(data_dict,
                   num_bins=0,
                   round_to_nearest=None,
                   num_decimal_places=0.2):
+    '''Combines multiple probability distributions for multimodal plotting.
+
+    Args:
+        data_dict (dict): Keys are mode iterations, values are random variable
+            values for the mode iteration.
+        min_val (int/float): Minimum random variable value.
+        max_val (int/float): Maximum random variable value.
+        bg_factor (int/float): Factor used to determine amount of noise to add
+            amongst shaped modes being combined. Higher factor will add more
+            noise to distribution and make modes more connected, lower will
+            reduce noise but make nodes less connected.
+        xlim (list): X-axis limits of plot. E.g. xlim=[0,10] to plot random
+            variable values between 0 and 10.
+        logscale (bool): Whether or not plot should have logscale x-axis and bins.
+        rand_var_name (str): Name of random variable to label plot's x-axis.
+        num_bins (int): Number of bins to use in plot. Default is 0, in which
+            case the number of bins chosen will be automatically selected.
+        round_to_nearest (int/float): Value to round random variables to nearest.
+            E.g. if round_to_nearest=0.2, will round each random variable to 
+            nearest 0.2.
+        num_decimal_places (int): Number of decimal places to random variable
+            values. Need to explicitly state otherwise Python's floating point 
+            arithmetic will cause spurious unique random variable value errors
+            when discretising.
+
+    Returns:
+        dict: Probability distribution whose key-value pairs are 
+        random variable value-probability pairs. 
+
+    '''
     locations = []
     skews = []
     scales = []
@@ -302,42 +410,88 @@ def gen_multimodal_val_dist(min_val,
                             num_skew_samples=[],
                             bg_factor=0.5,
                             round_to_nearest=None,
-                            occurrence_multiplier=10,
                             num_decimal_places=2,
+                            occurrence_multiplier=10,
                             path_to_save=None,
-                            return_data=False,
                             plot_fig=False,
                             show_fig=False,
+                            return_data=False,
                             xlim=None,
                             logscale=False,
                             rand_var_name='Random Variable',
                             prob_rand_var_less_than=None,
                             num_bins=0,
                             print_data=False):
-    '''
-    Generates multimodal val distribution for num_vals possible vals
-    i.e. diff vals have diff probability of being chosen
+    '''Generates a multimodal distribution of random variable values.
+
+    Multimodal distributions are arbitrary distributions with >= 2 different
+    modes. A multimodal distribution with 2 modes is a special case called a 
+    'bimodal distribution'. Bimodal distributions are the most common multi-
+    modal distribution.
+
+    E.g. Real-world scenarios of bimodal distributions: Starting salaries for
+    lawyers, book prices, peak resaurant hours, age groups of disease victims,
+    packet sizes in data centre networks, etc.
 
     Args:
-    - num_vals (int): number of possible vals
-    - skewed_vals (list): list of vals that want to skew
-    - skewed_val_probs (list): probabilites of these skewed vals being
-    chosen
-    - num_skewed_samples (list): number of samples in each skew. If have
-    one skew with more samples than another, will have higher probability
-    of demand falling within this particular skew
-    - num_skewed_vals (int): number of vals to randomly skew
-    - round_to_nearest (int or float): Value to round rand vars to nearest
-    when discretising rand var values. E.g. if round_to_nearest=0.2, will 
-    round each rand var to nearest 0.2
-    - num_decimal_places (int): Number of decimal places for discretised
-    rand vars. Need to explicitly state this because otherwise Python's
-    floating point arithmetic will cause spurious unique random var vals
-    when discretising
+        min_val (int/float): Minimum random variable value.
+        max_val (int/float): Maximum random variable value.
+        locations (list): Position value(s) of skewed distribution(s) (mean shape
+            parameter).
+        skews (list): Skew value(s) of skewed distribution(s) (skewness shape
+            parameter).
+        scales (list): Scale value(s) of skewed distribution(s) (standard deviation
+            shape parameter).
+        num_skew_samples (list): Number(s) of random variables to sample from distribution(s)
+            to generate skew data and plot.
+        bg_factor (int/float): Factor used to determine amount of noise to add
+            amongst shaped modes being combined. Higher factor will add more
+            noise to distribution and make modes more connected, lower will
+            reduce noise but make nodes less connected.
+        round_to_nearest (int/float): Value to round random variables to nearest.
+            E.g. if round_to_nearest=0.2, will round each random variable to 
+            nearest 0.2.
+        num_decimal_places (int): Number of decimal places to random variable
+            values. Need to explicitly state otherwise Python's floating point 
+            arithmetic will cause spurious unique random variable value errors
+            when discretising.
+        occurrence_multiplier (int/float): When sampling random variables from
+            distribution to create plot and random variable data, use this
+            multiplier to determine number of data points to sample. A higher 
+            value will cause the random variable data to match the probability
+            distribution more closely, but will take longer to generate.
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
+        plot_fig (bool): Whether or not to plot fig. If True, will return fig.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            return and display fig.
+        return_data (bool) Whether or not to return random variable data sampled
+            from generated distribution.
+        xlim (list): X-axis limits of plot. E.g. xlim=[0,10] to plot random
+            variable values between 0 and 10.
+        logscale (bool): Whether or not plot should have logscale x-axis and bins.
+        rand_var_name (str): Name of random variable to label plot's x-axis.
+        prob_rand_var_less_than (list): List of values for which to print the
+            probability that a variable sampled randomly from the generated 
+            distribution will be less than. This is useful for replicating 
+            distributions from the literature. E.g. prob_rand_var_less_than=[3.7,5.8]
+            will return the probability that a randomly chosen variable is less
+            than 3.7 and 5.8 respectively.
+        num_bins (int): Number of bins to use in plot. Default is 0, in which
+            case the number of bins chosen will be automatically selected.
+        print_data (bool): Whether or not to print extra information about the
+            generated data.
 
     Returns:
-    - val_dist (array): multinomial val distribution
-    - (optional) fig: plotted figure
+        tuple: Tuple containing:
+            - **prob_dist** (*dict*): Probability distribution whose key-value pairs are 
+              random variable value-probability pairs. 
+            - **rand_vars** (*list, optional*): Random variable values sampled from the 
+              generated probability distribution. To return, set return_data=True.
+            - **fig** (*matplotlib.figure.Figure, optional*): Probability density 
+              and cumulative distribution function plot. To return, set show_fig=True 
+              and/or plot_fig=True.
+    
     '''
 
     if round_to_nearest is None:
@@ -408,6 +562,24 @@ def gen_multimodal_val_dist(min_val,
 
 
 def gen_skewnorm_data(a, loc, scale, min_val, max_val, num_samples):
+    '''Generates skew data.
+
+    Args:
+        a (int/float): Skewness shape parameter. When a=0, distribution is
+            identical to a normal distribution.
+        loc (int/float): Position value of skewed distribution (mean shape
+            parameter).
+        scale (int/float): Scale value of skewed distribution (standard deviation
+            shape parameter).
+        min_val (int/float): Minimum random variable value.
+        max_val (int/float): Maximum random variable value.
+        num_samples (int): Number of values to sample from generated distribution
+            to generate skew data.
+
+    Returns:
+        list: List of random variable values sampled from skewed distribution.
+
+    '''
     data = skewnorm(a, loc, scale).rvs(num_samples)
     for data_iter in range(len(data)):
         counter = 0
@@ -423,6 +595,20 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                         probabilities, 
                                         num_demands,
                                         path_to_save=None):
+    '''Generates random variable values by sampling from a discretised distribution.
+
+    Args:
+        unique_vars (list): Possible random variable values.
+        probabilities (list): Corresponding probabilities of each random variable
+            value being chosen.
+        num_demands (int): Number of random variables to sample.
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated data. E.g. path_to_save='data/my_data'
+
+    Returns:
+        numpy array: Random variable values sampled from dist.
+
+    '''
     sampled_vars = np.random.choice(a=unique_vars, 
                                     size=num_demands,
                                     p=probabilities)
@@ -438,17 +624,7 @@ def gen_val_dist_data(val_dist,
                       max_val, 
                       num_vals_to_gen,
                       path_to_save=None):
-    '''
-    Generates values between min_val and max_val 
-    following the probability distribution given by val_dist
-
-    Args:
-    - num_vals_to_gen (int): number of flows to generate
-    - val_dist (array): probability of selecting each possible val
-    
-    Returns:
-    - vals (array)
-    '''
+    '''Generates values between min_val and max_val following val_dist distribution'''
     array_sum = np.round(np.sum(val_dist),2)
     assert array_sum == 1, \
         'array must sum to 1, but is {}'.format(array_sum)
@@ -480,24 +656,28 @@ def gen_discrete_prob_dist(rand_vars,
                            round_to_nearest=None, 
                            num_decimal_places=2,
                            path_to_save=None):
-    '''
+    '''Generate discrete probability distribution from list of random variables.
+
     Takes rand var values, rounds to nearest value (specified as arg, defaults
     by not rounding at all) to discretise the data, and generates a 
     probability distribution for the data
 
     Args:
-    - rand_vars (list): List of random variable values
-    - round_to_nearest(int or float): Value to round rand vars to nearest when
-    discretising rand var values. E.g. is round_to_nearest=0.2, will round each
-    rand var to nearest 0.2
-    - num_decimal_places (int): Number of decimal places for discretised rand vars.
-    Need to explitly state this because otherwise Python's floating point 
-    arithmetic will cause spurious unique random var values
+        rand_vars (list): List of random variable values
+        round_to_nearest(int/float): Value to round rand vars to nearest when
+            discretising rand var values. E.g. is round_to_nearest=0.2, will round each
+            rand var to nearest 0.2
+        num_decimal_places (int): Number of decimal places for discretised rand vars.
+            Need to explitly state this because otherwise Python's floating point 
+            arithmetic will cause spurious unique random var values
 
     Returns:
-    - xk (list): List of (discretised) unique random variable values that occurred
-    - pmf (list): List of corresponding probabilities that each
-    unique value in xk occurs
+        tuple: Tuple containing:
+            - **xk** (*list*): List of (discretised) unique random variable values 
+              that occurred
+            - **pmf** (*list*): List of corresponding probabilities that each
+              unique value in xk occurs
+
     '''
     if round_to_nearest is not None:
         # discretise vars
@@ -539,6 +719,24 @@ def gen_discrete_prob_dist(rand_vars,
 def gen_exponential_dist(_beta, 
                          size,
                          interactive_params=None):
+    '''Generates an exponential distribution of random variable values.
+    
+    The exponential distribution often fits scenarios whose events' random 
+    variable values (e.g. 'time between events') are made of many small 
+    values (e.g. time intervals) and a few large values. Often used to predict
+    time until next event occurs.
+
+    E.g. Real-world scenarios: Time between earthquakes, car accidents, mail
+    delivery, and data centre demand arrival.
+
+    Args:
+        _beta (int/float): Mean random variable value.
+        size (int): Number of random variable values to sample from distribution.
+
+    Returns:
+        list: Random variable values generated by sampling from the distribution.
+
+    '''
     rand_vars = np.random.exponential(_beta,size=size)
 
     if interactive_params is not None:
@@ -561,6 +759,30 @@ def gen_exponential_dist(_beta,
 
 
 def gen_lognormal_dist(_mu, _sigma, size, interactive_params=None):
+    '''Generates a log-normal distribution of random variable values.
+
+    Log-normal distributions often fit scenarios whose random variable values
+    have a low mean value but a high degree of variance, leading to a distribution
+    that is positively skewed (i.e. has a long tail to the right of its peak).
+
+    The log-normal distribution is mathematically similar to the normal distribution,
+    since its random variable is notmally distributed when its logarithm is taken. 
+    I.e. for a log-normally distributed random variable X, Y=ln(X) would have a
+    normal distribution.
+
+    E.g. of real-world scenarios: Length of a chess game, number of hospitalisations
+    during an epidemic, the time after which a mechanical system needs repair, 
+    data centre demand interarrival times, etc.
+
+    Args:
+        _mu (int/float): Mean value of underlying normal distribution.
+        _sigma (int/float): Standard deviation of underlying normal distribution.
+        size (int): Number of random variable values to sample from distribution.
+
+    Returns:
+        list: Random variable values generated by sampling from the distribution.
+
+    '''
     rand_vars = stats.lognorm.rvs(s=_sigma, scale=math.exp(_mu), size=size)
 
     if interactive_params is not None:
@@ -582,6 +804,28 @@ def gen_lognormal_dist(_mu, _sigma, size, interactive_params=None):
 
 
 def gen_pareto_dist(_alpha, _mode, size, interactive_params=None):
+    '''Generates a pareto distribution of random variable values.
+
+    Pareto distributions often fit scenarios whose random variable values
+    have high probability of having a small range of values, leading to a 
+    distribution that is heavily skewed (i.e. has a long tail).
+
+    E.g. real-world scenarios: A large portion of society's wealth being held
+    by a small portion of its population, human settlement sizes, value of
+    oil reserves in oil fields, size of sand particles, male dating success
+    on Tinder, sizes of data centre demands, etc.
+
+    Args:
+        _alpha (int/float): Shape parameter of Pareto distribution. Describes
+            how 'stretched out' (i.e. how high variance) the distribution is.
+        _mode (int/float): Mode of the distribution, which is also the distribution's
+            minimum possible value. 
+        size (int): number of random variable values to sample from distribution.
+    
+    Returns:
+        list: random variable values generated by sampling from the distribution.
+
+    '''
     rand_vars = stats.pareto.rvs(b=_alpha, loc=0, scale=_mode, size=size)
     
     if interactive_params is not None:
@@ -603,6 +847,42 @@ def gen_pareto_dist(_alpha, _mode, size, interactive_params=None):
 
 
 def gen_weibull_dist(_alpha, _lambda, size, interactive_params=None):
+    '''Generates a Weibull distribution of random variable values.
+
+    Weibull distributions often fir scenarios whose random variable values 
+    (e.g. 'time until failure') are modelled by 'extreme value theory' (EVT) in
+    that the values being predicted are more extreme than any previously recorded
+    and, similar to the log-normal distribution, have a low mean but high variance
+    and therefore a long tail/positive skew. Often use to predict time until
+    failure.
+
+    E.g. real-world scenarios: Paricle sizes generated by grinding, milling & 
+    crushing operations, survival times after cancer diagnosis, light bulb 
+    failure times, divorce rates, data centre arrival times, etc.
+
+    Args:
+        _alpha (int/float): Shape parameter. Describes slope of distribution.
+        
+            _alpha < 1: Probability of random variable occurring decreases as 
+            values get higher. Occurs in systems with high 'infant mortality'
+            in that e.g. defective items occur soon after t=0 and are therefore
+            weeded out of the population early on.
+
+            _alpha == 1: Special case of the Weibull distribution which reduces 
+            the distribution to an exponential distribution.
+
+            _alpha > 1: Probability of random variable value occurring increases
+            with time (until peak passes). Occurs in systems with an 'aging'
+            process whereby e.g. components are more likely to fail as time goes 
+            on.
+        _lambda (int/float): Weibull scale parameter. Use to shape distribution
+            standard deviation.
+        size (int): Number of random variable values to sample from distribution.
+    
+    Returns:
+        list: random variable values generated by sampling from the distribution.
+
+    '''
     rand_vars = (np.random.weibull(_alpha, size=size)) * _lambda
 
     if interactive_params is not None:
@@ -639,9 +919,63 @@ def gen_named_val_dist(dist,
                        prob_rand_var_less_than=None,
                        num_bins=0,
                        print_data=False):
-    '''
-    If return_data==True, will return data sampled from distribution (array). 
-    If return_data==False, will return distribution (dict).
+    '''Generates a 'named' (e.g. Weibull/exponential/log-normal/Pareto) distribution.
+
+    Args:
+        dist (str): One of the valid named distributions (e.g. 'weibull', 'lognormal',
+            'pareto', 'exponential')
+        params (dict): Corresponding parameter arguments of distribution (e.g. for
+            Weibull, params={'_alpha': 1.4, '_lambda': 7000}). See individual
+            name distribution function generators for more information.
+        interactive_plot (bool): Whether or not you want to use the interactive
+            functionality of this function in Jupyter notebook to visually
+            shape your named distribution.
+        size (int): Number of values to sample from generated distribution when
+            generating random variable data.
+        round_to_nearest (int/float): Value to round random variables to nearest.
+            E.g. if round_to_nearest=0.2, will round each random variable to 
+            nearest 0.2.
+        num_decimal_places (int): Number of decimal places to random variable
+            values. Need to explicitly state otherwise Python's floating point 
+            arithmetic will cause spurious unique random variable value errors
+            when discretising.
+        occurrence_multiplier (int/float): When sampling random variables from
+            distribution to create plot and random variable data, use this
+            multiplier to determine number of data points to sample. A higher 
+            value will cause the random variable data to match the probability
+            distribution more closely, but will take longer to generate.
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
+        plot_fig (bool): Whether or not to plot fig. If True, will return fig.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            return and display fig.
+        return_data (bool) Whether or not to return random variable data sampled
+            from generated distribution.
+        xlim (list): X-axis limits of plot. E.g. xlim=[0,10] to plot random
+            variable values between 0 and 10.
+        logscale (bool): Whether or not plot should have logscale x-axis and bins.
+        rand_var_name (str): Name of random variable to label plot's x-axis.
+        prob_rand_var_less_than (list): List of values for which to print the
+            probability that a variable sampled randomly from the generated 
+            distribution will be less than. This is useful for replicating 
+            distributions from the literature. E.g. prob_rand_var_less_than=[3.7,5.8]
+            will return the probability that a randomly chosen variable is less
+            than 3.7 and 5.8 respectively.
+        num_bins (int): Number of bins to use in plot. Default is 0, in which
+            case the number of bins chosen will be automatically selected.
+        print_data (bool): Whether or not to print extra information about the
+            generated data.
+
+    Returns:
+        tuple: Tuple containing:
+            - **prob_dist** (*dict*): Probability distribution whose key-value pairs are 
+              random variable value-probability pairs. 
+            - **rand_vars** (*list, optional*): Random variable values sampled from the 
+              generated probability distribution. To return, set return_data=True.
+            - **fig** (*matplotlib.figure.Figure, optional*): Probability density 
+              and cumulative distribution function plot. To return, set show_fig=True 
+              and/or plot_fig=True.
+
     '''
     if params is None:
         assert interactive_plot == True, 'if not using interactive, provide params dict'

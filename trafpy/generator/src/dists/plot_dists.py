@@ -2,6 +2,8 @@ import numpy as np
 import copy
 np.set_printoptions(threshold=np.inf)
 import matplotlib.pyplot as plt
+import matplotlib
+#matplotlib.use('tkagg')
 from statsmodels.distributions.empirical_distribution import ECDF
 from trafpy.generator.src import tools
 from trafpy.generator.src.dists import val_dists 

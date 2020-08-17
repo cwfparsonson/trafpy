@@ -167,7 +167,7 @@
 <p>This guide can help you start with TrafPy.</p>
 <div class="section" id="trafpy-generator">
 <h2>TrafPy Generator<a class="headerlink" href="#trafpy-generator" title="Permalink to this headline">¶</a></h2>
-<p>Import the TrafPy generator module.</p>
+<p>Import the TrafPy generator package.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
 </pre></div>
 </div>
@@ -179,7 +179,7 @@ arbitrary amounts of realistic network traffic.</p>
 <p>The most simple probability distribution for random variable values is the
 <strong>uniform distribution</strong>, where each random variable value has an equal probability
 of occurring</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">101</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">101</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>(<a class="reference external" href=".//Tutorial-2.png">png</a>, <a class="reference external" href=".//Tutorial-2.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-2.pdf">pdf</a>)</p>
@@ -188,7 +188,7 @@ of occurring</p>
 </div>
 <p>TrafPy probability distributions are defined as Python dictionaries with
 value-probability key-value pairs</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">Uniform</span> <span class="n">probability</span> <span class="n">distribution</span><span class="p">:</span>\<span class="n">n</span><span class="p">{}</span><span class="s1">&#39;.format(prob_dist))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Uniform probability distribution:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prob_dist</span><span class="p">))</span>
 <span class="go">Uniform probability distribution:</span>
 <span class="go">{1: 0.01, 2: 0.01, 3: 0.01, 4: 0.01, 5: 0.01, 6: 0.01, 7: 0.01, 8: 0.01, 9: 0.01, 10: 0.01, 11: 0.01, 12: 0.01, 13: 0.01, 14: 0.01, 15: 0.01, 16: 0.01, 17: 0.01, 18: 0.01, 19: 0.01, 20: 0.01, 21: 0.01, 22: 0.01, 23: 0.01, 24: 0.01, 25: 0.01, 26: 0.01, 27: 0.01, 28: 0.01, 29: 0.01, 30: 0.01, 31: 0.01, 32: 0.01, 33: 0.01, 34: 0.01, 35: 0.01, 36: 0.01, 37: 0.01, 38: 0.01, 39: 0.01, 40: 0.01, 41: 0.01, 42: 0.01, 43: 0.01, 44: 0.01, 45: 0.01, 46: 0.01, 47: 0.01, 48: 0.01, 49: 0.01, 50: 0.01, 51: 0.01, 52: 0.01, 53: 0.01, 54: 0.01, 55: 0.01, 56: 0.01, 57: 0.01, 58: 0.01, 59: 0.01, 60: 0.01, 61: 0.01, 62: 0.01, 63: 0.01, 64: 0.01, 65: 0.01, 66: 0.01, 67: 0.01, 68: 0.01, 69: 0.01, 70: 0.01, 71: 0.01, 72: 0.01, 73: 0.01, 74: 0.01, 75: 0.01, 76: 0.01, 77: 0.01, 78: 0.01, 79: 0.01, 80: 0.01, 81: 0.01, 82: 0.01, 83: 0.01, 84: 0.01, 85: 0.01, 86: 0.01, 87: 0.01, 88: 0.01, 89: 0.01, 90: 0.01, 91: 0.01, 92: 0.01, 93: 0.01, 94: 0.01, 95: 0.01, 96: 0.01, 97: 0.01, 98: 0.01, 99: 0.01, 100: 0.01}</span>
 </pre></div>
@@ -246,6 +246,80 @@ using TrafPy, allowing for almost any distribution to be generated.</p>
 </div>
 <div class="section" id="node-distributions">
 <h3>Node Distributions<a class="headerlink" href="#node-distributions" title="Permalink to this headline">¶</a></h3>
+<p>Network traffic travels from a <strong>source</strong> node to a <strong>destination</strong> node.
+Source-destination nodes are <strong>endpoints</strong> in a network</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">endpoints</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;server_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
+</pre></div>
+</div>
+<p>How regularly each node is selected as a source or destination is determined by a
+<strong>node distribution probability matrix</strong>. The most simple node distribution
+is the <strong>uniform distribution</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure align-default" id="id1">
+<img alt="_images/Tutorial-10_00.png" src="_images/Tutorial-10_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-10_00.png">png</a>, <a class="reference external" href=".//Tutorial-10_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-10_00.pdf">pdf</a>)</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id2">
+<img alt="_images/Tutorial-10_01.png" src="_images/Tutorial-10_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-10_01.png">png</a>, <a class="reference external" href=".//Tutorial-10_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-10_01.pdf">pdf</a>)</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
+<p>Since different endpoint nodes in a network likely have different hardware
+capabilities, network node distributions are rarely uniform. Instead, some nodes
+become ‘hot nodes’ and are requested more than others, forming a <strong>multimodal
+node distribution</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">skewed_nodes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;server_2&#39;</span><span class="p">],</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure align-default" id="id3">
+<img alt="_images/Tutorial-11_00.png" src="_images/Tutorial-11_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-11_00.png">png</a>, <a class="reference external" href=".//Tutorial-11_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-11_00.pdf">pdf</a>)</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id4">
+<img alt="_images/Tutorial-11_01.png" src="_images/Tutorial-11_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-11_01.png">png</a>, <a class="reference external" href=".//Tutorial-11_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-11_01.pdf">pdf</a>)</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</div>
+<p>Instead of certain <em>nodes</em> being requested more regularly, sometimes certain
+<em>node pairs</em> in the network might be skewed, forming a <strong>multimodal node pair</strong>
+distribution</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">skewed_pairs</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;server_1&#39;</span><span class="p">,</span><span class="s1">&#39;server_3&#39;</span><span class="p">],[</span><span class="s1">&#39;server_4&#39;</span><span class="p">,</span><span class="s1">&#39;server_2&#39;</span><span class="p">]],</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure align-default" id="id5">
+<img alt="_images/Tutorial-12_00.png" src="_images/Tutorial-12_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-12_00.png">png</a>, <a class="reference external" href=".//Tutorial-12_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-12_00.pdf">pdf</a>)</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id6">
+<img alt="_images/Tutorial-12_01.png" src="_images/Tutorial-12_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-12_01.png">png</a>, <a class="reference external" href=".//Tutorial-12_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-12_01.pdf">pdf</a>)</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+</div>
+<p>Different networks have different node distributions. Sometimes you may want a
+simple uniform distribution, or a slightly skewed distribution, or certain nodes
+being heavily in demand, or certain node pairs being heavily in demand. Furthermore,
+you may want all of the above, but may also want to specify certain things yourself
+(e.g. which specific ndoes/pairs to bias, how high demand they’re in, how many nodes
+are in high demand etc.), or you may want these specifics to be randomly generated.
+The above functions handle all of the above functionality. See their documentation
+for further details.</p>
+<p>You can create any size of node distribution you like to fit any network</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">endpoints</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;server_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure align-default" id="id7">
+<img alt="_images/Tutorial-13_00.png" src="_images/Tutorial-13_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-13_00.png">png</a>, <a class="reference external" href=".//Tutorial-13_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-13_00.pdf">pdf</a>)</span><a class="headerlink" href="#id7" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id8">
+<img alt="_images/Tutorial-13_01.png" src="_images/Tutorial-13_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-13_01.png">png</a>, <a class="reference external" href=".//Tutorial-13_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-13_01.pdf">pdf</a>)</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
+</div>
+<p>You can then sample from your node distribution to generate source-destination
+pairs</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sn</span><span class="p">,</span> <span class="n">dn</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_node_demands</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span><span class="n">num_demands</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="networks">
 <h3>Networks<a class="headerlink" href="#networks" title="Permalink to this headline">¶</a></h3>
@@ -258,9 +332,9 @@ multiple links and nodes, some of which may be endpoints and some not.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//Tutorial-9.png">png</a>, <a class="reference external" href=".//Tutorial-9.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-9.pdf">pdf</a>)</p>
+<p>(<a class="reference external" href=".//Tutorial-15.png">png</a>, <a class="reference external" href=".//Tutorial-15.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-15.pdf">pdf</a>)</p>
 <div class="figure align-default">
-<img alt="_images/Tutorial-9.png" src="_images/Tutorial-9.png" />
+<img alt="_images/Tutorial-15.png" src="_images/Tutorial-15.png" />
 </div>
 <p>A single demand in a network can be considered as either a <strong>flow</strong> or a computation
 graph (a <strong>job</strong>) whose dependencies (edges) may form flows. Both flow-centric

@@ -6,9 +6,9 @@ TrafPy provides:
 
 - a pre-built **interactive Jupyter Notebook** tool for visually building distributions and 
   data which acccurately mimic traffic characteristics of real networks (e.g. data centres);
-- a **generator** module for generating network traffic which can be flexibly integrated 
+- a **generator** package for generating network traffic which can be flexibly integrated 
   into custom Python projects; and
-- a **manager** module which can be used to simulate network management (scheduling,
+- a **manager** package which can be used to simulate network management (scheduling,
   routing etc.) following the standard OpenAI Gym reinforcement learning framework.
 
 TrafPy can be used to quickly and easily replicate traffic distributions from the

@@ -8,6 +8,7 @@ import numpy as np
 
 
 def assign_probs_to_matrix(eps, probs, matrix=None):
+    '''Assigns probabilities to 2D matrix.'''
     if matrix is None:
         matrix = np.zeros((len(eps),len(eps)))
     num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
@@ -35,18 +36,26 @@ def gen_uniform_node_dist(eps,
                           plot_fig=False, 
                           show_fig=False,
                           print_data=False):
-    '''
-    Generates a uniform node distribution where each node has equal
-    probability of being chosen
-    
+    '''Generates a uniform node distribution.
+
     Args:
-    - eps (list): List of node endpoints that can act as sources
-    & destinations
+        eps (list): List of network node endpoints that can act as sources
+            & destinations
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
+        plot_fig (bool): Whether or not to plot fig. If True, will return fig.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            return and display fig.
+        print_data (bool): Whether or not to print extra information about the
+            generated data.
     
     Returns:
-    - node_dist (array of floats): array of src-dst pairs and 
-    their probabilities of being chosen during routing session
-    - (optional) fig: plotted figure
+        tuple: Tuple containing:
+            - **node_dist** (*numpy array*): 2D matrix array of souce-destination pair
+              probabilities of being chosen.
+            - **fig** (*matplotlib.figure.Figure, optional*): Node distributions
+              plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.
+
     '''
     # init network params
     num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
@@ -88,19 +97,30 @@ def gen_uniform_multinomial_exp_node_dist(eps,
                                           plot_fig=False,
                                           show_fig=False,
                                           print_data=False):
-    '''
+    '''Runs multinomial exp with uniform initial probability to generate slight skew.
+
     Runs a multinomial experiment where each node pair has same (uniform)
     probability of being chosen. Will generate a node demand distribution
     where a few pairs & nodes have a slight skew in demand
-    
+
     Args:
-    - eps (list): List of node endpoints that can act as sources
-    & destinations
+        eps (list): List of network node endpoints that can act as sources
+            & destinations
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
+        plot_fig (bool): Whether or not to plot fig. If True, will return fig.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            return and display fig.
+        print_data (bool): Whether or not to print extra information about the
+            generated data.
     
     Returns:
-    - node_dist (array): array of src-dst pairs and their probabilities 
-    of being chosen during routing session
-    - (optional) fig: plotted figure
+        tuple: Tuple containing:
+            - **node_dist** (*numpy array*): 2D matrix array of souce-destination pair
+              probabilities of being chosen.
+            - **fig** (*matplotlib.figure.Figure, optional*): Node distributions
+              plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.
+
     '''
     # initialise graph params
     num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
@@ -146,28 +166,39 @@ def gen_multimodal_node_dist(eps,
                              plot_fig=False,
                              show_fig=False,
                              print_data=False):
-    '''
+    '''Generates a multimodal node distribution.
+
     Generates a multimodal node demand distribution i.e. certain nodes
     have a certain specified probability of being chosen. If no
     skewed nodes given, randomly selects random no. node(s) to skew. If no 
     skew node probabilities given, random selects probability with which
     to skew the node between 0.5 and 0.8. If no num skewed nodes given,
-    randomly chooses number of nodes to skew
-    
+    randomly chooses number of nodes to skew.
+
     Args:
-    - eps (list): List of node endpoints that can act as sources
-    & destinations
-    - skewed_nodes (list of ints): Node(s) to whose probability of being
-    chosen you want to skew/specify
-    - skewed_node_probs (list of floats): Probabilit(y)(ies) of node(s)
-    being chosen/specified skews
-    - num_skewed_nodes (int): Number of nodes to skew. If None, will gen
-    a number between 10% and 30% of the total number of nodes in network
+        eps (list): List of network node endpoints that can act as sources
+            & destinations
+        skewed_nodes (list): Node(s) to whose probability of being
+            chosen you want to skew/specify
+        skewed_node_probs (list): Probabilit(y)(ies) of node(s)
+            being chosen/specified skews
+        num_skewed_nodes (int): Number of nodes to skew. If None, will gen
+            a number between 10% and 30% of the total number of nodes in network
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
+        plot_fig (bool): Whether or not to plot fig. If True, will return fig.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            return and display fig.
+        print_data (bool): Whether or not to print extra information about the
+            generated data.
     
     Returns:
-    - node_dist (array): array of src-dst pairs and 
-    their probabilities of being chosen during routing session
-    - (optional) fig: plotted figure
+        tuple: Tuple containing:
+            - **node_dist** (*numpy array*): 2D matrix array of souce-destination pair
+              probabilities of being chosen.
+            - **fig** (*matplotlib.figure.Figure, optional*): Node distributions
+              plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.
+    
     ''' 
     # initialise graph params
     num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
@@ -290,27 +321,38 @@ def gen_multimodal_node_pair_dist(eps,
                                   plot_fig=False,
                                   show_fig=False,
                                   print_data=False):
-    ''' 
+    '''Generates a multimodal node pair distribution.
+
     Generates a multimodal node pair demand distribution i.e. certain node
     pairs have a certain specified probability of being chosen. If no
     skewed pairs given, randomly selects pair to skew. If no skew 
     pair probabilities given, random selects probability with which
     to skew the pair between 0.1 and 0.3. If no num skewed pairs given,
-    randomly chooses number of pairs to skew
+    randomly chooses number of pairs to skew.
 
     Args:
-    - eps (list): List of node endpoints that can act as sources
-    & destinations
-    - skewed_pairs (list of lists): List of the node pairs [src,dst] to 
-    skew
-    - skewed_pair_probs (list of floats): Probabilities of node pairs being
-    chosen
-    - num_skewed_pairs (int): Number of pairs to randomly skew
+        eps (list): List of network node endpoints that can act as sources
+            & destinations.
+        skewed_pairs (list of lists): List of the node pairs [src,dst] to 
+            skew.
+        skewed_pair_probs (list): Probabilities of node pairs being
+            chosen.
+        num_skewed_pairs (int): Number of pairs to randomly skew.
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
+        plot_fig (bool): Whether or not to plot fig. If True, will return fig.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            return and display fig.
+        print_data (bool): Whether or not to print extra information about the
+            generated data.
     
     Returns:
-    - node_dist (array): array of src-dst pairs and 
-    their probabilities of being chosen during routing session
-    - (optional) fig: plotted figure
+        tuple: Tuple containing:
+            - **node_dist** (*numpy array*): 2D matrix array of souce-destination pair
+              probabilities of being chosen.
+            - **fig** (*matplotlib.figure.Figure, optional*): Node distributions
+              plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.
+
     '''
     # initialise graph params
     num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
@@ -462,6 +504,26 @@ def gen_node_demands(eps,
                      num_demands, 
                      duplicate=False,
                      path_to_save=None):
+    '''Uses node distribution to generate src-dst node pair demands.
+
+    Args:
+        eps (list): List of network node endpoints that can act as sources
+            & destinations.
+        node_dist (numpy array): 2D matrix array of souce-destination pair
+            probabilities of being chosen.
+        num_demands (int): Number of src-dst node pairs to generate.
+        duplicate (bool): Whether or not to duplicate src-dst node pairs. Use
+            this is demands you're generating have a 'take down' event as well
+            as an 'establish' event.
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
+
+    Returns:
+        tuple: Tuple containing:
+            - **sn** (*numpy array*): Selected source nodes.
+            - **dn** (*numpy array*): Selected destination nodes.
+
+    '''
     matrix_sum = np.round(np.sum(node_dist),2)
     assert matrix_sum == 1, \
         'demand dist matrix must sum to 1, but is {}'.format(matrix_sum)
@@ -512,15 +574,16 @@ def gen_demand_nodes(eps,
                      size, 
                      axis,
                      path_to_save=None):
-    '''
-    Generates demand nodes following the node_dist distribution
+    '''Generates demand nodes following the node_dist distribution
 
     Args:
-    - eps (list): list of node endpoint labels
-    - node_dist (array): probability distribution each node is chosen
-    - size (int): number of demand nodes to generate
-    - axis (binary): which axis of normalised node distribution to consider.
-    E.g. If generating src nodes, axis=0. If dst nodes, axis=1
+        eps (list): List of node endpoint labels.
+        node_dist (numpy array): Probability distribution each node is chosen
+        size (int): Number of demand nodes to generate
+        axis (int, 1 or 0): Which axis of normalised node distribution to consider.
+            E.g. If generating src nodes, axis=0. If dst nodes, axis=1
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
     '''
     matrix_sum = np.round(np.sum(node_dist),2)
     assert matrix_sum == 1, \
