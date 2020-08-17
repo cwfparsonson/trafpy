@@ -1,3 +1,5 @@
+'''Module for generating node distributions.'''
+
 from trafpy.generator.src.dists import plot_dists
 from trafpy.generator.src import tools
 
