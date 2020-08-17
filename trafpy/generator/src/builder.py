@@ -1,3 +1,5 @@
+'''Module for building demand data dictionaries (flow- and job-centric).'''
+
 from trafpy.generator.src import jobcentric, flowcentric 
 from trafpy.generator.src import tools
 
@@ -133,6 +135,9 @@ def construct_demand_slots_dict(demand_data,
     into time slots. This function uses the generated demand data event times
     and the specified slot size to divide when each demand arrives in the simulation
     into specific time slots.
+
+    Returned dict keys are time slot boundary times and values are any demands
+    which arrive in the time slot.
 
     Args:
         demand_data (dict): Generated demand data (either flow-centric or job-centric).

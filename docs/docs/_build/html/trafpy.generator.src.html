@@ -170,6 +170,7 @@
 </div>
 <div class="section" id="module-trafpy.generator.src.builder">
 <span id="trafpy-generator-src-builder-module"></span><h2>trafpy.generator.src.builder module<a class="headerlink" href="#module-trafpy.generator.src.builder" title="Permalink to this headline">¶</a></h2>
+<p>Module for building demand data dictionaries (flow- and job-centric).</p>
 <dl class="py function">
 <dt id="trafpy.generator.src.builder.construct_demand_slots_dict">
 <code class="sig-prename descclassname">trafpy.generator.src.builder.</code><code class="sig-name descname">construct_demand_slots_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em>, <em class="sig-param"><span class="n">slot_size</span><span class="o">=</span><span class="default_value">0.1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.builder.construct_demand_slots_dict" title="Permalink to this definition">¶</a></dt>
@@ -178,6 +179,8 @@
 into time slots. This function uses the generated demand data event times
 and the specified slot size to divide when each demand arrives in the simulation
 into specific time slots.</p>
+<p>Returned dict keys are time slot boundary times and values are any demands
+which arrive in the time slot.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
