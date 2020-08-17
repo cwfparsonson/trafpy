@@ -1,3 +1,5 @@
+'''Module for plotting node and value distributions.'''
+
 import numpy as np
 import copy
 np.set_printoptions(threshold=np.inf)
@@ -17,9 +19,21 @@ def plot_node_dist(node_dist,
                    node_to_index_dict=None,
                    add_labels=False, 
                    show_fig=False):
-    '''
-    node_dist must either be a 2d numpy matrix of probabilities or a 1d list/array 
-    of node pair probabilities
+    '''Plots network node demand probability distribution as a 2D matrix.
+
+    Args:
+        node_dist (list or 2d numpy array): Source-destination pair probabilities 
+            of being chosen. Must be either a 2d numpy matrix of probabilities or 
+            a 1d list/array of node pair probabilities.
+        eps (list): List of node endpoint labels.
+        node_to_index_dict (dict): Maps node labels (keys) to integer indices (values).
+        add_labels (bool): Whether or not to node labels to plot.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            return and display fig.
+
+    Returns:
+        matplotlib.figure.Figure: node distribution plotted as a 2d matrix. 
+
     '''
     if type(node_dist[0]) == str and eps is None:
         eps = list(set(node_dist))
@@ -63,6 +77,28 @@ def plot_val_dist(rand_vars,
                   num_bins=0,
                   plot_cdf=True,
                   show_fig=False):
+    '''Plots (1) probability distribution and (2) cumulative distribution function.
+    
+    Args:
+        rand_vars (list): Random variable values.
+        dist_fit_line (str): Line to fit to named distribution. E.g. 'exponential'.
+            If not plotting a named distribution, leave as None.
+        xlim (list): X-axis limits of plot. E.g. xlim=[0,10] to plot random
+            variable values between 0 and 10.
+        logscale (bool): Whether or not plot should have logscale x-axis and bins.
+        transparent (bool): Whether or not to make plot bins slightly transparent.
+        rand_var_name (str): Name of random variable to label plot's x-axis.
+        num_bins (int): Number of bins to use in plot. Default is 0, in which
+            case the number of bins chosen will be automatically selected.
+        plot_cdf (bool): Whether or not to plot the CDF as well as the probability
+            distribution.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+            return and display fig.
+    
+    Returns:
+        matplotlib.figure.Figure: node distribution plotted as a 2d matrix. 
+
+    '''
     if num_bins==0:
         histo, bins = np.histogram(rand_vars,density=True,bins='auto')
     else:

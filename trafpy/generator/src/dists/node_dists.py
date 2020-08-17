@@ -120,8 +120,8 @@ def gen_uniform_multinomial_exp_node_dist(eps,
         tuple: Tuple containing:
             - **node_dist** (*numpy array*): 2D matrix array of souce-destination pair
               probabilities of being chosen.
-            - **fig** (*matplotlib.figure.Figure, optional*): Node distributions
-              plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.
+            - **fig** (*matplotlib.figure.figure, optional*): node distribution
+              plotted as a 2d matrix. to return, set show_fig=true and/or plot_fig=true.
 
     '''
     # initialise graph params
@@ -511,7 +511,7 @@ def gen_node_demands(eps,
     Args:
         eps (list): List of network node endpoints that can act as sources
             & destinations.
-        node_dist (numpy array): 2D matrix array of souce-destination pair
+        node_dist (numpy array): 2D matrix array of source-destination pair
             probabilities of being chosen.
         num_demands (int): Number of src-dst node pairs to generate.
         duplicate (bool): Whether or not to duplicate src-dst node pairs. Use

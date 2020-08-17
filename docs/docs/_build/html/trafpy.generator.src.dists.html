@@ -285,7 +285,7 @@ plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.</p></
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>eps</strong> (<em>list</em>) – List of network node endpoints that can act as sources
 &amp; destinations.</p></li>
-<li><p><strong>node_dist</strong> (<em>numpy array</em>) – 2D matrix array of souce-destination pair
+<li><p><strong>node_dist</strong> (<em>numpy array</em>) – 2D matrix array of source-destination pair
 probabilities of being chosen.</p></li>
 <li><p><strong>num_demands</strong> (<em>int</em>) – Number of src-dst node pairs to generate.</p></li>
 <li><p><strong>duplicate</strong> (<em>bool</em>) – Whether or not to duplicate src-dst node pairs. Use
@@ -337,8 +337,8 @@ generated data.</p></li>
 <dt>Tuple containing:</dt><dd><ul class="simple">
 <li><p><strong>node_dist</strong> (<em>numpy array</em>): 2D matrix array of souce-destination pair
 probabilities of being chosen.</p></li>
-<li><p><strong>fig</strong> (<em>matplotlib.figure.Figure, optional</em>): Node distributions
-plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.</p></li>
+<li><p><strong>fig</strong> (<em>matplotlib.figure.figure, optional</em>): node distribution
+plotted as a 2d matrix. to return, set show_fig=true and/or plot_fig=true.</p></li>
 </ul>
 </dd>
 </dl>
@@ -389,17 +389,64 @@ plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.</p></
 </div>
 <div class="section" id="module-trafpy.generator.src.dists.plot_dists">
 <span id="trafpy-generator-src-dists-plot-dists-module"></span><h2>trafpy.generator.src.dists.plot_dists module<a class="headerlink" href="#module-trafpy.generator.src.dists.plot_dists" title="Permalink to this headline">¶</a></h2>
+<p>Module for plotting node and value distributions.</p>
 <dl class="py function">
 <dt id="trafpy.generator.src.dists.plot_dists.plot_node_dist">
 <code class="sig-prename descclassname">trafpy.generator.src.dists.plot_dists.</code><code class="sig-name descname">plot_node_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">node_to_index_dict</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">add_labels</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.dists.plot_dists.plot_node_dist" title="Permalink to this definition">¶</a></dt>
-<dd><p>node_dist must either be a 2d numpy matrix of probabilities or a 1d list/array
-of node pair probabilities</p>
+<dd><p>Plots network node demand probability distribution as a 2D matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_dist</strong> (<em>list</em><em> or </em><em>2d numpy array</em>) – Source-destination pair probabilities
+of being chosen. Must be either a 2d numpy matrix of probabilities or
+a 1d list/array of node pair probabilities.</p></li>
+<li><p><strong>eps</strong> (<em>list</em>) – List of node endpoint labels.</p></li>
+<li><p><strong>node_to_index_dict</strong> (<em>dict</em>) – Maps node labels (keys) to integer indices (values).</p></li>
+<li><p><strong>add_labels</strong> (<em>bool</em>) – Whether or not to node labels to plot.</p></li>
+<li><p><strong>show_fig</strong> (<em>bool</em>) – Whether or not to plot and show fig. If True, will
+return and display fig.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>node distribution plotted as a 2d matrix.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="trafpy.generator.src.dists.plot_dists.plot_val_dist">
 <code class="sig-prename descclassname">trafpy.generator.src.dists.plot_dists.</code><code class="sig-name descname">plot_val_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rand_vars</span></em>, <em class="sig-param"><span class="n">dist_fit_line</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">xlim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">transparent</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">rand_var_name</span><span class="o">=</span><span class="default_value">'Random Variable'</span></em>, <em class="sig-param"><span class="n">prob_rand_var_less_than</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_bins</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">plot_cdf</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.generator.src.dists.plot_dists.plot_val_dist" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Plots (1) probability distribution and (2) cumulative distribution function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rand_vars</strong> (<em>list</em>) – Random variable values.</p></li>
+<li><p><strong>dist_fit_line</strong> (<em>str</em>) – Line to fit to named distribution. E.g. ‘exponential’.
+If not plotting a named distribution, leave as None.</p></li>
+<li><p><strong>xlim</strong> (<em>list</em>) – X-axis limits of plot. E.g. xlim=[0,10] to plot random
+variable values between 0 and 10.</p></li>
+<li><p><strong>logscale</strong> (<em>bool</em>) – Whether or not plot should have logscale x-axis and bins.</p></li>
+<li><p><strong>transparent</strong> (<em>bool</em>) – Whether or not to make plot bins slightly transparent.</p></li>
+<li><p><strong>rand_var_name</strong> (<em>str</em>) – Name of random variable to label plot’s x-axis.</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em>) – Number of bins to use in plot. Default is 0, in which
+case the number of bins chosen will be automatically selected.</p></li>
+<li><p><strong>plot_cdf</strong> (<em>bool</em>) – Whether or not to plot the CDF as well as the probability
+distribution.</p></li>
+<li><p><strong>show_fig</strong> (<em>bool</em>) – Whether or not to plot and show fig. If True, will
+return and display fig.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>node distribution plotted as a 2d matrix.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 <div class="section" id="module-trafpy.generator.src.dists.val_dists">
@@ -498,7 +545,7 @@ probability distribution for the data</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>rand_vars</strong> (<em>list</em>) – List of random variable values</p></li>
+<li><p><strong>rand_vars</strong> (<em>list</em>) – Random variable values</p></li>
 <li><p><strong>round_to_nearest</strong> (<em>int/float</em>) – Value to round rand vars to nearest when
 discretising rand var values. E.g. is round_to_nearest=0.2, will round each
 rand var to nearest 0.2</p></li>

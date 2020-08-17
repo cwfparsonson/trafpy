@@ -663,7 +663,7 @@ def gen_discrete_prob_dist(rand_vars,
     probability distribution for the data
 
     Args:
-        rand_vars (list): List of random variable values
+        rand_vars (list): Random variable values
         round_to_nearest(int/float): Value to round rand vars to nearest when
             discretising rand var values. E.g. is round_to_nearest=0.2, will round each
             rand var to nearest 0.2
