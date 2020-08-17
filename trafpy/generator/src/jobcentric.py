@@ -541,12 +541,9 @@ def draw_job_graphs(demand_data=None,
     Draws list of specified job graphs. If no job graphs specified,
     plots all job graphs
     '''
-
     if len(job_graphs) == 0:
         # plot all job graphs
         job_graphs = demand_data['job']
-    else:
-        # job graphs to plot already specified
         assert demand_data is not None, 'must provide job demand data or list of job graphs'
 
     figs = []

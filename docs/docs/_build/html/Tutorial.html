@@ -222,7 +222,7 @@ easy to reproduce.</p>
 <div class="figure align-default">
 <img alt="_images/Tutorial-6.png" src="_images/Tutorial-6.png" />
 </div>
-<p>and the <em>pareto distribution</em></p>
+<p>and the <em>Pareto distribution</em></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;pareto&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_alpha&#39;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s1">&#39;_mode&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
 </pre></div>
 </div>
@@ -298,7 +298,7 @@ distribution</p>
 simple uniform distribution, or a slightly skewed distribution, or certain nodes
 being heavily in demand, or certain node pairs being heavily in demand. Furthermore,
 you may want all of the above, but may also want to specify certain things yourself
-(e.g. which specific ndoes/pairs to bias, how high demand they’re in, how many nodes
+(e.g. which specific nodes/pairs to bias, how high demand they’re in, how many nodes
 are in high demand etc.), or you may want these specifics to be randomly generated.
 The above functions handle all of the above functionality. See their documentation
 for further details.</p>
@@ -361,13 +361,187 @@ by TrafPy.</p>
 <h3>Flow-Centric Traffic Demands<a class="headerlink" href="#flow-centric-traffic-demands" title="Permalink to this headline">¶</a></h3>
 <p>A flow is some information being sent from a source node to a destination node
 in a network (e.g. a data centre network).</p>
-<p>Common flow characteristics include:</p>
+<p>Common flow demand characteristics include:</p>
 <ul class="simple">
-<li><p>flow size</p></li>
+<li><p>size;</p></li>
+<li><p>interarrival time; and</p></li>
+<li><p>source-destination node distribution.</p></li>
 </ul>
+<p>Using the value and node distribution generation function you’ve seen so far,
+you can use TrafPy to generate realistics flow demands. Later in this tutorial,
+you will see how to use TrafPy’s Jupyter Notebook tool to visually shape your
+distributions such that they match real data/literature distributions. For now,
+assume that we already know the distribution parameters we want. Consider
+that we want to create 1,000 realistic data centre flows in a simple 5-node
+network</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">num_demands</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;endpoint&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-18.png">png</a>, <a class="reference external" href=".//Tutorial-18.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-18.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-18.png" src="_images/Tutorial-18.png" />
+</div>
+<p>You could start by defining the flow size distribution</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flow_size_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;weibull&#39;</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_alpha&#39;</span><span class="p">:</span> <span class="mf">1.4</span><span class="p">,</span> <span class="s1">&#39;_lambda&#39;</span><span class="p">:</span> <span class="mi">7000</span><span class="p">},</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">rand_var_name</span><span class="o">=</span><span class="s1">&#39;Flow Size&#39;</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mf">1e2</span><span class="p">,</span><span class="mf">1e12</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-19.png">png</a>, <a class="reference external" href=".//Tutorial-19.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-19.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-19.png" src="_images/Tutorial-19.png" />
+</div>
+<p>then the flow interarrival time distribution</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">interarrival_time_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;lognormal&#39;</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_mu&#39;</span><span class="p">:</span> <span class="mf">7.4</span><span class="p">,</span> <span class="s1">&#39;_sigma&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">rand_var_name</span><span class="o">=</span><span class="s1">&#39;Interarrival Time&#39;</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mf">1e1</span><span class="p">,</span><span class="mf">1e6</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//Tutorial-20.png">png</a>, <a class="reference external" href=".//Tutorial-20.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-20.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/Tutorial-20.png" src="_images/Tutorial-20.png" />
+</div>
+<p>and then the source-destination node distribution</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">endpoints</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">num_skewed_nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure align-default" id="id9">
+<img alt="_images/Tutorial-21_00.png" src="_images/Tutorial-21_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-21_00.png">png</a>, <a class="reference external" href=".//Tutorial-21_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-21_00.pdf">pdf</a>)</span><a class="headerlink" href="#id9" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id10">
+<img alt="_images/Tutorial-21_01.png" src="_images/Tutorial-21_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-21_01.png">png</a>, <a class="reference external" href=".//Tutorial-21_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-21_01.pdf">pdf</a>)</span><a class="headerlink" href="#id10" title="Permalink to this image">¶</a></p>
+</div>
+<p>You can then use your distributions to generate flow-centric demand data formatted
+neatly into a single dictionary</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flow_centric_demand_data</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">create_demand_data</span><span class="p">(</span><span class="n">num_demands</span><span class="o">=</span><span class="n">num_demands</span><span class="p">,</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span><span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span><span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Don’t forget to save your data as a pickle</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tpg</span><span class="o">.</span><span class="n">pickle_data</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">flow_centric_demand_data</span><span class="p">,</span><span class="n">path_to_save</span><span class="o">=</span><span class="s1">&#39;data/flow_centric_demand_data.pickle&#39;</span><span class="p">,</span><span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">zip_data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or as a csv</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tpg</span><span class="o">.</span><span class="n">save_data_as_csv</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">flow_centric_demand_data</span><span class="p">,</span><span class="n">path_to_save</span><span class="o">=</span><span class="s1">&#39;data/flow_centric_demand_data.csv&#39;</span><span class="p">,</span><span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>N.B. You can also re-load previously pickled data</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flow_centric_demand_data</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">unpickle_data</span><span class="p">(</span><span class="n">path_to_load</span><span class="o">=</span><span class="s1">&#39;data/flow_centric_demand_data.pickle&#39;</span><span class="p">,</span><span class="n">zip_data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>TrafPy flow-centric demand data dictionaries are organised as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;flow_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;flow_0&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;flow_n&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;sn&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">flow_0_sn</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">flow_n_sn</span><span class="p">],</span>
+    <span class="s1">&#39;dn&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">flow_0_dn</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">flow_n_dn</span><span class="p">],</span>
+    <span class="s1">&#39;flow_size&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">flow_0_size</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">flow_n_size</span><span class="p">],</span>
+    <span class="s1">&#39;event_time&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">event_time_flow_0</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">event_time_flow_n</span><span class="p">],</span>
+    <span class="s1">&#39;establish&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">event_establish_flow_0</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">event_establish_flow_1</span><span class="p">],</span>
+    <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">index_flow_0</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">index_flow_1</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">'establish'</span></code> key’s values are is binary values indicating whether the demand is a connection
+establishment request (1) or a take-down request (0) for a given event. Specifying
+take-down requests is optional in TrafPy. If take-downs have been speified, then
+there will be <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">num_demands</span></code> events in the demand data dictionary, otherwise
+there will be <code class="docutils literal notranslate"><span class="pre">num_demands</span></code> events.</p>
 </div>
 <div class="section" id="job-centric-traffic-demands">
 <h3>Job-Centric Traffic Demands<a class="headerlink" href="#job-centric-traffic-demands" title="Permalink to this headline">¶</a></h3>
+<p>A job is a task sent to a network (such as a data centre) to execute. Jobs are
+computation graphs made up of <strong>operations</strong> (ops). Jobs might be e.g. a Google
+search query, generating a user’s Facebook feed, performing a TensorFlow machine
+learning task (e.g. backpropagation), etc.</p>
+<p>In this context, an op is a data process ran on some machine where the result
+is specified by a pre-determined rule/programme. Each op requires &gt;= 0 tensors/
+data objects as input, and produces &gt;= tensors as output.</p>
+<p>In a job computation graph, if an op v requires &gt;= 1 input(s) produced by op u,
+the ops will be connected by a directed edge, [u, v], representing the <strong>dependency</strong>
+between the two ops. The edge attributes here are features of the tensor (e.g.
+size, source machine, destination machine, etc.).</p>
+<p>In a data centre, when a job arrives, each op in the job is placed onto some
+machine to execute the op. These ops might be placed all on one machine or, as
+is often the case for many applications, spread out across machines according
+to e.g. some heuristic. The <strong>network</strong> is used to pass the tensors around
+between the machines executing the ops. These tensors/data objects flowing
+between ops are <strong>flows</strong>. The flows of a given job might flow through the network
+at the same time or at different times depending on e.g. scheduling decisions, constraints,
+dependencies, etc.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In a job graph, edges between ops represent 1 of 2 types of op dependency:</p>
+<ul class="simple">
+<li><p><strong>Data dependency</strong>: Op j can only begin when op i’s output tensor(s)
+have arrived. Therefore, data dependencies become network flows <em>if</em>
+op j and op i are ran on separate network endpoints.</p></li>
+<li><p><strong>Control dependency</strong>: Op j can only begin when op i has finished.
+No data is exchanged, therefore control dependencies never become
+network flows.</p></li>
+</ul>
+</div>
+<p>Common job demand characteristics include:</p>
+<ul class="simple">
+<li><p>job interarrival time;</p></li>
+<li><p>which machine each op in the job is placed on;</p></li>
+<li><p>number of ops in the job;</p></li>
+<li><p>run times of the ops;</p></li>
+<li><p>size of data dependencies (flows) between ops;</p></li>
+<li><p>ratio of control to data dependencies in job computation graph; and</p></li>
+<li><p>connectivity of job graph.</p></li>
+</ul>
+<p>You can use the same value and node distributions as before to generate realistic
+job demands. The only difference is that now we will pass additional arguments
+into <code class="xref py py-func docutils literal notranslate"><span class="pre">tpg.create_demand_data()</span></code>. TrafPy will respond by generating job computation graphs
+rather than flows as the demands in the returned dictionary.</p>
+<p>Consider that we want to create 10 realistic data centre jobs in the same simple
+5-node network as before (but now omitting <code class="docutils literal notranslate"><span class="pre">show_fig</span></code> to save page space).</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">num_demands</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tpg</span><span class="o">.</span><span class="n">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;endpoint&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You could start by definiing the flow size distribution of the flows inside the
+job graphs</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flow_size_dist</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">max_val</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span><span class="n">locations</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">],</span><span class="n">skews</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">scales</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span><span class="n">num_skew_samples</span><span class="o">=</span><span class="p">[</span><span class="mi">10000</span><span class="p">],</span><span class="n">bg_factor</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">num_bins</span><span class="o">=</span><span class="mi">34</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>then the job interarrival time distribution</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">interarrival_time_dist</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">max_val</span><span class="o">=</span><span class="mf">1e8</span><span class="p">,</span><span class="n">locations</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3000</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1800000</span><span class="p">,</span><span class="mi">10000000</span><span class="p">],</span><span class="n">skews</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">50</span><span class="p">,</span><span class="mi">6</span><span class="p">],</span><span class="n">scales</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span><span class="mi">62</span><span class="p">,</span><span class="mi">2000</span><span class="p">,</span><span class="mi">7500</span><span class="p">,</span><span class="mi">3500000</span><span class="p">,</span><span class="mi">20000000</span><span class="p">],</span><span class="n">num_skew_samples</span><span class="o">=</span><span class="p">[</span><span class="mi">800</span><span class="p">,</span><span class="mi">1000</span><span class="p">,</span><span class="mi">2000</span><span class="p">,</span><span class="mi">4000</span><span class="p">,</span><span class="mi">4000</span><span class="p">,</span><span class="mi">3000</span><span class="p">],</span><span class="n">bg_factor</span><span class="o">=</span><span class="mf">0.025</span><span class="p">,</span><span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>then the number of ops in each job</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">num_ops_dist</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span><span class="n">max_val</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span><span class="n">locations</span><span class="o">=</span><span class="p">[</span><span class="mi">100</span><span class="p">],</span><span class="n">skews</span><span class="o">=</span><span class="p">[</span><span class="mf">0.05</span><span class="p">],</span><span class="n">scales</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">],</span><span class="n">num_skew_samples</span><span class="o">=</span><span class="p">[</span><span class="mi">10000</span><span class="p">],</span><span class="n">bg_factor</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span><span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and then the source-destination node (i.e. op machine placement) distribution</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">endpoints</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">num_skewed_nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can then use your distributions to generate your job-centric demand data
+returned neatly into a single dictionary</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">job_centric_demand_data</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">create_demand_data</span><span class="p">(</span><span class="n">num_demands</span><span class="o">=</span><span class="n">num_demands</span><span class="p">,</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span><span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span><span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">,</span><span class="n">num_ops_dist</span><span class="o">=</span><span class="n">num_ops_dist</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span><span class="n">use_multiprocessing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Don’t forget to save your data</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tpg</span><span class="o">.</span><span class="n">pickle_data</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">job_centric_demand_data</span><span class="p">,</span><span class="n">path_to_save</span><span class="o">=</span><span class="s1">&#39;data/job_centric_demand_data.pickle&#39;</span><span class="p">,</span><span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">zip_data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>TrafPy job-centric demand data dictionaries are organised as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;job_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;job_0&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;job_n&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;job&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">networkx_graph_job_0</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">networkx_graph_job_n</span><span class="p">],</span>
+    <span class="s1">&#39;event_time&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">event_time_job_0</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">event_time_job_n</span><span class="p">],</span>
+    <span class="s1">&#39;establish&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">event_establish_job_0</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">event_establish_job_1</span><span class="p">],</span>
+    <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">index_job_0</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">index_job_1</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Where the <code class="docutils literal notranslate"><span class="pre">'job'</span></code> key contains the list of job computation graphs with all
+the embedded demand data. You can visualise the job computation graph(s):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">jobs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">job_centric_demand_data</span><span class="p">[</span><span class="s1">&#39;job&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">draw_job_graphs</span><span class="p">(</span><span class="n">job_graphs</span><span class="o">=</span><span class="n">jobs</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="visually-shaping-trafpy-distributions">
