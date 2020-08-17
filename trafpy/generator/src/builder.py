@@ -15,21 +15,46 @@ def create_demand_data(num_demands,
                        use_multiprocessing=True,
                        print_data=False,
                        path_to_save=None):
-    """
-    Creates a set of traffic demand data for a dynamic time series demand 
-    scheme using a poisson process. N.B. First half of time array (and of
-    source & destination nodes) are for connection establishment (i.e. have
-    self.num_demands connection establishments), second half are for tearing
-    down requests (i.e. have self.num_demands connection teardownds). 
-    Therefore although have only self.num_demands requests/connections, 
-    need to have self.num_demands*2 sources, destinations, and points in 
-    time.
+    """Create demand data dictionary using given distributions.
+
+    If num_ops_dist and c are left as None, return flow-centric demand data.
+    Otherwise, return job-centric demand data.
 
     Args:
-    - self.num_demands (int, float): number of traffic requests
-    - flow_sizes (array): array of self.num_demands flow_sizes for 
-    self.num_demands demands
-    - node_dist (array of floats): normalised demand distribution matrix 
+        num_demands (int): Number of demands to generate.
+        eps (list): List of network endpoints.
+        node_dist (numpy array): 2d matrix of source-destination probabilities
+            of occurring
+        flow_size_dist (dict): Probability distribution whose key-value pairs are 
+            flow size value-probability pairs. 
+        interarrival_time_dist (dict): Probability distribution whose key-value pairs are 
+            interarrival time value-probability pairs. 
+        duration_time_dist (dict): Probability distribution whose key-value pairs are 
+            duration time value-probability pairs. If specified, half events
+            returned will be 'take-down' events (establish==0). If left as None,
+            all returned events will be 'connection establishment' events
+            (establish==1).
+        num_ops_dist (dict): Probability distribution whose key-value pairs are 
+            number of operations (in a job) value-probability pairs. 
+        c (int/float): Coefficient which determines job graph connectivity and
+            therefore the number of edges in the job graph. Use this because, for
+            large enough c and n (number of nodes), edge formation probability
+            when using Erdos-Renyi random graph creation scales with the
+            number of edges such that p=c*(ln(n)/n), where graph diameter (and
+            number of edges) scales with O(ln(n)). See
+            https://www.cs.cmu.edu/~avrim/598/chap4only.pdf for more information.
+        use_multiprocessing (bool): Whether or not to use multiprocessing when
+            generating data. For generating large numbers of big job computation
+            graphs, it is recommended to use multiprocessing.
+        print_data (bool): whether or not to print extra information about the
+            generated data (such as time to generate).
+        path_to_save (str): Path to directory (with file name included) in which
+            to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
+
+    Returns:
+        dict: Generated demand data (either flow-centric or job-centric demand
+        demand data depending on the args given to the function).
+
     """
     # check if provided dists have tuple with fig as second element
     if type(node_dist) == tuple:
@@ -102,6 +127,23 @@ def create_demand_data(num_demands,
 
 def construct_demand_slots_dict(demand_data,
                                 slot_size=0.1):
+    '''Takes demand data (job-centric or flow-centric) and generates time-slot demand dictionaries.
+
+    Often when simulating networks, it is useful to divide the arriving demands
+    into time slots. This function uses the generated demand data event times
+    and the specified slot size to divide when each demand arrives in the simulation
+    into specific time slots.
+
+    Args:
+        demand_data (dict): Generated demand data (either flow-centric or job-centric).
+        slot_size (int/float): Time period of each time slot.
+
+    Returns:
+        dict: Dictionary containing the original demand data organised into time 
+        slots.
+
+    '''
+
     if 'job_id' in demand_data:
         job_centric = True
     else:

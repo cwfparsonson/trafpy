@@ -383,6 +383,11 @@ the embedded demand data. You can visualise the job computation graph(s):
 
 Visually Shaping TrafPy Distributions
 -------------------------------------
+Up until now we have assumed we already knew all the parameters of each distribution
+we have generated with TrafPy. But what if we want to replicate a distribution
+which has either not been produced in TrafPy before or has not provided open-access
+data? TrafPy has a useful interactive Jupyter-Notebook which integrates with
+all of the above functions, allowing distributions to be visually shaped.
 
 
 

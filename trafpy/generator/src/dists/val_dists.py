@@ -130,7 +130,7 @@ def gen_uniform_val_dist(min_val,
             than 3.7 and 5.8 respectively.
         num_bins (int): Number of bins to use in plot. Default is 0, in which
             case the number of bins chosen will be automatically selected.
-        print_data (bool): Whether or not to print extra information about the
+        print_data (bool): whether or not to print extra information about the
             generated data.
 
     Returns:
