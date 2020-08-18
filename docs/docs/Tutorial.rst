@@ -93,7 +93,7 @@ random variable values as you like
 
 .. nbplot::
 
-    >>> tpg.gen_rand_vars_from_discretised_dist(unique_vars=list(prob_dist.keys()),probabilities=list(flow_size_dist.values()),num_demands=1000)
+    >>> rand_vars = tpg.gen_rand_vars_from_discretised_dist(unique_vars=list(prob_dist.keys()),probabilities=list(prob_dist.values()),num_demands=1000)
 
 
 Node Distributions
@@ -111,7 +111,9 @@ is the **uniform distribution**
 
 .. nbplot::
     
-    >>> node_dist, fig = tpg.gen_uniform_node_dist(eps=endpoints,show_fig=True) Since different endpoint nodes in a network likely have different hardware
+    >>> node_dist, fig = tpg.gen_uniform_node_dist(eps=endpoints,show_fig=True) 
+
+Since different endpoint nodes in a network likely have different hardware
 capabilities, network node distributions are rarely uniform. Instead, some nodes
 become 'hot nodes' and are requested more than others, forming a **multimodal
 node distribution**
