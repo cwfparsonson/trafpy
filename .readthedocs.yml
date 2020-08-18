@@ -23,6 +23,6 @@ python:
   version: 3.7
   install:
     - method: setuptools
-      path: trafpy
+      path: .
     - requirements: requirements/default.txt
     - requirements: requirements/docs.txt
