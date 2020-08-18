@@ -42,7 +42,7 @@ def create_demand_data(num_demands,
             therefore the number of edges in the job graph. Use this because, for
             large enough c and n (number of nodes), edge formation probability
             when using Erdos-Renyi random graph creation scales with the
-            number of edges such that p=c*(ln(n)/n), where graph diameter (and
+            number of edges such that p=c*ln(n)/n, where graph diameter (and
             number of edges) scales with O(ln(n)). See
             https://www.cs.cmu.edu/~avrim/598/chap4only.pdf for more information.
         use_multiprocessing (bool): Whether or not to use multiprocessing when

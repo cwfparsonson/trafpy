@@ -10,9 +10,7 @@ import os
 
 
 def get_network_params(eps):
-    '''
-    Returns basic params of network
-    '''
+    '''Returns basic params of network.'''
     num_nodes = len(eps)
     num_pairs = np.int(((num_nodes**2) - num_nodes)/2)
     node_indices = [index for index in range(num_nodes)]
@@ -27,6 +25,7 @@ def get_network_params(eps):
 def gen_event_times(interarrival_times, 
                     duration_times=None,
                     path_to_save=None):
+    '''Use event interarrival times to generate event times.'''
     if duration_times is None:
         event_times = np.zeros((int(len(interarrival_times))))
     else:
@@ -55,6 +54,7 @@ def gen_event_times(interarrival_times,
 
 
 def gen_event_dict(demand_data, event_iter=None):
+    '''Use demand data dict to generate dict for each event in demand data.'''
     if 'job_id' in demand_data:
         job_centric=True
     else:
@@ -159,6 +159,7 @@ def save_data_as_csv(path_to_save,
                      data,
                      overwrite=False,
                      print_times=True):
+    '''Saves data given as a csv file.'''
     start = time.time()
     if path_to_save[-4:] != '.csv':
         append_csv = True
@@ -205,9 +206,7 @@ def pickle_data(path_to_save,
                 overwrite=False, 
                 zip_data=True, 
                 print_times=True):
-    '''
-    Save data as a pickle
-    '''
+    '''Save data as a pickle.'''
     start = time.time()
     if path_to_save[-7:] != '.pickle':
         append_pickle = True
@@ -241,6 +240,7 @@ def pickle_data(path_to_save,
 def unpickle_data(path_to_load,
                   zip_data=True,
                   print_times=True):
+    '''Re-load previously pickled data.'''
     start = time.time()
     if path_to_load[-7:] != '.pickle':
         filename = path_to_load+'.pickle'
@@ -259,29 +259,29 @@ def unpickle_data(path_to_load,
 
 
 def calc_graph_diameter(graph):
+    '''Calculate diameter of a single graph.'''
     diameter = nx.algorithms.distance_measures.extrema_bounding(to_undirected_graph(graph), compute='diameter')
     return diameter
 
 def calc_graph_diameters(graphs, multiprocessing_type='none', print_times=False):
-        start = time.time()
-        if multiprocessing_type=='pool':
-            pool = multiprocessing.Pool(multiprocessing.cpu_count())
-            results = [pool.apply_async(calc_graph_diameter, args=(graph,)) for graph in graphs]
-            pool.close()
-            pool.join()
-            diameters = [p.get() for p in results]
-        elif multiprocessing_type=='none':
-            diameters = [calc_graph_diameter(graph) for graph in graphs]
-        end=time.time()
-        if print_times:
-            print('Time to calc diameters of {} graphs: {}'.format(len(graphs), end-start))
+    '''Calculate diameters of a list of graphs.'''
+    start = time.time()
+    if multiprocessing_type=='pool':
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        results = [pool.apply_async(calc_graph_diameter, args=(graph,)) for graph in graphs]
+        pool.close()
+        pool.join()
+        diameters = [p.get() for p in results]
+    elif multiprocessing_type=='none':
+        diameters = [calc_graph_diameter(graph) for graph in graphs]
+    end=time.time()
+    if print_times:
+        print('Time to calc diameters of {} graphs: {}'.format(len(graphs), end-start))
 
-        return diameters
+    return diameters
     
 def to_undirected_graph(directed_graph):
-    '''
-    Converts directed graph to an undirected graph
-    '''
+    '''Converts directed graph to an undirected graph.'''
     edges = directed_graph.edges()
     nodes = directed_graph.nodes()
     
