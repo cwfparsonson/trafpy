@@ -4,5 +4,5 @@ matplotlib>=3.2.2
 statsmodels>=0.11.1
 ipywidgets>=7.5.1
 networkx>=2.4
-cv2=3.4.2
+cv2==3.4.2
 pygraphviz>=1.3
