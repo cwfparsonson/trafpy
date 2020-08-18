@@ -1,0 +1,485 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trafpy.generator.src.tools &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Citing.html">Citing</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trafpy.generator.src.tools</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trafpy.generator.src.tools</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">trafpy.generator.src.demand</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">bz2</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+
+<div class="viewcode-block" id="get_network_params"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.tools.get_network_params">[docs]</a><span class="k">def</span> <span class="nf">get_network_params</span><span class="p">(</span><span class="n">eps</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Returns basic params of network.&#39;&#39;&#39;</span>
+    <span class="n">num_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
+    <span class="n">num_pairs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">(((</span><span class="n">num_nodes</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">num_nodes</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">node_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">)]</span>
+    <span class="n">iterables</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">node_indices</span><span class="p">)</span>
+    <span class="n">node_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="p">:</span> <span class="n">index</span> <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">iterables</span><span class="p">}</span>
+    <span class="n">iterables</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">node_indices</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+    <span class="n">index_to_node</span> <span class="o">=</span> <span class="p">{</span><span class="n">index</span><span class="p">:</span> <span class="n">node</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">iterables</span><span class="p">}</span>
+    
+    <span class="k">return</span> <span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_pairs</span><span class="p">,</span> <span class="n">node_to_index</span><span class="p">,</span> <span class="n">index_to_node</span></div>
+
+
+<div class="viewcode-block" id="gen_event_times"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.tools.gen_event_times">[docs]</a><span class="k">def</span> <span class="nf">gen_event_times</span><span class="p">(</span><span class="n">interarrival_times</span><span class="p">,</span> 
+                    <span class="n">duration_times</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">path_to_save</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Use event interarrival times to generate event times.&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">duration_times</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">event_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">interarrival_times</span><span class="p">))))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">event_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">interarrival_times</span><span class="p">))</span><span class="o">*</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="c1"># points in time at which establishments occur</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">interarrival_times</span><span class="p">))):</span>
+        <span class="n">event_times</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">event_times</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">interarrival_times</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">duration_times</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># points in time at which take downs occur</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">interarrival_times</span><span class="p">)),</span> <span class="mi">2</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">interarrival_times</span><span class="p">))):</span>
+            <span class="n">event_times</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">event_times</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">interarrival_times</span><span class="p">))]</span> <span class="o">+</span> <span class="n">duration_times</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">interarrival_times</span><span class="p">))</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># only consider arrival times, dont need take downs</span>
+        <span class="k">pass</span>
+    
+    <span class="k">if</span> <span class="n">path_to_save</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pickle_data</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">,</span> <span class="n">event_times</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">event_times</span></div>
+
+
+
+
+
+
+<div class="viewcode-block" id="gen_event_dict"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.tools.gen_event_dict">[docs]</a><span class="k">def</span> <span class="nf">gen_event_dict</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">event_iter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Use demand data dict to generate dict for each event in demand data.&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="s1">&#39;job_id&#39;</span> <span class="ow">in</span> <span class="n">demand_data</span><span class="p">:</span>
+        <span class="n">job_centric</span><span class="o">=</span><span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">job_centric</span><span class="o">=</span><span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">event_iter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># need to index demand_data</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">sn</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+        <span class="n">dn</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+        <span class="n">arrived</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+        <span class="n">establish</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">job_centric</span><span class="p">:</span>
+            <span class="n">flow_id</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+            <span class="n">job_id</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;job_id&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+            <span class="n">parent_deps</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;parent_dependency_flow_ids&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+            <span class="n">child_deps</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;child_dependency_flow_ids&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+            <span class="n">parent_op_run_time</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;parent_op_run_time&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+            <span class="n">child_op</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;child_op&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+            <span class="n">parent_op</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;parent_op&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+            <span class="n">dependency_type</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dependency_type&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent_deps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># no parent dependencies therefore can schedule immediately</span>
+                <span class="n">can_schedule</span><span class="o">=</span><span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">can_schedule</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">flow_id</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">][</span><span class="n">event_iter</span><span class="p">]</span>
+            <span class="n">job_id</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">parent_deps</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">child_deps</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">parent_op_run_time</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">child_op</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">parent_op</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">dependency_type</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">can_schedule</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># no dependencies in flow centric</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># no need to index demand_data</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">sn</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">]</span>
+        <span class="n">dn</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">]</span>
+        <span class="n">arrived</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]</span>
+        <span class="n">establish</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">job_centric</span><span class="p">:</span>
+            <span class="c1"># flows in jobs have unique ids &amp; dependencies</span>
+            <span class="n">flow_id</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]</span>
+            <span class="n">job_id</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;job_id&#39;</span><span class="p">]</span>
+            <span class="n">parent_deps</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;parent_dependency_flow_ids&#39;</span><span class="p">]</span>
+            <span class="n">child_deps</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;child_dependency_flow_ids&#39;</span><span class="p">]</span>
+            <span class="n">parent_op_run_time</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;parent_op_run_time&#39;</span><span class="p">]</span>
+            <span class="n">child_op</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;child_op&#39;</span><span class="p">]</span>
+            <span class="n">parent_op</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;parent_op&#39;</span><span class="p">]</span>
+            <span class="n">dependency_type</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dependency_type&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent_deps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># no parent dependencies therefore can schedule immediately</span>
+                <span class="n">can_schedule</span><span class="o">=</span><span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">can_schedule</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">flow_id</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]</span>
+            <span class="n">job_id</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">parent_deps</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">child_deps</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">parent_op_run_time</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">child_op</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">parent_op</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">dependency_type</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">can_schedule</span><span class="o">=</span><span class="mi">1</span> <span class="c1"># no dependencies in flow centric</span>
+        
+        
+    <span class="n">event_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;flow_id&#39;</span><span class="p">:</span> <span class="n">flow_id</span><span class="p">,</span>
+                  <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="n">size</span><span class="p">,</span>
+                  <span class="s1">&#39;src&#39;</span><span class="p">:</span> <span class="n">sn</span><span class="p">,</span>
+                  <span class="s1">&#39;dst&#39;</span><span class="p">:</span> <span class="n">dn</span><span class="p">,</span>
+                  <span class="s1">&#39;establish&#39;</span><span class="p">:</span> <span class="n">establish</span><span class="p">,</span>
+                  <span class="s1">&#39;parent_deps&#39;</span><span class="p">:</span> <span class="n">parent_deps</span><span class="p">,</span>
+                  <span class="s1">&#39;completed_parent_deps&#39;</span><span class="p">:</span> <span class="p">[],</span>
+                  <span class="s1">&#39;child_deps&#39;</span><span class="p">:</span> <span class="n">child_deps</span><span class="p">,</span>
+                  <span class="s1">&#39;parent_op_run_time&#39;</span><span class="p">:</span> <span class="n">parent_op_run_time</span><span class="p">,</span>
+                  <span class="s1">&#39;time_parent_op_started&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                  <span class="s1">&#39;parent_op&#39;</span><span class="p">:</span> <span class="n">parent_op</span><span class="p">,</span>
+                  <span class="s1">&#39;dependency_type&#39;</span><span class="p">:</span> <span class="n">dependency_type</span><span class="p">,</span>
+                  <span class="s1">&#39;child_op&#39;</span><span class="p">:</span> <span class="n">child_op</span><span class="p">,</span>
+                  <span class="s1">&#39;can_schedule&#39;</span><span class="p">:</span> <span class="n">can_schedule</span><span class="p">,</span>
+                  <span class="s1">&#39;job_id&#39;</span><span class="p">:</span> <span class="n">job_id</span><span class="p">,</span>
+                  <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                  <span class="s1">&#39;channel&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                  <span class="s1">&#39;packets&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                  <span class="s1">&#39;time_arrived&#39;</span><span class="p">:</span> <span class="n">arrived</span><span class="p">,</span>
+                  <span class="s1">&#39;time_completed&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                  <span class="s1">&#39;k_shortest_paths&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">event_dict</span></div>
+
+
+
+<div class="viewcode-block" id="save_data_as_csv"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.tools.save_data_as_csv">[docs]</a><span class="k">def</span> <span class="nf">save_data_as_csv</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">,</span>
+                     <span class="n">data</span><span class="p">,</span>
+                     <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">print_times</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Saves data given as a csv file.&#39;&#39;&#39;</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">path_to_save</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span> <span class="o">!=</span> <span class="s1">&#39;.csv&#39;</span><span class="p">:</span>
+        <span class="n">append_csv</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">path_to_save</span> <span class="o">+</span> <span class="s1">&#39;.csv&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">append_csv</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">path_to_save</span>
+    <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
+        <span class="c1"># overwrite prev saved file</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># avoid overwriting</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">while</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">filename</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">append_csv</span><span class="p">:</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">path_to_save</span><span class="o">+</span><span class="s1">&#39;_v</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;.csv&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">path_to_save</span><span class="p">[:</span><span class="o">-</span><span class="mi">7</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;_v</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;.csv&#39;</span>
+            <span class="n">v</span> <span class="o">+=</span> <span class="mi">1</span>
+   
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># dict values are scalars</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">)</span>
+    
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">print_times</span><span class="p">:</span> 
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time to save data to </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1"> s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="pickle_data"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.tools.pickle_data">[docs]</a><span class="k">def</span> <span class="nf">pickle_data</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">,</span>
+                <span class="n">data</span><span class="p">,</span>
+                <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                <span class="n">zip_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                <span class="n">print_times</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Save data as a pickle.&#39;&#39;&#39;</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">path_to_save</span><span class="p">[</span><span class="o">-</span><span class="mi">7</span><span class="p">:]</span> <span class="o">!=</span> <span class="s1">&#39;.pickle&#39;</span><span class="p">:</span>
+        <span class="n">append_pickle</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">path_to_save</span> <span class="o">+</span> <span class="s1">&#39;.pickle&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">append_pickle</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">path_to_save</span>
+    <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
+        <span class="c1"># overwrite prev saved file</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># avoid overwriting</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">while</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">filename</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">append_pickle</span><span class="p">:</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">path_to_save</span><span class="o">+</span><span class="s1">&#39;_v</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;.pickle&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">path_to_save</span><span class="p">[:</span><span class="o">-</span><span class="mi">7</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;_v</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;.pickle&#39;</span>
+            <span class="n">v</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">zip_data</span><span class="p">:</span>
+        <span class="n">filehandler</span> <span class="o">=</span> <span class="n">bz2</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filehandler</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">filehandler</span><span class="p">)</span>
+    <span class="n">filehandler</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">print_times</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time to save data to </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1"> s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="unpickle_data"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.tools.unpickle_data">[docs]</a><span class="k">def</span> <span class="nf">unpickle_data</span><span class="p">(</span><span class="n">path_to_load</span><span class="p">,</span>
+                  <span class="n">zip_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                  <span class="n">print_times</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Re-load previously pickled data.&#39;&#39;&#39;</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">path_to_load</span><span class="p">[</span><span class="o">-</span><span class="mi">7</span><span class="p">:]</span> <span class="o">!=</span> <span class="s1">&#39;.pickle&#39;</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">path_to_load</span><span class="o">+</span><span class="s1">&#39;.pickle&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">path_to_load</span>
+    <span class="k">if</span> <span class="n">zip_data</span><span class="p">:</span>
+        <span class="n">filehandler</span> <span class="o">=</span> <span class="n">bz2</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filehandler</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+    <span class="n">demand_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filehandler</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">print_times</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time to load data from </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1"> s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">demand_data</span></div>
+
+
+<div class="viewcode-block" id="calc_graph_diameter"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.tools.calc_graph_diameter">[docs]</a><span class="k">def</span> <span class="nf">calc_graph_diameter</span><span class="p">(</span><span class="n">graph</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Calculate diameter of a single graph.&#39;&#39;&#39;</span>
+    <span class="n">diameter</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">algorithms</span><span class="o">.</span><span class="n">distance_measures</span><span class="o">.</span><span class="n">extrema_bounding</span><span class="p">(</span><span class="n">to_undirected_graph</span><span class="p">(</span><span class="n">graph</span><span class="p">),</span> <span class="n">compute</span><span class="o">=</span><span class="s1">&#39;diameter&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">diameter</span></div>
+
+<div class="viewcode-block" id="calc_graph_diameters"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.tools.calc_graph_diameters">[docs]</a><span class="k">def</span> <span class="nf">calc_graph_diameters</span><span class="p">(</span><span class="n">graphs</span><span class="p">,</span> <span class="n">multiprocessing_type</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">print_times</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Calculate diameters of a list of graphs.&#39;&#39;&#39;</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">multiprocessing_type</span><span class="o">==</span><span class="s1">&#39;pool&#39;</span><span class="p">:</span>
+        <span class="n">pool</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">())</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">pool</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">calc_graph_diameter</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">graph</span><span class="p">,))</span> <span class="k">for</span> <span class="n">graph</span> <span class="ow">in</span> <span class="n">graphs</span><span class="p">]</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="n">diameters</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">multiprocessing_type</span><span class="o">==</span><span class="s1">&#39;none&#39;</span><span class="p">:</span>
+        <span class="n">diameters</span> <span class="o">=</span> <span class="p">[</span><span class="n">calc_graph_diameter</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span> <span class="k">for</span> <span class="n">graph</span> <span class="ow">in</span> <span class="n">graphs</span><span class="p">]</span>
+    <span class="n">end</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">print_times</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time to calc diameters of </span><span class="si">{}</span><span class="s1"> graphs: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">graphs</span><span class="p">),</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">diameters</span></div>
+    
+<div class="viewcode-block" id="to_undirected_graph"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.tools.to_undirected_graph">[docs]</a><span class="k">def</span> <span class="nf">to_undirected_graph</span><span class="p">(</span><span class="n">directed_graph</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Converts directed graph to an undirected graph.&#39;&#39;&#39;</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="n">directed_graph</span><span class="o">.</span><span class="n">edges</span><span class="p">()</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="n">directed_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()</span>
+    
+    <span class="n">undirected_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+        <span class="n">undirected_graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+        <span class="n">undirected_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">undirected_graph</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

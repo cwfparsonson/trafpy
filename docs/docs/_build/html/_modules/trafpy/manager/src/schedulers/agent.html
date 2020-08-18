@@ -1,0 +1,626 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trafpy.manager.src.schedulers.agent &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/underscore.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../../index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Citing.html">Citing</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trafpy.manager.src.schedulers.agent</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trafpy.manager.src.schedulers.agent</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">trafpy.manager.src.schedulers.schedulertoolbox</span> <span class="kn">import</span> <span class="n">SchedulerToolbox</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+
+
+<div class="viewcode-block" id="Agent"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent">[docs]</a><span class="k">class</span> <span class="nc">Agent</span><span class="p">(</span><span class="n">SchedulerToolbox</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">RWA</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">,</span> <span class="n">max_F</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">agent_type</span><span class="o">=</span><span class="s1">&#39;sarsa_learning&#39;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">Graph</span><span class="p">,</span> <span class="n">RWA</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent_type</span> <span class="o">=</span> <span class="n">agent_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Graph</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]))</span> <span class="c1"># number of servers</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_F</span> <span class="o">=</span> <span class="n">max_F</span> <span class="c1"># max number of flows per queue</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_record_num_packets</span> <span class="o">=</span> <span class="mi">100</span> <span class="c1"># max to record. above this val, all same</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_record_time_in_queue</span> <span class="o">=</span> <span class="mi">10</span> <span class="c1"># max time in queue to record</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span>
+
+        <span class="n">graph_edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">Graph</span><span class="o">.</span><span class="n">edges</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_edges</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">graph_edges</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_encoded_path_combos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RWA</span><span class="o">.</span><span class="n">num_k</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_edges</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span> 
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_poss_times_in_queue</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_record_time_in_queue</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">slot_size</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_poss_schedule</span> <span class="o">=</span> <span class="mi">2</span> <span class="c1"># can be 1 or 0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_poss_packets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_record_num_packets</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_poss_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_F</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="c1">#self.phi = self.num_poss_packets * self.num_poss_times_in_queue * self.num_poss_flows * self.num_encoded_path_combos * self.num_poss_schedule # state space for each flow </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_poss_packets</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_poss_times_in_queue</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_poss_flows</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RWA</span><span class="o">.</span><span class="n">num_k</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_edges</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="c1"># num params for each flow state, +1 is for schedule param </span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_queues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Graph</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span>
+        <span class="n">a_idx</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">([</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_queues</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_F</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">int_to_action</span> <span class="o">=</span> <span class="p">{</span><span class="nb">next</span><span class="p">(</span><span class="n">a_idx</span><span class="p">):</span> <span class="p">{</span><span class="s1">&#39;server&#39;</span><span class="p">:</span> <span class="n">ep</span><span class="p">,</span>
+                                            <span class="s1">&#39;queue&#39;</span><span class="p">:</span> <span class="n">epq</span><span class="p">,</span>
+                                            <span class="s1">&#39;flow_idx&#39;</span><span class="p">:</span> <span class="n">flow_idx</span><span class="p">}</span>
+                                <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">eps</span>
+                                    <span class="k">for</span> <span class="n">epq</span> <span class="ow">in</span> <span class="n">eps</span> <span class="k">if</span> <span class="n">ep</span> <span class="o">!=</span> <span class="n">epq</span>
+                                        <span class="k">for</span> <span class="n">flow_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_F</span><span class="p">)}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">int_to_action</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;null&#39;</span> <span class="c1"># add null action</span>
+
+        <span class="c1">#self.action_to_int = {}</span>
+        <span class="c1">#for key, val in self.int_to_action.items():</span>
+        <span class="c1">#    self.action_to_int[val] = key</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">action_space</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">int_to_action</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_space</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_queues</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_F</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span>
+        <span class="c1">#self.state_space = (self.action_space ** 2) * self.phi</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Action space: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">action_space</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;State space: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_space</span><span class="p">))</span>
+        
+        <span class="c1"># initialise q table</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Q_table</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">action_space</span><span class="p">))</span>
+        
+        <span class="c1"># create policy to follow</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">policy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_epsilon_greedy_policy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q_table</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_space</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Agent.make_epsilon_greedy_policy"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.make_epsilon_greedy_policy">[docs]</a>    <span class="k">def</span> <span class="nf">make_epsilon_greedy_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Q_table</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">action_space</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">policy_func</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+            <span class="c1"># create uniform probability distribution over all possible actions</span>
+            <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">action_space</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">epsilon</span> <span class="o">/</span> <span class="n">action_space</span>
+            
+            <span class="c1"># find which action has the highest value</span>
+            <span class="n">best_action</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">Q_table</span><span class="p">[</span><span class="n">state</span><span class="p">])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Best action:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">best_action</span><span class="p">))</span>
+            
+            <span class="c1"># bias probability of choosing best action</span>
+            <span class="n">A</span><span class="p">[</span><span class="n">best_action</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">epsilon</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Action prob distribution:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">A</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="n">A</span>
+
+        <span class="k">return</span> <span class="n">policy_func</span></div>
+
+<div class="viewcode-block" id="Agent.check_if_end_of_time_slot_decisions"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.check_if_end_of_time_slot_decisions">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_end_of_time_slot_decisions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        If one of the following is true, agent should stop making decisions</span>
+<span class="sd">        this time slot and this method will return True:</span>
+
+<span class="sd">        1) The action chosen is the &#39;null&#39; action, which is the agent&#39;s way</span>
+<span class="sd">        of explicitly stating that it doesn&#39;t want to schedule anymore flows</span>
+<span class="sd">        for this time slot</span>
+
+<span class="sd">        2) The action chosen is a flow that has already been chosen this time</span>
+<span class="sd">        slot</span>
+
+<span class="sd">        3) The action chosen is invalid since, due to previously selected </span>
+<span class="sd">        actions, there are no paths or channels (lightpaths) available</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        - action: The action to be checked chosen by the agent</span>
+<span class="sd">        - chosen_flows: A list of flows already chosen by the agent</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">action</span> <span class="o">==</span> <span class="s1">&#39;null&#39;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Agent doesn</span><span class="se">\&#39;</span><span class="s1">t want to make any more scheduling decisions&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># find flow in network</span>
+            <span class="n">flow_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_flow_from_network</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;server&#39;</span><span class="p">],</span>
+                                                   <span class="n">action</span><span class="p">[</span><span class="s1">&#39;queue&#39;</span><span class="p">],</span>
+                                                   <span class="n">action</span><span class="p">[</span><span class="s1">&#39;flow_idx&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">flow_dict</span> <span class="o">==</span> <span class="s1">&#39;N/A&#39;</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Flow not in network, therefore action invalid&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># flow is in network, check if already chosen this time slot</span>
+                <span class="k">if</span> <span class="n">flow_dict</span> <span class="ow">in</span> <span class="n">chosen_flows</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Chosen flow already chosen this time slot&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># flow not yet chosen this time slot, check if lightpath available</span>
+                    <span class="n">est</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">look_for_available_lightpath</span><span class="p">(</span><span class="n">flow_dict</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">est</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Lightpath not available, therefore action invalid&#39;</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="kc">True</span>
+        
+        <span class="c1"># if get to this point, action not null and is valid, return False</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="Agent.get_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+        <span class="n">chosen_flows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chosen_actions</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># save chosen actions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chosen_action_states</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># save states agent observed when choosing flows</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Q_state_action</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># init estimated q state action value</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_network_state</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">agent_queues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_agent_state_representation</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span> 
+        
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="c1"># keep getting decisions until end of time slot decisions</span>
+            <span class="n">a_probs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> 
+            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a_probs</span><span class="p">)),</span><span class="n">p</span><span class="o">=</span><span class="n">a_probs</span><span class="p">)</span> <span class="c1"># choose from dist</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Chosen action: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">chosen_actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">chosen_action_states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+            <span class="n">q_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q_table</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="n">a</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Estimated q_value of action: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">q_value</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Q_state_action</span> <span class="o">+=</span> <span class="n">q_value</span>
+
+
+            <span class="n">a_meaning</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">int_to_action</span><span class="p">[</span><span class="n">a</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Action meaning:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">a_meaning</span><span class="p">))</span>
+            
+            <span class="c1"># check if chosen action is null or invalid</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_end_of_time_slot_decisions</span><span class="p">(</span><span class="n">a_meaning</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
+                <span class="c1"># agent has either chosen &#39;null&#39; or an invalid action</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No more scheduling decisions for this time step&#39;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Chosen flows:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chosen_flows</span><span class="p">))</span>
+                
+                <span class="c1"># save current observation and actions chosen</span>
+                <span class="n">action</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;chosen_flows&#39;</span><span class="p">:</span> <span class="n">chosen_flows</span><span class="p">}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">curr_observation</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">curr_action</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+                
+                <span class="c1"># update Q_state_action to be estimated mean return per action</span>
+                <span class="n">num_chosen_actions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chosen_flows</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">Q_state_action</span> <span class="o">/=</span> <span class="n">num_chosen_actions</span>
+                <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+                    <span class="c1"># estimated 0 mean return per action</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">Q_state_action</span>
+
+                <span class="k">return</span> <span class="n">action</span> 
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># agent action is valid. Allocate lightpath with FF and append to chosen flows</span>
+                <span class="n">chosen_flow</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_flow_from_network</span><span class="p">(</span><span class="n">a_meaning</span><span class="p">[</span><span class="s1">&#39;server&#39;</span><span class="p">],</span> 
+                                                         <span class="n">a_meaning</span><span class="p">[</span><span class="s1">&#39;queue&#39;</span><span class="p">],</span>
+                                                         <span class="n">a_meaning</span><span class="p">[</span><span class="s1">&#39;flow_idx&#39;</span><span class="p">])</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">look_for_available_lightpath</span><span class="p">(</span><span class="n">chosen_flow</span><span class="p">,</span>
+                                                            <span class="n">chosen_flows</span><span class="p">)</span>
+                <span class="n">chosen_flow</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">],</span> <span class="n">chosen_flow</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">,</span> <span class="n">c</span>
+                <span class="n">chosen_flows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chosen_flow</span><span class="p">)</span>
+
+                <span class="c1"># update agent state as having scheduled this chosen flow</span>
+                <span class="n">state</span><span class="p">,</span> <span class="n">agent_queues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_agent_state</span><span class="p">(</span><span class="n">agent_queues</span><span class="p">,</span> <span class="n">a_meaning</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Agent.update_agent_state"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.update_agent_state">[docs]</a>    <span class="k">def</span> <span class="nf">update_agent_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent_queues</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Updates flow=action in agent_queues to having scheduled = 1, returns</span>
+<span class="sd">        updated state</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">server</span> <span class="o">=</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;server&#39;</span><span class="p">]</span>
+        <span class="n">queue</span> <span class="o">=</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;queue&#39;</span><span class="p">]</span>
+        <span class="n">flow_idx</span> <span class="o">=</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;flow_idx&#39;</span><span class="p">]</span>
+
+        <span class="c1"># update schedule status of flow in agent queues</span>
+        <span class="c1">#print(&#39;Agent queue:\n{}&#39;.format(agent_queues[server][queue][&#39;queued_flows&#39;][flow_idx]))</span>
+        <span class="n">agent_queues</span><span class="p">[</span><span class="n">server</span><span class="p">][</span><span class="n">queue</span><span class="p">][</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">][</span><span class="n">flow_idx</span><span class="p">][</span><span class="s1">&#39;scheduled&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="c1">#print(&#39;Updated agent queues:\n{}&#39;.format(agent_queues))</span>
+
+        <span class="c1"># update state</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gen_state_from_agent_queues</span><span class="p">(</span><span class="n">agent_queues</span><span class="p">)</span>
+        <span class="n">hashable_state</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">state</span><span class="p">)))</span> <span class="c1"># merge list of lists</span>
+
+        <span class="k">return</span> <span class="n">hashable_state</span><span class="p">,</span> <span class="n">agent_queues</span></div>
+
+
+
+<div class="viewcode-block" id="Agent.process_reward"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.process_reward">[docs]</a>    <span class="k">def</span> <span class="nf">process_reward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_observation</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Take reward from environment that resulted in action from prev time step</span>
+<span class="sd">        and use to learn </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># save what your estimated value per chosen flow/action was</span>
+        <span class="n">Q_state_action</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q_state_action</span><span class="p">)</span>
+
+        <span class="c1"># get mean value per action for next observation using best actions</span>
+        <span class="c1">#saved_epsilon = copy.deepcopy(self.epsilon) # save curr epsilon val</span>
+        <span class="c1">#self.epsilon = 0 # choose best actions</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_action</span><span class="p">(</span><span class="n">next_observation</span><span class="p">)</span>
+        <span class="n">Q_nextstate_nextaction</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q_state_action</span><span class="p">)</span>
+        <span class="c1">#self.epsilon = saved_epsilon # return to saved epsilon val</span>
+
+        <span class="c1"># calc td delta</span>
+        <span class="n">td_target</span> <span class="o">=</span> <span class="n">reward</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="p">(</span><span class="n">Q_nextstate_nextaction</span><span class="p">))</span>
+        <span class="n">td_delta</span> <span class="o">=</span> <span class="n">td_target</span> <span class="o">-</span> <span class="n">Q_state_action</span>
+        
+        <span class="c1"># go through each action that was chosen and update q value</span>
+        <span class="n">iterables</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chosen_actions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chosen_action_states</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">action</span><span class="p">,</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">iterables</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Q_table</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="n">action</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">td_delta</span></div>
+
+
+        
+
+
+
+
+<div class="viewcode-block" id="Agent.get_agent_state_representation"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.get_agent_state_representation">[docs]</a>    <span class="k">def</span> <span class="nf">get_agent_state_representation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SchedulerNetwork</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span>
+        <span class="n">agent_queues</span> <span class="o">=</span> <span class="p">{</span><span class="n">server</span><span class="p">:</span> <span class="p">{</span><span class="n">queue</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+                            <span class="k">for</span> <span class="n">queue</span> <span class="ow">in</span> <span class="n">eps</span> <span class="k">if</span> <span class="n">queue</span> <span class="o">!=</span> <span class="n">server</span><span class="p">}</span>
+                                <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">}</span>
+        
+        
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">:</span>
+            <span class="c1"># check queues at each end point...</span>
+            <span class="n">ep_queues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SchedulerNetwork</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span>
+            <span class="n">agent_ep_queue</span> <span class="o">=</span> <span class="p">{</span><span class="n">ep</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">:</span> <span class="p">[]}}</span>
+            <span class="n">iterables</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ep_queues</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">ep_queues</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">ep_queue</span><span class="p">,</span> <span class="n">ep_queue_key</span> <span class="ow">in</span> <span class="n">iterables</span><span class="p">:</span>
+                <span class="c1"># for each queue at the selected end point...</span>
+                
+                <span class="c1"># calc num flows in queue</span>
+                <span class="n">num_flows_in_queue</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ep_queue</span><span class="p">[</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">])</span>
+                <span class="n">encoded_num_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">binary_encode_num_flows_in_queue</span><span class="p">(</span><span class="n">num_flows_in_queue</span><span class="p">,</span>
+                                                                          <span class="bp">self</span><span class="o">.</span><span class="n">max_F</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">flow_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_flows_in_queue</span><span class="p">):</span>
+                    <span class="c1"># for each flow in the selected queue...</span>
+                    <span class="n">flow_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_paths_and_packets</span><span class="p">(</span><span class="n">ep_queue</span><span class="p">[</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">][</span><span class="n">flow_idx</span><span class="p">])</span>
+
+                    <span class="c1"># calc time flow has been in queue so far</span>
+                    <span class="n">num_decimals</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slot_size</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+                    <span class="n">time_arrived</span> <span class="o">=</span> <span class="n">flow_dict</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                    <span class="n">curr_time</span> <span class="o">=</span> <span class="n">observation</span><span class="p">[</span><span class="s1">&#39;slot_dict&#39;</span><span class="p">][</span><span class="s1">&#39;lb_time&#39;</span><span class="p">]</span>
+                    <span class="n">time_in_queue</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">curr_time</span> <span class="o">-</span> <span class="n">time_arrived</span><span class="p">,</span> <span class="n">num_decimals</span><span class="p">))</span> 
+                    <span class="n">encoded_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">binary_encode_time_in_queue</span><span class="p">(</span><span class="n">time_in_queue</span><span class="p">,</span>
+                                                                    <span class="bp">self</span><span class="o">.</span><span class="n">max_record_time_in_queue</span><span class="p">)</span>
+
+                    <span class="c1"># calc num flow packets remaining</span>
+                    <span class="n">num_packets_left</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">flow_dict</span><span class="p">[</span><span class="s1">&#39;packets&#39;</span><span class="p">])</span>
+                    <span class="n">encoded_num_packets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">binary_encode_num_packets</span><span class="p">(</span><span class="n">num_packets_left</span><span class="p">,</span>
+                                                                         <span class="bp">self</span><span class="o">.</span><span class="n">max_record_num_packets</span><span class="p">)</span>
+
+                    <span class="c1"># get binary encoded shortest paths</span>
+                    <span class="n">shortest_paths</span> <span class="o">=</span> <span class="n">flow_dict</span><span class="p">[</span><span class="s1">&#39;k_shortest_paths&#39;</span><span class="p">]</span>
+                    <span class="n">encoded_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">binary_encode_paths</span><span class="p">(</span><span class="n">shortest_paths</span><span class="p">)</span>
+
+                    <span class="c1"># init scheduled status for this time slot</span>
+                    <span class="n">scheduled</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                    <span class="c1"># define the agent&#39;s flow dict</span>
+                    <span class="n">agent_flow_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;num_packets_left&#39;</span><span class="p">:</span> <span class="n">encoded_num_packets</span><span class="p">,</span>
+                                       <span class="s1">&#39;time_in_queue&#39;</span><span class="p">:</span> <span class="n">encoded_time</span><span class="p">,</span>
+                                       <span class="s1">&#39;num_flows_in_queue&#39;</span><span class="p">:</span> <span class="n">encoded_num_flows</span><span class="p">,</span>
+                                       <span class="s1">&#39;k_shortest_paths&#39;</span><span class="p">:</span> <span class="n">encoded_paths</span><span class="p">,</span>
+                                       <span class="s1">&#39;scheduled&#39;</span><span class="p">:</span> <span class="n">scheduled</span><span class="p">}</span>
+                    
+                    <span class="c1"># add flow dict to agent&#39;s queue</span>
+                    <span class="n">agent_queues</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="n">ep_queue_key</span><span class="p">][</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">agent_flow_dict</span><span class="p">)</span>
+                    <span class="c1"># agent_ep_queue[ep][&#39;queued_flows&#39;].append(agent_flow_dict)</span>
+
+            <span class="c1"># update agent&#39;s queue state for this end point...</span>
+            <span class="c1">#agent_queues[next(key_iter)] = agent_ep_queues</span>
+            
+
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gen_state_from_agent_queues</span><span class="p">(</span><span class="n">agent_queues</span><span class="p">)</span>
+        
+        <span class="n">hashable_state</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">state</span><span class="p">)))</span> <span class="c1"># merge list of lists</span>
+
+        <span class="k">return</span> <span class="n">hashable_state</span><span class="p">,</span> <span class="n">agent_queues</span></div>
+
+<div class="viewcode-block" id="Agent.merge_agent_flow_dict"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.merge_agent_flow_dict">[docs]</a>    <span class="k">def</span> <span class="nf">merge_agent_flow_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent_flow_dict</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Merges flow dict of agent into single array</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">flow_state_array</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">flow_state_array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">agent_flow_dict</span><span class="p">[</span><span class="s1">&#39;scheduled&#39;</span><span class="p">])</span>
+        <span class="n">flow_state_array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">agent_flow_dict</span><span class="p">[</span><span class="s1">&#39;num_packets_left&#39;</span><span class="p">])</span>
+        <span class="n">flow_state_array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">agent_flow_dict</span><span class="p">[</span><span class="s1">&#39;time_in_queue&#39;</span><span class="p">])</span>
+        <span class="n">flow_state_array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">agent_flow_dict</span><span class="p">[</span><span class="s1">&#39;num_flows_in_queue&#39;</span><span class="p">])</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">agent_flow_dict</span><span class="p">[</span><span class="s1">&#39;k_shortest_paths&#39;</span><span class="p">]))</span>
+        <span class="n">flow_state_array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
+        <span class="n">flow_state_array</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">flow_state_array</span><span class="p">))</span> <span class="c1"># merge list of lists </span>
+       
+        <span class="k">return</span> <span class="n">flow_state_array</span></div>
+
+
+<div class="viewcode-block" id="Agent.gen_state_from_agent_queues"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.gen_state_from_agent_queues">[docs]</a>    <span class="k">def</span> <span class="nf">gen_state_from_agent_queues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent_queues</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Uses agent queues to generate state</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># init state for single flow</span>
+        <span class="n">single_flow_state</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
+        <span class="c1">#print(&#39;len single flow state: {}&#39;.format(len(single_flow_state)))</span>
+
+        <span class="c1"># calc total number of flows in network state space</span>
+        <span class="n">num_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_queues</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_F</span>
+
+        <span class="c1"># merge agent queue states that have been added into single array</span>
+        <span class="n">state_queue_dict</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">agent_queues</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">state_queue_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">queues</span> <span class="o">=</span> <span class="n">state_queue_dict</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">queue</span> <span class="ow">in</span> <span class="n">queues</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">flows</span> <span class="o">=</span> <span class="n">state_queue_dict</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="n">queue</span><span class="p">][</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">flows</span><span class="p">)):</span>
+                    <span class="n">flows</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_agent_flow_dict</span><span class="p">(</span><span class="n">flows</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+                    <span class="c1">#print(&#39;len merged flow: {}&#39;.format(len(flows[idx])))</span>
+        <span class="c1">#print(&#39;Original agent queues:\n{}&#39;.format(agent_queues))</span>
+        <span class="c1">#print(&#39;Merged agent queues:\n{}&#39;.format(state_queue_dict))</span>
+
+        <span class="c1"># each queue of each server can have a flow, where a flow has self.phi parameters</span>
+        <span class="c1"># add initialised single flow state for each flow until have padded out state dict</span>
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">state_queue_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">queues</span> <span class="o">=</span> <span class="n">state_queue_dict</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">queue</span> <span class="ow">in</span> <span class="n">queues</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">flows</span> <span class="o">=</span> <span class="n">state_queue_dict</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="n">queue</span><span class="p">][</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">]</span>
+                <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">flows</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_F</span><span class="p">:</span>
+                    <span class="n">flows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">single_flow_state</span><span class="p">)</span>
+        <span class="c1">#print(&#39;Padded state dict:\n{}&#39;.format(state_queue_dict)) </span>
+
+        <span class="c1"># convert state dict into matrix</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">state_queue_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">queues</span> <span class="o">=</span> <span class="n">state_queue_dict</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">queue</span> <span class="ow">in</span> <span class="n">queues</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">flows</span> <span class="o">=</span> <span class="n">state_queue_dict</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="n">queue</span><span class="p">][</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">flows</span><span class="p">:</span>
+                    <span class="n">state</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="c1">#print(&#39;State matrix:\n{}&#39;.format(state))</span>
+        <span class="c1">#print(&#39;Size of state matrix: {}&#39;.format(state.shape))</span>
+
+        <span class="k">return</span> <span class="n">state</span> </div>
+
+
+<div class="viewcode-block" id="Agent.get_agent_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.get_agent_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_agent_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">graphs</span> <span class="k">as</span> <span class="nn">g</span> 
+    <span class="kn">from</span> <span class="nn">demand</span> <span class="kn">import</span> <span class="n">Demand</span>
+    <span class="kn">from</span> <span class="nn">routing</span> <span class="kn">import</span> <span class="n">RWA</span>
+    <span class="kn">from</span> <span class="nn">scheduling</span> <span class="kn">import</span> <span class="n">SRPT</span><span class="p">,</span> <span class="n">BASRPT</span><span class="p">,</span> <span class="n">Agent</span>
+    <span class="kn">from</span> <span class="nn">simulator</span> <span class="kn">import</span> <span class="n">DCN</span>
+    <span class="kn">import</span> <span class="nn">pickle</span>
+    <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+    <span class="kn">import</span> <span class="nn">time</span>
+
+    <span class="c1"># config</span>
+    <span class="n">max_F</span> <span class="o">=</span> <span class="mi">2</span> <span class="c1"># max number of flows per queue</span>
+    <span class="n">num_episodes</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">num_k_paths</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">slot_size</span> <span class="o">=</span> <span class="mf">0.2</span>
+    <span class="n">max_time</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">path_figures</span> <span class="o">=</span> <span class="s1">&#39;figures/&#39;</span>
+    
+    <span class="n">load_demands</span> <span class="o">=</span> <span class="s1">&#39;pickles/demand/10_uniform_demands.obj&#39;</span> <span class="c1"># path str or None</span>
+    <span class="n">filehandler</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">load_demands</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+    <span class="n">demand</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filehandler</span><span class="p">)</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">demand</span><span class="o">.</span><span class="n">Graph</span>
+    <span class="n">edge_dict</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">get_edge_attributes</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="s1">&#39;channels&#39;</span><span class="p">)</span>
+    <span class="n">num_channels</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">edge_dict</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">edge_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+    <span class="c1"># initialise routing agent</span>
+    <span class="n">rwa</span> <span class="o">=</span> <span class="n">RWA</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">gen_channel_names</span><span class="p">(</span><span class="n">num_channels</span><span class="p">),</span> <span class="n">num_k_paths</span><span class="p">)</span>
+   
+    <span class="c1"># initialise scheduling agent</span>
+    <span class="c1">#scheduler = SRPT(graph, rwa, slot_size) </span>
+    <span class="c1">#scheduler = BASRPT(graph, rwa, slot_size, V=500) </span>
+    <span class="n">scheduler</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">rwa</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">,</span> <span class="n">max_F</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c1"># initialise dcn simulation environment</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">DCN</span><span class="p">(</span><span class="n">demand</span><span class="p">,</span> <span class="n">scheduler</span><span class="p">,</span> <span class="n">max_F</span><span class="p">,</span> <span class="n">max_time</span><span class="p">)</span>
+    
+    <span class="c1"># run simulations</span>
+    <span class="k">for</span> <span class="n">episode</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_episodes</span><span class="p">):</span>
+        <span class="n">observation</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">load_demands</span><span class="p">)</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;------------------------------------------------------&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">curr_time</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Observation:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">observation</span><span class="p">))</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">get_action</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Action:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">action</span><span class="p">))</span>
+            <span class="n">observation</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Observation:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">observation</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Episode finished.&#39;</span><span class="p">)</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">get_scheduling_session_summary</span><span class="p">()</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">print_scheduling_session_summary</span><span class="p">()</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">plot_all_queue_evolution</span><span class="p">(</span><span class="n">path_figures</span><span class="o">+</span><span class="s1">&#39;scheduler/&#39;</span><span class="p">)</span>
+                <span class="k">break</span>
+
+
+
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

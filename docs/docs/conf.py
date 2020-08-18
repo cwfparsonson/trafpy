@@ -35,8 +35,11 @@ import sphinx_rtd_theme
 
 extensions = [
         'sphinx_rtd_theme',
+        'sphinx.ext.autodoc',
         'nb2plots',
-        'sphinx.ext.napoleon'
+        'sphinx.ext.napoleon',
+        'sphinx.ext.viewcode',
+        'texext'
 ]
 
 #napoleon_google_docstring = True
@@ -67,6 +70,14 @@ exclude_patterns = []
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+
+# The name of the Pygments (syntax highlighting) style to use.
+# pygments_style = 'sphinx'
+pygments_style = 'friendly'
+#pygments_style = 'colorful'
+
+# file-wide GitHub URL
+github_url = 'https://github.com/cwfparsonson/trafpy'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

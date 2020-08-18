@@ -2,14 +2,20 @@ Tutorial
 ========
 This guide can help you start with TrafPy.
 
-
+.. note::
+    TrafPy users who are not familiar with Python can read the TrafPy Generator
+    section to understand how some of the TrafPy functions work. However, they may find 
+    it more useful to skip to the Visually Shaping TrafPy Distributions section, 
+    which describes how to use the TrafPy Jupyter Notebook as a stand-alone tool
+    (CSVs can be generated and imported into e.g. MATLAB scripts; no Python knowledge
+    is required).
 
 
 
 
 TrafPy Generator
 ----------------
-Import the TrafPy generator package.
+Import the ``trafpy.generator`` package.
 
 .. nbplot::
 
@@ -79,8 +85,15 @@ of **skewness** and/or **kurtosis**
 
     >>> prob_dist, rand_vars, fig = tpg.gen_multimodal_val_dist(min_val=10,max_val=7000,locations=[20,4000],skews=[6,-1],scales=[150,1500],num_skew_samples=[10000,650],bg_factor=0.05,return_data=True,show_fig=True,logscale=True,xlim=[10,10000],num_bins=18)
 
-Later in this tutorial, we will see how to visually shape a multimodal distribution
+Later in this tutorial, you will see how to visually shape a multimodal distribution
 using TrafPy, allowing for almost any distribution to be generated.
+
+Once you have your value probability distribution, you can use it to generate as many
+random variable values as you like
+
+.. nbplot::
+
+    >>> tpg.gen_rand_vars_from_discretised_dist(unique_vars=list(prob_dist.keys()),probabilities=list(flow_size_dist.values()),num_demands=1000)
 
 
 Node Distributions
@@ -98,9 +111,7 @@ is the **uniform distribution**
 
 .. nbplot::
     
-    >>> node_dist, fig = tpg.gen_uniform_node_dist(eps=endpoints,show_fig=True)
-
-Since different endpoint nodes in a network likely have different hardware
+    >>> node_dist, fig = tpg.gen_uniform_node_dist(eps=endpoints,show_fig=True) Since different endpoint nodes in a network likely have different hardware
 capabilities, network node distributions are rarely uniform. Instead, some nodes
 become 'hot nodes' and are requested more than others, forming a **multimodal
 node distribution**
@@ -133,8 +144,8 @@ You can create any size of node distribution you like to fit any network
     >>> endpoints = ['server_'+str(i) for i in range(64)]
     >>> node_dist, fig = tpg.gen_multimodal_node_pair_dist(eps=endpoints,show_fig=True)
 
-You can then sample from your node distribution to generate source-destination 
-pairs
+Once you have your node probability distribution, you can use it to generate 
+as many source-destination node pairs as you like
 
 .. nbplot::
 
@@ -193,8 +204,8 @@ Using the value and node distribution generation function you've seen so far,
 you can use TrafPy to generate realistics flow demands. Later in this tutorial,
 you will see how to use TrafPy's Jupyter Notebook tool to visually shape your
 distributions such that they match real data/literature distributions. For now,
-assume that we already know the distribution parameters we want. Consider
-that we want to create 1,000 realistic data centre flows in a simple 5-node
+assume that you already know the distribution parameters you want. Consider
+that you want to create 1,000 realistic data centre flows in a simple 5-node
 network
 
 .. nbplot::
@@ -219,7 +230,7 @@ and then the source-destination node distribution
 .. nbplot::
     
     >>> endpoints = network.graph['endpoints']
-    >>> node_dist, _ = tpg.gen_multimodal_node_dist(eps=endpoints,num_skewed_nodes=1,show_fig=True)
+    >>> node_dist = tpg.gen_multimodal_node_dist(eps=endpoints,num_skewed_nodes=1,show_fig=True)
 
 You can then use your distributions to generate flow-centric demand data formatted
 neatly into a single dictionary
@@ -228,21 +239,15 @@ neatly into a single dictionary
 
     >>> flow_centric_demand_data = tpg.create_demand_data(num_demands=num_demands,eps=endpoints,node_dist=node_dist,flow_size_dist=flow_size_dist,interarrival_time_dist=interarrival_time_dist)
 
-Don't forget to save your data as a pickle
+Don't forget to save your data as a pickle::
 
-.. nbplot:: 
-    
-    >>> tpg.pickle_data(data=flow_centric_demand_data,path_to_save='data/flow_centric_demand_data.pickle',overwrite=True,zip_data=True)
+    tpg.pickle_data(data=flow_centric_demand_data,path_to_save='data/flow_centric_demand_data.pickle',overwrite=True,zip_data=True)
 
-or as a csv
+or as a csv::
 
-.. nbplot::
+    tpg.save_data_as_csv(data=flow_centric_demand_data,path_to_save='data/flow_centric_demand_data.csv',overwrite=True)
 
-    >>> tpg.save_data_as_csv(data=flow_centric_demand_data,path_to_save='data/flow_centric_demand_data.csv',overwrite=True)
-
-N.B. You can also re-load previously pickled data
-
-.. nbplot::
+N.B. You can also re-load previously pickled data::
     
     >>> flow_centric_demand_data = tpg.unpickle_data(path_to_load='data/flow_centric_demand_data.pickle',zip_data=True)
 
@@ -311,11 +316,11 @@ Common job demand characteristics include:
 - connectivity of job graph.
 
 You can use the same value and node distributions as before to generate realistic
-job demands. The only difference is that now we will pass additional arguments
+job demands. The only difference is that now you will pass additional arguments
 into :func:`tpg.create_demand_data`. TrafPy will respond by generating job computation graphs
 rather than flows as the demands in the returned dictionary.
 
-Consider that we want to create 10 realistic data centre jobs in the same simple 
+Consider that you want to create 10 realistic data centre jobs in the same simple 
 5-node network as before (but now omitting ``show_fig`` to save page space).
 
 .. nbplot:: 
@@ -347,7 +352,7 @@ and then the source-destination node (i.e. op machine placement) distribution
 .. nbplot::
     
     >>> endpoints = network.graph['endpoints']
-    >>> node_dist, _ = tpg.gen_multimodal_node_dist(eps=endpoints,num_skewed_nodes=1)
+    >>> node_dist = tpg.gen_multimodal_node_dist(eps=endpoints,num_skewed_nodes=1)
 
 You can then use your distributions to generate your job-centric demand data
 returned neatly into a single dictionary
@@ -356,11 +361,9 @@ returned neatly into a single dictionary
 
     >>> job_centric_demand_data = tpg.create_demand_data(num_demands=num_demands,eps=endpoints,node_dist=node_dist,flow_size_dist=flow_size_dist,interarrival_time_dist=interarrival_time_dist,num_ops_dist=num_ops_dist,c=1.5,use_multiprocessing=False)
 
-Don't forget to save your data
-
-.. nbplot:: 
+Don't forget to save your data::
     
-    >>> tpg.pickle_data(data=job_centric_demand_data,path_to_save='data/job_centric_demand_data.pickle',overwrite=True,zip_data=True)
+    tpg.pickle_data(data=job_centric_demand_data,path_to_save='data/job_centric_demand_data.pickle',overwrite=True,zip_data=True)
 
 TrafPy job-centric demand data dictionaries are organised as::
 
@@ -383,16 +386,154 @@ the embedded demand data. You can visualise the job computation graph(s):
 
 Visually Shaping TrafPy Distributions
 -------------------------------------
-Up until now we have assumed we already knew all the parameters of each distribution
-we have generated with TrafPy. But what if we want to replicate a distribution
+Up until now you have assumed you already knew all the parameters of each distribution
+we have generated with TrafPy. But what if you want to replicate a distribution
 which has either not been produced in TrafPy before or has not provided open-access
 data? TrafPy has a useful interactive Jupyter-Notebook which integrates with
-all of the above functions, allowing distributions to be visually shaped.
+all of the above functions, allowing distributions to be visually shaped. Crucially,
+once a distribution has been shaped, it can be easily replicated with TrafPy so long
+as the set of parameters used to shape the distribution are shared.
+
+Academic papers present network traffic distribution information in many forms.
+It could be e.g. a plot, an analyticaly described named distribution (e.g. 'the
+connection duration times followed a log-normal distribution with mu -3.8 and
+sigma 6.4'), an analytically described unnamed distribution (e.g. 'the flow
+sizes followed a distribution with minimum 8, maximum 33,000, mean 6,450, skewness
+1.23, and kurtosis 2.03') etc.
+
+The TrafPy Jupyter Notebook tool enables distributions to be tuned visually
+and analytically to reproduce literature distributions. Distribution plots are 
+live-updated as slide bars, text boxes etc. are adjusted, with analytical characteristics
+of the generated distributions be output to aid accuracy. 
+
+Navigate to the directory where you cloned TrafPy and launch `the Jupyter Notebook <https://github.com/cwfparsonson/trafpy/blob/master/main.ipynb>`_::
+
+    $ jupyter-notebook main.ipynb
+
+The Notebook has a few main sections with markup descriptions for each
+
+- Import ``trafpy.generator``
+- Set global variables
+- Generate random variables from 'named' distribution
+- Generate random variables from arbitrary 'multimodal' distribution
+- Generate discrete probability distribution from random variables
+- Generate random variables from discrete probability distribution
+- Generate source-destination node distribution
+- Use node distribution to generate source-destination node demands
+- Use previously generated distributions to create single 'demand data' dictionary
+- Generate distributions in sets (extension)
+
+All of the above sections can be used together or independently depending on which
+functionalities you need to shape your specific distribution. Below are demonstrations
+of how to use the interactive distribution-shaping cells.
+
+.. note::
+    To run a Jupyter Notebook cell, click on the cell and click 'Run' on the top ribbon.
+    If you are running a cell with a TrafPy interactive graph, some configurable parameters
+    will appear. Adjust these parameters and click the 'Run Interact' button to update 
+    your plot (and the returned values).
+
+.. note::
+
+    Once you have shaped your distribution, you can simply plug your shaped parameters
+    into the previously described functions to generate your required random variable data/distributions
+    in your own scripts. I.e. There is no need to have to save your Notebook data if you
+    note down your shaped parameters and enter them into your own TrafPy scripts.
+
+
+Set Global Variables
+^^^^^^^^^^^^^^^^^^^^
+Set the ``PATH`` global variable to the directory where you want any data generated with the Notebook
+to be saved. You can also set the ``NUM_DEMANDS`` global variable, which will ensure
+that each time you shape a distribution for a certain traffic demand characteristic,
+the correct number of demands will be generated.
+
+.. image:: images/set_global_variables.png
+    :align: center
+    
 
 
 
 
 
+Generate Random Variables from 'Named' Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Use this section to shape the previously described 'named' value distributions 
+(Pareto, Weibull, etc.) generated by :func:`trafpy.gen_named_val_dist`.
+
+.. image:: images/generate_random_variables_from_named_distribution.png
+    :align: center
+
+
+
+Generate Random Variables from Arbitrary 'Multimodal' Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Use this section to shape the previously described 'multimodal' value distribution
+generated by :func:`trafpy.gen_multimodal_val_dist`.
+
+There are a few steps to generating a TrafPy distribution.
+
+1. Define the random variables of your multimodal distribution
+   Set the minimum and maximum possible values, the number of modes, the name
+   of your random variable, the x-axis limits, what to round the values to, and
+   how many decimal places to include. Run the 1st cell.
+
+.. image:: images/generate_random_variables_from_arbitrary_multimodal_distribution_1.png
+    :align: center
+
+2. Run the 2nd cell to launch the visualisation tool. A set of tuneable parameters
+   for each mode (where you specified the number of modes in the previous cell)
+   will appear. Adjust the parameters and click 'Run Interact' until you are 
+   happy with the shape of each mode. Use 'Location' for the mode position, 
+   'Skew' for the mode skew, 'Scale' for the mode standard deviation, 'Samples'
+   for the height of the mode's probability distribution, and 'bins' for how many
+   bins to plot (default of 0 automatically chooses number of bins).
+
+.. image:: images/generate_random_variables_from_arbitrary_multimodal_distribution_2_1.png
+    :align: center
+   
+.. image:: images/generate_random_variables_from_arbitrary_multimodal_distribution_2_2.png
+    :align: center
+
+3. Run the 3rd cell to combine the above modes. Adjust ``bg_factor`` to increase
+   or decrease the 'background noise' amongst your shaped nodes.
+
+.. image:: images/generate_random_variables_from_arbitrary_multimodal_distribution_3.png
+    :align: center
+
+.. note:: You may find it useful to jump between the 2nd and 3rd cells to improve the accuracy of the modes relative to one-another.
+
+4. (Optional) Run the 4th cell to use your shaped multimodal distribution to sample
+   random variable data.
+
+5. (Optional) Run the 5th cell to save your mutlimodal random variable data
+
+
+
+Generate Distributions in Sets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. note::
+    This is an extension of the interactive toolbox primarily for TrafPy users
+    who are not familiar with Python and want to simply run the Notebook to generate
+    distribution and/or random variable data CSV files to import into their own
+    e.g. MATLAB scripts. Users familiar with Python are encouraged to shape their
+    distributions and then implement their own TrafPy scripts, and may therefore
+    omit this final cell. 
+
+The final cell in the TrafPy Jupyter Notebook tool allows users to generate
+distributions without visualisation (i.e. the above cells are needed to first 
+shape the distributions, or some prior shaping parameters are needed). This 
+is useful for generating large amounts of data in 'sets', where some sets may
+have different demand characteristics/distributions from others.
+
+Simply configure the variables under ``# set vars`` (e.g. the number of sets 
+``num_sets`` and the number of demands in each set ``num_demands``). Any
+distributions to keep constant across all sets should be defined outside the for loop,
+and those that should change should be defined within.
+
+.. note::
+    This is a basic script written for a specific use-case. Adjusting it to
+    your specific needs may require some basic Python knowledge.
 
 
 
@@ -400,3 +541,106 @@ all of the above functions, allowing distributions to be visually shaped.
 
 TrafPy Manager
 --------------
+.. note::
+    The ``trafpy.manager`` package is still a working progress. The aim of it is
+    to integreat easily with demand data generated by ``trafpy.generator`` to enable
+    end-to-end network benchmarking, learning agent training etc. using only TrafPy.
+
+
+As this tutorial has shown, TrafPy can be used as a stand-alone tool for generating, 
+replicating, and reproducing network traffic data using the ``trafpy.generator``
+package and the interactive Jupyter Notebook tool. TrafPy also comes with another
+package, ``trafpy.manager``, which uses generated network traffic data to simulate
+networks. ``trafpy.manager`` can be used as a tool for e.g. benchmarking and comparing
+different network managers (routers, schedulers, machine placers, etc.) and for e.g.
+a reinforcement learning training environment.
+
+``trafpy.manager`` works by initialising a network environment (e.g. a data centre network)
+which itself is initialised with a TrafPy demand object, a scheduling agent, a routing agent,
+and a network object. TrafPy comes with pre-built versions of each of these, but
+has been designed such that users can write their own e.g. scheduler and benchmark
+it with ``trafpy.manager`` and network demands generated with ``trafpy.generator``.
+
+Import ``trafpy.generator`` and the requried ``trafpy.manager`` objects::
+
+    import trafpy.generator as tpg
+    from trafpy.manager import Demand, RWA, SRPT, DCN
+    import config
+
+Where the ``config.py`` might be defined as
+
+.. literalinclude:: ../../config.py
+
+Load your previously saved TrafPy demand data dictionary (see the TrafPy Generator
+section above)::
+
+    demand_data = tpg.unpickle_data(path_to_load='data/flow_centric_demand_data.pickle',zip_data=True)
+
+Initialise the ``trafpy.manager`` objects::
+
+    network = tpg.gen_simple_network(ep_label=config.ENDPOINT_LABEL,num_channels=config.NUM_CHANNELS)
+    demand = Demand(demand_data=demand_data)
+    rwa = RWA(tpg.gen_channel_names(config.NUM_CHANNELS), config.NUM_K_PATHS)
+    scheduler = SRPT(network, rwa, slot_size=config.SLOT_SIZE)
+    env = DCN(network, demand, scheduler, slot_size=config.SLOT_SIZE, max_flows=config.MAX_FLOWS, max_time=config.MAX_TIME)
+
+Finally run your simulation using the standard OpenAI Gym reinforcement learning
+framework::
+
+    for episode in range(config.NUM_EPISODES):
+    print('\nEpisode {}/{}'.format(episode+1,config.NUM_EPISODES))
+    observation = env.reset(config.LOAD_DEMANDS)
+    while True:
+        print('Time: {}'.format(env.curr_time))
+        action = scheduler.get_action(observation)
+        print('Action:\n{}'.format(action))
+        observation, reward, done, info = env.step(action)
+        if done:
+            print('Episode finished.')
+            break
+
+When completed, you can print TrafPy's summary of the scheduling session::
+
+    >>> env.get_scheduling_session_summary(print_summary=True)
+    -=-=-=-=-=-=-= Scheduling Session Ended -=-=-=-=-=-=-=
+    SUMMARY:
+    ~* General Info *~
+    Total session duration: 80000.0 time units
+    Total number of generated demands (jobs or flows): 10
+    Total info arrived: 56623.0 info units
+    Load: 0.7672975615099775 info unit demands arrived per unit time (from first to last flow arriving)
+    Total info transported: 56623.0 info units
+    Throughput: 0.7077875 info units transported per unit time
+
+    ~* Flow Info *~
+    Total number generated flows (src!=dst,dependency_type=='data_dep'): 10
+    Time first flow arrived: 0.0 time units
+    Time last flow arrived: 73795.36028834846 time units
+    Time first flow completed: 10000.0 time units
+    Time last flow completed: 80000.0 time units
+    Total number of demands that arrived and became flows: 10
+    Total number of flows that were completed: 10
+    Total number of dropped flows + flows in queues at end of session: 0
+    Average FCT: 7669.998225473775 time units
+    99th percentile FCT: 18035.645744379803 time units
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

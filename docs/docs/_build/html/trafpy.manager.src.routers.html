@@ -160,11 +160,11 @@
 <span id="trafpy-manager-src-routers-rwa-module"></span><h2>trafpy.manager.src.routers.rwa module<a class="headerlink" href="#module-trafpy.manager.src.routers.rwa" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="trafpy.manager.src.routers.rwa.RWA">
-<em class="property">class </em><code class="sig-prename descclassname">trafpy.manager.src.routers.rwa.</code><code class="sig-name descname">RWA</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel_names</span></em>, <em class="sig-param"><span class="n">num_k</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.manager.src.routers.rwa.</code><code class="sig-name descname">RWA</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel_names</span></em>, <em class="sig-param"><span class="n">num_k</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/routers/rwa.html#RWA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
 <dt id="trafpy.manager.src.routers.rwa.RWA.check_if_channel_space">
-<code class="sig-name descname">check_if_channel_space</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">edges</span></em>, <em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">flow_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.check_if_channel_space" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">check_if_channel_space</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">edges</span></em>, <em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">flow_size</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/routers/rwa.html#RWA.check_if_channel_space"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.check_if_channel_space" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes list of edges to see if all of the edges have enough space for
 the given demand on a certain channel</p>
 <p>Args:
@@ -180,7 +180,7 @@ the given channel across all given edges</p>
 
 <dl class="py method">
 <dt id="trafpy.manager.src.routers.rwa.RWA.check_if_channel_used">
-<code class="sig-name descname">check_if_channel_used</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">edges</span></em>, <em class="sig-param"><span class="n">channel</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.check_if_channel_used" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">check_if_channel_used</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">edges</span></em>, <em class="sig-param"><span class="n">channel</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/routers/rwa.html#RWA.check_if_channel_used"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.check_if_channel_used" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes list of edges to see if any one of the edges have used a certain
 channel</p>
 <p>Args:
@@ -194,7 +194,7 @@ of the edges</p>
 
 <dl class="py method">
 <dt id="trafpy.manager.src.routers.rwa.RWA.ff_k_shortest_paths">
-<code class="sig-name descname">ff_k_shortest_paths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">k_shortest_paths</span></em>, <em class="sig-param"><span class="n">flow_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.ff_k_shortest_paths" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">ff_k_shortest_paths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">k_shortest_paths</span></em>, <em class="sig-param"><span class="n">flow_size</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/routers/rwa.html#RWA.ff_k_shortest_paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.ff_k_shortest_paths" title="Permalink to this definition">¶</a></dt>
 <dd><p>Applies first fit algorithm, whereby path with lowest cost (shortest
 path) is looked at first when considering which route to select, then
 next etc. When route is considered, a wavelength (starting from lowest)
@@ -218,13 +218,13 @@ can consider assigning to each path
 
 <dl class="py method">
 <dt id="trafpy.manager.src.routers.rwa.RWA.get_action">
-<code class="sig-name descname">get_action</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">observation</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.get_action" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_action</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">observation</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/routers/rwa.html#RWA.get_action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.get_action" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets an action (route+channel or blocked) for DCN simulation</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="trafpy.manager.src.routers.rwa.RWA.get_path_edges">
-<code class="sig-name descname">get_path_edges</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.get_path_edges" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_path_edges</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/routers/rwa.html#RWA.get_path_edges"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.get_path_edges" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes a path and returns list of edges in the path</p>
 <p>Args:
 - path (list): path in which you want to find all edges</p>
@@ -234,7 +234,7 @@ can consider assigning to each path
 
 <dl class="py method">
 <dt id="trafpy.manager.src.routers.rwa.RWA.k_shortest_paths">
-<code class="sig-name descname">k_shortest_paths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">source</span></em>, <em class="sig-param"><span class="n">target</span></em>, <em class="sig-param"><span class="n">num_k</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">weight</span><span class="o">=</span><span class="default_value">'weight'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.k_shortest_paths" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">k_shortest_paths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">source</span></em>, <em class="sig-param"><span class="n">target</span></em>, <em class="sig-param"><span class="n">num_k</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">weight</span><span class="o">=</span><span class="default_value">'weight'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/routers/rwa.html#RWA.k_shortest_paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.k_shortest_paths" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses Yen’s algorithm to compute the k-shortest paths between a source
 and a target node. The shortest path is that with the lowest pathcost,
 defined by external path_cost() function. Paths are returned in order
@@ -251,7 +251,7 @@ finding ‘shortest’ paths</p>
 
 <dl class="py method">
 <dt id="trafpy.manager.src.routers.rwa.RWA.path_cost">
-<code class="sig-name descname">path_cost</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">weight</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.path_cost" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">path_cost</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">weight</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/routers/rwa.html#RWA.path_cost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.routers.rwa.RWA.path_cost" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates cost of path. If no weight specified, 1 unit of cost is 1
 link/edge in the path</p>
 <p>Args:
