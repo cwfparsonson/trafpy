@@ -567,11 +567,11 @@ Import ``trafpy.generator`` and the requried ``trafpy.manager`` objects::
 
     import trafpy.generator as tpg
     from trafpy.manager import Demand, RWA, SRPT, DCN
-    import config
+    from imports import config
 
 Where the ``config.py`` might be defined as
 
-.. literalinclude:: ../../config.py
+.. literalinclude:: imports/config.py
 
 Load your previously saved TrafPy demand data dictionary (see the TrafPy Generator
 section above)::

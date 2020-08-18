@@ -55,6 +55,9 @@ napoleon_use_param = True
 napoleon_use_rtype = True
 napoleon_type_aliases = None
 
+# set sphinx master doc for readthedocs to find (otherwise get contents.rst not found)
+master_doc = 'index'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
