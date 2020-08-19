@@ -85,4 +85,33 @@ use the traffic to test the performance of the *Shortest Remaining Processing Ti
     Average FCT: 24527.6 time units
     99th percentile FCT: 73821.64 time units
 
+See the `documentation's tutorial <https://trafpy.readthedocs.io/Tutorial.html>`
+for more information.
 
+
+Install
+-------
+
+Open Git Bash. Change the current working directory to the location where you want
+to clone this `GitHub <https://github.com/cwfparsonson/trafpy>`_ project, and run::
+
+    $ git clone https://github.com/cwfparsonson/trafpy
+
+In the project's root directory, run::
+
+    $ python setup.py install
+
+Then, still in the root directory, install the required packages with either pip::
+
+    $ pip install -r requirements/default.txt
+
+or conda::
+
+    $ conda install --file requirements/docs.txt
+
+
+You should then be able to import TrafPy into your Python script from any directory
+on your machine::
+
+    >>> import trafpy.generator as tpg
+    >>> from trafpy.manager import Demand, RWA, SRPT, DCN
