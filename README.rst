@@ -5,11 +5,11 @@ TrafPy is a Python package for the generation, management and standardisation of
 
 **Documentation**: https://trafpy.readthedocs.io/ 
 
-Simple Example
---------------
+Example
+-------
 Generate realistic flow-centric traffic demands for a data centre network and 
 use the traffic to test the performance of the *Shortest Remaining Processing Time*
-(SRPT) scheduling algorithm
+(SRPT) scheduling algorithm:
 
 .. code:: python
 
@@ -29,7 +29,7 @@ use the traffic to test the performance of the *Shortest Remaining Processing Ti
     node_dist = tpg.gen_multimodal_node_dist(eps=network.graph['endpoints'],
                                              num_skewed_nodes=1)
     flow_centric_demand_data = tpg.create_demand_data(num_demands=config.NUM_DEMANDS,
-                                                      eps=endpoints,
+                                                      eps=network.graph['endpoints'],
                                                       node_dist=node_dist,
                                                       flow_size_dist=flow_size_dist,
                                                       interarrival_time_dist=interarrival_time_dist)
@@ -60,6 +60,6 @@ use the traffic to test the performance of the *Shortest Remaining Processing Ti
                 break
 
     # analyse session
-    env.get_scheduling_session_summary(print_summary=True)
+    >>> env.get_scheduling_session_summary(print_summary=True)
 
 
