@@ -1,6 +1,7 @@
 Overview of TrafPy
 ==================
-TrafPy is a Python package for the generation and management of network traffic.
+TrafPy is a Python package for the generation, management and standardisation of 
+network traffic.
 
 TrafPy provides:
 

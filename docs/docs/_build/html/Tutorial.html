@@ -716,10 +716,11 @@ which itself is initialised with a TrafPy demand object, a scheduling agent, a r
 and a network object. TrafPy comes with pre-built versions of each of these, but
 has been designed such that users can write their own e.g. scheduler and benchmark
 it with <code class="docutils literal notranslate"><span class="pre">trafpy.manager</span></code> and network demands generated with <code class="docutils literal notranslate"><span class="pre">trafpy.generator</span></code>.</p>
-<p>Import <code class="docutils literal notranslate"><span class="pre">trafpy.generator</span></code> and the requried <code class="docutils literal notranslate"><span class="pre">trafpy.manager</span></code> objects:</p>
+<p>Import the <code class="docutils literal notranslate"><span class="pre">trafpy.generator</span></code> package and the requried objects from the
+<code class="docutils literal notranslate"><span class="pre">trafpy.manager</span></code> package:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
 <span class="kn">from</span> <span class="nn">trafpy.manager</span> <span class="kn">import</span> <span class="n">Demand</span><span class="p">,</span> <span class="n">RWA</span><span class="p">,</span> <span class="n">SRPT</span><span class="p">,</span> <span class="n">DCN</span>
-<span class="kn">import</span> <span class="nn">config</span>
+<span class="kn">from</span> <span class="nn">imports</span> <span class="kn">import</span> <span class="n">config</span>
 </pre></div>
 </div>
 <p>Where the <code class="docutils literal notranslate"><span class="pre">config.py</span></code> might be defined as</p>
@@ -728,16 +729,16 @@ it with <code class="docutils literal notranslate"><span class="pre">trafpy.mana
 <span class="n">NUM_K_PATHS</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">NUM_CHANNELS</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">NUM_DEMANDS</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="n">MIN_FLOW_SIZE</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># 1</span>
-<span class="n">MAX_FLOW_SIZE</span> <span class="o">=</span> <span class="mi">100</span> <span class="c1"># 100</span>
-<span class="n">MIN_NUM_OPS</span> <span class="o">=</span> <span class="mi">50</span> <span class="c1"># 50 10 10</span>
-<span class="n">MAX_NUM_OPS</span> <span class="o">=</span> <span class="mi">200</span> <span class="c1"># 200 7000 1000</span>
-<span class="n">C</span> <span class="o">=</span>  <span class="mf">1.5</span> <span class="c1"># 0.475 1.5</span>
+<span class="n">MIN_FLOW_SIZE</span> <span class="o">=</span> <span class="mi">1</span> 
+<span class="n">MAX_FLOW_SIZE</span> <span class="o">=</span> <span class="mi">100</span> 
+<span class="n">MIN_NUM_OPS</span> <span class="o">=</span> <span class="mi">50</span> 
+<span class="n">MAX_NUM_OPS</span> <span class="o">=</span> <span class="mi">200</span> 
+<span class="n">C</span> <span class="o">=</span>  <span class="mf">1.5</span> 
 <span class="n">MIN_INTERARRIVAL</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">MAX_INTERARRIVAL</span> <span class="o">=</span> <span class="mf">1e8</span>
-<span class="n">SLOT_SIZE</span> <span class="o">=</span> <span class="mi">10000</span> <span class="c1"># 0.2</span>
+<span class="n">SLOT_SIZE</span> <span class="o">=</span> <span class="mi">10000</span> 
 <span class="n">MAX_FLOWS</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="n">MAX_TIME</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># 0.4</span>
+<span class="n">MAX_TIME</span> <span class="o">=</span> <span class="kc">None</span> 
 <span class="n">ENDPOINT_LABEL</span> <span class="o">=</span> <span class="s1">&#39;server&#39;</span>
 <span class="n">ENDPOINT_LABELS</span> <span class="o">=</span> <span class="p">[</span><span class="n">ENDPOINT_LABEL</span><span class="o">+</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">ep</span><span class="p">)</span> <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
 <span class="n">PATH_FIGURES</span> <span class="o">=</span> <span class="s1">&#39;../figures/&#39;</span>
