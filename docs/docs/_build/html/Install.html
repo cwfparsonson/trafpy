@@ -162,16 +162,17 @@ to clone this <a class="reference external" href="https://github.com/cwfparsonso
 </pre></div>
 </div>
 <p>Then, still in the root directory, install the required packages with either pip:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install -r requirements.txt
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install -r requirements/default.txt
 </pre></div>
 </div>
 <p>or conda:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ conda install --file requirements.txt
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ conda install --file requirements/docs.txt
 </pre></div>
 </div>
 <p>You should then be able to import TrafPy into your Python script from any directory
 on your machine:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">trafpy.manager</span> <span class="kn">import</span> <span class="n">Demand</span><span class="p">,</span> <span class="n">RWA</span><span class="p">,</span> <span class="n">SRPT</span><span class="p">,</span> <span class="n">DCN</span>
 </pre></div>
 </div>
 </div>

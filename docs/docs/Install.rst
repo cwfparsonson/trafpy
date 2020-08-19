@@ -12,13 +12,15 @@ In the project's root directory, run::
 
 Then, still in the root directory, install the required packages with either pip::
 
-    $ pip install -r requirements.txt
+    $ pip install -r requirements/default.txt
 
 or conda::
 
-    $ conda install --file requirements.txt
+    $ conda install --file requirements/docs.txt
 
 
 You should then be able to import TrafPy into your Python script from any directory
 on your machine::
+
     >>> import trafpy.generator as tpg
+    >>> from trafpy.manager import Demand, RWA, SRPT, DCN
