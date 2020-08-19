@@ -16,7 +16,7 @@ Then, still in the root directory, install the required packages with either pip
 
 or conda::
 
-    $ conda install --file requirements/docs.txt
+    $ conda install --file requirements/default.txt
 
 
 You should then be able to import TrafPy into your Python script from any directory
