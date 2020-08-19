@@ -61,5 +61,26 @@ use the traffic to test the performance of the *Shortest Remaining Processing Ti
 
     # analyse session
     >>> env.get_scheduling_session_summary(print_summary=True)
+    -=-=-=-=-=-=-= Scheduling Session Ended -=-=-=-=-=-=-=
+    SUMMARY:
+    ~* General Info *~
+    Total session duration: 80000.0 time units
+    Total number of generated demands (jobs or flows): 10
+    Total info arrived: 61316.0 info units
+    Load: 1.8257503573130063 info unit demands arrived per unit time (from first to last flow arriving)
+    Total info transported: 61316.0 info units
+    Throughput: 0.76645 info units transported per unit time
+
+    ~* Flow Info *~
+    Total number generated flows (src!=dst,dependency_type=='data_dep'): 10
+    Time first flow arrived: 0.0 time units
+    Time last flow arrived: 33584.0 time units
+    Time first flow completed: 10000.0 time units
+    Time last flow completed: 80000.0 time units
+    Total number of demands that arrived and became flows: 10
+    Total number of flows that were completed: 10
+    Total number of dropped flows + flows in queues at end of session: 0
+    Average FCT: 24527.6 time units
+    99th percentile FCT: 73821.64 time units
 
 
