@@ -111,7 +111,9 @@ or conda::
 
 
 You should then be able to import TrafPy into your Python script from any directory
-on your machine::
+on your machine
 
-    >>> import trafpy.generator as tpg
-    >>> from trafpy.manager import Demand, RWA, SRPT, DCN
+.. code:: python
+
+    import trafpy.generator as tpg
+    from trafpy.manager import Demand, RWA, SRPT, DCN
