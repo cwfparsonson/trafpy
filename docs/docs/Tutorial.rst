@@ -563,7 +563,8 @@ and a network object. TrafPy comes with pre-built versions of each of these, but
 has been designed such that users can write their own e.g. scheduler and benchmark
 it with ``trafpy.manager`` and network demands generated with ``trafpy.generator``.
 
-Import ``trafpy.generator`` and the requried ``trafpy.manager`` objects::
+Import the ``trafpy.generator`` package and the requried objects from the
+``trafpy.manager`` package::
 
     import trafpy.generator as tpg
     from trafpy.manager import Demand, RWA, SRPT, DCN
