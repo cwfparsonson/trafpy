@@ -62,6 +62,7 @@ use the traffic to test the performance of the *Shortest Remaining Processing Ti
     >>> env.get_scheduling_session_summary(print_summary=True)
 
 ::
+
     -=-=-=-=-=-=-= Scheduling Session Ended -=-=-=-=-=-=-=
     SUMMARY:
     ~* General Info *~
