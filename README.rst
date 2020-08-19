@@ -12,5 +12,7 @@ use the traffic to test the performance of the *Shortest Remaining Processing Ti
 (SRPT) scheduling algorithm.
 
 .. literalinclude:: docs/docs/imports/readme_example.py
+    :language: python
+    :linenos:
 
 
