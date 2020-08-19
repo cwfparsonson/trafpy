@@ -203,7 +203,7 @@ Common flow demand characteristics include:
 - source-destination node distribution.
 
 Using the value and node distribution generation function you've seen so far,
-you can use TrafPy to generate realistics flow demands. Later in this tutorial,
+you can use TrafPy to generate realistic flow demands. Later in this tutorial,
 you will see how to use TrafPy's Jupyter Notebook tool to visually shape your
 distributions such that they match real data/literature distributions. For now,
 assume that you already know the distribution parameters you want. Consider
@@ -265,7 +265,7 @@ TrafPy flow-centric demand data dictionaries are organised as::
         'index': [index_flow_0, ..., index_flow_1]
     }
 
-Where ``'establish'`` key's values are is binary values indicating whether the demand is a connection
+Where ``'establish'`` keys' values are binary values indicating whether the demand is a connection
 establishment request (1) or a take-down request (0) for a given event. Specifying 
 take-down requests is optional in TrafPy. If take-downs have been speified, then
 there will be ``2 * num_demands`` events in the demand data dictionary, otherwise
@@ -281,8 +281,8 @@ search query, generating a user's Facebook feed, performing a TensorFlow machine
 learning task (e.g. backpropagation), etc.
 
 In this context, an op is a data process ran on some machine where the result
-is specified by a pre-determined rule/programme. Each op requires >= 0 tensors/
-data objects as input, and produces >= tensors as output.
+is specified by a pre-determined rule/programme. Each op requires >= 0 tensors/data 
+objects as input, and produces >= tensors as output.
 
 In a job computation graph, if an op v requires >= 1 input(s) produced by op u,
 the ops will be connected by a directed edge, [u, v], representing the **dependency**
@@ -291,8 +291,8 @@ size, source machine, destination machine, etc.).
 
 In a data centre, when a job arrives, each op in the job is placed onto some
 machine to execute the op. These ops might be placed all on one machine or, as
-is often the case for many applications, spread out across machines according
-to e.g. some heuristic. The **network** is used to pass the tensors around
+is often the case for many applications, spread out across different machines in the network
+according to e.g. some heuristic. The **network** is used to pass the tensors around
 between the machines executing the ops. These tensors/data objects flowing
 between ops are **flows**. The flows of a given job might flow through the network
 at the same time or at different times depending on e.g. scheduling decisions, constraints,
@@ -389,9 +389,9 @@ the embedded demand data. You can visualise the job computation graph(s):
 Visually Shaping TrafPy Distributions
 -------------------------------------
 Up until now you have assumed you already knew all the parameters of each distribution
-we have generated with TrafPy. But what if you want to replicate a distribution
-which has either not been produced in TrafPy before or has not provided open-access
-data? TrafPy has a useful interactive Jupyter-Notebook which integrates with
+you have generated with TrafPy. But what if you want to replicate a distribution
+which has either not been produced in TrafPy before or has not had open-access
+data provided? TrafPy has a useful interactive Jupyter-Notebook which integrates with
 all of the above functions, allowing distributions to be visually shaped. Crucially,
 once a distribution has been shaped, it can be easily replicated with TrafPy so long
 as the set of parameters used to shape the distribution are shared.
@@ -406,13 +406,13 @@ sizes followed a distribution with minimum 8, maximum 33,000, mean 6,450, skewne
 The TrafPy Jupyter Notebook tool enables distributions to be tuned visually
 and analytically to reproduce literature distributions. Distribution plots are 
 live-updated as slide bars, text boxes etc. are adjusted, with analytical characteristics
-of the generated distributions be output to aid accuracy. 
+of the generated distributions continuously output to aid accuracy. 
 
 Navigate to the directory where you cloned TrafPy and launch `the Jupyter Notebook <https://github.com/cwfparsonson/trafpy/blob/master/main.ipynb>`_::
 
     $ jupyter-notebook main.ipynb
 
-The Notebook has a few main sections with markup descriptions for each
+The Notebook has a few main sections with markdown descriptions for each:
 
 - Import ``trafpy.generator``
 - Set global variables
@@ -432,7 +432,7 @@ of how to use the interactive distribution-shaping cells.
 .. note::
     To run a Jupyter Notebook cell, click on the cell and click 'Run' on the top ribbon.
     If you are running a cell with a TrafPy interactive graph, some configurable parameters
-    will appear. Adjust these parameters and click the 'Run Interact' button to update 
+    will appear. Adjust these parameters and click the ``Run Interact`` button to update 
     your plot (and the returned values).
 
 .. note::
@@ -473,10 +473,10 @@ Generate Random Variables from Arbitrary 'Multimodal' Distribution
 Use this section to shape the previously described 'multimodal' value distribution
 generated by :func:`trafpy.gen_multimodal_val_dist`.
 
-There are a few steps to generating a TrafPy distribution.
+There are a few steps to generating a multimodal distribution with TrafPy:
 
-1. Define the random variables of your multimodal distribution
-   Set the minimum and maximum possible values, the number of modes, the name
+1. Define the random variables of your multimodal distribution. Set the minimum 
+   and maximum possible values, the number of modes, the name
    of your random variable, the x-axis limits, what to round the values to, and
    how many decimal places to include. Run the 1st cell.
 
@@ -484,11 +484,11 @@ There are a few steps to generating a TrafPy distribution.
     :align: center
 
 2. Run the 2nd cell to launch the visualisation tool. A set of tuneable parameters
-   for each mode (where you specified the number of modes in the previous cell)
-   will appear. Adjust the parameters and click 'Run Interact' until you are 
-   happy with the shape of each mode. Use 'Location' for the mode position, 
-   'Skew' for the mode skew, 'Scale' for the mode standard deviation, 'Samples'
-   for the height of the mode's probability distribution, and 'bins' for how many
+   for each mode (where you specified ``num_nodes`` in the previous cell)
+   will appear. Adjust the parameters and click ``Run Interact`` until you are 
+   happy with the shape of each mode. Use ``Location`` for the mode position, 
+   ``Skew`` for the mode skew, ``Scale`` for the mode standard deviation, ``Samples``
+   for the height of the mode's probability distribution, and ``bins`` for how many
    bins to plot (default of 0 automatically chooses number of bins).
 
 .. image:: images/generate_random_variables_from_arbitrary_multimodal_distribution_2_1.png
