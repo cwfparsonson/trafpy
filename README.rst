@@ -11,7 +11,7 @@ Generate realistic flow-centric traffic demands for a data centre network and
 use the traffic to test the performance of the *Shortest Remaining Processing Time*
 (SRPT) scheduling algorithm.
 
-.. literalinclude:: docs/docs/imports/readme_example.py
+.. literalinclude:: readme_example.py
     :language: python
     :linenos:
 
