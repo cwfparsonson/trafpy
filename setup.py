@@ -5,7 +5,7 @@ setuptools.setup(
     author="Christopher W. F. Parsonson",
     author_email="cwfparsonson@gmail.com",
     description="Network Traffic Generator",
-    #url="https://github.com/zawaki/dgl_gcn",
+    url="https://github.com/cwfparsonson/trafpy",
     packages=setuptools.find_packages(),
-    python_requires='>=3.6',
+    python_requires='>=3.7',
 )

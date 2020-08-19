@@ -1,3 +1,4 @@
+README.rst
 setup.py
 trafpy/__init__.py
 trafpy.egg-info/PKG-INFO
