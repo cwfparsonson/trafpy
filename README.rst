@@ -59,7 +59,8 @@ use the traffic to test the performance of the *Shortest Remaining Processing Ti
                 print('Episode finished.')
                 break
 
-    # analyse session
+.. code:: python
+
     >>> env.get_scheduling_session_summary(print_summary=True)
     -=-=-=-=-=-=-= Scheduling Session Ended -=-=-=-=-=-=-=
     SUMMARY:
