@@ -85,7 +85,7 @@ use the traffic to test the performance of the *Shortest Remaining Processing Ti
     Average FCT: 24527.6 time units
     99th percentile FCT: 73821.64 time units
 
-See the `documentation's tutorial <https://trafpy.readthedocs.io/Tutorial.html>`
+See the `documentation's tutorial <https://trafpy.readthedocs.io/en/latest/Tutorial.html>`_
 for more information.
 
 
