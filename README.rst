@@ -13,7 +13,7 @@ use the traffic to test the performance of the *Shortest Remaining Processing Ti
 
 
 .. code-block:: python
-    import trafpy.generator as tpg
+   import trafpy.generator as tpg
     from trafpy.manager import Demand, RWA, SRPT, DCN
     import config
 
