@@ -10,8 +10,8 @@ Simple Example
 Generate realistic flow-centric traffic demands for a data centre network and 
 use the traffic to test the performance of the *Shortest Remaining Processing Time*
 (SRPT) scheduling algorithm
-.. code:: python
 
+.. code:: python
 
     import trafpy.generator as tpg
     from trafpy.manager import Demand, RWA, SRPT, DCN
