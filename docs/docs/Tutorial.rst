@@ -76,10 +76,7 @@ the *Weibull distribution*
 
     >>> prob_dist, rand_vars, fig = tpg.gen_named_val_dist(dist='weibull', params={'_alpha': 1.5, '_lambda': 1.0}, return_data=True, show_fig=True, xlim=[0,3.5])
 
-.. image:: images/weibull_dist_param_composite_1.png
-    :align: center
-
-.. image:: images/weibull_dist_param_composite_2.png
+.. image:: images/weibull_dist_param_composite.png
     :align: center
 
 and the *Pareto distribution*
