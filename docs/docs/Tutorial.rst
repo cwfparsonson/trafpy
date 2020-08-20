@@ -58,11 +58,17 @@ Named distributions supported by TrafPy include the *exponential distribution*
 
     >>> prob_dist, rand_vars, fig = tpg.gen_named_val_dist(dist='exponential', params={'_beta': 1.0}, return_data=True, show_fig=True, xlim=[0,10])
 
+.. image:: images/exponential_dist_param_composite.png
+    :align: center
+
 the *log-normal distribution*
 
 .. nbplot::
 
     >>> prob_dist, rand_vars, fig = tpg.gen_named_val_dist(dist='lognormal', params={'_mu': 0, '_sigma': 1.0}, return_data=True, show_fig=True, xlim=[0,5])
+
+.. image:: images/lognormal_dist_param_composite.png
+    :align: center
 
 the *Weibull distribution*
 
@@ -70,11 +76,20 @@ the *Weibull distribution*
 
     >>> prob_dist, rand_vars, fig = tpg.gen_named_val_dist(dist='weibull', params={'_alpha': 1.5, '_lambda': 1.0}, return_data=True, show_fig=True, xlim=[0,3.5])
 
+.. image:: images/weibull_dist_param_composite_1.png
+    :align: center
+
+.. image:: images/weibull_dist_param_composite_2.png
+    :align: center
+
 and the *Pareto distribution*
 
 .. nbplot::
 
     >>> prob_dist, rand_vars, fig = tpg.gen_named_val_dist(dist='pareto', params={'_alpha': 3.0, '_mode': 1.0}, return_data=True, show_fig=True, xlim=[0,5])
+
+.. image:: images/pareto_dist_param_composite.png
+    :align: center
 
 However, some demand characteristics cannot be accurately described by these named
 distributions. Instead, they are described by arbitrary **multimodal distributions**, 
