@@ -6,21 +6,21 @@ Development Workflow
 
 1. If you are a first-time contributor:
 
-   * Go to `https://github.com/networkx/networkx
-     <https://github.com/networkx/networkx>`_ and click the
+   * Go to `https://github.com/cwfparsonson/trafpy
+     <https://github.com/cwfparsonson/trafpy>`_ and click the
      "fork" button to create your own copy of the project.
 
    * Clone the project to your local computer::
 
-      git clone git@github.com:your-username/networkx.git
+      git clone git@github.com:your-username/trafpy.git
 
-   * Navigate to the folder networkx and add the upstream repository::
+   * Navigate to the folder trafpy and add the upstream repository::
 
-      git remote add upstream git@github.com:networkx/networkx.git
+      git remote add upstream git@github.com:cwfparsonson/trafpy.git
 
    * Now, you have remote repositories named:
 
-     - ``upstream``, which refers to the ``networkx`` repository
+     - ``upstream``, which refers to the ``trafpy`` repository
      - ``origin``, which refers to your personal fork
 
    * Next, you need to set up your build environment.
@@ -30,46 +30,45 @@ Development Workflow
      
        ::
      
-         # Create a virtualenv named ``networkx-dev`` that lives in the directory of
+         # Create a virtualenv named ``trafpy-dev`` that lives in the directory of
          # the same name
-         python -m venv networkx-dev
+         python -m venv trafpy-dev
          # Activate it
-         source networkx-dev/bin/activate
-         # Install main development and runtime dependencies of networkx
-         pip install -r <(cat requirements/{default,developer,doc,optional,test}.txt)
+         source trafpy-dev/bin/activate
+         # Install main development and runtime dependencies of trafpy 
+         pip install -r <(cat requirements/{default,docs}.txt)
          #
-         # (Optional) Install pygraphviz, pydot, and gdal packages
          # These packages require that you have your system properly configured
          # and what that involves differs on various systems.
-         # pip install -r requirements/extras.txt
          #
-         # Build and install networkx from source
-         pip install -e .
-         # Test your installation
-         PYTHONPATH=. pytest networkx
+         # In the trafpy root directory folder, run
+         python setup.py develop
+         # Test your installation in a .py file
+         import trafpy.generator as tpg
+         from trafpy.manager import Demand, DCN, SRPT, RWA
+         
      
      * ``conda`` (Anaconda or Miniconda)
     
        ::
  
-         # Create a conda environment named ``networkx-dev``
-         conda create --name networkx-dev
+         # Create a conda environment named ``trafpy-dev``
+         conda create --name trafpy-dev
          # Activate it
-         conda activate networkx-dev
-         # Install main development and runtime dependencies of networkx
-         conda install -c conda-forge `for i in requirements/{default,developer,doc,optional,test}.txt; do echo -n " --file $i "; done`
+         conda activate trafpy-dev
+         # Install main development and runtime dependencies of trafpy 
+         conda install -c conda-forge `for i in requirements/{default,doc}.txt; do echo -n " --file $i "; done`
          #
-         # (Optional) Install pygraphviz, pydot, and gdal packages
          # These packages require that you have your system properly configured
          # and what that involves differs on various systems.
-         # pip install -r requirements/extras.txt
          #
-         # Install networkx from source
-         pip install -e . --no-deps
-         # Test your installation
-         PYTHONPATH=. pytest networkx
+         # In the trafpy root directory folder, run
+         python setup.py develop
+         # Test your installation in a .py file
+         import trafpy.generator as tpg
+         from trafpy.manager import Demand, DCN, SRPT, RWA
 
-   * Finally, we recommend you use a pre-commit hook, which runs black when
+   * Finally, it is recommended you use a pre-commit hook, which runs black when
      you type ``git commit``::
 
        pre-commit install
@@ -89,18 +88,7 @@ Development Workflow
 
    * Commit locally as you progress (``git add`` and ``git commit``)
 
-3. Test your contribution:
-
-   * Run the test suite locally (see `Testing`_ for details)::
-
-      PYTHONPATH=. pytest networkx
-
-   * Running the tests locally *before* submitting a pull request helps catch
-     problems early and reduces the load on the continuous integration
-     system.
-
-
-4. Submit your contribution:
+3. Submit your contribution:
 
    * Push your changes back to your fork on GitHub::
 
@@ -109,39 +97,16 @@ Development Workflow
    * Go to GitHub. The new branch will show up with a green Pull Request
      button---click it.
 
-   * If you want, post on the `mailing list
-     <http://groups.google.com/group/networkx-discuss>`_ to explain your changes or
-     to ask for review.
+   * If you want, email cwfparsonson@gmail.com to explain your changes or to ask 
+     for review.
 
-For a more detailed discussion, read these :doc:`detailed documents
-<gitwash/index>` on how to use Git with ``networkx``
-(`<https://networkx.github.io/documentation/latest/developer/gitwash/index.html>`_).
+4. Review process:
 
-5. Review process:
-
-   * Reviewers (the other developers and interested community members) will
-     write inline and/or general comments on your Pull Request (PR) to help
-     you improve its implementation, documentation, and style.  Every single
-     developer working on the project has their code reviewed, and we've come
-     to see it as friendly conversation from which we all learn and the
-     overall code quality benefits.  Therefore, please don't let the review
-     discourage you from contributing: its only aim is to improve the quality
-     of project, not to criticize (we are, after all, very grateful for the
-     time you're donating!).
+   * Your pull request will be reviewed.
 
    * To update your pull request, make your changes on your local repository
      and commit. As soon as those changes are pushed up (to the same branch as
      before) the pull request will update automatically.
-
-   * `Travis-CI <https://travis-ci.org/>`_, a continuous integration service,
-     is triggered after each Pull Request update to build the code and run unit
-     tests of your branch. The Travis tests must pass before your PR can be merged.
-     If Travis fails, you can find out why by clicking on the "failed" icon (red
-     cross) and inspecting the build and test log.
-
-   * `AppVeyor <http://ci.appveyor.com>`_, is another continuous integration
-     service that we use.  You will also need to make sure that the AppVeyor
-     tests pass.
 
    .. note::
 
@@ -150,7 +115,7 @@ For a more detailed discussion, read these :doc:`detailed documents
       issue number 1480, you could use the phrase "Fixes #1480" in the PR
       description or commit message.
 
-6. Document changes
+5. Document changes
 
    If your change introduces any API modifications, please update
    ``doc/release/release_dev.rst``.
@@ -209,11 +174,6 @@ Once you've fixed all merge conflicts, do::
 
    git commit
 
-.. note::
-
-   Advanced Git users are encouraged to `rebase instead of merge
-   <https://networkx.github.io/documentation/stable/developer/gitwash/development_workflow.html#rebase-on-trunk>`__,
-   but we squash and merge most PRs either way.
 
 
 
