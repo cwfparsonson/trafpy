@@ -6,7 +6,7 @@ network traffic.
 TrafPy provides:
 
 - a pre-built **interactive Jupyter Notebook** tool for visually building distributions and 
-  data which acccurately mimic traffic characteristics of real networks (e.g. data centres);
+  data which accurately mimic traffic characteristics of real networks (e.g. data centres);
 - a **generator** package for generating network traffic which can be flexibly integrated 
   into custom Python projects; and
 - a **manager** package which can be used to simulate network management (scheduling,
