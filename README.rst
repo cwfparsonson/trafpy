@@ -130,7 +130,7 @@ see TrafPy's `contributing guide <https://trafpy.readthedocs.io/en/latest/Contri
 
 License
 -------
-
+TrafPy uses Apache License 2.0.
 
 
 
