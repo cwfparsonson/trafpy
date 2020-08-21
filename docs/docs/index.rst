@@ -33,11 +33,6 @@ of the Apache License 2.0. Contributions are welcome. Check out the `guidelines 
 on how to contribute.
 
 
-TrafPy will one day be open-source. For now, it is a private repo found on
-`GitHub <https://github.com/cwfparsonson/trafpy>`_. Contact cwfparsonson@gmail.com
-to request access.
-
-
 
 
 
