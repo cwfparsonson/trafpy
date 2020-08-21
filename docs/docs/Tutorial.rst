@@ -214,7 +214,7 @@ Common flow demand characteristics include:
 - interarrival time; and
 - source-destination node distribution.
 
-Using the value and node distribution generation function you've seen so far,
+Using the value and node distribution generation functions you've seen so far,
 you can use TrafPy to generate realistic flow demands. Later in this tutorial,
 you will see how to use TrafPy's Jupyter Notebook tool to visually shape your
 distributions such that they match real data/literature distributions. For now,
