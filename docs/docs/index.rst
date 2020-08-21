@@ -45,6 +45,7 @@ Documentation
 
    Install
    Tutorial
+   Contribute
    License
    Citing
 
