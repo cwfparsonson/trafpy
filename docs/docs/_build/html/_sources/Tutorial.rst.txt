@@ -390,12 +390,16 @@ TrafPy job-centric demand data dictionaries are organised as::
     }
 
 Where the ``'job'`` key contains the list of job computation graphs with all
-the embedded demand data. You can visualise the job computation graph(s):
-
-.. nbplot::
+the embedded demand data. You can visualise the job computation graph(s)::
 
     >>> jobs = list(job_centric_demand_data['job'][0:2])
     >>> fig = tpg.draw_job_graphs(job_graphs=jobs,show_fig=True) 
+
+.. image:: images/job_graph_1.png
+    :align: center
+
+.. image:: images/job_graph_2.png
+    :align: center
 
 
 Visually Shaping TrafPy Distributions

@@ -117,3 +117,23 @@ on your machine
 
     import trafpy.generator as tpg
     from trafpy.manager import Demand, RWA, SRPT, DCN
+
+
+Contributing
+------------
+File an issue `here <https://github.com/cwfparsonson/trafpy/issues>`_  to report 
+any bugs or new suggestions. Or, even better, for the repository on `GitHub <https://github.com/cwfparsonson/trafpy>`_ 
+and create a pull request. If you want help making
+a pull request or are new to git, ask on the contributing issue you raise and/or
+see TrafPy's `contributing guide <https://docs.dgl.ai/contribute.html>`_.
+
+
+License
+-------
+
+
+
+
+
+
+

@@ -562,10 +562,12 @@ returned neatly into a single dictionary</p>
 </div>
 <p>Where the <code class="docutils literal notranslate"><span class="pre">'job'</span></code> key contains the list of job computation graphs with all
 the embedded demand data. You can visualise the job computation graph(s):</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">jobs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">job_centric_demand_data</span><span class="p">[</span><span class="s1">&#39;job&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">jobs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">job_centric_demand_data</span><span class="p">[</span><span class="s1">&#39;job&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">draw_job_graphs</span><span class="p">(</span><span class="n">job_graphs</span><span class="o">=</span><span class="n">jobs</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
+<img alt="_images/job_graph_1.png" class="align-center" src="_images/job_graph_1.png" />
+<img alt="_images/job_graph_2.png" class="align-center" src="_images/job_graph_2.png" />
 </div>
 </div>
 <div class="section" id="visually-shaping-trafpy-distributions">
