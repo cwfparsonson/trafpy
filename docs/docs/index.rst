@@ -30,7 +30,7 @@ Free Software
 =============
 TrafPy is free software; you can redistribute it and/or modify it under the terms
 of the Apache License 2.0. Contributions are welcome. Check out the `guidelines <https://trafpy.readthedocs.io/en/latest/Contribute.html>`_
-on how to contribute.
+on how to contribute. Contact cwfparsonson@gmail.com for questions.
 
 
 
