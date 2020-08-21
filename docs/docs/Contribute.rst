@@ -1,6 +1,9 @@
 Contribute
 ==========
 
+This guide will help you contribute to e.g. fix a bug or add a new feature for
+TrafPy.
+
 Development Workflow
 --------------------
 
