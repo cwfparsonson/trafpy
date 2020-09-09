@@ -4,13 +4,15 @@ from trafpy.generator.src import jobcentric, flowcentric
 from trafpy.generator.src import tools
 
 import numpy as np
+import time
 
 
-def create_demand_data(num_demands,
-                       eps,
+def create_demand_data(eps,
                        node_dist,
                        flow_size_dist,
                        interarrival_time_dist,
+                       num_demands=None,
+                       network_load_config=None,
                        duration_time_dist=None,
                        num_ops_dist=None,
                        c=None,
@@ -23,7 +25,6 @@ def create_demand_data(num_demands,
     Otherwise, return job-centric demand data.
 
     Args:
-        num_demands (int): Number of demands to generate.
         eps (list): List of network endpoints.
         node_dist (numpy array): 2d matrix of source-destination probabilities
             of occurring
@@ -31,6 +32,18 @@ def create_demand_data(num_demands,
             flow size value-probability pairs. 
         interarrival_time_dist (dict): Probability distribution whose key-value pairs are 
             interarrival time value-probability pairs. 
+        num_demands (int): Number of demands to generate. If None, must specify
+            network_load_config
+        network_load_config (dict): Dict of form {'network_rate_capacity': <int/float>, 'target_load_fraction': <float>, 'disable_timeouts': <bool>},
+            where network_rate_capacity is the maximum rate (in e.g. Gbps) at which
+            information can be reliably transmitted over the communication network
+            which the demand data will be inserted into, and where target_load_fraction
+            is the fraction of the network rate capacity being requested by the demands
+            (e.g. target_load_fraction=0.75 would generate demands which request
+            a load that is 75% of the network rate capacity from the first to 
+            the last demand arriving). disable_timeouts defines whether or not 
+            to stop looping when trying to meet specified network load.
+            If network_load_config is None, must specify num_demands
         duration_time_dist (dict): Probability distribution whose key-value pairs are 
             duration time value-probability pairs. If specified, half events
             returned will be 'take-down' events (establish==0). If left as None,
@@ -58,6 +71,16 @@ def create_demand_data(num_demands,
         demand data depending on the args given to the function).
 
     """
+    # check num demands and load config 
+    if num_demands is None and network_load_config is None:
+        raise Exception('Must specify either num_demands or network_load_config.')
+    if num_demands is None:
+        assert network_load_config is not None, \
+            'Must define network_load_config if leaving num_demands as None.'
+    if network_load_config is not None:
+        assert num_demands is None, \
+            'Cannot specify num_demands if network_load_config is not None.'
+
     # check if provided dists have tuple with fig as second element
     if type(node_dist) == tuple:
         node_dist = node_dist[0]
@@ -100,6 +123,12 @@ def create_demand_data(num_demands,
     assert matrix_sum == 1, \
         'demand distribution matrix must sum to 1, but is {}'.format(matrix_sum)
     
+
+    if network_load_config is not None:
+        # init a guess for number of demands needed to meet desired load
+        num_demands = 1000
+
+
     if job_centric:
         demand_data = jobcentric.create_job_centric_demand_data(num_demands=num_demands,
                                                                 eps=eps,
@@ -119,6 +148,40 @@ def create_demand_data(num_demands,
                                                                   interarrival_time_dist=interarrival_time_dist,
                                                                   duration_time_dist=duration_time_dist,
                                                                   print_data=print_data)
+        if network_load_config is not None:
+            load_rate = flowcentric.get_flow_centric_demand_data_load_rate(demand_data)
+            load_fraction = load_rate / network_load_config['network_rate_capacity']
+            num_loops = 0
+            while load_fraction < network_load_config['target_load_fraction']:
+                # increase number of demands to try increase loads
+                num_demands *= 2
+                demand_data = flowcentric.create_flow_centric_demand_data(num_demands=num_demands,
+                                                                          eps=eps,
+                                                                          node_dist=node_dist,
+                                                                          flow_size_dist=flow_size_dist,
+                                                                          interarrival_time_dist=interarrival_time_dist,
+                                                                          duration_time_dist=duration_time_dist,
+                                                                          print_data=print_data)
+                load_rate = flowcentric.get_flow_centric_demand_data_load_rate(demand_data)
+                load_fraction = load_rate / network_load_config['network_rate_capacity']
+                num_loops += 1
+                if print_data:
+                    print('Reached load of {} (target load {}) after {} loops.'.format(load_fraction, network_load_config['target_load_fraction'], num_loops))
+                if network_load_config['disable_timeouts']:
+                    # keep running loop to infinity
+                    if num_loops % 10 == 0:
+                        if print_data:
+                            print('Warning: Have disabled timeouts. Ran {} loops to try to reach {} network load (reached {} load so far). Set network_load_config[\'disable_timeouts\']=True if desired. Disable this warning by setting print_data=False when calling create_demand_data.'.format(num_loops, network_load_config['target_load_fraction'], load_fraction))
+                else:
+                    if num_loops > 15:
+                        raise Exception('Time out trying to reach requested network load fraction (reached {} but requested {}). Consider adjusting demand data parameters (e.g. increase flow size, decrease interarrival time, etc.), decreasing target_load_fraction, or decreasing network_rate_capacity. Alternatively, to disable timeouts, set network_load_config[\'disable_timeouts\'] = True}.'.format(load_fraction, network_load_config['target_load_fraction']))
+
+            # remove demands to get load fraction <= target load fraction
+            demand_data = flowcentric.set_flow_centric_demand_data_network_load(demand_data, 
+                                                                                network_rate_capacity=network_load_config['network_rate_capacity'],
+                                                                                target_load_fraction=network_load_config['target_load_fraction'],
+                                                                                print_data=print_data)
+
 
     if path_to_save is not None:
         tools.pickle_data(path_to_save, demand_data)
