@@ -33,36 +33,36 @@ class DCN:
 
 
 
-    def get_fat_tree_positions(self, net, width_scale=500, height_scale=10):
-        pos = {}
+    # def get_fat_tree_positions(self, net, width_scale=500, height_scale=10):
+        # pos = {}
 
-        node_type_dict = self.get_node_type_dict(net, net.graph['node_labels'])
-        node_types = list(node_type_dict.keys())
+        # node_type_dict = self.get_node_type_dict(net, net.graph['node_labels'])
+        # node_types = list(node_type_dict.keys())
         
-        heights = {} # dict for heigh separation between fat tree layers
-        widths = {} # dict for width separation between nodes within layers
-        h = iter([1, 2, 3, 4]) # server, edge, agg, core heights
-        for node_type in node_types: 
-            heights[node_type] = next(h)
-            widths[node_type] = 1/(len(node_type_dict[node_type])+1)
-            idx = 0
-            for node in node_type_dict[node_type]:
-                pos[node] = ((idx+1)*widths[node_type]*width_scale,heights[node_type]*height_scale)
-                idx += 1
+        # heights = {} # dict for heigh separation between fat tree layers
+        # widths = {} # dict for width separation between nodes within layers
+        # h = iter([1, 2, 3, 4]) # server, edge, agg, core heights
+        # for node_type in node_types: 
+            # heights[node_type] = next(h)
+            # widths[node_type] = 1/(len(node_type_dict[node_type])+1)
+            # idx = 0
+            # for node in node_type_dict[node_type]:
+                # pos[node] = ((idx+1)*widths[node_type]*width_scale,heights[node_type]*height_scale)
+                # idx += 1
 
-        return pos
+        # return pos
         
 
 
-    def init_network_node_positions(self, net):
-        if net.graph['topology_type'] == 'fat_tree':
-            pos = self.get_fat_tree_positions(net)
+    # def init_network_node_positions(self, net):
+        # if net.graph['topology_type'] == 'fat_tree':
+            # pos = self.get_fat_tree_positions(net)
 
 
-        else:
-            pos = nx.nx_agraph.graphviz_layout(net, prog='neato')
+        # else:
+            # pos = nx.nx_agraph.graphviz_layout(net, prog='neato')
         
-        return pos
+        # return pos
 
     def reset(self, pickled_demand_path=None, return_obs=True):
         '''
@@ -80,7 +80,7 @@ class DCN:
 
         self.num_endpoints = int(len(self.network.graph['endpoints']))
 
-        self.net_node_positions = self.init_network_node_positions(copy.deepcopy(self.network))
+        self.net_node_positions = networks.init_network_node_positions(copy.deepcopy(self.network))
         self.animation_images = []
 
         self.action = {'chosen_flows': []} # init
@@ -648,24 +648,24 @@ class DCN:
         return num_channels_used, num_channels
 
 
-    def get_node_type_dict(self, network, node_types=[]):
-        '''
-        Gets dict where keys are node types and values are list of nodes for
-        each node type in graph
-        '''
-        network_nodes = []
-        for network_node in network.nodes:
-            network_nodes.append(network_node)
-        network_nodes_dict = {node_type: [] for node_type in node_types}
-        for n in network_nodes:
-            for node_type in node_types:
-                if node_type in n:
-                    network_nodes_dict[node_type].append(n)
-                else:
-                    # not this node type
-                    pass
+    # def get_node_type_dict(self, network, node_types=[]):
+        # '''
+        # Gets dict where keys are node types and values are list of nodes for
+        # each node type in graph
+        # '''
+        # network_nodes = []
+        # for network_node in network.nodes:
+            # network_nodes.append(network_node)
+        # network_nodes_dict = {node_type: [] for node_type in node_types}
+        # for n in network_nodes:
+            # for node_type in node_types:
+                # if node_type in n:
+                    # network_nodes_dict[node_type].append(n)
+                # else:
+                    # # not this node type
+                    # pass
         
-        return network_nodes_dict
+        # return network_nodes_dict
 
 
 
@@ -744,7 +744,7 @@ class DCN:
                 sys.exit('Link type not recognised.')
 
         # network nodes
-        node_colours = iter(['#36a0c7', '#e8b017', '#6115a3', '#160e63']) # server, edge, agg, core
+        node_colours = iter(['#25c44d', '#36a0c7', '#e8b017', '#6115a3', '#160e63']) # server, rack, edge, agg, core
         for node_type in self.network.graph['node_labels']:
             nx.draw_networkx_nodes(network, 
                                    pos, 
