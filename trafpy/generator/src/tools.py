@@ -18,7 +18,7 @@ def get_network_params(eps):
     node_to_index = {node: index for node, index in iterables}
     iterables = zip(node_indices, eps)
     index_to_node = {index: node for index, node in iterables}
-    
+   
     return num_nodes, num_pairs, node_to_index, index_to_node
 
 
