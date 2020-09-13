@@ -4,6 +4,7 @@ from trafpy.generator.src import tools
 import copy
 import networkx as nx
 import matplotlib.pyplot as plt
+import json
 
 
 def gen_arbitrary_network(ep_label=None, num_eps=10):
@@ -304,6 +305,7 @@ def gen_fat_tree(k=4,
                                  rack_to_edge_channel_capacity)
     
     # link servers to racks, add link attributes
+    racks_dict = {rack: [] for rack in racks} # track which endpoints in which rack
     server_iterator = iter(servers)
     for rack in racks:
         servers_added = 0
@@ -314,11 +316,11 @@ def gen_fat_tree(k=4,
                                     (rack, server),
                                     channel_names,
                                     server_to_rack_channel_capacity)
+            racks_dict[rack].append(server)
             servers_added += 1
 
     # add end points as global network property
     fat_tree_network.graph['endpoints'] = get_endpoints(fat_tree_network, ep_label)
-
 
     # calc total network byte capacity
     num_agg_core_links = num_cores * k
@@ -333,14 +335,15 @@ def gen_fat_tree(k=4,
 
     # init global network attrs
     init_global_network_attrs(fat_tree_network, 
-                            max_nw_capacity, 
-                            num_channels, 
-                            node_labels=[ep_label,
-                                         rack_label,
-                                         edge_label,
-                                         aggregate_label,
-                                         core_label],
-                            topology_type='fat_tree')
+                              max_nw_capacity, 
+                              num_channels, 
+                              node_labels=[ep_label,
+                                           rack_label,
+                                           edge_label,
+                                           aggregate_label,
+                                           core_label],
+                              topology_type='fat_tree',
+                              racks_dict=racks_dict)
 
     if show_fig:
         plot_network(fat_tree_network, show_fig=True)
@@ -348,8 +351,27 @@ def gen_fat_tree(k=4,
     return fat_tree_network
 
 
-def init_global_network_attrs(network, max_nw_capacity, num_channels, topology_type='unknown', node_labels=['server']):
-    '''Initialises the standard global network attributes of a given network.'''
+def init_global_network_attrs(network, 
+                              max_nw_capacity, 
+                              num_channels, 
+                              topology_type='unknown', 
+                              node_labels=['server'],
+                              racks_dict=None):
+    '''Initialises the standard global network attributes of a given network.
+
+    Args:
+        network (obj): NetworkX object.
+        max_nw_capacity (int/float): Maximum rate at which info can be reliably 
+            transmitted over the network (sum of all link capacities).
+        num_channels (int): Number of channels on each link in network.
+        topology_type (str): Label of network topology (e.g. 'fat_tree').
+        node_labels (list): Label classes assigned to network nodes 
+            (e.g. ['server', 'rack', 'edge']).
+        racks_dict (dict): Which servers/endpoints are in which rack. If None,
+            assume do not have rack system where have multiple servers in one
+            rack.
+
+    '''
     network.graph['num_channels_per_link'] = num_channels
     network.graph['max_nw_capacity'] = max_nw_capacity
     network.graph['curr_nw_capacity_used'] = 0
@@ -358,6 +380,15 @@ def init_global_network_attrs(network, max_nw_capacity, num_channels, topology_t
     network.graph['node_labels'] = node_labels
     network.graph['topology_type'] = topology_type
     network.graph['channel_names'] = gen_channel_names(num_channels)
+    network.graph['rack_to_ep_dict'] = racks_dict
+
+    # switch racks_dict keys and values to make hasing easier
+    ep_to_rack_dict = {}
+    for key, val in racks_dict.items():
+        for v in val:
+            if v not in ep_to_rack_dict.keys():
+                ep_to_rack_dict[v] = key
+    network.graph['ep_to_rack_dict'] = ep_to_rack_dict
 
 
 def gen_channel_names(num_channels):

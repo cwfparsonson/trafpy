@@ -152,14 +152,14 @@
 <span class="kn">import</span> <span class="nn">queue</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<div class="viewcode-block" id="RWA"><a class="viewcode-back" href="../../../../../trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA">[docs]</a><span class="k">class</span> <span class="nc">RWA</span><span class="p">:</span>
+<div class="viewcode-block" id="RWA"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA">[docs]</a><span class="k">class</span> <span class="nc">RWA</span><span class="p">:</span>
     
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel_names</span><span class="p">,</span> <span class="n">num_k</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">channel_names</span> <span class="o">=</span> <span class="n">channel_names</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_k</span> <span class="o">=</span> <span class="n">num_k</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">blocking_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span> 
 
-<div class="viewcode-block" id="RWA.path_cost"><a class="viewcode-back" href="../../../../../trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.path_cost">[docs]</a>    <span class="k">def</span> <span class="nf">path_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="RWA.path_cost"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.path_cost">[docs]</a>    <span class="k">def</span> <span class="nf">path_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Calculates cost of path. If no weight specified, 1 unit of cost is 1</span>
 <span class="sd">        link/edge in the path</span>
@@ -187,7 +187,7 @@
 
         <span class="k">return</span> <span class="n">pathcost</span></div>
 
-<div class="viewcode-block" id="RWA.k_shortest_paths"><a class="viewcode-back" href="../../../../../trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.k_shortest_paths">[docs]</a>    <span class="k">def</span> <span class="nf">k_shortest_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">num_k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="s1">&#39;weight&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="RWA.k_shortest_paths"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.k_shortest_paths">[docs]</a>    <span class="k">def</span> <span class="nf">k_shortest_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">num_k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="s1">&#39;weight&#39;</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Uses Yen&#39;s algorithm to compute the k-shortest paths between a source</span>
 <span class="sd">        and a target node. The shortest path is that with the lowest pathcost,</span>
@@ -275,7 +275,7 @@
         <span class="k">return</span> <span class="n">A</span> </div>
 
 
-<div class="viewcode-block" id="RWA.ff_k_shortest_paths"><a class="viewcode-back" href="../../../../../trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.ff_k_shortest_paths">[docs]</a>    <span class="k">def</span> <span class="nf">ff_k_shortest_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">k_shortest_paths</span><span class="p">,</span> <span class="n">flow_size</span><span class="p">):</span>
+<div class="viewcode-block" id="RWA.ff_k_shortest_paths"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.ff_k_shortest_paths">[docs]</a>    <span class="k">def</span> <span class="nf">ff_k_shortest_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">k_shortest_paths</span><span class="p">,</span> <span class="n">flow_size</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Applies first fit algorithm, whereby path with lowest cost (shortest</span>
 <span class="sd">        path) is looked at first when considering which route to select, then</span>
@@ -321,7 +321,7 @@
         
         <span class="k">return</span> <span class="n">path</span><span class="p">,</span> <span class="n">channel</span></div>
 
-<div class="viewcode-block" id="RWA.get_path_edges"><a class="viewcode-back" href="../../../../../trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.get_path_edges">[docs]</a>    <span class="k">def</span> <span class="nf">get_path_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<div class="viewcode-block" id="RWA.get_path_edges"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.get_path_edges">[docs]</a>    <span class="k">def</span> <span class="nf">get_path_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Takes a path and returns list of edges in the path</span>
 
@@ -337,7 +337,7 @@
 
         <span class="k">return</span> <span class="n">edges</span></div>
 
-<div class="viewcode-block" id="RWA.check_if_channel_used"><a class="viewcode-back" href="../../../../../trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.check_if_channel_used">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_channel_used</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel</span><span class="p">):</span>
+<div class="viewcode-block" id="RWA.check_if_channel_used"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.check_if_channel_used">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_channel_used</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Takes list of edges to see if any one of the edges have used a certain</span>
 <span class="sd">        channel</span>
@@ -365,7 +365,7 @@
 
         <span class="k">return</span> <span class="n">channel_used</span></div>
 
-<div class="viewcode-block" id="RWA.check_if_channel_space"><a class="viewcode-back" href="../../../../../trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.check_if_channel_space">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_channel_space</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">flow_size</span><span class="p">):</span>
+<div class="viewcode-block" id="RWA.check_if_channel_space"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.check_if_channel_space">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_channel_space</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">flow_size</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Takes list of edges to see if all of the edges have enough space for</span>
 <span class="sd">        the given demand on a certain channel</span>
@@ -396,7 +396,7 @@
         <span class="k">return</span> <span class="n">channel_space</span></div>
         
 
-<div class="viewcode-block" id="RWA.get_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+<div class="viewcode-block" id="RWA.get_action"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.routers.html#trafpy.manager.src.routers.rwa.RWA.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Gets an action (route+channel or blocked) for DCN simulation</span>
 <span class="sd">        &#39;&#39;&#39;</span>

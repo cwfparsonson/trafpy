@@ -82,6 +82,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
 <li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
 </ul>
@@ -157,9 +158,54 @@
 <span id="trafpy-generator-src-dists-node-dists-module"></span><h2>trafpy.generator.src.dists.node_dists module<a class="headerlink" href="#module-trafpy.generator.src.dists.node_dists" title="Permalink to this headline">¶</a></h2>
 <p>Module for generating node distributions.</p>
 <dl class="py function">
+<dt id="trafpy.generator.src.dists.node_dists.adjust_node_dist_for_rack_prob_config">
+<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">adjust_node_dist_for_rack_prob_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rack_prob_config</span></em>, <em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">num_exps_factor</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#adjust_node_dist_for_rack_prob_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.adjust_node_dist_for_rack_prob_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes node dist and uses it to generate new node dist given inter- and intra-rack configuration.</p>
+<p>Different DCNs have different inter and intra rack traffic. This function
+allows you to specify how much of your traffic should be inter and intra rack.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rack_prob_config</strong> (<em>dict</em>) – Network endpoints/servers are often grouped into
+physically local clusters or <a href="#id1"><span class="problematic" id="id2">`</span></a>racks’. Different networks may have
+different levels of inter- (between) and intra- (within) rack communication.
+If rack_prob_config is left as None, will assume that server-server
+srs-dst requests are independent of which rack they might be in.
+If specified, dict should have a <a href="#id3"><span class="problematic" id="id4">`</span></a>racks_dict’ key, whose value is a dict
+with keys as rack labels (e.g. ‘rack_0’, ‘rack_1’ etc.) and whose value
+for each key is a list of the endpoints in the respective rack
+(e.g. [<a href="#id5"><span class="problematic" id="id6">`</span></a>server_0’, <a href="#id7"><span class="problematic" id="id8">`</span></a>server_24’, <a href="#id9"><span class="problematic" id="id10">`</span></a>server_56’, …]), and a <a href="#id11"><span class="problematic" id="id12">`</span></a>prob_inter_rack’
+key whose value is a float (e.g. 0.9), setting the probability
+that a chosen src endpoint has a destination which is outside of its rack.
+If you want to e.g. designate an entire rack as a ‘hot rack’ (many
+traffic requests occur from this rack), would specify skewed_nodes to
+contain the list of servers in this rack and configure rack_prob_config
+appropriately.</p></li>
+<li><p><strong>eps</strong> (<em>list</em>) – List of network node endpoints that can act as sources
+&amp; destinations.</p></li>
+<li><p><strong>node_dist</strong> (<em>numpy array</em>) – 2D matrix array of source-destination pair
+probabilities of being chosen.</p></li>
+<li><p><strong>num_exps_factor</strong> (<em>int</em>) – Factor by which to multiply number of eps to get
+the number of multinomial experiments to run when generating new
+node dist.</p></li>
+<li><p><strong>print_data</strong> (<em>bool</em>) – Whether or not to print extra information about the
+generated data.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.dists.node_dists.adjust_probability_array_sum">
+<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">adjust_probability_array_sum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">probs</span></em>, <em class="sig-param"><span class="n">target_sum</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#adjust_probability_array_sum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.adjust_probability_array_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt id="trafpy.generator.src.dists.node_dists.assign_probs_to_matrix">
 <code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">assign_probs_to_matrix</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">probs</span></em>, <em class="sig-param"><span class="n">matrix</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#assign_probs_to_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.assign_probs_to_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Assigns probabilities to 2D matrix.</p>
+<p>N.B. Assumes probs are given in order of matrix indices when looping
+for src in eps for dst in eps</p>
 </dd></dl>
 
 <dl class="py function">
@@ -183,7 +229,7 @@ to save generated distribution. E.g. path_to_save=’data/dists/my_dist’.</p><
 
 <dl class="py function">
 <dt id="trafpy.generator.src.dists.node_dists.gen_multimodal_node_dist">
-<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">gen_multimodal_node_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">skewed_nodes</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">skewed_node_probs</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">num_skewed_nodes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#gen_multimodal_node_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.gen_multimodal_node_dist" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">gen_multimodal_node_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">skewed_nodes</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">skewed_node_probs</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">num_skewed_nodes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rack_prob_config</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#gen_multimodal_node_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.gen_multimodal_node_dist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates a multimodal node distribution.</p>
 <p>Generates a multimodal node demand distribution i.e. certain nodes
 have a certain specified probability of being chosen. If no
@@ -202,6 +248,21 @@ chosen you want to skew/specify</p></li>
 being chosen/specified skews</p></li>
 <li><p><strong>num_skewed_nodes</strong> (<em>int</em>) – Number of nodes to skew. If None, will gen
 a number between 10% and 30% of the total number of nodes in network</p></li>
+<li><p><strong>rack_prob_config</strong> (<em>dict</em>) – Network endpoints/servers are often grouped into
+physically local clusters or <a href="#id13"><span class="problematic" id="id14">`</span></a>racks’. Different networks may have
+different levels of inter- (between) and intra- (within) rack communication.
+If rack_prob_config is left as None, will assume that server-server
+srs-dst requests are independent of which rack they might be in.
+If specified, dict should have a <a href="#id15"><span class="problematic" id="id16">`</span></a>racks_dict’ key, whose value is a dict
+with keys as rack labels (e.g. ‘rack_0’, ‘rack_1’ etc.) and whose value
+for each key is a list of the endpoints in the respective rack
+(e.g. [<a href="#id17"><span class="problematic" id="id18">`</span></a>server_0’, <a href="#id19"><span class="problematic" id="id20">`</span></a>server_24’, <a href="#id21"><span class="problematic" id="id22">`</span></a>server_56’, …]), and a <a href="#id23"><span class="problematic" id="id24">`</span></a>prob_inter_rack’
+key whose value is a float (e.g. 0.9), setting the probability
+that a chosen src endpoint has a destination which is outside of its rack.
+If you want to e.g. designate an entire rack as a ‘hot rack’ (many
+traffic requests occur from this rack), would specify skewed_nodes to
+contain the list of servers in this rack and configure rack_prob_config
+appropriately.</p></li>
 <li><p><strong>path_to_save</strong> (<em>str</em>) – Path to directory (with file name included) in which
 to save generated distribution. E.g. path_to_save=’data/dists/my_dist’.</p></li>
 <li><p><strong>plot_fig</strong> (<em>bool</em>) – Whether or not to plot fig. If True, will return fig.</p></li>
@@ -231,7 +292,7 @@ plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.</p></
 
 <dl class="py function">
 <dt id="trafpy.generator.src.dists.node_dists.gen_multimodal_node_pair_dist">
-<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">gen_multimodal_node_pair_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">skewed_pairs</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">skewed_pair_probs</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">num_skewed_pairs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#gen_multimodal_node_pair_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.gen_multimodal_node_pair_dist" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">gen_multimodal_node_pair_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">skewed_pairs</span><span class="o">=</span><span class="default_value">[['server_12', 'server_25'], ['server_36', 'server_60'], ['server_4', 'server_52'], ['server_24', 'server_32'], ['server_17', 'server_23'], ['server_38', 'server_39'], ['server_14', 'server_57'], ['server_4', 'server_40'], ['server_31', 'server_4'], ['server_37', 'server_39'], ['server_10', 'server_59'], ['server_31', 'server_58'], ['server_3', 'server_55'], ['server_45', 'server_9'], ['server_43', 'server_53'], ['server_35', 'server_6'], ['server_13', 'server_16'], ['server_19', 'server_46'], ['server_10', 'server_12'], ['server_13', 'server_2'], ['server_35', 'server_60'], ['server_32', 'server_42'], ['server_27', 'server_42'], ['server_12', 'server_28'], ['server_1', 'server_59'], ['server_13', 'server_6'], ['server_29', 'server_52'], ['server_35', 'server_51'], ['server_13', 'server_63'], ['server_26', 'server_37'], ['server_13', 'server_44'], ['server_24', 'server_51'], ['server_27', 'server_45'], ['server_12', 'server_56'], ['server_36', 'server_9'], ['server_50', 'server_63'], ['server_0', 'server_44'], ['server_21', 'server_45'], ['server_15', 'server_41'], ['server_28', 'server_35'], ['server_35', 'server_44'], ['server_17', 'server_52'], ['server_33', 'server_53'], ['server_13', 'server_60'], ['server_21', 'server_6'], ['server_36', 'server_59'], ['server_21', 'server_8'], ['server_35', 'server_51'], ['server_21', 'server_40'], ['server_1', 'server_2'], ['server_38', 'server_57'], ['server_59', 'server_63'], ['server_34', 'server_57'], ['server_40', 'server_9'], ['server_28', 'server_44'], ['server_13', 'server_22'], ['server_21', 'server_50'], ['server_29', 'server_42'], ['server_11', 'server_38'], ['server_38', 'server_45'], ['server_1', 'server_21'], ['server_28', 'server_42'], ['server_24', 'server_8'], ['server_15', 'server_47'], ['server_14', 'server_55'], ['server_40', 'server_55'], ['server_23', 'server_40'], ['server_15', 'server_29'], ['server_31', 'server_43'], ['server_18', 'server_26'], ['server_41', 'server_51'], ['server_30', 'server_6'], ['server_18', 'server_53'], ['server_32', 'server_48'], ['server_45', 'server_7'], ['server_34', 'server_53'], ['server_1', 'server_44'], ['server_19', 'server_25'], ['server_21', 'server_46'], ['server_31', 'server_4'], ['server_28', 'server_47'], ['server_26', 'server_9'], ['server_13', 'server_26'], ['server_13', 'server_15'], ['server_33', 'server_39'], ['server_36', 'server_9'], ['server_1', 'server_19'], ['server_26', 'server_63'], ['server_29', 'server_40'], ['server_22', 'server_24'], ['server_39', 'server_4'], ['server_12', 'server_9'], ['server_21', 'server_47'], ['server_16', 'server_42'], ['server_44', 'server_54'], ['server_16', 'server_53'], ['server_15', 'server_33'], ['server_26', 'server_34'], ['server_45', 'server_47'], ['server_13', 'server_49'], ['server_37', 'server_43'], ['server_11', 'server_21'], ['server_18', 'server_50'], ['server_31', 'server_60'], ['server_23', 'server_47'], ['server_36', 'server_61'], ['server_59', 'server_7'], ['server_28', 'server_44'], ['server_33', 'server_55'], ['server_36', 'server_5'], ['server_36', 'server_8'], ['server_54', 'server_6'], ['server_42', 'server_50'], ['server_39', 'server_53'], ['server_20', 'server_36'], ['server_27', 'server_62'], ['server_26', 'server_29'], ['server_14', 'server_6'], ['server_41', 'server_46'], ['server_24', 'server_8'], ['server_32', 'server_42'], ['server_17', 'server_21'], ['server_15', 'server_60'], ['server_21', 'server_8'], ['server_20', 'server_43'], ['server_22', 'server_26'], ['server_3', 'server_55'], ['server_17', 'server_41'], ['server_16', 'server_38'], ['server_37', 'server_59'], ['server_12', 'server_60'], ['server_27', 'server_60'], ['server_23', 'server_62'], ['server_22', 'server_59'], ['server_1', 'server_18'], ['server_19', 'server_52'], ['server_30', 'server_62'], ['server_42', 'server_49'], ['server_10', 'server_47'], ['server_49', 'server_6'], ['server_34', 'server_45'], ['server_2', 'server_35'], ['server_26', 'server_51'], ['server_14', 'server_3'], ['server_37', 'server_53'], ['server_25', 'server_32'], ['server_12', 'server_55'], ['server_42', 'server_61'], ['server_4', 'server_46'], ['server_25', 'server_50'], ['server_0', 'server_42'], ['server_2', 'server_31'], ['server_15', 'server_37'], ['server_18', 'server_54'], ['server_1', 'server_22'], ['server_43', 'server_57'], ['server_10', 'server_46'], ['server_10', 'server_30'], ['server_42', 'server_50'], ['server_13', 'server_20'], ['server_4', 'server_48'], ['server_23', 'server_59'], ['server_30', 'server_46'], ['server_10', 'server_3'], ['server_1', 'server_46'], ['server_45', 'server_51'], ['server_29', 'server_41'], ['server_22', 'server_46'], ['server_0', 'server_51'], ['server_55', 'server_57'], ['server_5', 'server_55'], ['server_34', 'server_44'], ['server_17', 'server_23'], ['server_42', 'server_51'], ['server_47', 'server_6'], ['server_28', 'server_33'], ['server_26', 'server_62'], ['server_20', 'server_3'], ['server_2', 'server_62'], ['server_36', 'server_63'], ['server_38', 'server_8'], ['server_53', 'server_61'], ['server_2', 'server_49'], ['server_14', 'server_55'], ['server_22', 'server_47'], ['server_28', 'server_62'], ['server_43', 'server_56'], ['server_51', 'server_7'], ['server_16', 'server_38'], ['server_39', 'server_58'], ['server_18', 'server_24'], ['server_58', 'server_60'], ['server_1', 'server_24'], ['server_39', 'server_46'], ['server_13', 'server_54'], ['server_5', 'server_53'], ['server_11', 'server_15'], ['server_12', 'server_19'], ['server_27', 'server_47'], ['server_33', 'server_46'], ['server_33', 'server_8'], ['server_30', 'server_35'], ['server_21', 'server_4'], ['server_11', 'server_63'], ['server_0', 'server_10'], ['server_33', 'server_49'], ['server_11', 'server_20'], ['server_25', 'server_31'], ['server_39', 'server_48'], ['server_1', 'server_15'], ['server_11', 'server_13'], ['server_33', 'server_63'], ['server_12', 'server_57'], ['server_37', 'server_57'], ['server_12', 'server_7'], ['server_18', 'server_40'], ['server_19', 'server_21'], ['server_1', 'server_20'], ['server_51', 'server_57'], ['server_10', 'server_47'], ['server_15', 'server_6'], ['server_17', 'server_35'], ['server_57', 'server_60'], ['server_12', 'server_42'], ['server_43', 'server_48'], ['server_14', 'server_3'], ['server_30', 'server_55'], ['server_43', 'server_48'], ['server_39', 'server_57'], ['server_38', 'server_40'], ['server_3', 'server_47'], ['server_60', 'server_61'], ['server_57', 'server_6'], ['server_13', 'server_37'], ['server_10', 'server_4'], ['server_2', 'server_22'], ['server_36', 'server_45'], ['server_46', 'server_57'], ['server_13', 'server_36'], ['server_24', 'server_31'], ['server_23', 'server_42'], ['server_30', 'server_34'], ['server_22', 'server_23'], ['server_52', 'server_9'], ['server_30', 'server_42'], ['server_18', 'server_5'], ['server_36', 'server_39'], ['server_2', 'server_44'], ['server_25', 'server_30'], ['server_40', 'server_46'], ['server_32', 'server_34'], ['server_30', 'server_53'], ['server_31', 'server_43'], ['server_51', 'server_55'], ['server_15', 'server_30'], ['server_10', 'server_5'], ['server_36', 'server_51'], ['server_19', 'server_22'], ['server_35', 'server_55'], ['server_43', 'server_56'], ['server_23', 'server_52'], ['server_0', 'server_19'], ['server_13', 'server_48'], ['server_14', 'server_37'], ['server_36', 'server_61'], ['server_11', 'server_34'], ['server_37', 'server_50'], ['server_18', 'server_24'], ['server_30', 'server_36'], ['server_20', 'server_57'], ['server_11', 'server_44'], ['server_41', 'server_9'], ['server_19', 'server_58'], ['server_30', 'server_57'], ['server_17', 'server_25'], ['server_46', 'server_53'], ['server_17', 'server_46'], ['server_39', 'server_59'], ['server_25', 'server_8'], ['server_5', 'server_6'], ['server_24', 'server_53'], ['server_23', 'server_35'], ['server_2', 'server_34'], ['server_26', 'server_8'], ['server_31', 'server_36'], ['server_23', 'server_9'], ['server_11', 'server_7'], ['server_62', 'server_8'], ['server_10', 'server_55'], ['server_0', 'server_34'], ['server_27', 'server_3'], ['server_17', 'server_35'], ['server_27', 'server_7'], ['server_24', 'server_41'], ['server_44', 'server_49'], ['server_29', 'server_55'], ['server_18', 'server_61'], ['server_14', 'server_59'], ['server_25', 'server_5'], ['server_47', 'server_50'], ['server_31', 'server_60'], ['server_34', 'server_61'], ['server_32', 'server_52'], ['server_2', 'server_54'], ['server_20', 'server_46'], ['server_29', 'server_5'], ['server_39', 'server_8'], ['server_61', 'server_8'], ['server_22', 'server_31'], ['server_33', 'server_37'], ['server_29', 'server_35'], ['server_25', 'server_32'], ['server_28', 'server_54'], ['server_14', 'server_47'], ['server_35', 'server_37'], ['server_15', 'server_8'], ['server_19', 'server_60'], ['server_50', 'server_60'], ['server_63', 'server_9'], ['server_17', 'server_29'], ['server_3', 'server_55'], ['server_52', 'server_54'], ['server_34', 'server_4'], ['server_1', 'server_25'], ['server_19', 'server_36'], ['server_55', 'server_9'], ['server_20', 'server_60'], ['server_13', 'server_48'], ['server_40', 'server_8'], ['server_15', 'server_25'], ['server_29', 'server_56'], ['server_16', 'server_52'], ['server_18', 'server_41'], ['server_1', 'server_7'], ['server_35', 'server_56'], ['server_52', 'server_57'], ['server_2', 'server_25'], ['server_52', 'server_62'], ['server_22', 'server_39'], ['server_52', 'server_59'], ['server_29', 'server_52'], ['server_0', 'server_2'], ['server_41', 'server_46'], ['server_42', 'server_9'], ['server_28', 'server_63'], ['server_42', 'server_5'], ['server_24', 'server_46'], ['server_30', 'server_41'], ['server_18', 'server_21'], ['server_4', 'server_54'], ['server_45', 'server_48'], ['server_44', 'server_50'], ['server_14', 'server_46'], ['server_33', 'server_63'], ['server_43', 'server_46'], ['server_2', 'server_31'], ['server_11', 'server_60'], ['server_42', 'server_60'], ['server_19', 'server_63'], ['server_27', 'server_53'], ['server_0', 'server_8'], ['server_44', 'server_60'], ['server_33', 'server_49'], ['server_2', 'server_46'], ['server_40', 'server_41'], ['server_39', 'server_48'], ['server_13', 'server_34'], ['server_5', 'server_56'], ['server_4', 'server_48'], ['server_40', 'server_7'], ['server_1', 'server_3'], ['server_25', 'server_35'], ['server_45', 'server_54'], ['server_26', 'server_5'], ['server_3', 'server_31'], ['server_24', 'server_29'], ['server_3', 'server_40'], ['server_39', 'server_56'], ['server_35', 'server_6'], ['server_17', 'server_44'], ['server_16', 'server_25'], ['server_40', 'server_49'], ['server_55', 'server_58'], ['server_26', 'server_52'], ['server_2', 'server_6'], ['server_30', 'server_61'], ['server_2', 'server_53'], ['server_32', 'server_60'], ['server_1', 'server_26'], ['server_20', 'server_29'], ['server_27', 'server_54'], ['server_19', 'server_36'], ['server_30', 'server_48'], ['server_50', 'server_60'], ['server_12', 'server_26'], ['server_18', 'server_19'], ['server_2', 'server_50'], ['server_38', 'server_41'], ['server_44', 'server_8'], ['server_33', 'server_43'], ['server_41', 'server_62'], ['server_16', 'server_6'], ['server_27', 'server_47'], ['server_3', 'server_48'], ['server_29', 'server_53'], ['server_10', 'server_14'], ['server_12', 'server_22'], ['server_15', 'server_23'], ['server_17', 'server_46'], ['server_53', 'server_55'], ['server_16', 'server_28'], ['server_41', 'server_9'], ['server_33', 'server_34'], ['server_45', 'server_47'], ['server_14', 'server_41'], ['server_1', 'server_63'], ['server_29', 'server_54'], ['server_26', 'server_57'], ['server_52', 'server_56'], ['server_49', 'server_57'], ['server_24', 'server_59'], ['server_15', 'server_44'], ['server_48', 'server_53'], ['server_1', 'server_60'], ['server_19', 'server_2'], ['server_22', 'server_29'], ['server_50', 'server_7'], ['server_3', 'server_39'], ['server_23', 'server_63']]</span></em>, <em class="sig-param"><span class="n">skewed_pair_probs</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">num_skewed_pairs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rack_prob_config</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#gen_multimodal_node_pair_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.gen_multimodal_node_pair_dist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates a multimodal node pair distribution.</p>
 <p>Generates a multimodal node pair demand distribution i.e. certain node
 pairs have a certain specified probability of being chosen. If no
@@ -249,6 +310,21 @@ skew.</p></li>
 <li><p><strong>skewed_pair_probs</strong> (<em>list</em>) – Probabilities of node pairs being
 chosen.</p></li>
 <li><p><strong>num_skewed_pairs</strong> (<em>int</em>) – Number of pairs to randomly skew.</p></li>
+<li><p><strong>rack_prob_config</strong> (<em>dict</em>) – Network endpoints/servers are often grouped into
+physically local clusters or <a href="#id25"><span class="problematic" id="id26">`</span></a>racks’. Different networks may have
+different levels of inter- (between) and intra- (within) rack communication.
+If rack_prob_config is left as None, will assume that server-server
+srs-dst requests are independent of which rack they might be in.
+If specified, dict should have a <a href="#id27"><span class="problematic" id="id28">`</span></a>racks_dict’ key, whose value is a dict
+with keys as rack labels (e.g. ‘rack_0’, ‘rack_1’ etc.) and whose value
+for each key is a list of the endpoints in the respective rack
+(e.g. [<a href="#id29"><span class="problematic" id="id30">`</span></a>server_0’, <a href="#id31"><span class="problematic" id="id32">`</span></a>server_24’, <a href="#id33"><span class="problematic" id="id34">`</span></a>server_56’, …]), and a <a href="#id35"><span class="problematic" id="id36">`</span></a>prob_inter_rack’
+key whose value is a float (e.g. 0.9), setting the probability
+that a chosen src endpoint has a destination which is outside of its rack.
+If you want to e.g. designate an entire rack as a ‘hot rack’ (many
+traffic requests occur from this rack), would specify skewed_nodes to
+contain the list of servers in this rack and configure rack_prob_config
+appropriately.</p></li>
 <li><p><strong>path_to_save</strong> (<em>str</em>) – Path to directory (with file name included) in which
 to save generated distribution. E.g. path_to_save=’data/dists/my_dist’.</p></li>
 <li><p><strong>plot_fig</strong> (<em>bool</em>) – Whether or not to plot fig. If True, will return fig.</p></li>
@@ -278,7 +354,7 @@ plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.</p></
 
 <dl class="py function">
 <dt id="trafpy.generator.src.dists.node_dists.gen_node_demands">
-<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">gen_node_demands</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">num_demands</span></em>, <em class="sig-param"><span class="n">duplicate</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#gen_node_demands"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.gen_node_demands" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">gen_node_demands</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">num_demands</span></em>, <em class="sig-param"><span class="n">rack_prob_config</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">duplicate</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#gen_node_demands"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.gen_node_demands" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses node distribution to generate src-dst node pair demands.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -313,7 +389,7 @@ to save generated distribution. E.g. path_to_save=’data/dists/my_dist’.</p><
 
 <dl class="py function">
 <dt id="trafpy.generator.src.dists.node_dists.gen_uniform_multinomial_exp_node_dist">
-<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">gen_uniform_multinomial_exp_node_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#gen_uniform_multinomial_exp_node_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.gen_uniform_multinomial_exp_node_dist" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">gen_uniform_multinomial_exp_node_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">rack_prob_config</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#gen_uniform_multinomial_exp_node_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.gen_uniform_multinomial_exp_node_dist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs multinomial exp with uniform initial probability to generate slight skew.</p>
 <p>Runs a multinomial experiment where each node pair has same (uniform)
 probability of being chosen. Will generate a node demand distribution
@@ -323,6 +399,21 @@ where a few pairs &amp; nodes have a slight skew in demand</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>eps</strong> (<em>list</em>) – List of network node endpoints that can act as sources
 &amp; destinations</p></li>
+<li><p><strong>rack_prob_config</strong> (<em>dict</em>) – Network endpoints/servers are often grouped into
+physically local clusters or <a href="#id37"><span class="problematic" id="id38">`</span></a>racks’. Different networks may have
+different levels of inter- (between) and intra- (within) rack communication.
+If rack_prob_config is left as None, will assume that server-server
+srs-dst requests are independent of which rack they might be in.
+If specified, dict should have a <a href="#id39"><span class="problematic" id="id40">`</span></a>racks_dict’ key, whose value is a dict
+with keys as rack labels (e.g. ‘rack_0’, ‘rack_1’ etc.) and whose value
+for each key is a list of the endpoints in the respective rack
+(e.g. [<a href="#id41"><span class="problematic" id="id42">`</span></a>server_0’, <a href="#id43"><span class="problematic" id="id44">`</span></a>server_24’, <a href="#id45"><span class="problematic" id="id46">`</span></a>server_56’, …]), and a <a href="#id47"><span class="problematic" id="id48">`</span></a>prob_inter_rack’
+key whose value is a float (e.g. 0.9), setting the probability
+that a chosen src endpoint has a destination which is outside of its rack.
+If you want to e.g. designate an entire rack as a ‘hot rack’ (many
+traffic requests occur from this rack), would specify skewed_nodes to
+contain the list of servers in this rack and configure rack_prob_config
+appropriately.</p></li>
 <li><p><strong>path_to_save</strong> (<em>str</em>) – Path to directory (with file name included) in which
 to save generated distribution. E.g. path_to_save=’data/dists/my_dist’.</p></li>
 <li><p><strong>plot_fig</strong> (<em>bool</em>) – Whether or not to plot fig. If True, will return fig.</p></li>
@@ -352,13 +443,28 @@ plotted as a 2d matrix. to return, set show_fig=true and/or plot_fig=true.</p></
 
 <dl class="py function">
 <dt id="trafpy.generator.src.dists.node_dists.gen_uniform_node_dist">
-<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">gen_uniform_node_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#gen_uniform_node_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.gen_uniform_node_dist" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">gen_uniform_node_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">rack_prob_config</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#gen_uniform_node_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.gen_uniform_node_dist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates a uniform node distribution.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>eps</strong> (<em>list</em>) – List of network node endpoints that can act as sources
 &amp; destinations</p></li>
+<li><p><strong>rack_prob_config</strong> (<em>dict</em>) – Network endpoints/servers are often grouped into
+physically local clusters or <a href="#id49"><span class="problematic" id="id50">`</span></a>racks’. Different networks may have
+different levels of inter- (between) and intra- (within) rack communication.
+If rack_prob_config is left as None, will assume that server-server
+srs-dst requests are independent of which rack they might be in.
+If specified, dict should have a <a href="#id51"><span class="problematic" id="id52">`</span></a>racks_dict’ key, whose value is a dict
+with keys as rack labels (e.g. ‘rack_0’, ‘rack_1’ etc.) and whose value
+for each key is a list of the endpoints in the respective rack
+(e.g. [<a href="#id53"><span class="problematic" id="id54">`</span></a>server_0’, <a href="#id55"><span class="problematic" id="id56">`</span></a>server_24’, <a href="#id57"><span class="problematic" id="id58">`</span></a>server_56’, …]), and a <a href="#id59"><span class="problematic" id="id60">`</span></a>prob_inter_rack’
+key whose value is a float (e.g. 0.9), setting the probability
+that a chosen src endpoint has a destination which is outside of its rack.
+If you want to e.g. designate an entire rack as a ‘hot rack’ (many
+traffic requests occur from this rack), would specify skewed_nodes to
+contain the list of servers in this rack and configure rack_prob_config
+appropriately.</p></li>
 <li><p><strong>path_to_save</strong> (<em>str</em>) – Path to directory (with file name included) in which
 to save generated distribution. E.g. path_to_save=’data/dists/my_dist’.</p></li>
 <li><p><strong>plot_fig</strong> (<em>bool</em>) – Whether or not to plot fig. If True, will return fig.</p></li>
@@ -384,6 +490,18 @@ plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.</p></
 <dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.dists.node_dists.get_network_pair_mapper">
+<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">get_network_pair_mapper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#get_network_pair_mapper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.get_network_pair_mapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets dicts mapping network endpoint indices to and from node dist matrix.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.dists.node_dists.get_suitable_destination_node_for_rack_config">
+<code class="sig-prename descclassname">trafpy.generator.src.dists.node_dists.</code><code class="sig-name descname">get_suitable_destination_node_for_rack_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sn</span></em>, <em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">ep_to_rack</span></em>, <em class="sig-param"><span class="n">rack_to_ep</span></em>, <em class="sig-param"><span class="n">inter_rack</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/node_dists.html#get_suitable_destination_node_for_rack_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.node_dists.get_suitable_destination_node_for_rack_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given source node, finds destination node given inter and intra rack config.</p>
 </dd></dl>
 
 </div>
@@ -446,6 +564,18 @@ return and display fig.</p></li>
 <dd class="field-odd"><p>matplotlib.figure.Figure</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.dists.plot_dists.plot_val_stacked_bar">
+<code class="sig-prename descclassname">trafpy.generator.src.dists.plot_dists.</code><code class="sig-name descname">plot_val_stacked_bar</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plot_dict</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">ylabel</span><span class="o">=</span><span class="default_value">'Random Variable'</span></em>, <em class="sig-param"><span class="n">ylim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">bar_width</span><span class="o">=</span><span class="default_value">0.35</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/plot_dists.html#plot_val_stacked_bar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.plot_dists.plot_val_stacked_bar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots stacked bar chart.</p>
+<p>E.g. plot_dict given should be of the form:</p>
+<dl class="simple">
+<dt>plot_dict= {‘class_1’: {‘x_values’: [‘Uni DCN’, ‘Private DCN’, ‘Cloud DCN’], ‘y_values’: [20, 40, 80]},</dt><dd><p>‘class_2’: {‘x_values’: [‘Uni DCN’, ‘Private DCN’, ‘Cloud DCN’], ‘y_values’: [80, 60, 20]}}</p>
+</dd>
+</dl>
+<p>ylim=[0,100]</p>
 </dd></dl>
 
 </div>

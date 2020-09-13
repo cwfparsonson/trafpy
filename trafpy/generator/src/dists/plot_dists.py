@@ -67,6 +67,7 @@ def plot_node_dist(node_dist,
     return fig
 
 
+
 def plot_val_dist(rand_vars, 
                   dist_fit_line=None, 
                   xlim=None, 
@@ -188,6 +189,59 @@ def plot_val_dist(rand_vars,
         plt.show()
 
     return fig
+
+
+
+def plot_val_stacked_bar(plot_dict={},
+                         ylabel='Random Variable',
+                         ylim=None,
+                         bar_width=0.35,
+                         show_fig=False):
+    '''Plots stacked bar chart.
+
+    E.g. plot_dict given should be of the form:
+
+    plot_dict= {'class_1': {'x_values': ['Uni DCN', 'Private DCN', 'Cloud DCN'], 'y_values': [20, 40, 80]},
+                'class_2': {'x_values': ['Uni DCN', 'Private DCN', 'Cloud DCN'], 'y_values': [80, 60, 20]}}
+    ylim=[0,100]
+
+    '''
+
+
+    keys = list(plot_dict.keys())
+    num_vals = len(plot_dict[keys[0]]['x_values'])
+    for key in keys:
+        if len(plot_dict[key]['x_values']) != num_vals or len(plot_dict[key]['y_values']) != num_vals:
+            raise Exception('Must have equal number of x and y values to plot if want to stack bars.')
+    x_pos = [x for x in range(num_vals)]
+
+
+    fig = plt.figure()
+    plt.style.use('ggplot')
+
+    plots = {}
+    # plot first class
+    curr_bottom = None # init bottom y coords of bar to plot
+    for _class in plot_dict.keys():
+        plots[_class] = plt.bar(x_pos, plot_dict[_class]['y_values'], bar_width, bottom=curr_bottom)
+        # update bottom y coords for next bar
+        curr_bottom = plot_dict[_class]['y_values']
+
+    plt.ylabel(ylabel)
+    plt.xticks(x_pos, (x_val for x_val in plot_dict[_class]['x_values']))
+    plt.legend((plots[key][0] for key in list(plots.keys())), (_class for _class in (plot_dict.keys())))
+
+    try:
+        plt.ylim(ylim)
+    except NameError:
+        pass
+
+    if show_fig:
+        plt.show()
+
+    return fig
+
+
 
 
 

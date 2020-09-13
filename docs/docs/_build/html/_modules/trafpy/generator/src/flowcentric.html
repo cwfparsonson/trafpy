@@ -153,6 +153,8 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">random</span>
 
 
 <div class="viewcode-block" id="create_flow_centric_demand_data"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.create_flow_centric_demand_data">[docs]</a><span class="k">def</span> <span class="nf">create_flow_centric_demand_data</span><span class="p">(</span><span class="n">num_demands</span><span class="p">,</span>
@@ -225,6 +227,110 @@
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Generated </span><span class="si">{}</span><span class="s1"> flow demands in </span><span class="si">{}</span><span class="s1"> seconds.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_demands</span><span class="p">,</span><span class="n">ended</span><span class="o">-</span><span class="n">started</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">demand_data</span></div>
+
+
+<div class="viewcode-block" id="set_flow_centric_demand_data_network_load"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.set_flow_centric_demand_data_network_load">[docs]</a><span class="k">def</span> <span class="nf">set_flow_centric_demand_data_network_load</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">network_rate_capacity</span><span class="p">,</span> <span class="n">target_load_fraction</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">demand_data</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">demand_data</span><span class="p">)</span>
+    
+    <span class="k">assert</span> <span class="n">target_load_fraction</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> \
+        <span class="s1">&#39;Must have target load fraction &lt;= 1 for compatability with network rate capacity.&#39;</span>
+    
+    <span class="n">target_load_rate</span> <span class="o">=</span> <span class="n">network_rate_capacity</span><span class="o">*</span><span class="n">target_load_fraction</span>
+    <span class="n">load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">)</span>
+    <span class="n">init_load_rate</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">load_rate</span><span class="p">)</span>
+    <span class="n">init_load_fraction</span> <span class="o">=</span> <span class="n">init_load_rate</span> <span class="o">/</span> <span class="n">network_rate_capacity</span>
+    
+    <span class="n">change_in_num_demands</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">load_rate</span> <span class="o">&gt;</span> <span class="n">target_load_rate</span><span class="p">:</span>
+        <span class="c1"># randomly drop demands until get target load rate</span>
+        <span class="k">while</span> <span class="n">load_rate</span> <span class="o">&gt;</span> <span class="n">target_load_rate</span><span class="p">:</span>
+            <span class="n">demand_data</span> <span class="o">=</span> <span class="n">drop_random_flow_from_demand_data</span><span class="p">(</span><span class="n">demand_data</span><span class="p">)</span>
+            <span class="n">load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">)</span>
+            <span class="n">change_in_num_demands</span> <span class="o">-=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">load_rate</span> <span class="o">&lt;</span> <span class="n">target_load_rate</span><span class="p">:</span>
+        <span class="n">load_fraction</span> <span class="o">=</span> <span class="n">load_rate</span> <span class="o">/</span> <span class="n">network_rate_capacity</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Load is </span><span class="si">{}</span><span class="s1">, but requested target load is </span><span class="si">{}</span><span class="s1">. Either decrease target load or increase load in demand_data. To increase load in demand_data, increase number of demands generated or adjust e.g. event size, interarrival time, etc., then re-construct demand_data and pass back into this function.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_fraction</span><span class="p">,</span> <span class="n">target_load_fraction</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+    
+    <span class="n">load_fraction</span> <span class="o">=</span> <span class="n">load_rate</span> <span class="o">/</span> <span class="n">network_rate_capacity</span>
+    
+    <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Network rate capacity: </span><span class="si">{}</span><span class="s1"> Gbps&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">network_rate_capacity</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initial load rate: </span><span class="si">{}</span><span class="s1"> Gbps&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">init_load_rate</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initial load fraction: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">init_load_fraction</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Target load rate: </span><span class="si">{}</span><span class="s1"> Gbps&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target_load_rate</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Target load fraction: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target_load_fraction</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Final load rate: </span><span class="si">{}</span><span class="s1"> Gbps&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_rate</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Final load fraction: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_fraction</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Change in number of demands: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">change_in_num_demands</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Final number of demands: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])))</span>
+    
+    <span class="k">return</span> <span class="n">demand_data</span></div>
+
+<div class="viewcode-block" id="drop_random_flow_from_demand_data"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.drop_random_flow_from_demand_data">[docs]</a><span class="k">def</span> <span class="nf">drop_random_flow_from_demand_data</span><span class="p">(</span><span class="n">demand_data</span><span class="p">):</span>
+    <span class="n">event_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]))]</span>
+    <span class="n">flow_idx_to_drop</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">event_indices</span><span class="p">)</span>
+    
+    <span class="n">num_loops</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">flow_idx_to_drop</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">flow_idx_to_drop</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">flow_idx_to_drop</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">flow_idx_to_drop</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_indices</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># start from beginning</span>
+            <span class="n">flow_idx_to_drop</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">num_loops</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">num_loops</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_indices</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Cannot find event in demand_data to drop.&#39;</span><span class="p">)</span>
+            
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">demand_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>        
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">del</span> <span class="n">new_data</span><span class="p">[</span><span class="n">flow_idx_to_drop</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># is numpy array</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">flow_idx_to_drop</span><span class="p">)</span>
+        <span class="n">demand_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_data</span>
+            
+    <span class="k">return</span> <span class="n">demand_data</span></div>
+
+<div class="viewcode-block" id="get_flow_centric_demand_data_load_rate"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.get_flow_centric_demand_data_load_rate">[docs]</a><span class="k">def</span> <span class="nf">get_flow_centric_demand_data_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">):</span>
+    <span class="n">info_arrived</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_total_info_arrived</span><span class="p">(</span><span class="n">demand_data</span><span class="p">)</span>
+    <span class="n">first_event_time</span><span class="p">,</span> <span class="n">last_event_time</span> <span class="o">=</span> <span class="n">get_first_last_flow_arrival_times</span><span class="p">(</span><span class="n">demand_data</span><span class="p">)</span>
+    
+    <span class="n">load_rate</span> <span class="o">=</span> <span class="n">info_arrived</span><span class="o">/</span><span class="p">(</span><span class="n">last_event_time</span><span class="o">-</span><span class="n">first_event_time</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">load_rate</span></div>
+
+
+
+<div class="viewcode-block" id="get_flow_centric_demand_data_total_info_arrived"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.get_flow_centric_demand_data_total_info_arrived">[docs]</a><span class="k">def</span> <span class="nf">get_flow_centric_demand_data_total_info_arrived</span><span class="p">(</span><span class="n">demand_data</span><span class="p">):</span> 
+    <span class="n">info_arrived</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">flow_size</span> <span class="ow">in</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">flow_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">info_arrived</span> <span class="o">+=</span> <span class="n">flow_size</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+    
+    <span class="k">return</span> <span class="n">info_arrived</span></div>
+            
+<div class="viewcode-block" id="get_first_last_flow_arrival_times"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.get_first_last_flow_arrival_times">[docs]</a><span class="k">def</span> <span class="nf">get_first_last_flow_arrival_times</span><span class="p">(</span><span class="n">demand_data</span><span class="p">):</span>
+    <span class="n">arrival_times</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">])):</span>
+        <span class="k">if</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]:</span>
+            <span class="n">arrival_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arrival_times</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Could not find first event establish request with size &gt; 0.. This occurs because either demand_data given does not contain any events, or because all events have had to be dropped to try get below your specified target load. Try increasing the target load or increasing the granularity of load per demand (by e.g. decreasing demand sizes, increasing total number of demands, etc.) when you generate your demand data so that this function can more easily hit your desired load target.&#39;</span><span class="p">)</span>
+
+    <span class="n">time_first_flow_arrived</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">arrival_times</span><span class="p">)</span>
+    <span class="n">time_last_flow_arrived</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">arrival_times</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">time_first_flow_arrived</span><span class="p">,</span> <span class="n">time_last_flow_arrived</span></div>
+
+
+
 </pre></div>
 
            </div>

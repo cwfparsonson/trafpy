@@ -161,7 +161,7 @@
 <span class="kn">import</span> <span class="nn">itertools</span>
 
 
-<div class="viewcode-block" id="BASRPT"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.basrpt.BASRPT">[docs]</a><span class="k">class</span> <span class="nc">BASRPT</span><span class="p">(</span><span class="n">SchedulerToolbox</span><span class="p">):</span>
+<div class="viewcode-block" id="BASRPT"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.basrpt.BASRPT">[docs]</a><span class="k">class</span> <span class="nc">BASRPT</span><span class="p">(</span><span class="n">SchedulerToolbox</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">RWA</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">,</span> <span class="n">V</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">Graph</span><span class="p">,</span> <span class="n">RWA</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">)</span>
@@ -170,7 +170,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
     
-<div class="viewcode-block" id="BASRPT.get_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.basrpt.BASRPT.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+<div class="viewcode-block" id="BASRPT.get_action"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.basrpt.BASRPT.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
 
         <span class="c1"># scheduler action</span>
         <span class="n">chosen_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduler_action</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
@@ -178,7 +178,7 @@
 
         <span class="k">return</span> <span class="n">action</span></div>
 
-<div class="viewcode-block" id="BASRPT.find_contending_flow"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.basrpt.BASRPT.find_contending_flow">[docs]</a>    <span class="k">def</span> <span class="nf">find_contending_flow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chosen_flow</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
+<div class="viewcode-block" id="BASRPT.find_contending_flow"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.basrpt.BASRPT.find_contending_flow">[docs]</a>    <span class="k">def</span> <span class="nf">find_contending_flow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chosen_flow</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Goes through chosen flow possible path &amp; channel combinations &amp; </span>
 <span class="sd">        compares to path-channel combinations in chosen flows. Saves all</span>
@@ -228,7 +228,7 @@
          
         <span class="k">return</span> <span class="n">contending_flow</span><span class="p">,</span> <span class="n">contending_flow_cost</span><span class="p">,</span> <span class="n">chosen_path</span><span class="p">,</span> <span class="n">chosen_channel</span></div>
 
-<div class="viewcode-block" id="BASRPT.calc_basrpt_cost"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.basrpt.BASRPT.calc_basrpt_cost">[docs]</a>    <span class="k">def</span> <span class="nf">calc_basrpt_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">flow_queue</span><span class="p">):</span>
+<div class="viewcode-block" id="BASRPT.calc_basrpt_cost"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.basrpt.BASRPT.calc_basrpt_cost">[docs]</a>    <span class="k">def</span> <span class="nf">calc_basrpt_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">flow_queue</span><span class="p">):</span>
         <span class="n">num_queued_flows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">flow_queue</span><span class="p">)</span>
 
         <span class="c1"># calc size of flow&#39;s queue</span>
@@ -249,7 +249,7 @@
 
         <span class="k">return</span> <span class="n">cost</span></div>
 
-<div class="viewcode-block" id="BASRPT.get_scheduler_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.basrpt.BASRPT.get_scheduler_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_scheduler_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+<div class="viewcode-block" id="BASRPT.get_scheduler_action"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.basrpt.BASRPT.get_scheduler_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_scheduler_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
         <span class="c1"># update scheduler network &amp; new flow states</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_network_state</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
 
