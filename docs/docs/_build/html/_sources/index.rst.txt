@@ -6,7 +6,7 @@ network traffic.
 TrafPy provides:
 
 - a pre-built **interactive Jupyter Notebook** tool for visually building distributions and 
-  data which acccurately mimic traffic characteristics of real networks (e.g. data centres);
+  data which accurately mimic traffic characteristics of real networks (e.g. data centres);
 - a **generator** package for generating network traffic which can be flexibly integrated 
   into custom Python projects; and
 - a **manager** package which can be used to simulate network management (scheduling,
@@ -28,9 +28,9 @@ at the :doc:`tutorial <Tutorial>`.
 
 Free Software
 =============
-TrafPy will one day be open-source. For now, it is a private repo found on
-`GitHub <https://github.com/cwfparsonson/trafpy>`_. Contact cwfparsonson@gmail.com
-to request access.
+TrafPy is free software; you can redistribute it and/or modify it under the terms
+of the Apache License 2.0. Contributions are welcome. Check out the `guidelines <https://trafpy.readthedocs.io/en/latest/Contribute.html>`_
+on how to contribute. Contact cwfparsonson@gmail.com for questions.
 
 
 

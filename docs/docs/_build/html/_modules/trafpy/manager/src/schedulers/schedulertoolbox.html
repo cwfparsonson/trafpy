@@ -159,7 +159,7 @@
 <span class="kn">import</span> <span class="nn">itertools</span>
 
 
-<div class="viewcode-block" id="SchedulerToolbox"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox">[docs]</a><span class="k">class</span> <span class="nc">SchedulerToolbox</span><span class="p">:</span>
+<div class="viewcode-block" id="SchedulerToolbox"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox">[docs]</a><span class="k">class</span> <span class="nc">SchedulerToolbox</span><span class="p">:</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">RWA</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">Graph</span> <span class="o">=</span> <span class="n">Graph</span>
@@ -170,10 +170,10 @@
         
         <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
 
-<div class="viewcode-block" id="SchedulerToolbox.reset"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.reset"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">SchedulerNetwork</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Graph</span><span class="p">)</span></div>
         
-<div class="viewcode-block" id="SchedulerToolbox.remove_flow_from_queue"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.remove_flow_from_queue">[docs]</a>    <span class="k">def</span> <span class="nf">remove_flow_from_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow_dict</span><span class="p">,</span> <span class="n">network</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.remove_flow_from_queue"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.remove_flow_from_queue">[docs]</a>    <span class="k">def</span> <span class="nf">remove_flow_from_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow_dict</span><span class="p">,</span> <span class="n">network</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Given flow dict and network that flow is in, will locate flow </span>
 <span class="sd">        in network and remove from queue</span>
@@ -188,7 +188,7 @@
 
         <span class="k">return</span> <span class="n">network</span></div>
 
-<div class="viewcode-block" id="SchedulerToolbox.filter_unavailable_flows"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.filter_unavailable_flows">[docs]</a>    <span class="k">def</span> <span class="nf">filter_unavailable_flows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.filter_unavailable_flows"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.filter_unavailable_flows">[docs]</a>    <span class="k">def</span> <span class="nf">filter_unavailable_flows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Takes a network and filters out any flow that is not ready to be scheduled</span>
 <span class="sd">        yet i.e. has incomplete parent flow dependencies. Use this method to get</span>
@@ -224,7 +224,7 @@
         <span class="k">return</span> <span class="n">net</span></div>
         
         
-<div class="viewcode-block" id="SchedulerToolbox.update_network_state"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.update_network_state">[docs]</a>    <span class="k">def</span> <span class="nf">update_network_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">,</span> <span class="n">hide_child_dependency_flows</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.update_network_state"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.update_network_state">[docs]</a>    <span class="k">def</span> <span class="nf">update_network_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">,</span> <span class="n">hide_child_dependency_flows</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        If hide_child_dependency_flows is True, will only update scheduler network</span>
 <span class="sd">        to see flows that are ready to be scheduled i.e. all parent flow dependencies</span>
@@ -243,12 +243,12 @@
             
             
     
-<div class="viewcode-block" id="SchedulerToolbox.gen_flow_packets"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.gen_flow_packets">[docs]</a>    <span class="k">def</span> <span class="nf">gen_flow_packets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow_size</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.gen_flow_packets"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.gen_flow_packets">[docs]</a>    <span class="k">def</span> <span class="nf">gen_flow_packets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow_size</span><span class="p">):</span>
         <span class="n">num_packets</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">flow_size</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">packet_size</span><span class="p">)</span> <span class="c1"># round up </span>
         <span class="n">packets</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_packets</span><span class="p">))</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">packet_size</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">packet_size</span><span class="p">,</span> <span class="n">packets</span></div>
     
-<div class="viewcode-block" id="SchedulerToolbox.get_flow_from_network"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.get_flow_from_network">[docs]</a>    <span class="k">def</span> <span class="nf">get_flow_from_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">flow_idx</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.get_flow_from_network"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.get_flow_from_network">[docs]</a>    <span class="k">def</span> <span class="nf">get_flow_from_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">flow_idx</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Given the server that the flow is at, the queue of the server that</span>
 <span class="sd">        the flow is in, and the flow idx of the flow in the queue, this method</span>
@@ -261,7 +261,7 @@
             <span class="k">return</span> <span class="s1">&#39;N/A&#39;</span></div>
 
 
-<div class="viewcode-block" id="SchedulerToolbox.get_path_edges"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.get_path_edges">[docs]</a>    <span class="k">def</span> <span class="nf">get_path_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.get_path_edges"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.get_path_edges">[docs]</a>    <span class="k">def</span> <span class="nf">get_path_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Takes a path and returns list of edges in the path</span>
 
@@ -277,7 +277,7 @@
 
         <span class="k">return</span> <span class="n">edges</span></div>
     
-<div class="viewcode-block" id="SchedulerToolbox.find_flow_idx"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.find_flow_idx">[docs]</a>    <span class="k">def</span> <span class="nf">find_flow_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">flows</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.find_flow_idx"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.find_flow_idx">[docs]</a>    <span class="k">def</span> <span class="nf">find_flow_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">flows</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Finds flow idx in a list of flows. Assumes the following </span>
 <span class="sd">        flow features are unique and unchanged properties of each flow:</span>
@@ -306,7 +306,7 @@
         
         <span class="k">return</span> <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s1">&#39;Flow not found in list of flows&#39;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SchedulerToolbox.find_flow_queue"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.find_flow_queue">[docs]</a>    <span class="k">def</span> <span class="nf">find_flow_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.find_flow_queue"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.find_flow_queue">[docs]</a>    <span class="k">def</span> <span class="nf">find_flow_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Finds queue of flow in network</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -317,7 +317,7 @@
         <span class="k">return</span> <span class="n">flow_queue</span></div>
 
 
-<div class="viewcode-block" id="SchedulerToolbox.check_if_lightpath_available"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.check_if_lightpath_available">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_lightpath_available</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.check_if_lightpath_available"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.check_if_lightpath_available">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_lightpath_available</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Checks if chosen flow already has edges which have been assigned to </span>
 <span class="sd">        channel</span>
@@ -336,7 +336,7 @@
                     <span class="k">return</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span></div>
     
-<div class="viewcode-block" id="SchedulerToolbox.estimate_time_to_completion"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.estimate_time_to_completion">[docs]</a>    <span class="k">def</span> <span class="nf">estimate_time_to_completion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow_dict</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.estimate_time_to_completion"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.estimate_time_to_completion">[docs]</a>    <span class="k">def</span> <span class="nf">estimate_time_to_completion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow_dict</span><span class="p">):</span>
         <span class="n">num_packets</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">flow_dict</span><span class="p">[</span><span class="s1">&#39;packets&#39;</span><span class="p">])</span>
         <span class="n">packet_size</span> <span class="o">=</span> <span class="n">flow_dict</span><span class="p">[</span><span class="s1">&#39;packets&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
         
@@ -353,7 +353,7 @@
         
         <span class="k">return</span> <span class="n">completion_time</span><span class="p">,</span> <span class="n">packets_per_slot</span></div>
 
-<div class="viewcode-block" id="SchedulerToolbox.binary_encode_time_in_queue"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.binary_encode_time_in_queue">[docs]</a>    <span class="k">def</span> <span class="nf">binary_encode_time_in_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_in_queue</span><span class="p">,</span> <span class="n">max_record_time_in_queue</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.binary_encode_time_in_queue"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.binary_encode_time_in_queue">[docs]</a>    <span class="k">def</span> <span class="nf">binary_encode_time_in_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_in_queue</span><span class="p">,</span> <span class="n">max_record_time_in_queue</span><span class="p">):</span>
         <span class="n">num_decimals</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slot_size</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
         <span class="n">times</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">num_decimals</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>
                                                               <span class="n">max_record_time_in_queue</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">slot_size</span><span class="p">,</span>
@@ -372,7 +372,7 @@
 
         <span class="k">return</span> <span class="n">binary_encoded_time_in_queue</span></div>
 
-<div class="viewcode-block" id="SchedulerToolbox.binary_encode_num_packets"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.binary_encode_num_packets">[docs]</a>    <span class="k">def</span> <span class="nf">binary_encode_num_packets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_packets</span><span class="p">,</span> <span class="n">max_record_num_packets</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.binary_encode_num_packets"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.binary_encode_num_packets">[docs]</a>    <span class="k">def</span> <span class="nf">binary_encode_num_packets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_packets</span><span class="p">,</span> <span class="n">max_record_num_packets</span><span class="p">):</span>
         <span class="n">binary_encoded_num_packets</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_record_num_packets</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span>
         <span class="k">if</span> <span class="n">num_packets</span> <span class="o">&gt;</span> <span class="n">max_record_num_packets</span><span class="p">:</span>
             <span class="n">num_packets</span> <span class="o">=</span> <span class="n">num_packets</span>
@@ -380,7 +380,7 @@
         
         <span class="k">return</span> <span class="n">binary_encoded_num_packets</span></div>
 
-<div class="viewcode-block" id="SchedulerToolbox.binary_encode_num_flows_in_queue"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.binary_encode_num_flows_in_queue">[docs]</a>    <span class="k">def</span> <span class="nf">binary_encode_num_flows_in_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_flows_in_queue</span><span class="p">,</span> <span class="n">max_num_flows_in_queue</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.binary_encode_num_flows_in_queue"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.binary_encode_num_flows_in_queue">[docs]</a>    <span class="k">def</span> <span class="nf">binary_encode_num_flows_in_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_flows_in_queue</span><span class="p">,</span> <span class="n">max_num_flows_in_queue</span><span class="p">):</span>
         <span class="n">binary_encoded_num_flows</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_num_flows_in_queue</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span>
         <span class="k">if</span> <span class="n">num_flows_in_queue</span> <span class="o">&gt;</span> <span class="n">max_num_flows_in_queue</span><span class="p">:</span>
             <span class="n">num_flows_in_queue</span> <span class="o">=</span> <span class="n">max_num_flows_in_queue</span>
@@ -388,7 +388,7 @@
 
         <span class="k">return</span> <span class="n">binary_encoded_num_flows</span></div>
 
-<div class="viewcode-block" id="SchedulerToolbox.binary_encode_paths"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.binary_encode_paths">[docs]</a>    <span class="k">def</span> <span class="nf">binary_encode_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">paths</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.binary_encode_paths"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.binary_encode_paths">[docs]</a>    <span class="k">def</span> <span class="nf">binary_encode_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">paths</span><span class="p">):</span>
         <span class="n">graph_edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">SchedulerNetwork</span><span class="o">.</span><span class="n">edges</span><span class="p">]</span>
 
         <span class="c1"># map edges to integers</span>
@@ -421,7 +421,7 @@
 
         <span class="k">return</span> <span class="n">binary_encoded_paths</span></div>
 
-<div class="viewcode-block" id="SchedulerToolbox.init_paths_and_packets"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.init_paths_and_packets">[docs]</a>    <span class="k">def</span> <span class="nf">init_paths_and_packets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow_dict</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.init_paths_and_packets"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.init_paths_and_packets">[docs]</a>    <span class="k">def</span> <span class="nf">init_paths_and_packets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow_dict</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">flow_dict</span><span class="p">[</span><span class="s1">&#39;k_shortest_paths&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">k_shortest_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RWA</span><span class="o">.</span><span class="n">k_shortest_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SchedulerNetwork</span><span class="p">,</span>
                                                          <span class="n">flow_dict</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">],</span>
@@ -441,7 +441,7 @@
         <span class="k">return</span> <span class="n">flow_dict</span></div>
 
 
-<div class="viewcode-block" id="SchedulerToolbox.find_shortest_flow_in_queue"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.find_shortest_flow_in_queue">[docs]</a>    <span class="k">def</span> <span class="nf">find_shortest_flow_in_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queued_flows</span><span class="p">,</span> <span class="n">completion_times</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.find_shortest_flow_in_queue"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.find_shortest_flow_in_queue">[docs]</a>    <span class="k">def</span> <span class="nf">find_shortest_flow_in_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queued_flows</span><span class="p">,</span> <span class="n">completion_times</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Allocates shortest lightpaths and finds flow in queue w/ shortest </span>
 <span class="sd">        completion time</span>
@@ -464,7 +464,7 @@
         
         <span class="k">return</span> <span class="n">shortest_flow</span><span class="p">,</span> <span class="n">comp_time</span></div>
     
-<div class="viewcode-block" id="SchedulerToolbox.get_curr_queue_states"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.get_curr_queue_states">[docs]</a>    <span class="k">def</span> <span class="nf">get_curr_queue_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.get_curr_queue_states"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.get_curr_queue_states">[docs]</a>    <span class="k">def</span> <span class="nf">get_curr_queue_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Returns all queues (empty and full) in network</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -480,7 +480,7 @@
         
         <span class="k">return</span> <span class="n">queues</span></div>
 
-<div class="viewcode-block" id="SchedulerToolbox.look_for_available_lightpath"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.look_for_available_lightpath">[docs]</a>    <span class="k">def</span> <span class="nf">look_for_available_lightpath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chosen_flow</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerToolbox.look_for_available_lightpath"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.schedulertoolbox.SchedulerToolbox.look_for_available_lightpath">[docs]</a>    <span class="k">def</span> <span class="nf">look_for_available_lightpath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chosen_flow</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
         <span class="c1"># check for link contentions</span>
         <span class="n">paths</span> <span class="o">=</span> <span class="n">chosen_flow</span><span class="p">[</span><span class="s1">&#39;k_shortest_paths&#39;</span><span class="p">]</span>
         <span class="n">channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RWA</span><span class="o">.</span><span class="n">channel_names</span>

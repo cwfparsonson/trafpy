@@ -1,16 +1,25 @@
 '''Module for generating node distributions.'''
 
 from trafpy.generator.src.dists import plot_dists
+from trafpy.generator.src.dists import val_dists
 from trafpy.generator.src import tools
 
 import sys
 import numpy as np
+import time
+import json
+import copy
 
 
 
 
 def assign_probs_to_matrix(eps, probs, matrix=None):
-    '''Assigns probabilities to 2D matrix.'''
+    '''Assigns probabilities to 2D matrix.
+
+    N.B. Assumes probs are given in order of matrix indices when looping
+    for src in eps for dst in eps
+
+    '''
     if matrix is None:
         matrix = np.zeros((len(eps),len(eps)))
     num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
@@ -34,6 +43,7 @@ def assign_probs_to_matrix(eps, probs, matrix=None):
 
 
 def gen_uniform_node_dist(eps, 
+                          rack_prob_config=None,
                           path_to_save=None, 
                           plot_fig=False, 
                           show_fig=False,
@@ -43,6 +53,21 @@ def gen_uniform_node_dist(eps,
     Args:
         eps (list): List of network node endpoints that can act as sources
             & destinations
+        rack_prob_config (dict): Network endpoints/servers are often grouped into
+            physically local clusters or `racks'. Different networks may have 
+            different levels of inter- (between) and intra- (within) rack communication.
+            If rack_prob_config is left as None, will assume that server-server
+            srs-dst requests are independent of which rack they might be in.
+            If specified, dict should have a `racks_dict' key, whose value is a dict
+            with keys as rack labels (e.g. 'rack_0', 'rack_1' etc.) and whose value
+            for each key is a list of the endpoints in the respective rack
+            (e.g. [`server_0', `server_24', `server_56', ...]), and a `prob_inter_rack'
+            key whose value is a float (e.g. 0.9), setting the probability
+            that a chosen src endpoint has a destination which is outside of its rack.
+            If you want to e.g. designate an entire rack as a 'hot rack' (many
+            traffic requests occur from this rack), would specify skewed_nodes to
+            contain the list of servers in this rack and configure rack_prob_config
+            appropriately.
         path_to_save (str): Path to directory (with file name included) in which
             to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
         plot_fig (bool): Whether or not to plot fig. If True, will return fig.
@@ -65,11 +90,20 @@ def gen_uniform_node_dist(eps,
     
     # uniform prob each pair chosen
     prob_pair_chosen = (np.ones((num_pairs))/((num_pairs)))/2
+    if print_data:
+        print('Prob pair chosen:\n{}'.format(prob_pair_chosen))
 
     # assign probabilites to matrix
     node_dist = assign_probs_to_matrix(eps=eps,
                                        probs=prob_pair_chosen,
                                        matrix=node_dist)
+
+    if rack_prob_config is not None:
+        # adjust node prob dist to account for rack prob config
+        node_dist = adjust_node_dist_for_rack_prob_config(rack_prob_config,
+                                                          eps,
+                                                          node_dist,
+                                                          print_data=print_data)
 
     matrix_sum = np.round(np.sum(node_dist),2)
 
@@ -95,6 +129,7 @@ def gen_uniform_node_dist(eps,
 
 
 def gen_uniform_multinomial_exp_node_dist(eps,
+                                          rack_prob_config=None,
                                           path_to_save=None,
                                           plot_fig=False,
                                           show_fig=False,
@@ -108,6 +143,21 @@ def gen_uniform_multinomial_exp_node_dist(eps,
     Args:
         eps (list): List of network node endpoints that can act as sources
             & destinations
+        rack_prob_config (dict): Network endpoints/servers are often grouped into
+            physically local clusters or `racks'. Different networks may have 
+            different levels of inter- (between) and intra- (within) rack communication.
+            If rack_prob_config is left as None, will assume that server-server
+            srs-dst requests are independent of which rack they might be in.
+            If specified, dict should have a `racks_dict' key, whose value is a dict
+            with keys as rack labels (e.g. 'rack_0', 'rack_1' etc.) and whose value
+            for each key is a list of the endpoints in the respective rack
+            (e.g. [`server_0', `server_24', `server_56', ...]), and a `prob_inter_rack'
+            key whose value is a float (e.g. 0.9), setting the probability
+            that a chosen src endpoint has a destination which is outside of its rack.
+            If you want to e.g. designate an entire rack as a 'hot rack' (many
+            traffic requests occur from this rack), would specify skewed_nodes to
+            contain the list of servers in this rack and configure rack_prob_config
+            appropriately.
         path_to_save (str): Path to directory (with file name included) in which
             to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
         plot_fig (bool): Whether or not to plot fig. If True, will return fig.
@@ -140,6 +190,13 @@ def gen_uniform_multinomial_exp_node_dist(eps,
                                        probs=counter_array_prob_dist,
                                        matrix=node_dist)
 
+    if rack_prob_config is not None:
+        # adjust node prob dist to account for rack prob config
+        node_dist = adjust_node_dist_for_rack_prob_config(rack_prob_config,
+                                                          eps,
+                                                          node_dist,
+                                                          print_data=print_data)
+
     matrix_sum = np.round(np.sum(node_dist),2)
 
     assert matrix_sum == 1, \
@@ -164,6 +221,7 @@ def gen_multimodal_node_dist(eps,
                              skewed_nodes=[],
                              skewed_node_probs=[],
                              num_skewed_nodes=None,
+                             rack_prob_config=None,
                              path_to_save=None,
                              plot_fig=False,
                              show_fig=False,
@@ -186,6 +244,21 @@ def gen_multimodal_node_dist(eps,
             being chosen/specified skews
         num_skewed_nodes (int): Number of nodes to skew. If None, will gen
             a number between 10% and 30% of the total number of nodes in network
+        rack_prob_config (dict): Network endpoints/servers are often grouped into
+            physically local clusters or `racks'. Different networks may have 
+            different levels of inter- (between) and intra- (within) rack communication.
+            If rack_prob_config is left as None, will assume that server-server
+            srs-dst requests are independent of which rack they might be in.
+            If specified, dict should have a `racks_dict' key, whose value is a dict
+            with keys as rack labels (e.g. 'rack_0', 'rack_1' etc.) and whose value
+            for each key is a list of the endpoints in the respective rack
+            (e.g. [`server_0', `server_24', `server_56', ...]), and a `prob_inter_rack'
+            key whose value is a float (e.g. 0.9), setting the probability
+            that a chosen src endpoint has a destination which is outside of its rack.
+            If you want to e.g. designate an entire rack as a 'hot rack' (many
+            traffic requests occur from this rack), would specify skewed_nodes to
+            contain the list of servers in this rack and configure rack_prob_config
+            appropriately.
         path_to_save (str): Path to directory (with file name included) in which
             to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
         plot_fig (bool): Whether or not to plot fig. If True, will return fig.
@@ -289,14 +362,21 @@ def gen_multimodal_node_dist(eps,
             if prob_pair_chosen[pair] == 0:
                 prob_pair_chosen[pair] = next(iter)
     if print_data:
-        print('Prob pair chosen: {}'.format(prob_pair_chosen))
+        print('Prob pair chosen:\n{}'.format(prob_pair_chosen))
 
     # assign probabilites to normalised demand matrix
     node_dist = assign_probs_to_matrix(eps=eps,
                                        probs=prob_pair_chosen,
                                        matrix=node_dist)
 
-    matrix_sum = np.round(np.sum(node_dist),2)
+    if rack_prob_config is not None:
+        # adjust node prob dist to account for rack prob config
+        node_dist = adjust_node_dist_for_rack_prob_config(rack_prob_config,
+                                                          eps,
+                                                          node_dist,
+                                                          print_data=print_data)
+
+        matrix_sum = np.round(np.sum(node_dist),2)
     assert matrix_sum == 1, \
         'matrix must sum to 1, but is {}'.format(matrix_sum)
     
@@ -314,11 +394,236 @@ def gen_multimodal_node_dist(eps,
     else:
         return node_dist
 
+def get_suitable_destination_node_for_rack_config(sn, node_dist, eps, ep_to_rack, rack_to_ep, inter_rack):
+    '''Given source node, finds destination node given inter and intra rack config.'''
+    sn_rack = ep_to_rack[sn]
+
+    # get list of suitable destination nodes
+    dn_eps = []
+    if inter_rack:
+        # get list of inter rack destination nodes for this source node
+        for rack in rack_to_ep.keys():
+            if rack != sn_rack:
+                rack_eps = rack_to_ep[rack]
+                dn_eps.append(rack_eps)
+    else:
+        # get list of intra rack destination nodes for this source node
+        for rack in rack_to_ep.keys():
+            if rack == sn_rack:
+                rack_eps = rack_to_ep[rack]
+                dn_eps.append(rack_eps)
+    # flatten
+    dn_eps_flat = []
+    for l in dn_eps:
+        for d in l:
+            dn_eps_flat.append(d)
+
+    # find suitable destination for source node
+    dn = copy.deepcopy(sn)
+    while sn == dn:
+        dn = gen_demand_nodes(eps=dn_eps_flat,
+                              node_dist=node_dist,
+                              size=1,
+                              axis=1)[0]
+
+    return dn
+
+
+def adjust_node_dist_for_rack_prob_config(rack_prob_config,
+                                          eps,
+                                          node_dist,
+                                          num_exps_factor=100,
+                                          print_data=False):
+    '''Takes node dist and uses it to generate new node dist given inter- and intra-rack configuration.
+
+    Different DCNs have different inter and intra rack traffic. This function
+    allows you to specify how much of your traffic should be inter and intra rack.
+
+    Args:
+        rack_prob_config (dict): Network endpoints/servers are often grouped into
+            physically local clusters or `racks'. Different networks may have 
+            different levels of inter- (between) and intra- (within) rack communication.
+            If rack_prob_config is left as None, will assume that server-server
+            srs-dst requests are independent of which rack they might be in.
+            If specified, dict should have a `racks_dict' key, whose value is a dict
+            with keys as rack labels (e.g. 'rack_0', 'rack_1' etc.) and whose value
+            for each key is a list of the endpoints in the respective rack
+            (e.g. [`server_0', `server_24', `server_56', ...]), and a `prob_inter_rack'
+            key whose value is a float (e.g. 0.9), setting the probability
+            that a chosen src endpoint has a destination which is outside of its rack.
+            If you want to e.g. designate an entire rack as a 'hot rack' (many
+            traffic requests occur from this rack), would specify skewed_nodes to
+            contain the list of servers in this rack and configure rack_prob_config
+            appropriately.
+        eps (list): List of network node endpoints that can act as sources
+            & destinations.
+        node_dist (numpy array): 2D matrix array of source-destination pair
+            probabilities of being chosen.
+        num_exps_factor (int): Factor by which to multiply number of eps to get
+            the number of multinomial experiments to run when generating new
+            node dist.
+        print_data (bool): Whether or not to print extra information about the
+            generated data.
+
+    '''
+
+    node_dist = copy.deepcopy(node_dist)
+
+    # switch racks_dict keys and values to make hashing easier
+    racks_dict = {}
+    for key, val in rack_prob_config['racks_dict'].items():
+        for v in val:
+            if v not in racks_dict.keys():
+                racks_dict[v] = key
+
+    # run multinomial exp to incpororate rack probabilities
+    num_experiments = num_exps_factor * len(eps) 
+    sampled_pairs = {}
+    inter_counter = 0
+    intra_counter = 0
+    for exp in range(num_experiments):
+        # sample if connection should be intra or inter rack
+        inter_rack = np.random.choice(a=[True, False], 
+                                      p=[rack_prob_config['prob_inter_rack'], 
+                                         1-rack_prob_config['prob_inter_rack']])
+        if inter_rack:
+            inter_counter += 1
+        else:
+            intra_counter += 1
+
+        # sample a source node
+        sn = gen_demand_nodes(eps=eps,
+                              node_dist=node_dist,
+                              size=1,
+                              axis=0)[0]
+
+        # sample destination node given inter_rack config
+        dn = get_suitable_destination_node_for_rack_config(sn, 
+                                                           copy.deepcopy(node_dist), 
+                                                           eps, 
+                                                           ep_to_rack=racks_dict, 
+                                                           rack_to_ep=rack_prob_config['racks_dict'], 
+                                                           inter_rack=inter_rack)
+
+        pair = json.dumps([sn, dn])
+        if pair not in sampled_pairs:
+            # check if switched src-dst pair that already occurred
+            pair_switched = json.dumps([dn, sn])
+            if pair_switched not in sampled_pairs:
+                sampled_pairs[pair] = 1 # init first occurrence of pair
+            else:
+                # pair already seen before
+                sampled_pairs[pair_switched] += 1
+        else:
+            # pair already seen before
+            sampled_pairs[pair] += 1
+
+    # convert sampled pairs dict to rand vars
+    sampled_pairs = val_dists.convert_key_occurrences_to_data(list(sampled_pairs.keys()), list(sampled_pairs.values()))
+
+    if print_data:
+        total = inter_counter + intra_counter
+        print('Number inter-rack requests: {} ({}%)'.format(inter_counter, inter_counter*100/total))
+        print('Number intra-rack requests: {} ({}%)'.format(intra_counter, intra_counter*100/total))
+
+    # convert sampled pairs list into prob dist
+    unique_vals, pmf = val_dists.gen_discrete_prob_dist(sampled_pairs)
+    sampled_pair_prob_dist = {unique_var: prob for unique_var, prob in zip(unique_vals, pmf)}
+
+    # insert 0 probabilites for any pairs that were never sampled in multinomial exp
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
+    index_to_pair, pair_to_index = get_network_pair_mapper(eps)
+    if num_pairs != len(sampled_pair_prob_dist.keys()):
+        # some pairs were never chosen, find which are missing
+        chosen_pair_indices = {}
+        for pair in sampled_pair_prob_dist.keys():
+            try:
+                chosen_pair_indices[pair_to_index[pair]] = None
+            except KeyError:
+                pair = json.loads(pair)
+                pair = [pair[1],pair[0]]
+                pair = json.dumps(pair)
+                chosen_pair_indices[pair_to_index[pair]] = None
+
+        for index in index_to_pair.keys():
+            if index not in chosen_pair_indices:
+                # index is missing, update sampled pairs dict with 0 prob for this index
+                sampled_pair_prob_dist[json.dumps(index_to_pair[index])] = 0
+
+    # convert prob dist into dict whose keys are node dist matrix indices
+    index_to_pair, pair_to_index = get_network_pair_mapper(eps)
+    matrix_pair_prob_dist = {}
+    for key in sampled_pair_prob_dist.keys():
+        try:
+            matrix_index = pair_to_index[key]
+        except KeyError:
+            # switch src and dst
+            pair = json.loads(key)
+            key = json.dumps([pair[1], pair[0]])
+            matrix_index = pair_to_index[key]
+        try:
+            matrix_pair_prob_dist[matrix_index] = sampled_pair_prob_dist[key]
+        except KeyError:
+            # switch src and dst back for sampled pair prob dist
+            pair = json.loads(key)
+            key = json.dumps([pair[1], pair[0]])
+            matrix_pair_prob_dist[matrix_index] = sampled_pair_prob_dist[key]
+
+    # sort so that get correct ordering of pair probs when assign to node matrix
+    sorted_matrix_pair_prob_dist_keys = sorted((matrix_pair_prob_dist.keys()))
+
+    # generate new node matrix prob dist (which now accounts for rack probs)
+    prob_pair_chosen = []
+    for key in sorted_matrix_pair_prob_dist_keys:
+        prob = matrix_pair_prob_dist[key]/2 # divide by 2 since one side of diagonal
+        prob_pair_chosen.append(prob)
+
+
+    if print_data:
+        print('Prob pair chosen after accounting for rack prob config:\n{}'.format(prob_pair_chosen))
+        print(len(prob_pair_chosen))
+
+
+
+
+
+    node_dist = assign_probs_to_matrix(eps=eps,
+                                       probs=prob_pair_chosen,
+                                       matrix=node_dist)
+    
+    return node_dist
+
+
+
+
+
+def get_network_pair_mapper(eps):
+    '''Gets dicts mapping network endpoint indices to and from node dist matrix.'''
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
+
+    index_to_pair = {}
+    pair_to_index = {}
+    pair_index = 0
+    for src in eps:
+        for dst in eps:
+            if src == dst:
+                continue
+            elif src > dst:
+                # making symmetric so skip this side of diagonal
+                continue
+            else:
+                index_to_pair[pair_index] = [src, dst]
+                pair_to_index[json.dumps([src, dst])] = pair_index
+                pair_index += 1
+
+    return index_to_pair, pair_to_index
+
 
 def gen_multimodal_node_pair_dist(eps,
                                   skewed_pairs = [],
                                   skewed_pair_probs = [],
                                   num_skewed_pairs=None,
+                                  rack_prob_config=None,
                                   path_to_save=None,
                                   plot_fig=False,
                                   show_fig=False,
@@ -340,6 +645,21 @@ def gen_multimodal_node_pair_dist(eps,
         skewed_pair_probs (list): Probabilities of node pairs being
             chosen.
         num_skewed_pairs (int): Number of pairs to randomly skew.
+        rack_prob_config (dict): Network endpoints/servers are often grouped into
+            physically local clusters or `racks'. Different networks may have 
+            different levels of inter- (between) and intra- (within) rack communication.
+            If rack_prob_config is left as None, will assume that server-server
+            srs-dst requests are independent of which rack they might be in.
+            If specified, dict should have a `racks_dict' key, whose value is a dict
+            with keys as rack labels (e.g. 'rack_0', 'rack_1' etc.) and whose value
+            for each key is a list of the endpoints in the respective rack
+            (e.g. [`server_0', `server_24', `server_56', ...]), and a `prob_inter_rack'
+            key whose value is a float (e.g. 0.9), setting the probability
+            that a chosen src endpoint has a destination which is outside of its rack.
+            If you want to e.g. designate an entire rack as a 'hot rack' (many
+            traffic requests occur from this rack), would specify skewed_nodes to
+            contain the list of servers in this rack and configure rack_prob_config
+            appropriately.
         path_to_save (str): Path to directory (with file name included) in which
             to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
         plot_fig (bool): Whether or not to plot fig. If True, will return fig.
@@ -482,6 +802,20 @@ def gen_multimodal_node_pair_dist(eps,
                                        probs=prob_pair_chosen,
                                        matrix=node_dist)
 
+    if rack_prob_config is not None:
+        # adjust node prob dist to account for rack prob config
+        node_dist = adjust_node_dist_for_rack_prob_config(rack_prob_config,
+                                                          eps,
+                                                          node_dist,
+                                                          print_data=print_data)
+
+
+
+
+                
+
+
+
     matrix_sum = np.round(np.sum(node_dist),2)
     assert matrix_sum == 1, \
         'matrix must sum to 1, but is {}'.format(matrix_sum)
@@ -504,6 +838,7 @@ def gen_multimodal_node_pair_dist(eps,
 def gen_node_demands(eps,
                      node_dist, 
                      num_demands, 
+                     rack_prob_config=None,
                      duplicate=False,
                      path_to_save=None):
     '''Uses node distribution to generate src-dst node pair demands.
@@ -564,6 +899,52 @@ def gen_node_demands(eps,
     if duplicate:
         dn[num_demands:] = dn[:num_demands] # duplicate
 
+    if rack_prob_config is not None:
+        # adjust for rack config
+        # switch racks_dict keys and values to make hasing easier
+        racks_dict = {}
+        for key, val in rack_prob_config['racks_dict'].items():
+            for v in val:
+                if v not in racks_dict.keys():
+                    racks_dict[v] = key
+
+        for request in np.arange(num_demands):
+            # sample if connection should be intra or inter rack
+            inter_rack = np.random.choice(a=[True, False], 
+                                          p=[rack_prob_config['prob_inter_rack'], 
+                                             1-rack_prob_config['prob_inter_rack']])
+
+            # sample destination node given inter_rack config
+            dn[request] = get_suitable_destination_node_for_rack_config(sn[request], 
+                                                                        node_dist, 
+                                                                        eps, 
+                                                                        ep_to_rack=racks_dict, 
+                                                                        rack_to_ep=rack_prob_config['racks_dict'], 
+                                                                        inter_rack=inter_rack)
+
+            # start = time.time()
+            # if inter_rack:
+                # # src and dst must be in different racks
+                # while racks_dict[sn[request]] == racks_dict[dn[request]]:
+                    # dn[request] = gen_demand_nodes(eps=eps,
+                                                   # node_dist=node_dist, 
+                                                   # size=1, 
+                                                   # axis=1)[0]
+                    # if time.time()-start > 20:
+                        # raise Exception('Cannot find src and dst in different racks. Consider adding more racks, reducing number of endpoints per rack, or changing rack_prob_config.')
+            # else:
+                # # src and dst must be in same rack
+                # while racks_dict[sn[request]] != racks_dict[dn[request]]:
+                    # dn[request] = gen_demand_nodes(eps=eps,
+                                                   # node_dist=node_dist, 
+                                                   # size=1, 
+                                                   # axis=1)[0]
+                    # if time.time()-start > 20:
+                        # raise Exception('Cannot find src and dst in same rack. Consider removing racks, increasing number of endpoints per rack, or changing rack_prob_config.')
+
+    if duplicate:
+        dn[num_demands:] = dn[:num_demands]
+
     if path_to_save is not None:
         data = {'sn': sn, 'dn': dn}
         tools.pickle_data(path_to_save, data)
@@ -591,15 +972,46 @@ def gen_demand_nodes(eps,
     assert matrix_sum == 1, \
         'matrix must sum to 1, but is {}'.format(matrix_sum)
 
+
+    if len(eps) != len(np.sum(node_dist,axis=axis)):
+        # must index node dist
+        num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
+        ep_node_indices = [node_to_index[ep] for ep in eps]
+        node_dist = node_dist[ep_node_indices]
+
+    # make sure sums to 1 (sometimes python floating point arithmetic causes incorrect rounding, and will adjust if used above node indexing)
+    probs = adjust_probability_array_sum(np.sum(node_dist, axis=axis), target_sum=1, print_data=False)
+
     nodes = np.random.choice(a = eps, 
                              size = size,
-                             p = np.sum(node_dist,
-                                        axis=axis)).astype(object)
+                             p = probs).astype(object)
     
     if path_to_save is not None:
         tools.pickle_data(path_to_save, nodes)
     
     return nodes
+
+
+
+def adjust_probability_array_sum(probs, target_sum=1, print_data=False):
+    # check probabilites sum to 1 (python floating point arithmetic can cause problems so need this)
+    adjusted_probs = copy.deepcopy(probs)
+
+    total = np.sum(adjusted_probs)
+    if print_data:
+        print('Initial sum: {}'.format(total))
+    difference = total - target_sum
+    if difference != 0:
+        # need slight adjustment so probs sum to target
+        diff_per_pair = difference/len(adjusted_probs)
+        for idx in range(len(adjusted_probs)):
+            adjusted_probs[idx] -= diff_per_pair
+    if print_data:
+        print('Final sum: {}'.format(np.sum(adjusted_probs)))
+
+    return adjusted_probs
+
+
 
 
 

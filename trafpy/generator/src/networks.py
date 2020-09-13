@@ -4,6 +4,7 @@ from trafpy.generator.src import tools
 import copy
 import networkx as nx
 import matplotlib.pyplot as plt
+import json
 
 
 def gen_arbitrary_network(ep_label=None, num_eps=10):
@@ -180,12 +181,15 @@ def get_endpoints(network, ep_label):
 
 
 def gen_fat_tree(k=4,
+                 N=4,
                  ep_label='server',
+                 rack_label='rack',
                  edge_label='edge',
                  aggregate_label='agg',
                  core_label='core',
                  num_channels = 2,
-                 server_to_edge_channel_capacity=10,
+                 server_to_rack_channel_capacity=1,
+                 rack_to_edge_channel_capacity=10,
                  edge_to_agg_channel_capacity=40,
                  agg_to_core_channel_capacity=100,
                  show_fig=False):
@@ -199,10 +203,12 @@ def gen_fat_tree(k=4,
     - number of pods = k
     - number of aggregate switches = (k^2)/2
     - number of edge switches = (k^2)/2
-    - number of servers = (k^3)/4
+    - number of racks = (k^3)/4
+    - number of servers = N*(k^3)/4
 
     Args:
         k (int): Number of ports/links on each switch
+        N (int): Number of servers per rack
         ep_label (str,int,float): Endpoint label (e.g. 'server'). All endpoints will have
             ep_label appended to the start of their label (e.g. 'server_0', 'server_1', ...).
         edge_label (str,int): Label to assign to edge switch nodes
@@ -223,18 +229,20 @@ def gen_fat_tree(k=4,
     num_cores = int((k/2)**2)
     num_aggs = int((k**2)/2)
     num_edges = int((k**2)/2)
-    num_servers = int((k**3)/4)
+    num_racks = int((k**3)/4)
+    num_servers = int(N * num_racks)
 
     cores = [core_label+'_'+str(i) for i in range(num_cores)]
     aggs = [aggregate_label+'_'+str(i) for i in range(num_aggs)]
     edges = [edge_label+'_'+str(i) for i in range(num_edges)]
+    racks = [rack_label+'_'+str(i) for i in range(num_racks)]
     servers = [ep_label+'_'+str(i) for i in range(num_servers)]
    
-    # create core and server layer networks
+    # create core and rack layer networks
     core_layer = nx.Graph()
-    server_layer = nx.Graph()
+    rack_layer = nx.Graph()
     core_layer.add_nodes_from(cores)
-    server_layer.add_nodes_from(servers)
+    rack_layer.add_nodes_from(racks)
     
     # group edges and aggregates into pods
     num_pods = int(k)
@@ -264,9 +272,9 @@ def gen_fat_tree(k=4,
                                  channel_names, 
                                  edge_to_agg_channel_capacity) 
 
-    # combine cores, pods and servers into single network
+    # combine cores, pods and racks into single network
     pod_networks = list(pods_dict.values())
-    fat_tree_network = nx.compose(core_layer, server_layer)
+    fat_tree_network = nx.compose(core_layer, rack_layer)
     for pod_iter in range(num_pods):
         fat_tree_network = nx.compose(fat_tree_network, pod_networks[pod_iter])
 
@@ -283,41 +291,59 @@ def gen_fat_tree(k=4,
                                  channel_names,
                                  agg_to_core_channel_capacity)
 
-    # link edge switches in pods to servers, add link attributes
-    server_iterator = iter(servers)
+    # link edge switches in pods to racks, add link attributes
+    rack_iterator = iter(racks)
     for pod_iter in range(num_pods):
         pod_edges = pods[pod_iter][0]
         for pod_edge in pod_edges:
             while fat_tree_network.degree[pod_edge] < k:
-                server = next(server_iterator)
-                fat_tree_network.add_edge(pod_edge, server)
+                rack = next(rack_iterator)
+                fat_tree_network.add_edge(pod_edge, rack)
                 add_edge_capacity_attrs(fat_tree_network,
-                                 (pod_edge,server),
+                                 (pod_edge,rack),
                                  channel_names,
-                                 server_to_edge_channel_capacity)
+                                 rack_to_edge_channel_capacity)
+    
+    # link servers to racks, add link attributes
+    racks_dict = {rack: [] for rack in racks} # track which endpoints in which rack
+    server_iterator = iter(servers)
+    for rack in racks:
+        servers_added = 0
+        while servers_added < N:
+            server = next(server_iterator)
+            fat_tree_network.add_edge(rack, server)
+            add_edge_capacity_attrs(fat_tree_network,
+                                    (rack, server),
+                                    channel_names,
+                                    server_to_rack_channel_capacity)
+            racks_dict[rack].append(server)
+            servers_added += 1
 
     # add end points as global network property
     fat_tree_network.graph['endpoints'] = get_endpoints(fat_tree_network, ep_label)
 
-
     # calc total network byte capacity
     num_agg_core_links = num_cores * k
     num_edge_agg_links = num_pods * k
-    num_server_edge_links = num_edges * (k/2)
+    num_rack_edge_links = num_edges * (k/2)
+    num_server_rack_links = num_racks * N
     agg_core_capacity = num_agg_core_links * agg_to_core_channel_capacity * num_channels
     edge_agg_capacity = num_edge_agg_links * edge_to_agg_channel_capacity * num_channels
-    server_edge_capacity = num_server_edge_links * server_to_edge_channel_capacity * num_channels
-    max_nw_capacity = server_edge_capacity + edge_agg_capacity + agg_core_capacity
+    rack_edge_capacity = num_rack_edge_links * rack_to_edge_channel_capacity * num_channels
+    server_rack_capacity = num_server_rack_links * server_to_rack_channel_capacity * num_channels
+    max_nw_capacity = server_rack_capacity + rack_edge_capacity + edge_agg_capacity + agg_core_capacity
 
     # init global network attrs
     init_global_network_attrs(fat_tree_network, 
-                            max_nw_capacity, 
-                            num_channels, 
-                            node_labels=[ep_label,
-                                         edge_label,
-                                         aggregate_label,
-                                         core_label],
-                            topology_type='fat_tree')
+                              max_nw_capacity, 
+                              num_channels, 
+                              node_labels=[ep_label,
+                                           rack_label,
+                                           edge_label,
+                                           aggregate_label,
+                                           core_label],
+                              topology_type='fat_tree',
+                              racks_dict=racks_dict)
 
     if show_fig:
         plot_network(fat_tree_network, show_fig=True)
@@ -325,8 +351,27 @@ def gen_fat_tree(k=4,
     return fat_tree_network
 
 
-def init_global_network_attrs(network, max_nw_capacity, num_channels, topology_type='unknown', node_labels=['server']):
-    '''Initialises the standard global network attributes of a given network.'''
+def init_global_network_attrs(network, 
+                              max_nw_capacity, 
+                              num_channels, 
+                              topology_type='unknown', 
+                              node_labels=['server'],
+                              racks_dict=None):
+    '''Initialises the standard global network attributes of a given network.
+
+    Args:
+        network (obj): NetworkX object.
+        max_nw_capacity (int/float): Maximum rate at which info can be reliably 
+            transmitted over the network (sum of all link capacities).
+        num_channels (int): Number of channels on each link in network.
+        topology_type (str): Label of network topology (e.g. 'fat_tree').
+        node_labels (list): Label classes assigned to network nodes 
+            (e.g. ['server', 'rack', 'edge']).
+        racks_dict (dict): Which servers/endpoints are in which rack. If None,
+            assume do not have rack system where have multiple servers in one
+            rack.
+
+    '''
     network.graph['num_channels_per_link'] = num_channels
     network.graph['max_nw_capacity'] = max_nw_capacity
     network.graph['curr_nw_capacity_used'] = 0
@@ -335,6 +380,15 @@ def init_global_network_attrs(network, max_nw_capacity, num_channels, topology_t
     network.graph['node_labels'] = node_labels
     network.graph['topology_type'] = topology_type
     network.graph['channel_names'] = gen_channel_names(num_channels)
+    network.graph['rack_to_ep_dict'] = racks_dict
+
+    # switch racks_dict keys and values to make hasing easier
+    ep_to_rack_dict = {}
+    for key, val in racks_dict.items():
+        for v in val:
+            if v not in ep_to_rack_dict.keys():
+                ep_to_rack_dict[v] = key
+    network.graph['ep_to_rack_dict'] = ep_to_rack_dict
 
 
 def gen_channel_names(num_channels):
@@ -420,7 +474,7 @@ def get_fat_tree_positions(net, width_scale=500, height_scale=10):
     
     heights = {} # dict for heigh separation between fat tree layers
     widths = {} # dict for width separation between nodes within layers
-    h = iter([1, 2, 3, 4]) # server, edge, agg, core heights
+    h = iter([1, 2, 3, 4, 5]) # server, rack, edge, agg, core heights
     for node_type in node_types: 
         heights[node_type] = next(h)
         widths[node_type] = 1/(len(node_type_dict[node_type])+1)
@@ -489,7 +543,7 @@ def plot_network(network,
             pos[network_node] = net_node_positions[network_node]
             
     # network nodes
-    node_colours = iter(['#36a0c7', '#e8b017', '#6115a3', '#160e63']) # server, edge, agg, core
+    node_colours = iter(['#25c44d', '#36a0c7', '#e8b017', '#6115a3', '#160e63']) # server, rack, edge, agg, core
     for node_type in network.graph['node_labels']:
         nx.draw_networkx_nodes(network, 
                                pos, 

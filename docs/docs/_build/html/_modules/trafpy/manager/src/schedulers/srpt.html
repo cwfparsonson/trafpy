@@ -161,9 +161,9 @@
 <span class="kn">import</span> <span class="nn">itertools</span>
 
 
-<div class="viewcode-block" id="SRPT"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT">[docs]</a><span class="k">class</span> <span class="nc">SRPT</span><span class="p">(</span><span class="n">SchedulerToolbox</span><span class="p">):</span>
+<div class="viewcode-block" id="SRPT"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT">[docs]</a><span class="k">class</span> <span class="nc">SRPT</span><span class="p">(</span><span class="n">SchedulerToolbox</span><span class="p">):</span>
 
-<div class="viewcode-block" id="SRPT.get_scheduler_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT.get_scheduler_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_scheduler_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+<div class="viewcode-block" id="SRPT.get_scheduler_action"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT.get_scheduler_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_scheduler_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Uses observation and chosen rwa action(s) to construct schedule for this</span>
 <span class="sd">        timeslot</span>
@@ -224,7 +224,7 @@
 
         <span class="k">return</span> <span class="n">chosen_flows</span></div>
 
-<div class="viewcode-block" id="SRPT.get_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+<div class="viewcode-block" id="SRPT.get_action"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
 
         <span class="c1"># scheduler action</span>
         <span class="n">chosen_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduler_action</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
@@ -232,7 +232,7 @@
 
         <span class="k">return</span> <span class="n">action</span></div>
     
-<div class="viewcode-block" id="SRPT.find_contending_flow"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT.find_contending_flow">[docs]</a>    <span class="k">def</span> <span class="nf">find_contending_flow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chosen_flow</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
+<div class="viewcode-block" id="SRPT.find_contending_flow"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT.find_contending_flow">[docs]</a>    <span class="k">def</span> <span class="nf">find_contending_flow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chosen_flow</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Goes through chosen flow possible path &amp; channel combinations &amp; </span>
 <span class="sd">        compares to path-channel combinations in chosen flows. Saves all</span>

@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="License" href="License.html" />
+    <link rel="next" title="Contribute" href="Contribute.html" />
     <link rel="prev" title="Install" href="Install.html" /> 
 </head>
 
@@ -90,6 +90,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#networks">Networks</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#flow-centric-traffic-demands">Flow-Centric Traffic Demands</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#job-centric-traffic-demands">Job-Centric Traffic Demands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#additional-functionality">Additional Functionality</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#visually-shaping-trafpy-distributions">Visually Shaping TrafPy Distributions</a><ul>
@@ -102,6 +103,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#trafpy-manager">TrafPy Manager</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
 <li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
 </ul>
@@ -296,27 +298,19 @@ node distribution</strong></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">skewed_nodes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;server_2&#39;</span><span class="p">],</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="figure align-default" id="id3">
-<img alt="_images/Tutorial-12_00.png" src="_images/Tutorial-12_00.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-12_00.png">png</a>, <a class="reference external" href=".//Tutorial-12_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-12_00.pdf">pdf</a>)</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
-</div>
-<div class="figure align-default" id="id4">
-<img alt="_images/Tutorial-12_01.png" src="_images/Tutorial-12_01.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-12_01.png">png</a>, <a class="reference external" href=".//Tutorial-12_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-12_01.pdf">pdf</a>)</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
-</div>
 <p>Instead of certain <em>nodes</em> being requested more regularly, sometimes certain
 <em>node pairs</em> in the network might be skewed, forming a <strong>multimodal node pair</strong>
 distribution</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">skewed_pairs</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;server_1&#39;</span><span class="p">,</span><span class="s1">&#39;server_3&#39;</span><span class="p">],[</span><span class="s1">&#39;server_4&#39;</span><span class="p">,</span><span class="s1">&#39;server_2&#39;</span><span class="p">]],</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="figure align-default" id="id5">
+<div class="figure align-default" id="id3">
 <img alt="_images/Tutorial-13_00.png" src="_images/Tutorial-13_00.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-13_00.png">png</a>, <a class="reference external" href=".//Tutorial-13_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-13_00.pdf">pdf</a>)</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-13_00.png">png</a>, <a class="reference external" href=".//Tutorial-13_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-13_00.pdf">pdf</a>)</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
 </div>
-<div class="figure align-default" id="id6">
+<div class="figure align-default" id="id4">
 <img alt="_images/Tutorial-13_01.png" src="_images/Tutorial-13_01.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-13_01.png">png</a>, <a class="reference external" href=".//Tutorial-13_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-13_01.pdf">pdf</a>)</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-13_01.png">png</a>, <a class="reference external" href=".//Tutorial-13_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-13_01.pdf">pdf</a>)</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
 </div>
 <p>Different networks have different node distributions. Sometimes you may want a
 simple uniform distribution, or a slightly skewed distribution, or certain nodes
@@ -331,13 +325,13 @@ for further details.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="figure align-default" id="id7">
+<div class="figure align-default" id="id5">
 <img alt="_images/Tutorial-14_00.png" src="_images/Tutorial-14_00.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-14_00.png">png</a>, <a class="reference external" href=".//Tutorial-14_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-14_00.pdf">pdf</a>)</span><a class="headerlink" href="#id7" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-14_00.png">png</a>, <a class="reference external" href=".//Tutorial-14_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-14_00.pdf">pdf</a>)</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
 </div>
-<div class="figure align-default" id="id8">
+<div class="figure align-default" id="id6">
 <img alt="_images/Tutorial-14_01.png" src="_images/Tutorial-14_01.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-14_01.png">png</a>, <a class="reference external" href=".//Tutorial-14_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-14_01.pdf">pdf</a>)</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-14_01.png">png</a>, <a class="reference external" href=".//Tutorial-14_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-14_01.pdf">pdf</a>)</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
 </div>
 <p>Once you have your node probability distribution, you can use it to generate
 as many source-destination node pairs as you like</p>
@@ -356,17 +350,9 @@ multiple links and nodes, some of which may be endpoints and some not.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//Tutorial-16.png">png</a>, <a class="reference external" href=".//Tutorial-16.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-16.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-16.png" src="_images/Tutorial-16.png" />
-</div>
 <p>or the 14-node NSFNET network</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_nsfnet_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-</div>
-<p>(<a class="reference external" href=".//Tutorial-17.png">png</a>, <a class="reference external" href=".//Tutorial-17.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-17.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-17.png" src="_images/Tutorial-17.png" />
 </div>
 <p>or a fat-tree network</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_fat_tree</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -391,7 +377,7 @@ in a network (e.g. a data centre network).</p>
 <li><p>interarrival time; and</p></li>
 <li><p>source-destination node distribution.</p></li>
 </ul>
-<p>Using the value and node distribution generation function you’ve seen so far,
+<p>Using the value and node distribution generation functions you’ve seen so far,
 you can use TrafPy to generate realistic flow demands. Later in this tutorial,
 you will see how to use TrafPy’s Jupyter Notebook tool to visually shape your
 distributions such that they match real data/literature distributions. For now,
@@ -401,10 +387,6 @@ network</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">num_demands</span> <span class="o">=</span> <span class="mi">1000</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;endpoint&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-</div>
-<p>(<a class="reference external" href=".//Tutorial-19.png">png</a>, <a class="reference external" href=".//Tutorial-19.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-19.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-19.png" src="_images/Tutorial-19.png" />
 </div>
 <p>You could start by defining the flow size distribution</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flow_size_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;weibull&#39;</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_alpha&#39;</span><span class="p">:</span> <span class="mf">1.4</span><span class="p">,</span> <span class="s1">&#39;_lambda&#39;</span><span class="p">:</span> <span class="mi">7000</span><span class="p">},</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">rand_var_name</span><span class="o">=</span><span class="s1">&#39;Flow Size&#39;</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mf">1e2</span><span class="p">,</span><span class="mf">1e12</span><span class="p">])</span>
@@ -426,14 +408,6 @@ network</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">endpoints</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">num_skewed_nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-</div>
-<div class="figure align-default" id="id9">
-<img alt="_images/Tutorial-22_00.png" src="_images/Tutorial-22_00.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-22_00.png">png</a>, <a class="reference external" href=".//Tutorial-22_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-22_00.pdf">pdf</a>)</span><a class="headerlink" href="#id9" title="Permalink to this image">¶</a></p>
-</div>
-<div class="figure align-default" id="id10">
-<img alt="_images/Tutorial-22_01.png" src="_images/Tutorial-22_01.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-22_01.png">png</a>, <a class="reference external" href=".//Tutorial-22_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-22_01.pdf">pdf</a>)</span><a class="headerlink" href="#id10" title="Permalink to this image">¶</a></p>
 </div>
 <p>You can then use your distributions to generate flow-centric demand data formatted
 neatly into a single dictionary</p>
@@ -568,6 +542,76 @@ the embedded demand data. You can visualise the job computation graph(s):</p>
 </div>
 <img alt="_images/job_graph_1.png" class="align-center" src="_images/job_graph_1.png" />
 <img alt="_images/job_graph_2.png" class="align-center" src="_images/job_graph_2.png" />
+</div>
+<div class="section" id="additional-functionality">
+<h3>Additional Functionality<a class="headerlink" href="#additional-functionality" title="Permalink to this headline">¶</a></h3>
+<p>Up to now, you have used TrafPy to create some number of demands. However,
+it is often more useful to create an arbitrary number of demands such that a certain
+<strong>network load</strong> is generated for an arbitrary network. Here, the <strong>network capacity</strong>
+is the total <em>rate</em> at which information can be reliably transmitted over the network,
+and the network load is the fraction of this capacity being requested during the
+session.</p>
+<p>To specify the load and have the number of demands automatically generated,
+the same functions you’ve seen above can be used, but now specifying the
+<code class="docutils literal notranslate"><span class="pre">network_load_config</span></code> argument rather than <code class="docutils literal notranslate"><span class="pre">num_demands</span></code>. E.g. to generate
+demands that will request a 0.75 load of a network with a network capacity
+of 6,000 Gbps:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network_load_config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;network_rate_capacity&#39;</span><span class="p">:</span> <span class="mi">6000</span><span class="p">,</span> <span class="s1">&#39;target_load_fraction&#39;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">flow_centric_demand_data</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">create_demand_data</span><span class="p">(</span><span class="n">network_load_config</span><span class="o">=</span><span class="n">network_load_config</span><span class="p">,</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span><span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span><span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Network endpoints/servers are often grouped into physically local clusters or ‘racks’.
+Different networks may have different levels of inter- (between) and intra- (within) rack communication.
+One way to specify this would be to set individual node pair probabilities with the <code class="docutils literal notranslate"><span class="pre">gen_multimodal_node_pair_dist</span></code> function
+you’ve already seen, however this would be inconvenient and laborious. Instead, when using the above node distribution functions,
+you can specify the <code class="docutils literal notranslate"><span class="pre">rack_prob_config</span></code> argument, which allows you to set the proportion of
+traffic which should be inter-rack. TrafPy will then use your shaped node distribution
+to create an adjusted node distribution which accounts for your specified rack probabilites.
+For example, if you specify <code class="docutils literal notranslate"><span class="pre">rack_prob_config</span></code> in <code class="docutils literal notranslate"><span class="pre">gen_uniform_node_dist</span></code>, you will not generate a perfectly
+uniform node distribution as you would if you left <code class="docutils literal notranslate"><span class="pre">rack_prob_config</span></code> as <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+but instead a node distribution with set inter- and intra-rack probabilities sampled
+from a uniform distribution. You will need to specify which endpoints are
+in which rack with a dictionary (this is automatically done for you if you
+use one of the TrafPy networks). E.g. Making 20% of traffic inter-rack in a
+fat-tree topology:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">net</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_fat_tree</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">num_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">plot_network</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">draw_node_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">network_node_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Racks dict:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;rack_to_ep_dict&#39;</span><span class="p">]))</span>
+<span class="go">Racks dict:</span>
+<span class="go">{&#39;rack_0&#39;: [&#39;server_0&#39;, &#39;server_1&#39;], &#39;rack_1&#39;: [&#39;server_2&#39;, &#39;server_3&#39;],</span>
+<span class="go">&#39;rack_2&#39;: [&#39;server_4&#39;, &#39;server_5&#39;], &#39;rack_3&#39;: [&#39;server_6&#39;, &#39;server_7&#39;],</span>
+<span class="go">&#39;rack_4&#39;: [&#39;server_8&#39;, &#39;server_9&#39;], &#39;rack_5&#39;: [&#39;server_10&#39;, &#39;server_11&#39;]}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rack_prob_config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;racks_dict&#39;</span><span class="p">:</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;rack_to_ep_dict&#39;</span><span class="p">],</span> <span class="s1">&#39;prob_inter_rack&#39;</span><span class="p">:</span> <span class="mf">0.20</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">],</span> <span class="n">rack_prob_config</span><span class="o">=</span><span class="n">rack_prob_config</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure align-default" id="id7">
+<img alt="_images/Tutorial-31_00.png" src="_images/Tutorial-31_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-31_00.png">png</a>, <a class="reference external" href=".//Tutorial-31_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-31_00.pdf">pdf</a>)</span><a class="headerlink" href="#id7" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id8">
+<img alt="_images/Tutorial-31_01.png" src="_images/Tutorial-31_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-31_01.png">png</a>, <a class="reference external" href=".//Tutorial-31_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-31_01.pdf">pdf</a>)</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id9">
+<img alt="_images/Tutorial-31_02.png" src="_images/Tutorial-31_02.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-31_02.png">png</a>, <a class="reference external" href=".//Tutorial-31_02.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-31_02.pdf">pdf</a>)</span><a class="headerlink" href="#id9" title="Permalink to this image">¶</a></p>
+</div>
+<p>Making 90% of traffic inter-rack:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rack_prob_config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;racks_dict&#39;</span><span class="p">:</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;rack_to_ep_dict&#39;</span><span class="p">],</span> <span class="s1">&#39;prob_inter_rack&#39;</span><span class="p">:</span> <span class="mf">0.90</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">],</span> <span class="n">rack_prob_config</span><span class="o">=</span><span class="n">rack_prob_config</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure align-default" id="id10">
+<img alt="_images/Tutorial-32_00.png" src="_images/Tutorial-32_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-32_00.png">png</a>, <a class="reference external" href=".//Tutorial-32_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-32_00.pdf">pdf</a>)</span><a class="headerlink" href="#id10" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id11">
+<img alt="_images/Tutorial-32_01.png" src="_images/Tutorial-32_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-32_01.png">png</a>, <a class="reference external" href=".//Tutorial-32_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-32_01.pdf">pdf</a>)</span><a class="headerlink" href="#id11" title="Permalink to this image">¶</a></p>
+</div>
 </div>
 </div>
 <div class="section" id="visually-shaping-trafpy-distributions">
@@ -822,7 +866,7 @@ framework:</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="License.html" class="btn btn-neutral float-right" title="License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="Contribute.html" class="btn btn-neutral float-right" title="Contribute" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="Install.html" class="btn btn-neutral float-left" title="Install" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

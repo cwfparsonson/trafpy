@@ -161,7 +161,7 @@
 <span class="kn">import</span> <span class="nn">itertools</span>
 
 
-<div class="viewcode-block" id="Agent"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent">[docs]</a><span class="k">class</span> <span class="nc">Agent</span><span class="p">(</span><span class="n">SchedulerToolbox</span><span class="p">):</span>
+<div class="viewcode-block" id="Agent"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent">[docs]</a><span class="k">class</span> <span class="nc">Agent</span><span class="p">(</span><span class="n">SchedulerToolbox</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">RWA</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">,</span> <span class="n">max_F</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">agent_type</span><span class="o">=</span><span class="s1">&#39;sarsa_learning&#39;</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">Graph</span><span class="p">,</span> <span class="n">RWA</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">)</span>
@@ -217,7 +217,7 @@
         <span class="c1"># create policy to follow</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">policy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_epsilon_greedy_policy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q_table</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_space</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Agent.make_epsilon_greedy_policy"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.make_epsilon_greedy_policy">[docs]</a>    <span class="k">def</span> <span class="nf">make_epsilon_greedy_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Q_table</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">action_space</span><span class="p">):</span>
+<div class="viewcode-block" id="Agent.make_epsilon_greedy_policy"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.make_epsilon_greedy_policy">[docs]</a>    <span class="k">def</span> <span class="nf">make_epsilon_greedy_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Q_table</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">action_space</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">policy_func</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
             <span class="c1"># create uniform probability distribution over all possible actions</span>
             <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">action_space</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">epsilon</span> <span class="o">/</span> <span class="n">action_space</span>
@@ -234,7 +234,7 @@
 
         <span class="k">return</span> <span class="n">policy_func</span></div>
 
-<div class="viewcode-block" id="Agent.check_if_end_of_time_slot_decisions"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.check_if_end_of_time_slot_decisions">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_end_of_time_slot_decisions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
+<div class="viewcode-block" id="Agent.check_if_end_of_time_slot_decisions"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.check_if_end_of_time_slot_decisions">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_end_of_time_slot_decisions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        If one of the following is true, agent should stop making decisions</span>
 <span class="sd">        this time slot and this method will return True:</span>
@@ -281,7 +281,7 @@
         <span class="k">return</span> <span class="kc">False</span></div>
 
 
-<div class="viewcode-block" id="Agent.get_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+<div class="viewcode-block" id="Agent.get_action"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
         <span class="n">chosen_flows</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">chosen_actions</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># save chosen actions</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">chosen_action_states</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># save states agent observed when choosing flows</span>
@@ -338,7 +338,7 @@
                 <span class="c1"># update agent state as having scheduled this chosen flow</span>
                 <span class="n">state</span><span class="p">,</span> <span class="n">agent_queues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_agent_state</span><span class="p">(</span><span class="n">agent_queues</span><span class="p">,</span> <span class="n">a_meaning</span><span class="p">)</span></div>
     
-<div class="viewcode-block" id="Agent.update_agent_state"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.update_agent_state">[docs]</a>    <span class="k">def</span> <span class="nf">update_agent_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent_queues</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+<div class="viewcode-block" id="Agent.update_agent_state"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.update_agent_state">[docs]</a>    <span class="k">def</span> <span class="nf">update_agent_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent_queues</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Updates flow=action in agent_queues to having scheduled = 1, returns</span>
 <span class="sd">        updated state</span>
@@ -360,7 +360,7 @@
 
 
 
-<div class="viewcode-block" id="Agent.process_reward"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.process_reward">[docs]</a>    <span class="k">def</span> <span class="nf">process_reward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_observation</span><span class="p">):</span>
+<div class="viewcode-block" id="Agent.process_reward"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.process_reward">[docs]</a>    <span class="k">def</span> <span class="nf">process_reward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_observation</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Take reward from environment that resulted in action from prev time step</span>
 <span class="sd">        and use to learn </span>
@@ -390,7 +390,7 @@
 
 
 
-<div class="viewcode-block" id="Agent.get_agent_state_representation"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.get_agent_state_representation">[docs]</a>    <span class="k">def</span> <span class="nf">get_agent_state_representation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+<div class="viewcode-block" id="Agent.get_agent_state_representation"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.get_agent_state_representation">[docs]</a>    <span class="k">def</span> <span class="nf">get_agent_state_representation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
         <span class="n">eps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SchedulerNetwork</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span>
         <span class="n">agent_queues</span> <span class="o">=</span> <span class="p">{</span><span class="n">server</span><span class="p">:</span> <span class="p">{</span><span class="n">queue</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">:</span> <span class="p">[]}</span>
                             <span class="k">for</span> <span class="n">queue</span> <span class="ow">in</span> <span class="n">eps</span> <span class="k">if</span> <span class="n">queue</span> <span class="o">!=</span> <span class="n">server</span><span class="p">}</span>
@@ -455,7 +455,7 @@
 
         <span class="k">return</span> <span class="n">hashable_state</span><span class="p">,</span> <span class="n">agent_queues</span></div>
 
-<div class="viewcode-block" id="Agent.merge_agent_flow_dict"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.merge_agent_flow_dict">[docs]</a>    <span class="k">def</span> <span class="nf">merge_agent_flow_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent_flow_dict</span><span class="p">):</span>
+<div class="viewcode-block" id="Agent.merge_agent_flow_dict"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.merge_agent_flow_dict">[docs]</a>    <span class="k">def</span> <span class="nf">merge_agent_flow_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent_flow_dict</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Merges flow dict of agent into single array</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -471,7 +471,7 @@
         <span class="k">return</span> <span class="n">flow_state_array</span></div>
 
 
-<div class="viewcode-block" id="Agent.gen_state_from_agent_queues"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.gen_state_from_agent_queues">[docs]</a>    <span class="k">def</span> <span class="nf">gen_state_from_agent_queues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent_queues</span><span class="p">):</span>
+<div class="viewcode-block" id="Agent.gen_state_from_agent_queues"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.gen_state_from_agent_queues">[docs]</a>    <span class="k">def</span> <span class="nf">gen_state_from_agent_queues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent_queues</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Uses agent queues to generate state</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -519,7 +519,7 @@
         <span class="k">return</span> <span class="n">state</span> </div>
 
 
-<div class="viewcode-block" id="Agent.get_agent_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.get_agent_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_agent_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+<div class="viewcode-block" id="Agent.get_agent_action"><a class="viewcode-back" href="../../../../../docs/trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.agent.Agent.get_agent_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_agent_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
         <span class="k">pass</span></div></div>
 
 

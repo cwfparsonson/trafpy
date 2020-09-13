@@ -183,36 +183,36 @@
 
 
 
-<div class="viewcode-block" id="DCN.get_fat_tree_positions"><a class="viewcode-back" href="../../../../../trafpy.manager.src.simulators.html#trafpy.manager.src.simulators.dcn.DCN.get_fat_tree_positions">[docs]</a>    <span class="k">def</span> <span class="nf">get_fat_tree_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">width_scale</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">height_scale</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-        <span class="n">pos</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="c1"># def get_fat_tree_positions(self, net, width_scale=500, height_scale=10):</span>
+        <span class="c1"># pos = {}</span>
 
-        <span class="n">node_type_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_node_type_dict</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;node_labels&#39;</span><span class="p">])</span>
-        <span class="n">node_types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_type_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="c1"># node_type_dict = self.get_node_type_dict(net, net.graph[&#39;node_labels&#39;])</span>
+        <span class="c1"># node_types = list(node_type_dict.keys())</span>
         
-        <span class="n">heights</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># dict for heigh separation between fat tree layers</span>
-        <span class="n">widths</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># dict for width separation between nodes within layers</span>
-        <span class="n">h</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span> <span class="c1"># server, edge, agg, core heights</span>
-        <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">node_types</span><span class="p">:</span> 
-            <span class="n">heights</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
-            <span class="n">widths</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">node_type_dict</span><span class="p">[</span><span class="n">node_type</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_type_dict</span><span class="p">[</span><span class="n">node_type</span><span class="p">]:</span>
-                <span class="n">pos</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">widths</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span><span class="o">*</span><span class="n">width_scale</span><span class="p">,</span><span class="n">heights</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span><span class="o">*</span><span class="n">height_scale</span><span class="p">)</span>
-                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># heights = {} # dict for heigh separation between fat tree layers</span>
+        <span class="c1"># widths = {} # dict for width separation between nodes within layers</span>
+        <span class="c1"># h = iter([1, 2, 3, 4]) # server, edge, agg, core heights</span>
+        <span class="c1"># for node_type in node_types: </span>
+            <span class="c1"># heights[node_type] = next(h)</span>
+            <span class="c1"># widths[node_type] = 1/(len(node_type_dict[node_type])+1)</span>
+            <span class="c1"># idx = 0</span>
+            <span class="c1"># for node in node_type_dict[node_type]:</span>
+                <span class="c1"># pos[node] = ((idx+1)*widths[node_type]*width_scale,heights[node_type]*height_scale)</span>
+                <span class="c1"># idx += 1</span>
 
-        <span class="k">return</span> <span class="n">pos</span></div>
+        <span class="c1"># return pos</span>
         
 
 
-<div class="viewcode-block" id="DCN.init_network_node_positions"><a class="viewcode-back" href="../../../../../trafpy.manager.src.simulators.html#trafpy.manager.src.simulators.dcn.DCN.init_network_node_positions">[docs]</a>    <span class="k">def</span> <span class="nf">init_network_node_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">net</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;topology_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;fat_tree&#39;</span><span class="p">:</span>
-            <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fat_tree_positions</span><span class="p">(</span><span class="n">net</span><span class="p">)</span>
+    <span class="c1"># def init_network_node_positions(self, net):</span>
+        <span class="c1"># if net.graph[&#39;topology_type&#39;] == &#39;fat_tree&#39;:</span>
+            <span class="c1"># pos = self.get_fat_tree_positions(net)</span>
 
 
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">pos</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">nx_agraph</span><span class="o">.</span><span class="n">graphviz_layout</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">prog</span><span class="o">=</span><span class="s1">&#39;neato&#39;</span><span class="p">)</span>
+        <span class="c1"># else:</span>
+            <span class="c1"># pos = nx.nx_agraph.graphviz_layout(net, prog=&#39;neato&#39;)</span>
         
-        <span class="k">return</span> <span class="n">pos</span></div>
+        <span class="c1"># return pos</span>
 
 <div class="viewcode-block" id="DCN.reset"><a class="viewcode-back" href="../../../../../trafpy.manager.src.simulators.html#trafpy.manager.src.simulators.dcn.DCN.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pickled_demand_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_obs</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
@@ -230,7 +230,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">num_endpoints</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]))</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">net_node_positions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_network_node_positions</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net_node_positions</span> <span class="o">=</span> <span class="n">networks</span><span class="o">.</span><span class="n">init_network_node_positions</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">animation_images</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;chosen_flows&#39;</span><span class="p">:</span> <span class="p">[]}</span> <span class="c1"># init</span>
@@ -798,24 +798,24 @@
         <span class="k">return</span> <span class="n">num_channels_used</span><span class="p">,</span> <span class="n">num_channels</span></div>
 
 
-<div class="viewcode-block" id="DCN.get_node_type_dict"><a class="viewcode-back" href="../../../../../trafpy.manager.src.simulators.html#trafpy.manager.src.simulators.dcn.DCN.get_node_type_dict">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_type_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">,</span> <span class="n">node_types</span><span class="o">=</span><span class="p">[]):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Gets dict where keys are node types and values are list of nodes for</span>
-<span class="sd">        each node type in graph</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">network_nodes</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">network_node</span> <span class="ow">in</span> <span class="n">network</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
-            <span class="n">network_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">network_node</span><span class="p">)</span>
-        <span class="n">network_nodes_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">node_type</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">node_types</span><span class="p">}</span>
-        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">network_nodes</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">node_types</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">n</span><span class="p">:</span>
-                    <span class="n">network_nodes_dict</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># not this node type</span>
-                    <span class="k">pass</span>
+    <span class="c1"># def get_node_type_dict(self, network, node_types=[]):</span>
+        <span class="c1"># &#39;&#39;&#39;</span>
+        <span class="c1"># Gets dict where keys are node types and values are list of nodes for</span>
+        <span class="c1"># each node type in graph</span>
+        <span class="c1"># &#39;&#39;&#39;</span>
+        <span class="c1"># network_nodes = []</span>
+        <span class="c1"># for network_node in network.nodes:</span>
+            <span class="c1"># network_nodes.append(network_node)</span>
+        <span class="c1"># network_nodes_dict = {node_type: [] for node_type in node_types}</span>
+        <span class="c1"># for n in network_nodes:</span>
+            <span class="c1"># for node_type in node_types:</span>
+                <span class="c1"># if node_type in n:</span>
+                    <span class="c1"># network_nodes_dict[node_type].append(n)</span>
+                <span class="c1"># else:</span>
+                    <span class="c1"># # not this node type</span>
+                    <span class="c1"># pass</span>
         
-        <span class="k">return</span> <span class="n">network_nodes_dict</span></div>
+        <span class="c1"># return network_nodes_dict</span>
 
 
 
@@ -894,7 +894,7 @@
                 <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s1">&#39;Link type not recognised.&#39;</span><span class="p">)</span>
 
         <span class="c1"># network nodes</span>
-        <span class="n">node_colours</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">([</span><span class="s1">&#39;#36a0c7&#39;</span><span class="p">,</span> <span class="s1">&#39;#e8b017&#39;</span><span class="p">,</span> <span class="s1">&#39;#6115a3&#39;</span><span class="p">,</span> <span class="s1">&#39;#160e63&#39;</span><span class="p">])</span> <span class="c1"># server, edge, agg, core</span>
+        <span class="n">node_colours</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">([</span><span class="s1">&#39;#25c44d&#39;</span><span class="p">,</span> <span class="s1">&#39;#36a0c7&#39;</span><span class="p">,</span> <span class="s1">&#39;#e8b017&#39;</span><span class="p">,</span> <span class="s1">&#39;#6115a3&#39;</span><span class="p">,</span> <span class="s1">&#39;#160e63&#39;</span><span class="p">])</span> <span class="c1"># server, rack, edge, agg, core</span>
         <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;node_labels&#39;</span><span class="p">]:</span>
             <span class="n">nx</span><span class="o">.</span><span class="n">draw_networkx_nodes</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> 
                                    <span class="n">pos</span><span class="p">,</span> 

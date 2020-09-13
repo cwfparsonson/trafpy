@@ -82,6 +82,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
 <li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
 </ul>
@@ -200,14 +201,13 @@ slots.</p>
 
 <dl class="py function">
 <dt id="trafpy.generator.src.builder.create_demand_data">
-<code class="sig-prename descclassname">trafpy.generator.src.builder.</code><code class="sig-name descname">create_demand_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_demands</span></em>, <em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">flow_size_dist</span></em>, <em class="sig-param"><span class="n">interarrival_time_dist</span></em>, <em class="sig-param"><span class="n">duration_time_dist</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_ops_dist</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_multiprocessing</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/builder.html#create_demand_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.builder.create_demand_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">trafpy.generator.src.builder.</code><code class="sig-name descname">create_demand_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">flow_size_dist</span></em>, <em class="sig-param"><span class="n">interarrival_time_dist</span></em>, <em class="sig-param"><span class="n">num_demands</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">network_load_config</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">duration_time_dist</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_ops_dist</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_multiprocessing</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/builder.html#create_demand_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.builder.create_demand_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create demand data dictionary using given distributions.</p>
 <p>If num_ops_dist and c are left as None, return flow-centric demand data.
 Otherwise, return job-centric demand data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_demands</strong> (<em>int</em>) – Number of demands to generate.</p></li>
 <li><p><strong>eps</strong> (<em>list</em>) – List of network endpoints.</p></li>
 <li><p><strong>node_dist</strong> (<em>numpy array</em>) – 2d matrix of source-destination probabilities
 of occurring</p></li>
@@ -215,6 +215,18 @@ of occurring</p></li>
 flow size value-probability pairs.</p></li>
 <li><p><strong>interarrival_time_dist</strong> (<em>dict</em>) – Probability distribution whose key-value pairs are
 interarrival time value-probability pairs.</p></li>
+<li><p><strong>num_demands</strong> (<em>int</em>) – Number of demands to generate. If None, must specify
+network_load_config</p></li>
+<li><p><strong>network_load_config</strong> (<em>dict</em>) – Dict of form {‘network_rate_capacity’: &lt;int/float&gt;, ‘target_load_fraction’: &lt;float&gt;, ‘disable_timeouts’: &lt;bool&gt;},
+where network_rate_capacity is the maximum rate (in e.g. Gbps) at which
+information can be reliably transmitted over the communication network
+which the demand data will be inserted into, and where target_load_fraction
+is the fraction of the network rate capacity being requested by the demands
+(e.g. target_load_fraction=0.75 would generate demands which request
+a load that is 75% of the network rate capacity from the first to
+the last demand arriving). disable_timeouts defines whether or not
+to stop looping when trying to meet specified network load.
+If network_load_config is None, must specify num_demands</p></li>
 <li><p><strong>duration_time_dist</strong> (<em>dict</em>) – Probability distribution whose key-value pairs are
 duration time value-probability pairs. If specified, half events
 returned will be ‘take-down’ events (establish==0). If left as None,
@@ -278,6 +290,31 @@ demand data depending on the args given to the function).</p>
 <dl class="py function">
 <dt id="trafpy.generator.src.flowcentric.create_flow_centric_demand_data">
 <code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">create_flow_centric_demand_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_demands</span></em>, <em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">flow_size_dist</span></em>, <em class="sig-param"><span class="n">interarrival_time_dist</span></em>, <em class="sig-param"><span class="n">duration_time_dist</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#create_flow_centric_demand_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.create_flow_centric_demand_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.drop_random_flow_from_demand_data">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">drop_random_flow_from_demand_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#drop_random_flow_from_demand_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.drop_random_flow_from_demand_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.get_first_last_flow_arrival_times">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">get_first_last_flow_arrival_times</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#get_first_last_flow_arrival_times"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.get_first_last_flow_arrival_times" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.get_flow_centric_demand_data_load_rate">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">get_flow_centric_demand_data_load_rate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#get_flow_centric_demand_data_load_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.get_flow_centric_demand_data_load_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.get_flow_centric_demand_data_total_info_arrived">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">get_flow_centric_demand_data_total_info_arrived</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#get_flow_centric_demand_data_total_info_arrived"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.get_flow_centric_demand_data_total_info_arrived" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.set_flow_centric_demand_data_network_load">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">set_flow_centric_demand_data_network_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em>, <em class="sig-param"><span class="n">network_rate_capacity</span></em>, <em class="sig-param"><span class="n">target_load_fraction</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#set_flow_centric_demand_data_network_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.set_flow_centric_demand_data_network_load" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -439,7 +476,7 @@ ep_label appended to the start of their label (e.g. ‘server_0’, ‘server_1�
 
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.gen_fat_tree">
-<code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">gen_fat_tree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">k</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">ep_label</span><span class="o">=</span><span class="default_value">'server'</span></em>, <em class="sig-param"><span class="n">edge_label</span><span class="o">=</span><span class="default_value">'edge'</span></em>, <em class="sig-param"><span class="n">aggregate_label</span><span class="o">=</span><span class="default_value">'agg'</span></em>, <em class="sig-param"><span class="n">core_label</span><span class="o">=</span><span class="default_value">'core'</span></em>, <em class="sig-param"><span class="n">num_channels</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">server_to_edge_channel_capacity</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">edge_to_agg_channel_capacity</span><span class="o">=</span><span class="default_value">40</span></em>, <em class="sig-param"><span class="n">agg_to_core_channel_capacity</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/networks.html#gen_fat_tree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.networks.gen_fat_tree" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">gen_fat_tree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">k</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">N</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">ep_label</span><span class="o">=</span><span class="default_value">'server'</span></em>, <em class="sig-param"><span class="n">rack_label</span><span class="o">=</span><span class="default_value">'rack'</span></em>, <em class="sig-param"><span class="n">edge_label</span><span class="o">=</span><span class="default_value">'edge'</span></em>, <em class="sig-param"><span class="n">aggregate_label</span><span class="o">=</span><span class="default_value">'agg'</span></em>, <em class="sig-param"><span class="n">core_label</span><span class="o">=</span><span class="default_value">'core'</span></em>, <em class="sig-param"><span class="n">num_channels</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">server_to_rack_channel_capacity</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">rack_to_edge_channel_capacity</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">edge_to_agg_channel_capacity</span><span class="o">=</span><span class="default_value">40</span></em>, <em class="sig-param"><span class="n">agg_to_core_channel_capacity</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/networks.html#gen_fat_tree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.networks.gen_fat_tree" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates a data centre network with a 3-layer fat tree topology.</p>
 <p>Resource for building: <a class="reference external" href="https://blogchinmaya.blogspot.com/2017/04/what-is-fat-tree">https://blogchinmaya.blogspot.com/2017/04/what-is-fat-tree</a></p>
 <p>Parameters of network:</p>
@@ -448,12 +485,14 @@ ep_label appended to the start of their label (e.g. ‘server_0’, ‘server_1�
 <li><p>number of pods = k</p></li>
 <li><p>number of aggregate switches = (k^2)/2</p></li>
 <li><p>number of edge switches = (k^2)/2</p></li>
-<li><p>number of servers = (k^3)/4</p></li>
+<li><p>number of racks = (k^3)/4</p></li>
+<li><p>number of servers = N*(k^3)/4</p></li>
 </ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>k</strong> (<em>int</em>) – Number of ports/links on each switch</p></li>
+<li><p><strong>N</strong> (<em>int</em>) – Number of servers per rack</p></li>
 <li><p><strong>ep_label</strong> (<em>str</em><em>,</em><em>int</em><em>,</em><em>float</em>) – Endpoint label (e.g. ‘server’). All endpoints will have
 ep_label appended to the start of their label (e.g. ‘server_0’, ‘server_1’, …).</p></li>
 <li><p><strong>edge_label</strong> (<em>str</em><em>,</em><em>int</em>) – Label to assign to edge switch nodes</p></li>
@@ -557,8 +596,24 @@ ep_label appended to the start of their label (e.g. ‘server_0’, ‘server_1�
 
 <dl class="py function">
 <dt id="trafpy.generator.src.networks.init_global_network_attrs">
-<code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">init_global_network_attrs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em>, <em class="sig-param"><span class="n">max_nw_capacity</span></em>, <em class="sig-param"><span class="n">num_channels</span></em>, <em class="sig-param"><span class="n">topology_type</span><span class="o">=</span><span class="default_value">'unknown'</span></em>, <em class="sig-param"><span class="n">node_labels</span><span class="o">=</span><span class="default_value">['server']</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/networks.html#init_global_network_attrs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.networks.init_global_network_attrs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">trafpy.generator.src.networks.</code><code class="sig-name descname">init_global_network_attrs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em>, <em class="sig-param"><span class="n">max_nw_capacity</span></em>, <em class="sig-param"><span class="n">num_channels</span></em>, <em class="sig-param"><span class="n">topology_type</span><span class="o">=</span><span class="default_value">'unknown'</span></em>, <em class="sig-param"><span class="n">node_labels</span><span class="o">=</span><span class="default_value">['server']</span></em>, <em class="sig-param"><span class="n">racks_dict</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/networks.html#init_global_network_attrs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.networks.init_global_network_attrs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialises the standard global network attributes of a given network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>network</strong> (<em>obj</em>) – NetworkX object.</p></li>
+<li><p><strong>max_nw_capacity</strong> (<em>int/float</em>) – Maximum rate at which info can be reliably
+transmitted over the network (sum of all link capacities).</p></li>
+<li><p><strong>num_channels</strong> (<em>int</em>) – Number of channels on each link in network.</p></li>
+<li><p><strong>topology_type</strong> (<em>str</em>) – Label of network topology (e.g. ‘fat_tree’).</p></li>
+<li><p><strong>node_labels</strong> (<em>list</em>) – Label classes assigned to network nodes
+(e.g. [‘server’, ‘rack’, ‘edge’]).</p></li>
+<li><p><strong>racks_dict</strong> (<em>dict</em>) – Which servers/endpoints are in which rack. If None,
+assume do not have rack system where have multiple servers in one
+rack.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
