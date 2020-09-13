@@ -151,16 +151,25 @@
 <span></span><span class="sd">&#39;&#39;&#39;Module for generating node distributions.&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">trafpy.generator.src.dists</span> <span class="kn">import</span> <span class="n">plot_dists</span>
+<span class="kn">from</span> <span class="nn">trafpy.generator.src.dists</span> <span class="kn">import</span> <span class="n">val_dists</span>
 <span class="kn">from</span> <span class="nn">trafpy.generator.src</span> <span class="kn">import</span> <span class="n">tools</span>
 
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">copy</span>
 
 
 
 
 <div class="viewcode-block" id="assign_probs_to_matrix"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.assign_probs_to_matrix">[docs]</a><span class="k">def</span> <span class="nf">assign_probs_to_matrix</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">matrix</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Assigns probabilities to 2D matrix.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;Assigns probabilities to 2D matrix.</span>
+
+<span class="sd">    N.B. Assumes probs are given in order of matrix indices when looping</span>
+<span class="sd">    for src in eps for dst in eps</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">eps</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">eps</span><span class="p">)))</span>
     <span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_pairs</span><span class="p">,</span> <span class="n">node_to_index</span><span class="p">,</span> <span class="n">index_to_node</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">get_network_params</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
@@ -184,6 +193,7 @@
 
 
 <div class="viewcode-block" id="gen_uniform_node_dist"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.gen_uniform_node_dist">[docs]</a><span class="k">def</span> <span class="nf">gen_uniform_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> 
+                          <span class="n">rack_prob_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                           <span class="n">path_to_save</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
                           <span class="n">plot_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
                           <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -193,6 +203,21 @@
 <span class="sd">    Args:</span>
 <span class="sd">        eps (list): List of network node endpoints that can act as sources</span>
 <span class="sd">            &amp; destinations</span>
+<span class="sd">        rack_prob_config (dict): Network endpoints/servers are often grouped into</span>
+<span class="sd">            physically local clusters or `racks&#39;. Different networks may have </span>
+<span class="sd">            different levels of inter- (between) and intra- (within) rack communication.</span>
+<span class="sd">            If rack_prob_config is left as None, will assume that server-server</span>
+<span class="sd">            srs-dst requests are independent of which rack they might be in.</span>
+<span class="sd">            If specified, dict should have a `racks_dict&#39; key, whose value is a dict</span>
+<span class="sd">            with keys as rack labels (e.g. &#39;rack_0&#39;, &#39;rack_1&#39; etc.) and whose value</span>
+<span class="sd">            for each key is a list of the endpoints in the respective rack</span>
+<span class="sd">            (e.g. [`server_0&#39;, `server_24&#39;, `server_56&#39;, ...]), and a `prob_inter_rack&#39;</span>
+<span class="sd">            key whose value is a float (e.g. 0.9), setting the probability</span>
+<span class="sd">            that a chosen src endpoint has a destination which is outside of its rack.</span>
+<span class="sd">            If you want to e.g. designate an entire rack as a &#39;hot rack&#39; (many</span>
+<span class="sd">            traffic requests occur from this rack), would specify skewed_nodes to</span>
+<span class="sd">            contain the list of servers in this rack and configure rack_prob_config</span>
+<span class="sd">            appropriately.</span>
 <span class="sd">        path_to_save (str): Path to directory (with file name included) in which</span>
 <span class="sd">            to save generated distribution. E.g. path_to_save=&#39;data/dists/my_dist&#39;.</span>
 <span class="sd">        plot_fig (bool): Whether or not to plot fig. If True, will return fig.</span>
@@ -215,11 +240,20 @@
     
     <span class="c1"># uniform prob each pair chosen</span>
     <span class="n">prob_pair_chosen</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">num_pairs</span><span class="p">))</span><span class="o">/</span><span class="p">((</span><span class="n">num_pairs</span><span class="p">)))</span><span class="o">/</span><span class="mi">2</span>
+    <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Prob pair chosen:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prob_pair_chosen</span><span class="p">))</span>
 
     <span class="c1"># assign probabilites to matrix</span>
     <span class="n">node_dist</span> <span class="o">=</span> <span class="n">assign_probs_to_matrix</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
                                        <span class="n">probs</span><span class="o">=</span><span class="n">prob_pair_chosen</span><span class="p">,</span>
                                        <span class="n">matrix</span><span class="o">=</span><span class="n">node_dist</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">rack_prob_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># adjust node prob dist to account for rack prob config</span>
+        <span class="n">node_dist</span> <span class="o">=</span> <span class="n">adjust_node_dist_for_rack_prob_config</span><span class="p">(</span><span class="n">rack_prob_config</span><span class="p">,</span>
+                                                          <span class="n">eps</span><span class="p">,</span>
+                                                          <span class="n">node_dist</span><span class="p">,</span>
+                                                          <span class="n">print_data</span><span class="o">=</span><span class="n">print_data</span><span class="p">)</span>
 
     <span class="n">matrix_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">node_dist</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span>
 
@@ -245,6 +279,7 @@
 
 
 <div class="viewcode-block" id="gen_uniform_multinomial_exp_node_dist"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.gen_uniform_multinomial_exp_node_dist">[docs]</a><span class="k">def</span> <span class="nf">gen_uniform_multinomial_exp_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span>
+                                          <span class="n">rack_prob_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                                           <span class="n">path_to_save</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                                           <span class="n">plot_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                           <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -258,6 +293,21 @@
 <span class="sd">    Args:</span>
 <span class="sd">        eps (list): List of network node endpoints that can act as sources</span>
 <span class="sd">            &amp; destinations</span>
+<span class="sd">        rack_prob_config (dict): Network endpoints/servers are often grouped into</span>
+<span class="sd">            physically local clusters or `racks&#39;. Different networks may have </span>
+<span class="sd">            different levels of inter- (between) and intra- (within) rack communication.</span>
+<span class="sd">            If rack_prob_config is left as None, will assume that server-server</span>
+<span class="sd">            srs-dst requests are independent of which rack they might be in.</span>
+<span class="sd">            If specified, dict should have a `racks_dict&#39; key, whose value is a dict</span>
+<span class="sd">            with keys as rack labels (e.g. &#39;rack_0&#39;, &#39;rack_1&#39; etc.) and whose value</span>
+<span class="sd">            for each key is a list of the endpoints in the respective rack</span>
+<span class="sd">            (e.g. [`server_0&#39;, `server_24&#39;, `server_56&#39;, ...]), and a `prob_inter_rack&#39;</span>
+<span class="sd">            key whose value is a float (e.g. 0.9), setting the probability</span>
+<span class="sd">            that a chosen src endpoint has a destination which is outside of its rack.</span>
+<span class="sd">            If you want to e.g. designate an entire rack as a &#39;hot rack&#39; (many</span>
+<span class="sd">            traffic requests occur from this rack), would specify skewed_nodes to</span>
+<span class="sd">            contain the list of servers in this rack and configure rack_prob_config</span>
+<span class="sd">            appropriately.</span>
 <span class="sd">        path_to_save (str): Path to directory (with file name included) in which</span>
 <span class="sd">            to save generated distribution. E.g. path_to_save=&#39;data/dists/my_dist&#39;.</span>
 <span class="sd">        plot_fig (bool): Whether or not to plot fig. If True, will return fig.</span>
@@ -290,6 +340,13 @@
                                        <span class="n">probs</span><span class="o">=</span><span class="n">counter_array_prob_dist</span><span class="p">,</span>
                                        <span class="n">matrix</span><span class="o">=</span><span class="n">node_dist</span><span class="p">)</span>
 
+    <span class="k">if</span> <span class="n">rack_prob_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># adjust node prob dist to account for rack prob config</span>
+        <span class="n">node_dist</span> <span class="o">=</span> <span class="n">adjust_node_dist_for_rack_prob_config</span><span class="p">(</span><span class="n">rack_prob_config</span><span class="p">,</span>
+                                                          <span class="n">eps</span><span class="p">,</span>
+                                                          <span class="n">node_dist</span><span class="p">,</span>
+                                                          <span class="n">print_data</span><span class="o">=</span><span class="n">print_data</span><span class="p">)</span>
+
     <span class="n">matrix_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">node_dist</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span>
 
     <span class="k">assert</span> <span class="n">matrix_sum</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> \
@@ -314,6 +371,7 @@
                              <span class="n">skewed_nodes</span><span class="o">=</span><span class="p">[],</span>
                              <span class="n">skewed_node_probs</span><span class="o">=</span><span class="p">[],</span>
                              <span class="n">num_skewed_nodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                             <span class="n">rack_prob_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                              <span class="n">path_to_save</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                              <span class="n">plot_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                              <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -336,6 +394,21 @@
 <span class="sd">            being chosen/specified skews</span>
 <span class="sd">        num_skewed_nodes (int): Number of nodes to skew. If None, will gen</span>
 <span class="sd">            a number between 10% and 30% of the total number of nodes in network</span>
+<span class="sd">        rack_prob_config (dict): Network endpoints/servers are often grouped into</span>
+<span class="sd">            physically local clusters or `racks&#39;. Different networks may have </span>
+<span class="sd">            different levels of inter- (between) and intra- (within) rack communication.</span>
+<span class="sd">            If rack_prob_config is left as None, will assume that server-server</span>
+<span class="sd">            srs-dst requests are independent of which rack they might be in.</span>
+<span class="sd">            If specified, dict should have a `racks_dict&#39; key, whose value is a dict</span>
+<span class="sd">            with keys as rack labels (e.g. &#39;rack_0&#39;, &#39;rack_1&#39; etc.) and whose value</span>
+<span class="sd">            for each key is a list of the endpoints in the respective rack</span>
+<span class="sd">            (e.g. [`server_0&#39;, `server_24&#39;, `server_56&#39;, ...]), and a `prob_inter_rack&#39;</span>
+<span class="sd">            key whose value is a float (e.g. 0.9), setting the probability</span>
+<span class="sd">            that a chosen src endpoint has a destination which is outside of its rack.</span>
+<span class="sd">            If you want to e.g. designate an entire rack as a &#39;hot rack&#39; (many</span>
+<span class="sd">            traffic requests occur from this rack), would specify skewed_nodes to</span>
+<span class="sd">            contain the list of servers in this rack and configure rack_prob_config</span>
+<span class="sd">            appropriately.</span>
 <span class="sd">        path_to_save (str): Path to directory (with file name included) in which</span>
 <span class="sd">            to save generated distribution. E.g. path_to_save=&#39;data/dists/my_dist&#39;.</span>
 <span class="sd">        plot_fig (bool): Whether or not to plot fig. If True, will return fig.</span>
@@ -439,14 +512,21 @@
             <span class="k">if</span> <span class="n">prob_pair_chosen</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">prob_pair_chosen</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Prob pair chosen: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prob_pair_chosen</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Prob pair chosen:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prob_pair_chosen</span><span class="p">))</span>
 
     <span class="c1"># assign probabilites to normalised demand matrix</span>
     <span class="n">node_dist</span> <span class="o">=</span> <span class="n">assign_probs_to_matrix</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
                                        <span class="n">probs</span><span class="o">=</span><span class="n">prob_pair_chosen</span><span class="p">,</span>
                                        <span class="n">matrix</span><span class="o">=</span><span class="n">node_dist</span><span class="p">)</span>
 
-    <span class="n">matrix_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">node_dist</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">rack_prob_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># adjust node prob dist to account for rack prob config</span>
+        <span class="n">node_dist</span> <span class="o">=</span> <span class="n">adjust_node_dist_for_rack_prob_config</span><span class="p">(</span><span class="n">rack_prob_config</span><span class="p">,</span>
+                                                          <span class="n">eps</span><span class="p">,</span>
+                                                          <span class="n">node_dist</span><span class="p">,</span>
+                                                          <span class="n">print_data</span><span class="o">=</span><span class="n">print_data</span><span class="p">)</span>
+
+        <span class="n">matrix_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">node_dist</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">matrix_sum</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> \
         <span class="s1">&#39;matrix must sum to 1, but is </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">matrix_sum</span><span class="p">)</span>
     
@@ -464,11 +544,236 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">node_dist</span></div>
 
+<div class="viewcode-block" id="get_suitable_destination_node_for_rack_config"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.get_suitable_destination_node_for_rack_config">[docs]</a><span class="k">def</span> <span class="nf">get_suitable_destination_node_for_rack_config</span><span class="p">(</span><span class="n">sn</span><span class="p">,</span> <span class="n">node_dist</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">ep_to_rack</span><span class="p">,</span> <span class="n">rack_to_ep</span><span class="p">,</span> <span class="n">inter_rack</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Given source node, finds destination node given inter and intra rack config.&#39;&#39;&#39;</span>
+    <span class="n">sn_rack</span> <span class="o">=</span> <span class="n">ep_to_rack</span><span class="p">[</span><span class="n">sn</span><span class="p">]</span>
+
+    <span class="c1"># get list of suitable destination nodes</span>
+    <span class="n">dn_eps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">inter_rack</span><span class="p">:</span>
+        <span class="c1"># get list of inter rack destination nodes for this source node</span>
+        <span class="k">for</span> <span class="n">rack</span> <span class="ow">in</span> <span class="n">rack_to_ep</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">rack</span> <span class="o">!=</span> <span class="n">sn_rack</span><span class="p">:</span>
+                <span class="n">rack_eps</span> <span class="o">=</span> <span class="n">rack_to_ep</span><span class="p">[</span><span class="n">rack</span><span class="p">]</span>
+                <span class="n">dn_eps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rack_eps</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># get list of intra rack destination nodes for this source node</span>
+        <span class="k">for</span> <span class="n">rack</span> <span class="ow">in</span> <span class="n">rack_to_ep</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">rack</span> <span class="o">==</span> <span class="n">sn_rack</span><span class="p">:</span>
+                <span class="n">rack_eps</span> <span class="o">=</span> <span class="n">rack_to_ep</span><span class="p">[</span><span class="n">rack</span><span class="p">]</span>
+                <span class="n">dn_eps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rack_eps</span><span class="p">)</span>
+    <span class="c1"># flatten</span>
+    <span class="n">dn_eps_flat</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">dn_eps</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
+            <span class="n">dn_eps_flat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+    <span class="c1"># find suitable destination for source node</span>
+    <span class="n">dn</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">sn</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">sn</span> <span class="o">==</span> <span class="n">dn</span><span class="p">:</span>
+        <span class="n">dn</span> <span class="o">=</span> <span class="n">gen_demand_nodes</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">dn_eps_flat</span><span class="p">,</span>
+                              <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span>
+                              <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                              <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">dn</span></div>
+
+
+<div class="viewcode-block" id="adjust_node_dist_for_rack_prob_config"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.adjust_node_dist_for_rack_prob_config">[docs]</a><span class="k">def</span> <span class="nf">adjust_node_dist_for_rack_prob_config</span><span class="p">(</span><span class="n">rack_prob_config</span><span class="p">,</span>
+                                          <span class="n">eps</span><span class="p">,</span>
+                                          <span class="n">node_dist</span><span class="p">,</span>
+                                          <span class="n">num_exps_factor</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                                          <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Takes node dist and uses it to generate new node dist given inter- and intra-rack configuration.</span>
+
+<span class="sd">    Different DCNs have different inter and intra rack traffic. This function</span>
+<span class="sd">    allows you to specify how much of your traffic should be inter and intra rack.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        rack_prob_config (dict): Network endpoints/servers are often grouped into</span>
+<span class="sd">            physically local clusters or `racks&#39;. Different networks may have </span>
+<span class="sd">            different levels of inter- (between) and intra- (within) rack communication.</span>
+<span class="sd">            If rack_prob_config is left as None, will assume that server-server</span>
+<span class="sd">            srs-dst requests are independent of which rack they might be in.</span>
+<span class="sd">            If specified, dict should have a `racks_dict&#39; key, whose value is a dict</span>
+<span class="sd">            with keys as rack labels (e.g. &#39;rack_0&#39;, &#39;rack_1&#39; etc.) and whose value</span>
+<span class="sd">            for each key is a list of the endpoints in the respective rack</span>
+<span class="sd">            (e.g. [`server_0&#39;, `server_24&#39;, `server_56&#39;, ...]), and a `prob_inter_rack&#39;</span>
+<span class="sd">            key whose value is a float (e.g. 0.9), setting the probability</span>
+<span class="sd">            that a chosen src endpoint has a destination which is outside of its rack.</span>
+<span class="sd">            If you want to e.g. designate an entire rack as a &#39;hot rack&#39; (many</span>
+<span class="sd">            traffic requests occur from this rack), would specify skewed_nodes to</span>
+<span class="sd">            contain the list of servers in this rack and configure rack_prob_config</span>
+<span class="sd">            appropriately.</span>
+<span class="sd">        eps (list): List of network node endpoints that can act as sources</span>
+<span class="sd">            &amp; destinations.</span>
+<span class="sd">        node_dist (numpy array): 2D matrix array of source-destination pair</span>
+<span class="sd">            probabilities of being chosen.</span>
+<span class="sd">        num_exps_factor (int): Factor by which to multiply number of eps to get</span>
+<span class="sd">            the number of multinomial experiments to run when generating new</span>
+<span class="sd">            node dist.</span>
+<span class="sd">        print_data (bool): Whether or not to print extra information about the</span>
+<span class="sd">            generated data.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">node_dist</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">node_dist</span><span class="p">)</span>
+
+    <span class="c1"># switch racks_dict keys and values to make hashing easier</span>
+    <span class="n">racks_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">rack_prob_config</span><span class="p">[</span><span class="s1">&#39;racks_dict&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">racks_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">racks_dict</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span>
+
+    <span class="c1"># run multinomial exp to incpororate rack probabilities</span>
+    <span class="n">num_experiments</span> <span class="o">=</span> <span class="n">num_exps_factor</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span> 
+    <span class="n">sampled_pairs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">inter_counter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">intra_counter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_experiments</span><span class="p">):</span>
+        <span class="c1"># sample if connection should be intra or inter rack</span>
+        <span class="n">inter_rack</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> 
+                                      <span class="n">p</span><span class="o">=</span><span class="p">[</span><span class="n">rack_prob_config</span><span class="p">[</span><span class="s1">&#39;prob_inter_rack&#39;</span><span class="p">],</span> 
+                                         <span class="mi">1</span><span class="o">-</span><span class="n">rack_prob_config</span><span class="p">[</span><span class="s1">&#39;prob_inter_rack&#39;</span><span class="p">]])</span>
+        <span class="k">if</span> <span class="n">inter_rack</span><span class="p">:</span>
+            <span class="n">inter_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">intra_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># sample a source node</span>
+        <span class="n">sn</span> <span class="o">=</span> <span class="n">gen_demand_nodes</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
+                              <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span>
+                              <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                              <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># sample destination node given inter_rack config</span>
+        <span class="n">dn</span> <span class="o">=</span> <span class="n">get_suitable_destination_node_for_rack_config</span><span class="p">(</span><span class="n">sn</span><span class="p">,</span> 
+                                                           <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">node_dist</span><span class="p">),</span> 
+                                                           <span class="n">eps</span><span class="p">,</span> 
+                                                           <span class="n">ep_to_rack</span><span class="o">=</span><span class="n">racks_dict</span><span class="p">,</span> 
+                                                           <span class="n">rack_to_ep</span><span class="o">=</span><span class="n">rack_prob_config</span><span class="p">[</span><span class="s1">&#39;racks_dict&#39;</span><span class="p">],</span> 
+                                                           <span class="n">inter_rack</span><span class="o">=</span><span class="n">inter_rack</span><span class="p">)</span>
+
+        <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">sn</span><span class="p">,</span> <span class="n">dn</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">pair</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sampled_pairs</span><span class="p">:</span>
+            <span class="c1"># check if switched src-dst pair that already occurred</span>
+            <span class="n">pair_switched</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">dn</span><span class="p">,</span> <span class="n">sn</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">pair_switched</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sampled_pairs</span><span class="p">:</span>
+                <span class="n">sampled_pairs</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># init first occurrence of pair</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># pair already seen before</span>
+                <span class="n">sampled_pairs</span><span class="p">[</span><span class="n">pair_switched</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># pair already seen before</span>
+            <span class="n">sampled_pairs</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># convert sampled pairs dict to rand vars</span>
+    <span class="n">sampled_pairs</span> <span class="o">=</span> <span class="n">val_dists</span><span class="o">.</span><span class="n">convert_key_occurrences_to_data</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">sampled_pairs</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="nb">list</span><span class="p">(</span><span class="n">sampled_pairs</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+
+    <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">inter_counter</span> <span class="o">+</span> <span class="n">intra_counter</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Number inter-rack requests: </span><span class="si">{}</span><span class="s1"> (</span><span class="si">{}</span><span class="s1">%)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">inter_counter</span><span class="p">,</span> <span class="n">inter_counter</span><span class="o">*</span><span class="mi">100</span><span class="o">/</span><span class="n">total</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Number intra-rack requests: </span><span class="si">{}</span><span class="s1"> (</span><span class="si">{}</span><span class="s1">%)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">intra_counter</span><span class="p">,</span> <span class="n">intra_counter</span><span class="o">*</span><span class="mi">100</span><span class="o">/</span><span class="n">total</span><span class="p">))</span>
+
+    <span class="c1"># convert sampled pairs list into prob dist</span>
+    <span class="n">unique_vals</span><span class="p">,</span> <span class="n">pmf</span> <span class="o">=</span> <span class="n">val_dists</span><span class="o">.</span><span class="n">gen_discrete_prob_dist</span><span class="p">(</span><span class="n">sampled_pairs</span><span class="p">)</span>
+    <span class="n">sampled_pair_prob_dist</span> <span class="o">=</span> <span class="p">{</span><span class="n">unique_var</span><span class="p">:</span> <span class="n">prob</span> <span class="k">for</span> <span class="n">unique_var</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">unique_vals</span><span class="p">,</span> <span class="n">pmf</span><span class="p">)}</span>
+
+    <span class="c1"># insert 0 probabilites for any pairs that were never sampled in multinomial exp</span>
+    <span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_pairs</span><span class="p">,</span> <span class="n">node_to_index</span><span class="p">,</span> <span class="n">index_to_node</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">get_network_params</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
+    <span class="n">index_to_pair</span><span class="p">,</span> <span class="n">pair_to_index</span> <span class="o">=</span> <span class="n">get_network_pair_mapper</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">num_pairs</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sampled_pair_prob_dist</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="c1"># some pairs were never chosen, find which are missing</span>
+        <span class="n">chosen_pair_indices</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">sampled_pair_prob_dist</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">chosen_pair_indices</span><span class="p">[</span><span class="n">pair_to_index</span><span class="p">[</span><span class="n">pair</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pair</span><span class="p">)</span>
+                <span class="n">pair</span> <span class="o">=</span> <span class="p">[</span><span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pair</span><span class="p">)</span>
+                <span class="n">chosen_pair_indices</span><span class="p">[</span><span class="n">pair_to_index</span><span class="p">[</span><span class="n">pair</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">index_to_pair</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">chosen_pair_indices</span><span class="p">:</span>
+                <span class="c1"># index is missing, update sampled pairs dict with 0 prob for this index</span>
+                <span class="n">sampled_pair_prob_dist</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">index_to_pair</span><span class="p">[</span><span class="n">index</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># convert prob dist into dict whose keys are node dist matrix indices</span>
+    <span class="n">index_to_pair</span><span class="p">,</span> <span class="n">pair_to_index</span> <span class="o">=</span> <span class="n">get_network_pair_mapper</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
+    <span class="n">matrix_pair_prob_dist</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">sampled_pair_prob_dist</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">matrix_index</span> <span class="o">=</span> <span class="n">pair_to_index</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c1"># switch src and dst</span>
+            <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+            <span class="n">matrix_index</span> <span class="o">=</span> <span class="n">pair_to_index</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">matrix_pair_prob_dist</span><span class="p">[</span><span class="n">matrix_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">sampled_pair_prob_dist</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c1"># switch src and dst back for sampled pair prob dist</span>
+            <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+            <span class="n">matrix_pair_prob_dist</span><span class="p">[</span><span class="n">matrix_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">sampled_pair_prob_dist</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="c1"># sort so that get correct ordering of pair probs when assign to node matrix</span>
+    <span class="n">sorted_matrix_pair_prob_dist_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">matrix_pair_prob_dist</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+    <span class="c1"># generate new node matrix prob dist (which now accounts for rack probs)</span>
+    <span class="n">prob_pair_chosen</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">sorted_matrix_pair_prob_dist_keys</span><span class="p">:</span>
+        <span class="n">prob</span> <span class="o">=</span> <span class="n">matrix_pair_prob_dist</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># divide by 2 since one side of diagonal</span>
+        <span class="n">prob_pair_chosen</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>
+
+
+    <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Prob pair chosen after accounting for rack prob config:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prob_pair_chosen</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">prob_pair_chosen</span><span class="p">))</span>
+
+
+
+
+
+    <span class="n">node_dist</span> <span class="o">=</span> <span class="n">assign_probs_to_matrix</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
+                                       <span class="n">probs</span><span class="o">=</span><span class="n">prob_pair_chosen</span><span class="p">,</span>
+                                       <span class="n">matrix</span><span class="o">=</span><span class="n">node_dist</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">node_dist</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="get_network_pair_mapper"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.get_network_pair_mapper">[docs]</a><span class="k">def</span> <span class="nf">get_network_pair_mapper</span><span class="p">(</span><span class="n">eps</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Gets dicts mapping network endpoint indices to and from node dist matrix.&#39;&#39;&#39;</span>
+    <span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_pairs</span><span class="p">,</span> <span class="n">node_to_index</span><span class="p">,</span> <span class="n">index_to_node</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">get_network_params</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
+
+    <span class="n">index_to_pair</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">pair_to_index</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">pair_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">dst</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">src</span> <span class="o">==</span> <span class="n">dst</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">src</span> <span class="o">&gt;</span> <span class="n">dst</span><span class="p">:</span>
+                <span class="c1"># making symmetric so skip this side of diagonal</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">index_to_pair</span><span class="p">[</span><span class="n">pair_index</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">]</span>
+                <span class="n">pair_to_index</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">])]</span> <span class="o">=</span> <span class="n">pair_index</span>
+                <span class="n">pair_index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">index_to_pair</span><span class="p">,</span> <span class="n">pair_to_index</span></div>
+
 
 <div class="viewcode-block" id="gen_multimodal_node_pair_dist"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.gen_multimodal_node_pair_dist">[docs]</a><span class="k">def</span> <span class="nf">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span>
                                   <span class="n">skewed_pairs</span> <span class="o">=</span> <span class="p">[],</span>
                                   <span class="n">skewed_pair_probs</span> <span class="o">=</span> <span class="p">[],</span>
                                   <span class="n">num_skewed_pairs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                  <span class="n">rack_prob_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                                   <span class="n">path_to_save</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                                   <span class="n">plot_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                   <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -490,6 +795,21 @@
 <span class="sd">        skewed_pair_probs (list): Probabilities of node pairs being</span>
 <span class="sd">            chosen.</span>
 <span class="sd">        num_skewed_pairs (int): Number of pairs to randomly skew.</span>
+<span class="sd">        rack_prob_config (dict): Network endpoints/servers are often grouped into</span>
+<span class="sd">            physically local clusters or `racks&#39;. Different networks may have </span>
+<span class="sd">            different levels of inter- (between) and intra- (within) rack communication.</span>
+<span class="sd">            If rack_prob_config is left as None, will assume that server-server</span>
+<span class="sd">            srs-dst requests are independent of which rack they might be in.</span>
+<span class="sd">            If specified, dict should have a `racks_dict&#39; key, whose value is a dict</span>
+<span class="sd">            with keys as rack labels (e.g. &#39;rack_0&#39;, &#39;rack_1&#39; etc.) and whose value</span>
+<span class="sd">            for each key is a list of the endpoints in the respective rack</span>
+<span class="sd">            (e.g. [`server_0&#39;, `server_24&#39;, `server_56&#39;, ...]), and a `prob_inter_rack&#39;</span>
+<span class="sd">            key whose value is a float (e.g. 0.9), setting the probability</span>
+<span class="sd">            that a chosen src endpoint has a destination which is outside of its rack.</span>
+<span class="sd">            If you want to e.g. designate an entire rack as a &#39;hot rack&#39; (many</span>
+<span class="sd">            traffic requests occur from this rack), would specify skewed_nodes to</span>
+<span class="sd">            contain the list of servers in this rack and configure rack_prob_config</span>
+<span class="sd">            appropriately.</span>
 <span class="sd">        path_to_save (str): Path to directory (with file name included) in which</span>
 <span class="sd">            to save generated distribution. E.g. path_to_save=&#39;data/dists/my_dist&#39;.</span>
 <span class="sd">        plot_fig (bool): Whether or not to plot fig. If True, will return fig.</span>
@@ -632,6 +952,20 @@
                                        <span class="n">probs</span><span class="o">=</span><span class="n">prob_pair_chosen</span><span class="p">,</span>
                                        <span class="n">matrix</span><span class="o">=</span><span class="n">node_dist</span><span class="p">)</span>
 
+    <span class="k">if</span> <span class="n">rack_prob_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># adjust node prob dist to account for rack prob config</span>
+        <span class="n">node_dist</span> <span class="o">=</span> <span class="n">adjust_node_dist_for_rack_prob_config</span><span class="p">(</span><span class="n">rack_prob_config</span><span class="p">,</span>
+                                                          <span class="n">eps</span><span class="p">,</span>
+                                                          <span class="n">node_dist</span><span class="p">,</span>
+                                                          <span class="n">print_data</span><span class="o">=</span><span class="n">print_data</span><span class="p">)</span>
+
+
+
+
+                
+
+
+
     <span class="n">matrix_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">node_dist</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">matrix_sum</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> \
         <span class="s1">&#39;matrix must sum to 1, but is </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">matrix_sum</span><span class="p">)</span>
@@ -654,6 +988,7 @@
 <div class="viewcode-block" id="gen_node_demands"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.gen_node_demands">[docs]</a><span class="k">def</span> <span class="nf">gen_node_demands</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span>
                      <span class="n">node_dist</span><span class="p">,</span> 
                      <span class="n">num_demands</span><span class="p">,</span> 
+                     <span class="n">rack_prob_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                      <span class="n">duplicate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                      <span class="n">path_to_save</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Uses node distribution to generate src-dst node pair demands.</span>
@@ -714,6 +1049,52 @@
     <span class="k">if</span> <span class="n">duplicate</span><span class="p">:</span>
         <span class="n">dn</span><span class="p">[</span><span class="n">num_demands</span><span class="p">:]</span> <span class="o">=</span> <span class="n">dn</span><span class="p">[:</span><span class="n">num_demands</span><span class="p">]</span> <span class="c1"># duplicate</span>
 
+    <span class="k">if</span> <span class="n">rack_prob_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># adjust for rack config</span>
+        <span class="c1"># switch racks_dict keys and values to make hasing easier</span>
+        <span class="n">racks_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">rack_prob_config</span><span class="p">[</span><span class="s1">&#39;racks_dict&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">racks_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">racks_dict</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span>
+
+        <span class="k">for</span> <span class="n">request</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_demands</span><span class="p">):</span>
+            <span class="c1"># sample if connection should be intra or inter rack</span>
+            <span class="n">inter_rack</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> 
+                                          <span class="n">p</span><span class="o">=</span><span class="p">[</span><span class="n">rack_prob_config</span><span class="p">[</span><span class="s1">&#39;prob_inter_rack&#39;</span><span class="p">],</span> 
+                                             <span class="mi">1</span><span class="o">-</span><span class="n">rack_prob_config</span><span class="p">[</span><span class="s1">&#39;prob_inter_rack&#39;</span><span class="p">]])</span>
+
+            <span class="c1"># sample destination node given inter_rack config</span>
+            <span class="n">dn</span><span class="p">[</span><span class="n">request</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_suitable_destination_node_for_rack_config</span><span class="p">(</span><span class="n">sn</span><span class="p">[</span><span class="n">request</span><span class="p">],</span> 
+                                                                        <span class="n">node_dist</span><span class="p">,</span> 
+                                                                        <span class="n">eps</span><span class="p">,</span> 
+                                                                        <span class="n">ep_to_rack</span><span class="o">=</span><span class="n">racks_dict</span><span class="p">,</span> 
+                                                                        <span class="n">rack_to_ep</span><span class="o">=</span><span class="n">rack_prob_config</span><span class="p">[</span><span class="s1">&#39;racks_dict&#39;</span><span class="p">],</span> 
+                                                                        <span class="n">inter_rack</span><span class="o">=</span><span class="n">inter_rack</span><span class="p">)</span>
+
+            <span class="c1"># start = time.time()</span>
+            <span class="c1"># if inter_rack:</span>
+                <span class="c1"># # src and dst must be in different racks</span>
+                <span class="c1"># while racks_dict[sn[request]] == racks_dict[dn[request]]:</span>
+                    <span class="c1"># dn[request] = gen_demand_nodes(eps=eps,</span>
+                                                   <span class="c1"># node_dist=node_dist, </span>
+                                                   <span class="c1"># size=1, </span>
+                                                   <span class="c1"># axis=1)[0]</span>
+                    <span class="c1"># if time.time()-start &gt; 20:</span>
+                        <span class="c1"># raise Exception(&#39;Cannot find src and dst in different racks. Consider adding more racks, reducing number of endpoints per rack, or changing rack_prob_config.&#39;)</span>
+            <span class="c1"># else:</span>
+                <span class="c1"># # src and dst must be in same rack</span>
+                <span class="c1"># while racks_dict[sn[request]] != racks_dict[dn[request]]:</span>
+                    <span class="c1"># dn[request] = gen_demand_nodes(eps=eps,</span>
+                                                   <span class="c1"># node_dist=node_dist, </span>
+                                                   <span class="c1"># size=1, </span>
+                                                   <span class="c1"># axis=1)[0]</span>
+                    <span class="c1"># if time.time()-start &gt; 20:</span>
+                        <span class="c1"># raise Exception(&#39;Cannot find src and dst in same rack. Consider removing racks, increasing number of endpoints per rack, or changing rack_prob_config.&#39;)</span>
+
+    <span class="k">if</span> <span class="n">duplicate</span><span class="p">:</span>
+        <span class="n">dn</span><span class="p">[</span><span class="n">num_demands</span><span class="p">:]</span> <span class="o">=</span> <span class="n">dn</span><span class="p">[:</span><span class="n">num_demands</span><span class="p">]</span>
+
     <span class="k">if</span> <span class="n">path_to_save</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sn&#39;</span><span class="p">:</span> <span class="n">sn</span><span class="p">,</span> <span class="s1">&#39;dn&#39;</span><span class="p">:</span> <span class="n">dn</span><span class="p">}</span>
         <span class="n">tools</span><span class="o">.</span><span class="n">pickle_data</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
@@ -741,15 +1122,46 @@
     <span class="k">assert</span> <span class="n">matrix_sum</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> \
         <span class="s1">&#39;matrix must sum to 1, but is </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">matrix_sum</span><span class="p">)</span>
 
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">node_dist</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)):</span>
+        <span class="c1"># must index node dist</span>
+        <span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_pairs</span><span class="p">,</span> <span class="n">node_to_index</span><span class="p">,</span> <span class="n">index_to_node</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">get_network_params</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
+        <span class="n">ep_node_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">node_to_index</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span> <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">]</span>
+        <span class="n">node_dist</span> <span class="o">=</span> <span class="n">node_dist</span><span class="p">[</span><span class="n">ep_node_indices</span><span class="p">]</span>
+
+    <span class="c1"># make sure sums to 1 (sometimes python floating point arithmetic causes incorrect rounding, and will adjust if used above node indexing)</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="n">adjust_probability_array_sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">node_dist</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">),</span> <span class="n">target_sum</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
     <span class="n">nodes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">a</span> <span class="o">=</span> <span class="n">eps</span><span class="p">,</span> 
                              <span class="n">size</span> <span class="o">=</span> <span class="n">size</span><span class="p">,</span>
-                             <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">node_dist</span><span class="p">,</span>
-                                        <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+                             <span class="n">p</span> <span class="o">=</span> <span class="n">probs</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
     
     <span class="k">if</span> <span class="n">path_to_save</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">tools</span><span class="o">.</span><span class="n">pickle_data</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span>
     
     <span class="k">return</span> <span class="n">nodes</span></div>
+
+
+
+<div class="viewcode-block" id="adjust_probability_array_sum"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.adjust_probability_array_sum">[docs]</a><span class="k">def</span> <span class="nf">adjust_probability_array_sum</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">target_sum</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="c1"># check probabilites sum to 1 (python floating point arithmetic can cause problems so need this)</span>
+    <span class="n">adjusted_probs</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">probs</span><span class="p">)</span>
+
+    <span class="n">total</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">adjusted_probs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initial sum: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">total</span><span class="p">))</span>
+    <span class="n">difference</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="n">target_sum</span>
+    <span class="k">if</span> <span class="n">difference</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># need slight adjustment so probs sum to target</span>
+        <span class="n">diff_per_pair</span> <span class="o">=</span> <span class="n">difference</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">adjusted_probs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">adjusted_probs</span><span class="p">)):</span>
+            <span class="n">adjusted_probs</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-=</span> <span class="n">diff_per_pair</span>
+    <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Final sum: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">adjusted_probs</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">adjusted_probs</span></div>
+
+
 
 
 
