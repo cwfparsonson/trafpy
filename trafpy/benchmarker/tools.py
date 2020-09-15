@@ -49,14 +49,9 @@ def gen_benchmark_demands(network_capacity,
     for benchmark in benchmark_sets:
         print('~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*')
         print('Generating demands for benchmark \'{}\'...'.format(benchmark))
+        start_benchmark = time.time()
         load_counter = 1
-        start_benchmark=time.time()
-        # TODO: Check if benchmark_dists saved in data/ folder (of benchmarker)
-        # if not, generate benchmarks. Otherwise, load dists
-        start_dist = time.time()
         benchmark_dists[benchmark] = importer.get_benchmark_dists(benchmark, racks_dict, eps)
-        end_dist = time.time()
-        print('Generated distributions for benchmark \'{}\' in {} seconds.'.format(benchmark, end_dist-start_dist))
         for load in loads:
             start_load = time.time()
             network_load_config = {'network_rate_capacity': network_capacity, 

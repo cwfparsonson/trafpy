@@ -1,7 +1,7 @@
-import json
 import numpy as np
 import pandas as pd
 from trafpy.generator.src.demand import *
+import json
 import pickle
 import bz2
 import time
@@ -190,7 +190,6 @@ def save_data_as_json(path_to_save,
                 filename = path_to_save[:-5]+'_v{}'.format(v)+'.json'
             v += 1
 
-
     dumped = json.dumps(data, cls=NumpyEncoder)
     with open(filename, 'w') as f:
         json.dump(dumped, f)
@@ -207,7 +206,7 @@ def load_data_from_json(path_to_load,
     else:
         filename = path_to_load
     with open(filename) as f:
-        data = json.load(f)
+        data = json.loads(f.read())
 
     end = time.time()
     if print_times:

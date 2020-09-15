@@ -6,7 +6,9 @@ class BenchmarkImporter:
     def __init__(self, benchmark_version, load_prev_dists=True):
         self.load_prev_dists = load_prev_dists
         if self.load_prev_dists:
-            print('Where possible, will load previously generated distributions. Ensure that e.g. network endpoints, rack prob configs etc. are correct. To overwrite saved distributions with your current configuration, set load_prev_dists to False.')
+            print('load_prev_dists=True. Where possible, will load previously generated distributions. Ensure that e.g. network endpoints, rack prob configs etc. are correct. To overwrite saved distributions with your current configuration, set load_prev_dists to False.')
+        else:
+            print('load_prev_dist=False. Will re-generate dists with given network params and override any previously saved distributions.')
 
         self.valid_versions = ['0.0.1']
 
