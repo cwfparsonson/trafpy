@@ -122,7 +122,10 @@ def create_demand_data(eps,
     matrix_sum = np.round(np.sum(node_dist),2)
     assert matrix_sum == 1, \
         'demand distribution matrix must sum to 1, but is {}'.format(matrix_sum)
-    
+
+    if 'disabled_timeouts' not in network_load_config.keys():
+        # assume not disabling timeouts
+        network_load_config['disable_timeouts'] = False
 
     if network_load_config is not None:
         # init a guess for number of demands needed to meet desired load
