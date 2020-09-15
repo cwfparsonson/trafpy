@@ -1,3 +1,4 @@
+import json
 import numpy as np
 import pandas as pd
 from trafpy.generator.src.demand import *
@@ -153,6 +154,67 @@ def gen_event_dict(demand_data, event_iter=None):
 
     return event_dict
 
+class NumpyEncoder(json.JSONEncoder):
+    """ Special json encoder for numpy types """
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+
+def save_data_as_json(path_to_save,
+                      data,
+                      overwrite=False,
+                      print_times=True):
+    start = time.time()
+    if path_to_save[-5:] != '.json':
+        append_json = True
+        filename = path_to_save + '.json'
+    else:
+        append_json = False
+        filename = path_to_save
+    if overwrite:
+        # overwrite prev saved file
+        pass
+    else:
+        # avoid overwriting
+        v = 2
+        while os.path.exists(str(filename)):
+            if append_json:
+                filename = path_to_save+'_v{}'.format(v)+'.json'
+            else:
+                filename = path_to_save[:-5]+'_v{}'.format(v)+'.json'
+            v += 1
+
+
+    dumped = json.dumps(data, cls=NumpyEncoder)
+    with open(filename, 'w') as f:
+        json.dump(dumped, f)
+
+    end = time.time()
+    if print_times:
+        print('Time to save data to {}: {} s'.format(filename, end-start))
+
+def load_data_from_json(path_to_load,
+                        print_times=True):
+    start = time.time()
+    if path_to_load[-5:] != '.json':
+        filename = path_to_load+'.json'
+    else:
+        filename = path_to_load
+    with open(filename) as f:
+        data = json.load(f)
+
+    end = time.time()
+    if print_times:
+        print('Time to load data from {}: {} s'.format(filename,end-start))
+
+    return data
+
 
 
 def save_data_as_csv(path_to_save,
@@ -177,7 +239,7 @@ def save_data_as_csv(path_to_save,
             if append_csv:
                 filename = path_to_save+'_v{}'.format(v)+'.csv'
             else:
-                filename = path_to_save[:-7]+'_v{}'.format(v)+'.csv'
+                filename = path_to_save[:-4]+'_v{}'.format(v)+'.csv'
             v += 1
    
     if type(data) == dict:
