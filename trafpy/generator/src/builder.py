@@ -5,6 +5,7 @@ from trafpy.generator.src import tools
 
 import numpy as np
 import time
+import json
 
 
 def create_demand_data(eps,
@@ -84,14 +85,30 @@ def create_demand_data(eps,
     # check if provided dists have tuple with fig as second element
     if type(node_dist) == tuple:
         node_dist = node_dist[0]
+    elif type(node_dist) == str:
+        # loaded from json, convert
+        node_dist = json.loads(node_dist)
+        node_dist = np.array(node_dist)
     assert type(node_dist) == np.ndarray, 'Invalid dist provided. Must be \
             dict with var-prob key-value pairs.'
     if type(flow_size_dist) == tuple:
         flow_size_dist = flow_size_dist[0]
+    elif type(flow_size_dist) == str:
+        # loaded from json, convert
+        flow_size_dist = json.loads(flow_size_dist)
+        # convert str keys to float
+        new_dict = {float(k): v for k, v in iter(flow_size_dist.items())}
+        flow_size_dist = new_dict
     assert type(flow_size_dist) == dict, 'Invalid dist provided. Must be \
             dict with var-prob key-value pairs.'
     if type(interarrival_time_dist) == tuple:
         interarrival_time_dist = interarrival_time_dist[0]
+    if type(interarrival_time_dist) == str:
+        # loaded from json, convert
+        interarrival_time_dist = json.loads(interarrival_time_dist)
+        # convert str keys to float
+        new_dict = {float(k): v for k, v in iter(interarrival_time_dist.items())}
+        interarrival_time_dist = new_dict
     assert type(interarrival_time_dist) == dict, 'Invalid dist provided. Must be \
             dict with var-prob key-value pairs.'
     if duration_time_dist is None:
