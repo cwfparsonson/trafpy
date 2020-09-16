@@ -188,7 +188,11 @@ class SchedulerToolbox:
     
     def estimate_time_to_completion(self, flow_dict):
         num_packets = len(flow_dict['packets'])
-        packet_size = flow_dict['packets'][0]
+        try:
+            packet_size = flow_dict['packets'][0]
+        except IndexError:
+            print('Flow has 0 packets since has 0 size. Flows should not have 0 size by definition. This usually results from not setting a minimum bound on the possible values when generating your flow size distribution.')
+            sys.exit()
         
         path_links = self.get_path_edges(flow_dict['path'])
         link_bws = []

@@ -90,6 +90,7 @@ class DistributionGenerator:
             if benchmark == 'university':
                 flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
                                                               params={'_mu': 7, '_sigma': 2.5},
+                                                              min_val=1,
                                                               show_fig=False,
                                                               print_data=False,
                                                               round_to_nearest=1)
