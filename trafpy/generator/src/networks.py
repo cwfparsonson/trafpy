@@ -382,13 +382,16 @@ def init_global_network_attrs(network,
     network.graph['channel_names'] = gen_channel_names(num_channels)
     network.graph['rack_to_ep_dict'] = racks_dict
 
-    # switch racks_dict keys and values to make hasing easier
-    ep_to_rack_dict = {}
-    for key, val in racks_dict.items():
-        for v in val:
-            if v not in ep_to_rack_dict.keys():
-                ep_to_rack_dict[v] = key
-    network.graph['ep_to_rack_dict'] = ep_to_rack_dict
+    if racks_dict is not None:
+        # switch racks_dict keys and values to make hashing easier
+        ep_to_rack_dict = {}
+        for key, val in racks_dict.items():
+            for v in val:
+                if v not in ep_to_rack_dict.keys():
+                    ep_to_rack_dict[v] = key
+        network.graph['ep_to_rack_dict'] = ep_to_rack_dict
+    else:
+        network.graph['ep_to_rack_dict'] = None
 
 
 def gen_channel_names(num_channels):

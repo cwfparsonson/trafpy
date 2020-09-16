@@ -1106,7 +1106,7 @@ def gen_named_val_dist(dist,
             fig = plot_dists.plot_val_dist(rand_vars=data, 
                                            xlim=xlim,
                                            logscale=logscale,
-                                           num_bins=nums_bins,
+                                           num_bins=num_bins,
                                            rand_var_name=rand_var_name,
                                            prob_rand_var_less_than=prob_rand_var_less_than,
                                            show_fig=show_fig)
