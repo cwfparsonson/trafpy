@@ -7,6 +7,7 @@ import multiprocessing
 import time
 import json
 import pickle
+import sys
 
 
 class TestBed:
@@ -52,7 +53,6 @@ class TestBed:
                                   slot_size=config['slot_size'],
                                   max_flows=config['max_flows'], 
                                   max_time=config['max_time'])
-                        self.run_test(scheduler, env, self.envs)
                         p = multiprocessing.Process(target=self.run_test,
                                                     args=(scheduler, env, self.envs, path_to_save,))
                         jobs.append(p)
@@ -73,19 +73,23 @@ class TestBed:
             observation, reward, done, info = env.step(action)
             if done:
                 env.get_scheduling_session_summary(print_summary=True)
-                envs.append(env) # store env
-                self.save(path_to_save, overwrite=True, conv_back_to_mp_manager_list=True) # save curr TestBed state
+                try:
+                    envs.append(env) # store env
+                except EOFError:
+                    print('Memory error appending env to list. See https://stackoverflow.com/questions/57370803/multiprocessing-pool-manager-namespace-eof-error for example. Allocate more system memory or reduce size of TestBed experiment.')
+                    sys.exit()
+                # self.save(path_to_save, overwrite=True, conv_back_to_mp_manager_list=True) # save curr TestBed state
                 break
 
-    def save(self, path, conv_back_to_mp_manager_list=False):
+    def save(self, path, overwrite=False, conv_back_to_mp_manager_list=False):
         self.envs = list(self.envs) # conv to list so is picklable
-        filename = path + self.config['test_name'] + '.obj'
+        filename = path + '/' + self.config['test_name'] + '.obj'
         filehandler = open(filename, 'wb')
         pickle.dump(dict(self.__dict__), filehandler)
         filehandler.close()
 
-        if conv_back_to_mp_manager_list:
-            self.envs = multiprocessing.Manager().list(self.envs) # conv back to list to continue multiprocessing if needed
+        # if conv_back_to_mp_manager_list:
+            # self.envs = multiprocessing.Manager().list(self.envs) # conv back to list to continue multiprocessing if needed
 
 
 
@@ -149,7 +153,7 @@ if __name__ == '__main__':
                    'schedulers': schedulers}
 
     tb.reset()
-    tb.run_tests(test_config, path_to_save = os.path.dirname(trafpy.__file__+'/../data/'))
+    tb.run_tests(test_config, path_to_save = os.path.dirname(trafpy.__file__)+'/../data/')
 
     
 

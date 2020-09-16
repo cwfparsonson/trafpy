@@ -723,6 +723,8 @@ def gen_discrete_prob_dist(rand_vars,
 
 def gen_exponential_dist(_beta, 
                          size,
+                         min_val=None,
+                         max_val=None,
                          interactive_params=None,
                          logscale=False,
                          transparent=False):
@@ -750,6 +752,41 @@ def gen_exponential_dist(_beta,
     '''
     rand_vars = np.random.exponential(_beta,size=size)
 
+    # check min and max vals 
+    min_rand_var, max_rand_var = min(rand_vars), max(rand_vars)
+    counter = 0
+    if min_val is None and max_val is None:
+        # don't need to worry about any min or max allowed values
+        pass
+    elif min_val is not None and max_val is None:
+        # ensure greater than min_val
+        while min(rand_vars) < min_val:
+            min_idx = np.argmin(np.array(rand_vars))
+            rand_vars[min_idx] = np.random.exponential(_beta,size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+    elif min_val is None and max_val is not None:
+        # ensure less than max val
+        while max(rand_vars) > max_val:
+            max_idx = np.argmin(np.array(rand_vars))
+            rand_vars[max_idx] = np.random.exponential(_beta,size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+    elif min_val is not None and max_val is not None:
+        # ensure less than max val and greater than min val
+        while min(rand_vars) < min_val or max(rand_vars) > max_val:
+            if min(rand_vars) < min_val:
+                min_idx = np.argmin(np.array(rand_vars))
+                rand_vars[min_idx] = np.random.exponential(_beta,size=1)
+            if max(rand_vars) > max_val:
+                max_idx = np.argmin(np.array(rand_vars))
+                rand_vars[max_idx] = np.random.exponential(_beta,size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+
     if interactive_params is not None:
         # gen interactive plot
         data_description = stats.describe(rand_vars) 
@@ -770,6 +807,8 @@ def gen_exponential_dist(_beta,
 def gen_lognormal_dist(_mu, 
                        _sigma, 
                        size, 
+                       min_val=None,
+                       max_val=None,
                        interactive_params=None, 
                        logscale=False, 
                        transparent=False):
@@ -803,6 +842,42 @@ def gen_lognormal_dist(_mu,
     '''
     rand_vars = stats.lognorm.rvs(s=_sigma, scale=math.exp(_mu), size=size)
 
+    # check min and max vals 
+    min_rand_var, max_rand_var = min(rand_vars), max(rand_vars)
+    counter = 0
+    if min_val is None and max_val is None:
+        # don't need to worry about any min or max allowed values
+        pass
+    elif min_val is not None and max_val is None:
+        # ensure greater than min_val
+        while min(rand_vars) < min_val:
+            min_idx = np.argmin(np.array(rand_vars))
+            rand_vars[min_idx] = stats.lognorm.rvs(s=_sigma,scale=math.exp(_mu),size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+    elif min_val is None and max_val is not None:
+        # ensure less than max val
+        while max(rand_vars) > max_val:
+            max_idx = np.argmin(np.array(rand_vars))
+            rand_vars[max_idx] = stats.lognorm.rvs(s=_sigma,scale=math.exp(_mu),size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+    elif min_val is not None and max_val is not None:
+        # ensure less than max val and greater than min val
+        while min(rand_vars) < min_val or max(rand_vars) > max_val:
+            if min(rand_vars) < min_val:
+                min_idx = np.argmin(np.array(rand_vars))
+                rand_vars[min_idx] = stats.lognorm.rvs(s=_sigma,scale=math.exp(_mu),size=1)
+            if max(rand_vars) > max_val:
+                max_idx = np.argmin(np.array(rand_vars))
+                rand_vars[max_idx] = stats.lognorm.rvs(s=_sigma,scale=math.exp(_mu),size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+
+
     if interactive_params is not None:
         # gen interactive plot
         data_description = stats.describe(rand_vars) 
@@ -822,6 +897,8 @@ def gen_lognormal_dist(_mu,
 def gen_pareto_dist(_alpha, 
                     _mode,  
                     size, 
+                    min_val=None,
+                    max_val=None,
                     interactive_params=None,
                     logscale=False,
                     transparent=False):
@@ -852,6 +929,41 @@ def gen_pareto_dist(_alpha,
 
     '''
     rand_vars = stats.pareto.rvs(b=_alpha, loc=0, scale=_mode, size=size)
+
+    # check min and max vals 
+    min_rand_var, max_rand_var = min(rand_vars), max(rand_vars)
+    counter = 0
+    if min_val is None and max_val is None:
+        # don't need to worry about any min or max allowed values
+        pass
+    elif min_val is not None and max_val is None:
+        # ensure greater than min_val
+        while min(rand_vars) < min_val:
+            min_idx = np.argmin(np.array(rand_vars))
+            rand_vars[min_idx] = stats.pareto.rvs(b=_alpha, loc=0, scale=_mode, size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+    elif min_val is None and max_val is not None:
+        # ensure less than max val
+        while max(rand_vars) > max_val:
+            max_idx = np.argmin(np.array(rand_vars))
+            rand_vars[max_idx] = stats.pareto.rvs(b=_alpha, loc=0, scale=_mode, size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+    elif min_val is not None and max_val is not None:
+        # ensure less than max val and greater than min val
+        while min(rand_vars) < min_val or max(rand_vars) > max_val:
+            if min(rand_vars) < min_val:
+                min_idx = np.argmin(np.array(rand_vars))
+                rand_vars[min_idx] = stats.pareto.rvs(b=_alpha, loc=0, scale=_mode, size=1)
+            if max(rand_vars) > max_val:
+                max_idx = np.argmin(np.array(rand_vars))
+                rand_vars[max_idx] = stats.pareto.rvs(b=_alpha, loc=0, scale=_mode, size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
     
     if interactive_params is not None:
         # gen interactive plot
@@ -872,6 +984,8 @@ def gen_pareto_dist(_alpha,
 def gen_weibull_dist(_alpha, 
                      _lambda, 
                      size, 
+                     min_val=None,
+                     max_val=None,
                      interactive_params=None, 
                      logscale=False, 
                      transparent=False):
@@ -917,6 +1031,41 @@ def gen_weibull_dist(_alpha,
     '''
     rand_vars = (np.random.weibull(_alpha, size=size)) * _lambda
 
+    # check min and max vals 
+    min_rand_var, max_rand_var = min(rand_vars), max(rand_vars)
+    counter = 0
+    if min_val is None and max_val is None:
+        # don't need to worry about any min or max allowed values
+        pass
+    elif min_val is not None and max_val is None:
+        # ensure greater than min_val
+        while min(rand_vars) < min_val:
+            min_idx = np.argmin(np.array(rand_vars))
+            rand_vars[min_idx] = (np.random.weibull(_alpha, size=1)) * _lambda
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+    elif min_val is None and max_val is not None:
+        # ensure less than max val
+        while max(rand_vars) > max_val:
+            max_idx = np.argmin(np.array(rand_vars))
+            rand_vars[max_idx] = (np.random.weibull(_alpha, size=1)) * _lambda
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+    elif min_val is not None and max_val is not None:
+        # ensure less than max val and greater than min val
+        while min(rand_vars) < min_val or max(rand_vars) > max_val:
+            if min(rand_vars) < min_val:
+                min_idx = np.argmin(np.array(rand_vars))
+                rand_vars[min_idx] = (np.random.weibull(_alpha, size=1)) * _lambda
+            if max(rand_vars) > max_val:
+                max_idx = np.argmin(np.array(rand_vars))
+                rand_vars[max_idx] = (np.random.weibull(_alpha, size=1)) * _lambda
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+
     if interactive_params is not None:
         # gen interactive plot
         data_description = stats.describe(rand_vars) 
@@ -943,6 +1092,8 @@ def gen_named_val_dist(dist,
                        path_to_save=None,
                        plot_fig=False,
                        show_fig=False,
+                       min_val=None,
+                       max_val=None,
                        xlim=None,
                        logscale=False,
                        rand_var_name='Random Variable',
@@ -981,6 +1132,8 @@ def gen_named_val_dist(dist,
             return and display fig.
         return_data (bool) Whether or not to return random variable data sampled
             from generated distribution.
+        min_val (int/float): Minimum random variable value.
+        max_val (int/float): Maximum random variable value.
         xlim (list): X-axis limits of plot. E.g. xlim=[0,10] to plot random
             variable values between 0 and 10.
         logscale (bool): Whether or not plot should have logscale x-axis and bins.
@@ -1021,13 +1174,17 @@ def gen_named_val_dist(dist,
                                     {'manual': True},
                                     _beta=_beta_exp_widget,
                                     size=fixed(size),
+                                    min_val=fixed(min_val),
+                                    max_val=fixed(max_val),
                                     interactive_params=fixed({'xlim': xlim, 
                                                               'rand_var_name': rand_var_name,
                                                               'prob_rand_var_less_than': prob_rand_var_less_than,
                                                               'num_bins': num_bins}))
         else:
             rand_vars = gen_exponential_dist(_beta=params['_beta'], 
-                                             size=size)
+                                             size=size,
+                                             min_val=min_val,
+                                             max_val=max_val)
 
     elif dist == 'lognormal':
         if interactive_plot:
@@ -1038,6 +1195,8 @@ def gen_named_val_dist(dist,
                                     _mu=_mu_lognormal_widget,
                                     _sigma=_sigma_lognormal_widget,
                                     size=fixed(size),
+                                    min_val=fixed(min_val),
+                                    max_val=fixed(max_val),
                                     interactive_params=fixed({'xlim': xlim, 
                                                               'rand_var_name': rand_var_name,
                                                               'prob_rand_var_less_than': prob_rand_var_less_than,
@@ -1045,7 +1204,9 @@ def gen_named_val_dist(dist,
         else:
             rand_vars = gen_lognormal_dist(_mu=params['_mu'],
                                            _sigma=params['_sigma'],
-                                           size=size)
+                                           size=size,
+                                           min_val=min_val,
+                                           max_val=max_val)
 
     elif dist == 'weibull':
         if interactive_plot:
@@ -1056,6 +1217,8 @@ def gen_named_val_dist(dist,
                                     _alpha=_alpha_weibull_widget,
                                     _lambda=_lambda_weibull_widget,
                                     size=fixed(size),
+                                    min_val=fixed(min_val),
+                                    max_val=fixed(max_val),
                                     interactive_params=fixed({'xlim': xlim, 
                                                               'rand_var_name': rand_var_name,
                                                               'prob_rand_var_less_than': prob_rand_var_less_than,
@@ -1063,7 +1226,9 @@ def gen_named_val_dist(dist,
         else:
             rand_vars = gen_weibull_dist(_alpha=params['_alpha'],
                                          _lambda=params['_lambda'],
-                                         size=size)
+                                         size=size,
+                                         min_val=min_val,
+                                         max_val=max_val)
 
     elif dist == 'pareto':
         if interactive_plot:
@@ -1074,6 +1239,8 @@ def gen_named_val_dist(dist,
                                     _alpha=_alpha_pareto_widget,
                                     _mode=_mode_pareto_widget,
                                     size=fixed(size),
+                                    min_val=fixed(min_val),
+                                    max_val=fixed(max_val),
                                     interactive_params=fixed({'xlim': xlim, 
                                                               'rand_var_name': rand_var_name,
                                                               'prob_rand_var_less_than': prob_rand_var_less_than,
@@ -1081,7 +1248,9 @@ def gen_named_val_dist(dist,
         else:
             rand_vars = gen_pareto_dist(_alpha=params['_alpha'],
                                         _mode=params['_mode'],
-                                        size=size)
+                                        size=size,
+                                        min_val=min_val,
+                                        max_val=max_val)
 
     else:
         sys.exist('Must provide valid name distribution to use')
