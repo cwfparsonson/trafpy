@@ -19,6 +19,8 @@ def gen_benchmark_demands(network_capacity,
                           benchmark_version='0.0.1', 
                           benchmark_sets=['all'], 
                           num_repeats=10):
+    # remove python floating point arithmetic errors in loads
+    loads = [round(load, 2) for load in loads]
 
     # init benchmark importer
     importer = BenchmarkImporter(benchmark_version, load_prev_dists=load_prev_dists)
@@ -39,7 +41,7 @@ def gen_benchmark_demands(network_capacity,
         benchmark_sets = importer.valid_benchmark_sets
 
     benchmark_dists = {benchmark: {} for benchmark in benchmark_sets}
-    benchmark_demands = {benchmark: {repeat: {} for repeat in range(num_repeats)} for benchmark in benchmark_sets}
+    benchmark_demands = {benchmark: {load: {repeat: {} for repeat in range(num_repeats)} for load in loads} for benchmark in benchmark_sets}
     num_loads = len(loads)
     start_loops = time.time()
     print('\n~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*')
@@ -63,7 +65,7 @@ def gen_benchmark_demands(network_capacity,
                                                               flow_size_dist=benchmark_dists[benchmark]['flow_size_dist'],
                                                               interarrival_time_dist=benchmark_dists[benchmark]['interarrival_time_dist'],
                                                               print_data=False)
-                benchmark_demands[benchmark][repeat] = flow_centric_demand_data
+                benchmark_demands[benchmark][load][repeat] = flow_centric_demand_data
             end_load = time.time()
             print('Generated \'{}\' demands for load {} of {} in {} seconds.'.format(benchmark, load_counter, num_loads, end_load-start_load))
             load_counter += 1

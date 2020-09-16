@@ -5,6 +5,9 @@ class Demand:
     def __init__(self,
                  demand_data):
 
+        self.reset(demand_data)
+
+    def reset(self, demand_data):
         self.demand_data = demand_data
         self.num_demands = self.get_num_demands(self.demand_data)
 
@@ -14,7 +17,6 @@ class Demand:
             self.job_centric = False
 
         self.num_control_deps, self.num_data_deps, self.num_flows = self.get_num_deps(demand_data)
-    
 
     def get_slots_dict(self, slot_size):
         return builder.construct_demand_slots_dict(demand_data=self.demand_data,
