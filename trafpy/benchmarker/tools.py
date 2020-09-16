@@ -20,7 +20,7 @@ def gen_benchmark_demands(network_capacity,
                           benchmark_sets=['all'], 
                           num_repeats=10):
     # remove python floating point arithmetic errors in loads
-    loads = [round(load, 2) for load in loads]
+    loads = [round(load, 3) for load in loads]
 
     # init benchmark importer
     importer = BenchmarkImporter(benchmark_version, load_prev_dists=load_prev_dists)
