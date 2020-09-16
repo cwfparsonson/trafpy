@@ -25,7 +25,7 @@ class TestBed:
         return json.loads(load_data_from_json(demand_file_path))
 
 
-    def run_tests(self, config):
+    def run_tests(self, config, path_to_save):
         self.config = config
 
         # calc how many jobs to run
@@ -40,48 +40,52 @@ class TestBed:
         jobs = []
         start_time = time.time()
         for benchmark in self.benchmarks:
-            for load in self.benchmark_data[benchmark]:
+            # for load in self.benchmark_data[benchmark]:
+            for load in list(self.benchmark_data[benchmark].keys())[:2]:
                 for repeat in self.benchmark_data[benchmark][load]:
                     for scheduler in config['schedulers']:
                         demand_data = self.benchmark_data[benchmark][load][repeat]
                         demand = Demand(demand_data)
                         env = DCN(config['networks'][0], 
                                   demand, 
-                                  config['schedulers'][0], 
-                                  slot_size=config['schedulers'][0].slot_size, 
+                                  scheduler, 
+                                  slot_size=config['slot_size'],
                                   max_flows=config['max_flows'], 
                                   max_time=config['max_time'])
                         self.run_test(scheduler, env, self.envs)
-                        # p = multiprocessing.Process(target=self.run_test,
-                                                    # args=(scheduler, env, self.envs,))
-                        # jobs.append(p)
-                        # p.start()
-        # for job in jobs:
-            # job.join() # only execute below code when all jobs finished
+                        p = multiprocessing.Process(target=self.run_test,
+                                                    args=(scheduler, env, self.envs, path_to_save,))
+                        jobs.append(p)
+                        p.start()
+        for job in jobs:
+            job.join() # only execute below code when all jobs finished
         end_time = time.time()
         total_time = round(end_time-start_time, 2)
         print('\n{} tests completed in {} seconds.'.format(num_jobs, total_time))
 
-        # convert multiprocessing manage list to an actual list so is picklable
-        self.envs = list(self.envs)
+        self.save(path=path_to_save, overwrite=True, conv_back_to_mp_manager_list=False) # save final testbed state
 
 
-    def run_test(self, scheduler, env, envs):
+    def run_test(self, scheduler, env, envs, path_to_save):
         observation = env.reset()
         while True:
             action = scheduler.get_action(observation)
             observation, reward, done, info = env.step(action)
             if done:
                 env.get_scheduling_session_summary(print_summary=True)
-                raise Exception()
                 envs.append(env) # store env
+                self.save(path_to_save, overwrite=True, conv_back_to_mp_manager_list=True) # save curr TestBed state
                 break
 
-    def save(self, path):
+    def save(self, path, conv_back_to_mp_manager_list=False):
+        self.envs = list(self.envs) # conv to list so is picklable
         filename = path + self.config['test_name'] + '.obj'
         filehandler = open(filename, 'wb')
         pickle.dump(dict(self.__dict__), filehandler)
         filehandler.close()
+
+        if conv_back_to_mp_manager_list:
+            self.envs = multiprocessing.Manager().list(self.envs) # conv back to list to continue multiprocessing if needed
 
 
 
@@ -107,7 +111,7 @@ if __name__ == '__main__':
     import trafpy
     from trafpy.generator.src.networks import gen_fat_tree, gen_channel_names
     from trafpy.manager.src.routers.routers import RWA
-    from trafpy.manager.src.schedulers.schedulers import SRPT
+    from trafpy.manager.src.schedulers.schedulers import SRPT, BASRPT
 
 
 
@@ -130,27 +134,24 @@ if __name__ == '__main__':
     rwas = [RWA(gen_channel_names(NUM_CHANNELS), NUM_K_PATHS)]
 
     # schedulers
-    SLOT_SIZE = 1000
-    schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE)]
+    SLOT_SIZE = 1e6 
+    schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
+                  BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=40)]
 
 
 
     test_config = {'test_name': 'university_benchmark_test_1',
                    'max_time': MAX_TIME,
                    'max_flows': None,
+                   'slot_size': SLOT_SIZE,
                    'networks': networks,
                    'rwas': rwas,
                    'schedulers': schedulers}
 
     tb.reset()
-    tb.run_tests(test_config)
-    path = os.path.dirname(trafpy.__file__)+'/../data/'
-    tb.save(path)
+    tb.run_tests(test_config, path_to_save = os.path.dirname(trafpy.__file__+'/../data/'))
 
     
-    # TODO: complete TestBed class. Need to load envs iterarively using
-    # specified demand datas in benchmarks loaded by TestBed
-
 
 
 

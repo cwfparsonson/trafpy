@@ -195,9 +195,11 @@ class SchedulerToolbox:
         for link in path_links:
             link_bws.append(self.SchedulerNetwork[link[0]][link[1]]['max_channel_capacity'])
         lowest_bw = min(link_bws)
-
+        
         size_per_slot = lowest_bw/(1/self.slot_size)
         packets_per_slot = int(size_per_slot / packet_size) # round down 
+        if packets_per_slot == 0:
+            raise Exception('Encountered 0 packets that can be transferred per time slot. Either decrease packet size or increase time slot size.')
         slots_to_completion = math.ceil(num_packets/packets_per_slot) # round up
         completion_time = slots_to_completion * self.slot_size
         
