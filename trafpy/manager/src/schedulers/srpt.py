@@ -13,9 +13,9 @@ import itertools
 
 class SRPT(SchedulerToolbox):
 
-    def __init__(self):
-        super().__init__()
-        self.scheduler_name = 'srpt'
+    def __init__(self, Graph, RWA, slot_size, scheduler_name='srpt'):
+        super().__init__(Graph, RWA, slot_size)
+        self.scheduler_name = scheduler_name
 
     def get_scheduler_action(self, observation):
         '''

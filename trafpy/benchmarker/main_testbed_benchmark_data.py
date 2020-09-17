@@ -43,7 +43,7 @@ class TestBed:
         start_time = time.time()
         for benchmark in self.benchmarks:
             # for load in self.benchmark_data[benchmark]:
-            for load in list(self.benchmark_data[benchmark].keys())[:2]:
+            for load in list(self.benchmark_data[benchmark].keys()):
                 for repeat in self.benchmark_data[benchmark][load]:
                     for scheduler in config['schedulers']:
                         demand_data = self.benchmark_data[benchmark][load][repeat]
@@ -152,7 +152,7 @@ if __name__ == '__main__':
     # schedulers
     SLOT_SIZE = 1e6 
     schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
-                  BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=40)]
+                  BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=5)]
 
 
 

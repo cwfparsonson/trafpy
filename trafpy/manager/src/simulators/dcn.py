@@ -1636,6 +1636,7 @@ class DCN:
         print('-=-=-=-=-=-=-= Scheduling Session Ended -=-=-=-=-=-=-=')
         print('SUMMARY:')
         print('~* General Info *~')
+        print('Simulation name: \'{}\''.format(self.sim_name))
         print('Total session duration: {} time units'.format(self.session_duration))
         print('Total number of generated demands (jobs or flows): {}'.format(self.demand.num_demands))
         print('Total info arrived: {} info units'.format(self.info_arrived))

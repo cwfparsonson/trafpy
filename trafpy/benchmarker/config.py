@@ -58,19 +58,45 @@ NUM_REPEATS = 1
 
 
 
-# PRIVATE ENTERPRISE
+
+
+
+
+
+# UNIVERSITY
 # -------------------------------------------------------------------------
 # define benchmarks to generate
-BENCHMARKS = ['private_enterprise']
+BENCHMARKS = ['university']
 
 # define network topology for each benchmark
-NETS = {'private_enterprise': gen_fat_tree(k=6, N=30, num_channels=1)}
+NETS = {'university': gen_fat_tree(k=4, N=30, num_channels=1)}
 
 # define network capacity for each benchmark
-NETWORK_CAPACITIES = {'private_enterprise': NETS['private_enterprise'].graph['max_nw_capacity']}
+NETWORK_CAPACITIES = {'university': NETS['university'].graph['max_nw_capacity']}
 
 # define network racks for each benchmark
-RACKS_DICTS = {'private_enterprise': NETS['private_enterprise'].graph['rack_to_ep_dict']}
+RACKS_DICTS = {'university': NETS['university'].graph['rack_to_ep_dict']}
+
+
+
+
+
+
+
+
+# # PRIVATE ENTERPRISE
+# # -------------------------------------------------------------------------
+# # define benchmarks to generate
+# BENCHMARKS = ['private_enterprise']
+
+# # define network topology for each benchmark
+# NETS = {'private_enterprise': gen_fat_tree(k=6, N=30, num_channels=1)}
+
+# # define network capacity for each benchmark
+# NETWORK_CAPACITIES = {'private_enterprise': NETS['private_enterprise'].graph['max_nw_capacity']}
+
+# # define network racks for each benchmark
+# RACKS_DICTS = {'private_enterprise': NETS['private_enterprise'].graph['rack_to_ep_dict']}
 
 
 
