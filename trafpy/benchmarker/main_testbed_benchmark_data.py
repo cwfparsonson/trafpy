@@ -138,12 +138,12 @@ if __name__ == '__main__':
     MAX_TIME = None
 
 
-    path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/university_benchmark_data.json'
+    path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/private_enterprise_benchmark_data.json'
     tb = TestBed(path_to_benchmark_data)
 
     # networks
     NUM_CHANNELS = 1
-    networks = [gen_fat_tree(k=4, N=30, num_channels=NUM_CHANNELS)]
+    networks = [gen_fat_tree(k=6, N=30, num_channels=NUM_CHANNELS)]
 
     # rwas
     NUM_K_PATHS = 2
@@ -156,7 +156,7 @@ if __name__ == '__main__':
 
 
 
-    test_config = {'test_name': 'university_benchmark_test_1',
+    test_config = {'test_name': 'private_enterprise_benchmark_test_1',
                    'max_time': MAX_TIME,
                    'max_flows': None,
                    'slot_size': SLOT_SIZE,

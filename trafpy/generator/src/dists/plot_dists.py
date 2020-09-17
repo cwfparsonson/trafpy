@@ -45,7 +45,7 @@ def plot_node_dist(node_dist,
     if node_to_index_dict is None:
         _,_,node_to_index_dict,_=tools.get_network_params(eps) 
     fig = plt.figure()
-    plt.matshow(node_dist, cmap='coolwarm')
+    plt.matshow(node_dist, cmap='YlOrBr')
     cbar = plt.colorbar()
     if add_labels == True:
         for (i, j), z in np.ndenumerate(node_dist):
