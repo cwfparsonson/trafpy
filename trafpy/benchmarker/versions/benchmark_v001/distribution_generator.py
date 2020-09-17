@@ -65,6 +65,19 @@ class DistributionGenerator:
             if benchmark == 'university':
                 rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.7}
                 node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
+            
+            elif benchmark == 'private_enterprise':
+                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.7}
+                node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
+
+            elif benchmark == 'commercial_cloud':
+                pass
+
+            elif benchmark == 'social_media_cloud':
+                pass
+
+            else:
+                raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
 
 
             if save_data:

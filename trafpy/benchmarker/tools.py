@@ -10,55 +10,41 @@ import time
 
 
 
-
-def gen_benchmark_demands(network_capacity, 
-                          path_to_save=None,
-                          load_prev_dists=True,
-                          racks_dict=None,
-                          loads=np.arange(0.1, 1.1, 0.1).tolist(),
-                          benchmark_version='0.0.1', 
-                          benchmark_sets=['all'], 
-                          num_repeats=10):
-    # remove python floating point arithmetic errors in loads
-    loads = [round(load, 3) for load in loads]
-
+def gen_benchmark_demands(config, path_to_save=None, load_prev_dists=True):
     # init benchmark importer
-    importer = BenchmarkImporter(benchmark_version, load_prev_dists=load_prev_dists)
+    importer = BenchmarkImporter(config.BENCHMARK_VERSION, load_prev_dists=load_prev_dists)
 
-    if racks_dict is None:
-        print('No racks_dict given. Loading racks_dict from config.py...')
-        racks_dict = config.RACKS_DICT
-        print('Loaded racks dict:\n{}'.format(racks_dict))
+    # load distributions for each benchmark
+    benchmark_dists = {benchmark: {} for benchmark in config.BENCHMARKS}
+    benchmark_demands = {benchmark: {load: {repeat: {} for repeat in range(config.NUM_REPEATS)} for load in loads} for benchmark in config.BENCHMARKS}
 
-    # get endpoint labels
-    eps_racks_list = [eps for eps in racks_dict.values()]
-    eps = []
-    for rack in eps_racks_list:
-        for ep in rack:
-            eps.append(ep)
-
-    if benchmark_sets == ['all']:
-        benchmark_sets = importer.valid_benchmark_sets
-
-    benchmark_dists = {benchmark: {} for benchmark in benchmark_sets}
-    benchmark_demands = {benchmark: {load: {repeat: {} for repeat in range(num_repeats)} for load in loads} for benchmark in benchmark_sets}
-    num_loads = len(loads)
+    # begin generating data for each benchmark
+    num_loads = len(config.LOADS)
     start_loops = time.time()
     print('\n~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*')
-    print('Benchmarks to Generate: {}'.format(benchmark_sets))
+    print('Benchmarks to Generate: {}'.format(config.BENCHMARKS))
     print('Loads to generate: {}'.format(loads))
-    print('Number of repeats to generate for each benchmark load: {}'.format(num_repeats))
-    for benchmark in benchmark_sets:
+    print('Number of repeats to generate for each benchmark load: {}'.format(config.NUM_REPEATS))
+    for benchmark in config.BENCHMARKS:
         print('~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*')
         print('Generating demands for benchmark \'{}\'...'.format(benchmark))
+        
+        # get racks and endpoints
+        racks_dict = config.RACKS_DICTS[benchmark]
+        eps_racks_list = [eps for eps in racks_dict.values()]
+        eps = []
+        for rack in eps_racks_list:
+            for ep in rack:
+                eps.append(ep)
+
         start_benchmark = time.time()
         load_counter = 1
         benchmark_dists[benchmark] = importer.get_benchmark_dists(benchmark, racks_dict, eps)
-        for load in loads:
+        for load in config.LOADS:
             start_load = time.time()
-            network_load_config = {'network_rate_capacity': network_capacity, 
+            network_load_config = {'network_rate_capacity': config.NETWORK_CAPACITIES[benchmark], 
                                    'target_load_fraction': load}
-            for repeat in range(num_repeats):
+            for repeat in range(config.NUM_REPEATS):
                 flow_centric_demand_data = create_demand_data(network_load_config=network_load_config,
                                                               eps=eps,
                                                               node_dist=benchmark_dists[benchmark]['node_dist'],

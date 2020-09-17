@@ -376,7 +376,7 @@ def gen_multimodal_node_dist(eps,
                                                           node_dist,
                                                           print_data=print_data)
 
-        matrix_sum = np.round(np.sum(node_dist),2)
+    matrix_sum = np.round(np.sum(node_dist),2)
     assert matrix_sum == 1, \
         'matrix must sum to 1, but is {}'.format(matrix_sum)
     
