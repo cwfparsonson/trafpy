@@ -194,6 +194,37 @@ def plot_val_dist(rand_vars,
     return fig
 
 
+def plot_val_bar(x_values,
+                 y_values,
+                 ylabel='Random Variable',
+                 ylim=None,
+                 bar_width=0.35,
+                 show_fig=False):
+    '''Plots standard bar chart.'''
+    x_pos = [x for x in range(len(x_values))]
+
+    fig = plt.figure()
+    plt.style.use('ggplot')
+
+    plt.bar(x_pos, y_values, bar_width)
+
+    plt.ylabel(ylabel)
+    plt.xticks(x_pos, (x_val for x_val in x_values))
+
+    try:
+        plt.ylim(ylim)
+    except NameError:
+        pass
+
+    if show_fig:
+        plt.show()
+
+    return fig
+
+
+
+
+
 
 def plot_val_stacked_bar(plot_dict={},
                          ylabel='Random Variable',
