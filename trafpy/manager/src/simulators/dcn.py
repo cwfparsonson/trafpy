@@ -20,6 +20,7 @@ class DCN:
                  Demand, 
                  Scheduler, 
                  slot_size, 
+                 sim_nam='dcn_sim',
                  max_flows=None, 
                  max_time=None):
 
@@ -28,6 +29,7 @@ class DCN:
         self.demand = Demand
         self.scheduler = Scheduler
         self.slot_size = slot_size
+        self.sim_name = sim_name 
         self.max_flows = max_flows # max number of flows per queue
         self.max_time = max_time
 

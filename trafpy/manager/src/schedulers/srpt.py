@@ -13,6 +13,10 @@ import itertools
 
 class SRPT(SchedulerToolbox):
 
+    def __init__(self):
+        super().__init__()
+        self.scheduler_name = 'srpt'
+
     def get_scheduler_action(self, observation):
         '''
         Uses observation and chosen rwa action(s) to construct schedule for this

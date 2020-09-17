@@ -1,6 +1,6 @@
+from trafpy.benchmarker import config
 from trafpy.generator.src.builder import create_demand_data
 from trafpy.generator.src.tools import save_data_as_json
-from trafpy.benchmarker import config
 from trafpy.benchmarker.versions.benchmark_importer import BenchmarkImporter
 
 import numpy as np
@@ -10,20 +10,20 @@ import time
 
 
 
-def gen_benchmark_demands(config, path_to_save=None, load_prev_dists=True):
+def gen_benchmark_demands(path_to_save=None, load_prev_dists=True):
     # init benchmark importer
     importer = BenchmarkImporter(config.BENCHMARK_VERSION, load_prev_dists=load_prev_dists)
 
     # load distributions for each benchmark
     benchmark_dists = {benchmark: {} for benchmark in config.BENCHMARKS}
-    benchmark_demands = {benchmark: {load: {repeat: {} for repeat in range(config.NUM_REPEATS)} for load in loads} for benchmark in config.BENCHMARKS}
+    benchmark_demands = {benchmark: {load: {repeat: {} for repeat in range(config.NUM_REPEATS)} for load in config.LOADS} for benchmark in config.BENCHMARKS}
 
     # begin generating data for each benchmark
     num_loads = len(config.LOADS)
     start_loops = time.time()
     print('\n~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*')
     print('Benchmarks to Generate: {}'.format(config.BENCHMARKS))
-    print('Loads to generate: {}'.format(loads))
+    print('Loads to generate: {}'.format(config.LOADS))
     print('Number of repeats to generate for each benchmark load: {}'.format(config.NUM_REPEATS))
     for benchmark in config.BENCHMARKS:
         print('~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*')

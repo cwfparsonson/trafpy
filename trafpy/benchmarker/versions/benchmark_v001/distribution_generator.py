@@ -67,14 +67,16 @@ class DistributionGenerator:
                 node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
             
             elif benchmark == 'private_enterprise':
-                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.7}
+                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.5}
                 node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
 
             elif benchmark == 'commercial_cloud':
-                pass
+                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.2}
+                node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
 
             elif benchmark == 'social_media_cloud':
-                pass
+                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.129}
+                node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
 
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
@@ -108,6 +110,33 @@ class DistributionGenerator:
                                                               print_data=False,
                                                               round_to_nearest=1)
 
+            elif benchmark == 'private_enterprise':
+                flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
+                                                              params={'_mu': 7, '_sigma': 2.5},
+                                                              min_val=1,
+                                                              show_fig=False,
+                                                              print_data=False,
+                                                              round_to_nearest=1)
+
+            elif benchmark == 'commercial_cloud':
+                flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
+                                                              params={'_mu': 7, '_sigma': 2.5},
+                                                              min_val=1,
+                                                              show_fig=False,
+                                                              print_data=False,
+                                                              round_to_nearest=1)
+
+            elif benchmark == 'social_media_cloud':
+                flow_size_dist = val_dists.gen_named_val_dist(dist='weibull',
+                                                              params={'_alpha': 0.5, '_lambda': 21000},
+                                                              min_val=1,
+                                                              show_fig=False,
+                                                              print_data=False,
+                                                              round_to_nearest=1)
+
+            else:
+                raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
+
 
             if save_data:
                 save_data_as_json(path_to_save=path_to_data, data=flow_size_dist, overwrite=True, print_times=False)
@@ -138,6 +167,34 @@ class DistributionGenerator:
                                                                       show_fig=False,
                                                                       print_data=False,
                                                                       round_to_nearest=1)
+
+            elif benchmark == 'private_enterprise':
+                interarrival_time_dist = val_dists.gen_multimodal_val_dist(min_val=1,
+                                                                           max_val=100000,
+                                                                           locations=[40,1],
+                                                                           skews=[-1,4],
+                                                                           scales=[60,1000],
+                                                                           num_skew_samples=[10000,10000],
+                                                                           bg_factor=0.05)
+
+            elif benchmark == 'commercial_cloud':
+                interarrival_time_dist = val_dists.gen_multimodal_val_dist(min_val=1,
+                                                                           max_val=10000,
+                                                                           locations=[10,20,100,1],
+                                                                           skews=[0,0,0,100],
+                                                                           scales=[1,3,4,50],
+                                                                           num_skew_samples=[10000,7000,5000,20000],
+                                                                           bg_factor=0.01)
+
+            elif benchmark == 'social_media_cloud':
+                interarrival_time_dist = val_dists.gen_named_val_dist(dist='lognormal',
+                                                                      params={'_mu': 6, '_sigma': 2.3},
+                                                                      show_fig=False,
+                                                                      print_data=False,
+                                                                      round_to_nearest=1)
+
+            else:
+                raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
 
 
             if save_data:

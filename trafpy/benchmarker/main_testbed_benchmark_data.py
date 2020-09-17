@@ -52,6 +52,7 @@ class TestBed:
                                   demand, 
                                   scheduler, 
                                   slot_size=config['slot_size'],
+                                  sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark,load,repeat,scheduler),
                                   max_flows=config['max_flows'], 
                                   max_time=config['max_time'])
                         p = multiprocessing.Process(target=self.run_test,

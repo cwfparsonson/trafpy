@@ -15,6 +15,7 @@ class BASRPT(SchedulerToolbox):
 
     def __init__(self, Graph, RWA, slot_size, V):
         super().__init__(Graph, RWA, slot_size)
+        self.scheduler_name = 'basrpt'
         self.V = V # BASRPT V parameter
         self.N = int(len(self.Graph.graph['endpoints'])) # number of servers
 
