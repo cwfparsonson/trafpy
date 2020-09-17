@@ -537,8 +537,9 @@ def gen_multimodal_val_dist(min_val,
                                               round_to_nearest=round_to_nearest,
                                               num_decimal_places=num_decimal_places)
     
-    prob_dist = {unique_val: prob for unique_val, prob in zip(unique_vals, pmf)}
-    
+    # ensure keys are floats so dont get error if try save with json
+    prob_dist = {float(unique_val): prob for unique_val, prob in zip(unique_vals, pmf)}
+
     if print_data:
         print('Prob dist:\n{}'.format(prob_dist))
     if path_to_save is not None:

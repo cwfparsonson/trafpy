@@ -58,19 +58,19 @@ NUM_REPEATS = 1
 
 
 
-# # PRIVATE ENTERPRISE
-# # -------------------------------------------------------------------------
-# # define benchmarks to generate
-# BENCHMARKS = ['private_enterprise']
+# PRIVATE ENTERPRISE
+# -------------------------------------------------------------------------
+# define benchmarks to generate
+BENCHMARKS = ['private_enterprise']
 
-# # define network topology for each benchmark
-# NETS = {'private_enterprise': gen_fat_tree(k=6, N=30, num_channels=1)}
+# define network topology for each benchmark
+NETS = {'private_enterprise': gen_fat_tree(k=6, N=30, num_channels=1)}
 
-# # define network capacity for each benchmark
-# NETWORK_CAPACITIES = {'private_enterprise': NETS['private_enterprise'].graph['max_nw_capacity']}
+# define network capacity for each benchmark
+NETWORK_CAPACITIES = {'private_enterprise': NETS['private_enterprise'].graph['max_nw_capacity']}
 
-# # define network racks for each benchmark
-# RACKS_DICTS = {'private_enterprise': NETS['private_enterprise'].graph['rack_to_ep_dict']}
+# define network racks for each benchmark
+RACKS_DICTS = {'private_enterprise': NETS['private_enterprise'].graph['rack_to_ep_dict']}
 
 
 
@@ -97,19 +97,19 @@ NUM_REPEATS = 1
 
 
 
-# SOCIAL MEDIA CLOUD
-# -------------------------------------------------------------------------
-# define benchmarks to generate
-BENCHMARKS = ['social_media_cloud']
+# # SOCIAL MEDIA CLOUD
+# # -------------------------------------------------------------------------
+# # define benchmarks to generate
+# BENCHMARKS = ['social_media_cloud']
 
-# define network topology for each benchmark
-NETS = {'social_media_cloud': gen_fat_tree(k=23, N=35, num_channels=1)}
+# # define network topology for each benchmark
+# NETS = {'social_media_cloud': gen_fat_tree(k=23, N=35, num_channels=1)}
 
-# define network capacity for each benchmark
-NETWORK_CAPACITIES = {'social_media_cloud': NETS['social_media_cloud'].graph['max_nw_capacity']}
+# # define network capacity for each benchmark
+# NETWORK_CAPACITIES = {'social_media_cloud': NETS['social_media_cloud'].graph['max_nw_capacity']}
 
-# define network racks for each benchmark
-RACKS_DICTS = {'social_media_cloud': NETS['social_media_cloud'].graph['rack_to_ep_dict']}
+# # define network racks for each benchmark
+# RACKS_DICTS = {'social_media_cloud': NETS['social_media_cloud'].graph['rack_to_ep_dict']}
 
 
 
