@@ -16,7 +16,9 @@ import copy
 def assign_probs_to_matrix(eps, probs, matrix=None):
     '''Assigns probabilities to 2D matrix.
 
-    N.B. Assumes probs are given in order of matrix indices when looping
+    probs can be list of pair probabilities or dict of key-value pair-probability
+
+    N.B. if probs is list, assumes probs are given in order of matrix indices when looping
     for src in eps for dst in eps
 
     '''
@@ -24,20 +26,33 @@ def assign_probs_to_matrix(eps, probs, matrix=None):
         matrix = np.zeros((len(eps),len(eps)))
     num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
     
-    iter = np.nditer(np.array(probs))
-    for src in eps:
-        for dst in eps:
-            if src == dst:
-                continue
-            elif src > dst:
-                # making symmetric so skip this side of diagonal
-                continue
-            else:
-                prob = next(iter)
-                src_idx = node_to_index[src]
-                dst_idx = node_to_index[dst]
-                matrix[src_idx,dst_idx] = prob
-                matrix[dst_idx,src_idx] = prob
+    sum_prob = 0
+    if type(probs) == dict:
+        for pair in list(probs.keys()):
+            prob = probs[pair]
+            pair = json.loads(pair)
+            src, dst = pair[0], pair[1]
+            src_idx, dst_idx = node_to_index[src], node_to_index[dst]
+            matrix[src_idx, dst_idx] = prob 
+            matrix[dst_idx, src_idx] = prob 
+            sum_prob += prob*2
+        matrix_sum = np.round(np.sum(matrix),2)
+
+    else:
+        iter = np.nditer(np.array(probs))
+        for src in eps:
+            for dst in eps:
+                if src == dst:
+                    continue
+                elif node_to_index[src] > node_to_index[dst]:
+                    # making symmetric so skip this side of diagonal
+                    continue
+                else:
+                    prob = next(iter)
+                    src_idx = node_to_index[src]
+                    dst_idx = node_to_index[dst]
+                    matrix[src_idx,dst_idx] = prob
+                    matrix[dst_idx,src_idx] = prob
 
     return matrix
 
@@ -106,7 +121,6 @@ def gen_uniform_node_dist(eps,
                                                           print_data=print_data)
 
     matrix_sum = np.round(np.sum(node_dist),2)
-
     assert matrix_sum == 1, \
         'matrix must sum to 1, but is {}'.format(matrix_sum)
     
@@ -605,12 +619,156 @@ def get_suitable_destination_node_for_rack_config(sn, node_dist, eps, ep_to_rack
     return dn
 
 
+def get_inter_intra_rack_pair_prob_dicts(pair_prob_dict, ep_to_rack_dict):
+    inter_rack_pair_prob_dict = {}
+    intra_rack_pair_prob_dict = {}
+    for pair in list(pair_prob_dict.keys()):
+        pair_loaded = json.loads(pair)
+        src, dst = pair_loaded[0], pair_loaded[1]
+        if ep_to_rack_dict[src] == ep_to_rack_dict[dst]:
+            # intra-rack
+            try:
+                intra_rack_pair_prob_dict[pair] = pair_prob_dict[pair]
+            except KeyError:
+                pair = json.loads(pair)
+                pair = json.dumps([pair[1],pair[0]])
+                intra_rack_pair_prob_dict[pair] = pair_prob_dict[pair]
+        else:
+            # inter-rack
+            try:
+                inter_rack_pair_prob_dict[pair] = pair_prob_dict[pair]
+            except KeyError:
+                pair = json.loads(pair)
+                pair = json.dumps([pair[1],pair[0]])
+                inter_rack_pair_prob_dict[pair] = pair_prob_dict[pair]
+
+
+
+    return inter_rack_pair_prob_dict, intra_rack_pair_prob_dict
+
+
 def adjust_node_dist_for_rack_prob_config(rack_prob_config,
-                                          eps,
-                                          node_dist,
-                                          num_exps_factor=10,
-                                          print_data=False):
-    '''Takes node dist and uses it to generate new node dist given inter- and intra-rack configuration.
+                                               eps,
+                                               node_dist,
+                                               print_data=False):
+    '''Unlike the other adjust_node_dist_from_multinomial_exp_for_rack_prob_config function,
+    this function does not use a multinomial experiment to adjust the prob dist,
+    but rather uses a deterministic method of distorting the probabilities from
+    the original node distribution such that the required inter-/intra-rack probabilities
+    are met.
+
+    '''
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
+    index_to_pair, pair_to_index = get_network_pair_mapper(eps)
+
+    ep_to_rack_dict = {}
+    for key, val in rack_prob_config['racks_dict'].items():
+        for v in val:
+            if v not in ep_to_rack_dict.keys():
+                ep_to_rack_dict[v] = key
+
+    pair_prob_dict = get_pair_prob_dict_of_node_dist_matrix(node_dist, eps)
+    inter_rack_pair_prob_dict, intra_rack_pair_prob_dict = get_inter_intra_rack_pair_prob_dicts(pair_prob_dict, ep_to_rack_dict)
+
+    # get current inter intra rack probs
+    inter_rack_prob = sum(list(inter_rack_pair_prob_dict.values()))
+    intra_rack_prob = sum(list(intra_rack_pair_prob_dict.values()))
+    if print_data:
+        print('inter_rack_prob: {}'.format(inter_rack_prob))
+        print('intra_rack_prob: {}'.format(intra_rack_prob))
+        print('sum: {}'.format(inter_rack_prob+intra_rack_prob))
+
+    target_inter_rack_prob = rack_prob_config['prob_inter_rack'] / 2 # allocate 2x so divide by 2
+    diff_inter_rack_prob = target_inter_rack_prob - inter_rack_prob
+    diff_per_inter_rack_pair = diff_inter_rack_prob / len(list(inter_rack_pair_prob_dict.keys()))
+    diff_per_intra_rack_pair = -(diff_inter_rack_prob / len(list(intra_rack_pair_prob_dict.keys())))
+    if print_data:
+        print('target_inter_rack_prob: {}'.format(target_inter_rack_prob))
+        print('diff_inter_rack_prob: {}'.format(diff_inter_rack_prob))
+        print('diff_per_inter_rack_pair: {}'.format(diff_per_inter_rack_pair))
+        print('diff_per_intra_rack_pair: {}'.format(diff_per_intra_rack_pair))
+
+    # adjust probs so have desired inter intra rack probs
+    # update inter rack probs
+    for inter_rack_pair in inter_rack_pair_prob_dict.keys():
+        updated_prob = inter_rack_pair_prob_dict[inter_rack_pair] + diff_per_inter_rack_pair
+        if updated_prob < 0:
+            # cant have 0 probs, take away from max prob instead
+            pairs = list(inter_rack_pair_prob_dict.keys())
+            probs = list(inter_rack_pair_prob_dict.values())
+            highest_prob_pair = pairs[probs.index(max(probs))]
+            inter_rack_pair_prob_dict[highest_prob_pair] += diff_per_inter_rack_pair
+            if inter_rack_pair_prob_dict[highest_prob_pair] < 0:
+                # raise Exception('Negative {} probability encountered.'.format(inter_rack_pair_prob_dict[highest_prob_pair]))
+                inter_rack_pair_prob_dict[highest_prob_pair] = 0
+        else:
+            # wont have 0 probs, can apply update
+            inter_rack_pair_prob_dict[inter_rack_pair] = updated_prob
+    # update intra rack probs
+    for intra_rack_pair in intra_rack_pair_prob_dict.keys():
+        updated_prob = intra_rack_pair_prob_dict[intra_rack_pair] + diff_per_intra_rack_pair
+        if updated_prob < 0:
+            # cant have 0 probs, take away from max prob instead
+            pairs = list(intra_rack_pair_prob_dict.keys())
+            probs = list(intra_rack_pair_prob_dict.values())
+            highest_prob_pair = pairs[probs.index(max(probs))]
+            intra_rack_pair_prob_dict[highest_prob_pair] += diff_per_intra_rack_pair
+            if intra_rack_pair_prob_dict[highest_prob_pair] < 0:
+                # raise Exception('Negative {} probability encountered.'.format(intra_rack_pair_prob_dict[highest_prob_pair]))
+                intra_rack_pair_prob_dict[highest_prob_pair] = 0
+        else:
+            # wont have 0 probs, can apply update
+            intra_rack_pair_prob_dict[intra_rack_pair] = updated_prob
+
+    inter_rack_prob = sum(list(inter_rack_pair_prob_dict.values()))
+    intra_rack_prob = sum(list(intra_rack_pair_prob_dict.values()))
+    if print_data:
+        print('inter_rack_prob: {}'.format(inter_rack_prob))
+        print('intra_rack_prob: {}'.format(intra_rack_prob))
+        print('sum: {}'.format(inter_rack_prob+intra_rack_prob))
+
+    # create new adjusted pair_prob_dict
+    adjusted_pair_prob_dict = {}
+    for pair, prob in inter_rack_pair_prob_dict.items():
+        adjusted_pair_prob_dict[pair] = prob
+    for pair, prob in intra_rack_pair_prob_dict.items():
+        adjusted_pair_prob_dict[pair] = prob
+
+    # correct any minor errors in python floating point arithmetic
+    adjusted_pair_prob_dict = adjust_probability_dict_sum(adjusted_pair_prob_dict, target_sum=0.5)
+
+    if print_data:
+        print('adjusted sum: {}'.format(sum(list(adjusted_pair_prob_dict.values()))))
+
+    # assign to create adjusted prob matrix
+    node_dist = assign_probs_to_matrix(eps=eps, 
+                                       probs=adjusted_pair_prob_dict, 
+                                       matrix=node_dist)
+
+    return node_dist
+
+
+        
+
+
+
+
+    
+
+
+
+
+def adjust_node_dist_from_multinomial_exp_for_rack_prob_config(rack_prob_config,
+                                              eps,
+                                              node_dist,
+                                              num_exps_factor=2,
+                                              print_data=False):
+    '''Unlike the other adjust_node_dist_for_rack_prob_config function,
+    this function adjusts the node dist by running multinomial experiments 
+    on the initial node distribution to sample from it. It therefore takes
+    much much longer than the other function, especially for networks with >1,000 nodes.
+
+    Takes node dist and uses it to generate new node dist given inter- and intra-rack configuration.
 
     Different DCNs have different inter and intra rack traffic. This function
     allows you to specify how much of your traffic should be inter and intra rack.
@@ -786,7 +944,7 @@ def get_network_pair_mapper(eps):
         for dst in eps:
             if src == dst:
                 continue
-            elif src > dst:
+            elif node_to_index[src] > node_to_index[dst]:
                 # making symmetric so skip this side of diagonal
                 continue
             else:
@@ -893,7 +1051,7 @@ def gen_multimodal_node_pair_dist(eps,
         # keep src<dst convention consistent
         for pair_iter in range(num_skewed_pairs):
             pair = skewed_pairs[pair_iter]
-            if pair[0] > pair[1]:
+            if node_to_index[pair[0]] > node_to_index[pair[1]]:
                 # swap src and dst to keep convention consistent
                 temp_src = pair[1]
                 temp_dst = pair[0]
@@ -931,6 +1089,13 @@ def gen_multimodal_node_pair_dist(eps,
     # find prob of each skewed node pair being chosen
     pairs_per_node = num_nodes - 1
     probs_per_skewed_pair = {json.dumps(pair): prob for pair, prob in zip(skewed_pairs, [p for p in skewed_pair_probs])}
+    # keep src < dst
+    for pair in probs_per_skewed_pair:
+        unpacked_pair = json.loads(pair)
+        if node_to_index[unpacked_pair[0]] > node_to_index[unpacked_pair[1]]:
+            flipped_pair = json.dumps([unpacked_pair[1], unpacked_pair[0]])
+            probs_per_skewed_pair[flipped_pair] = probs_per_skewed_pair[pair]
+            del probs_per_skewed_pair[pair]
 
     # update prob pair chosen for each pair with a skewed node
     prob_pair_chosen = {pair: 0 for pair in pair_to_index.keys()}
@@ -1375,6 +1540,7 @@ def gen_demand_nodes(eps,
 
 
 def adjust_probability_array_sum(probs, target_sum=1, print_data=False):
+    '''For array.'''
     # check probabilites sum to 1 (python floating point arithmetic can cause problems so need this)
     adjusted_probs = copy.deepcopy(probs)
 
@@ -1392,6 +1558,24 @@ def adjust_probability_array_sum(probs, target_sum=1, print_data=False):
 
     return adjusted_probs
 
+def adjust_probability_dict_sum(probs, target_sum=1, print_data=False):
+    '''For dict.'''
+    # check probabilites sum to 1 (python floating point arithmetic can cause problems so need this)
+    adjusted_probs = copy.deepcopy(probs)
+
+    total = np.sum(list(adjusted_probs.values()))
+    if print_data:
+        print('Initial sum: {}'.format(total))
+    difference = total - target_sum
+    if difference != 0:
+        # need slight adjustment so probs sum to target
+        diff_per_pair = difference/len(list(adjusted_probs.keys()))
+        for key in adjusted_probs.keys():
+            adjusted_probs[key] -= diff_per_pair
+    if print_data:
+        print('Final sum: {}'.format(np.sum(list(adjusted_probs.values()))))
+
+    return adjusted_probs
 
 
 def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps):
@@ -1418,6 +1602,8 @@ def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps):
                     pair = [pair[1],pair[0]]
                     pair = json.dumps(pair)
                     pair_prob_dict[pair] = node_dist[src_idx, dst_idx]
+
+
 
     return pair_prob_dict
 

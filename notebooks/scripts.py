@@ -10,11 +10,18 @@ net = tpg.gen_fat_tree(k=4, N=30, num_channels=1)
 fig = tpg.plot_network(net, draw_node_labels=False, network_node_size=1000, linewidths=1)
 
 
-# rack_prob_config = {'racks_dict': net.graph['rack_to_ep_dict'], 'prob_inter_rack': 0.7}
-rack_prob_config = None
+for prob_inter_rack in [0.1, 0.4, 0.6, 0.8, 0.9]:
+    rack_prob_config = {'racks_dict': net.graph['rack_to_ep_dict'], 'prob_inter_rack': prob_inter_rack}
+    node_dist, _ = tpg.gen_multimodal_node_dist(net.graph['endpoints'], rack_prob_config=rack_prob_config, show_fig=True, print_data=False)
+
+
+
+# rack_prob_config = {'racks_dict': net.graph['rack_to_ep_dict'], 'prob_inter_rack': 0.5}
+# rack_prob_config = None
 # node_dist, _ = tpg.gen_uniform_node_dist(net.graph['endpoints'], rack_prob_config=rack_prob_config, show_fig=True, print_data=False)
+
 # node_dist, _ = tpg.gen_multimodal_node_dist(net.graph['endpoints'], rack_prob_config=rack_prob_config, show_fig=True, print_data=False)
-node_dist, _ = tpg.gen_multimodal_node_pair_dist(net.graph['endpoints'], num_skewed_pairs=12500, rack_prob_config=rack_prob_config, show_fig=True, print_data=False)
+# node_dist, _ = tpg.gen_multimodal_node_pair_dist(net.graph['endpoints'], num_skewed_pairs=12500, rack_prob_config=rack_prob_config, show_fig=True, print_data=False)
 
 
 # pair_prob_dict = tpg.get_pair_prob_dict_of_node_dist_matrix(node_dist, net.graph['endpoints'])
