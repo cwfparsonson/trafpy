@@ -198,6 +198,8 @@ def plot_val_bar(x_values,
                  y_values,
                  ylabel='Random Variable',
                  ylim=None,
+                 xlabel=None,
+                 plot_x_ticks=True,
                  bar_width=0.35,
                  show_fig=False):
     '''Plots standard bar chart.'''
@@ -209,7 +211,10 @@ def plot_val_bar(x_values,
     plt.bar(x_pos, y_values, bar_width)
 
     plt.ylabel(ylabel)
-    plt.xticks(x_pos, (x_val for x_val in x_values))
+    if plot_x_ticks:
+        plt.xticks(x_pos, (x_val for x_val in x_values))
+    if xlabel is not None:
+        plt.xlabel(xlabel)
 
     try:
         plt.ylim(ylim)

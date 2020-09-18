@@ -323,7 +323,7 @@ def gen_multimodal_node_dist(eps,
             if index_to_node[pair_idx] != node:
                 pair = json.dumps([node, index_to_node[pair_idx]])
                 try:
-                    prob_pair_chosen[pair] += probs_per_skewed_pair[node]
+                    prob_pair_chosen[pair] += probs_per_skewed_pair[node]/2
                     try:
                         del unskewed_pairs[pair]
                     except KeyError:
@@ -608,7 +608,7 @@ def get_suitable_destination_node_for_rack_config(sn, node_dist, eps, ep_to_rack
 def adjust_node_dist_for_rack_prob_config(rack_prob_config,
                                           eps,
                                           node_dist,
-                                          num_exps_factor=100,
+                                          num_exps_factor=10,
                                           print_data=False):
     '''Takes node dist and uses it to generate new node dist given inter- and intra-rack configuration.
 
@@ -635,7 +635,7 @@ def adjust_node_dist_for_rack_prob_config(rack_prob_config,
             & destinations.
         node_dist (numpy array): 2D matrix array of source-destination pair
             probabilities of being chosen.
-        num_exps_factor (int): Factor by which to multiply number of eps to get
+        num_exps_factor (int): Factor by which to multiply number of ep pairs to get
             the number of multinomial experiments to run when generating new
             node dist.
         print_data (bool): Whether or not to print extra information about the
@@ -653,7 +653,8 @@ def adjust_node_dist_for_rack_prob_config(rack_prob_config,
                 racks_dict[v] = key
 
     # run multinomial exp to incpororate rack probabilities
-    num_experiments = num_exps_factor * len(eps) 
+    num_pairs = np.int(((len(eps)**2) - len(eps))/2)
+    num_experiments = num_exps_factor * num_pairs
     sampled_pairs = {}
     inter_counter = 0
     intra_counter = 0
@@ -796,6 +797,7 @@ def get_network_pair_mapper(eps):
     return index_to_pair, pair_to_index
 
 
+
 def gen_multimodal_node_pair_dist(eps,
                                   skewed_pairs = [],
                                   skewed_pair_probs = [],
@@ -855,6 +857,7 @@ def gen_multimodal_node_pair_dist(eps,
     '''
     # initialise graph params
     num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
+    index_to_pair, pair_to_index = get_network_pair_mapper(eps)
     node_dist = np.zeros((num_nodes, num_nodes))
     
     if num_skewed_pairs is None:
@@ -869,23 +872,24 @@ def gen_multimodal_node_pair_dist(eps,
                 min_skews = 1
                 max_skews = 2
             num_skewed_pairs = np.random.randint(min_skews, max_skews+1)
+
         # randomly choose src and dst for pairs
         nodes = eps
         src = np.random.choice(nodes, size=num_skewed_pairs)
         dst = np.random.choice(nodes, size=num_skewed_pairs)
-        # remove src-dst conflicts and repeated pairs
-        for pair_iter in range(num_skewed_pairs):
-            try:
-                pair = skewed_pairs[pair_iter]
-            except IndexError:
-                pair = []
-            while (skewed_pairs.count(pair) > 1 or  src[pair_iter] == dst[pair_iter]):
-                # remove repeated pairs and src-dst conflicts
-                print('dst: {}'.format(dst))
-                print('pair iter: {}'.format(pair_iter))
-                print('nodes: {}'.format(nodes))
-                dst[pair_iter] = np.random.choice(nodes, size=1)[0]
-            skewed_pairs.append([src[pair_iter],dst[pair_iter]])
+
+        # remove src-dst conflicts and repeated pairs, then add to skewed pairs list
+        for idx in range(num_skewed_pairs):
+            sn, dn = src[idx], dst[idx]
+            pair = [sn, dn]
+            pair_flipped = [dn, sn]
+            while sn == dn or pair in skewed_pairs or pair_flipped in skewed_pairs:
+                dn = np.random.choice(nodes, size=1)[0]
+                pair = [sn, dn]
+                pair_flipped = [sn, dn]
+            dst[idx] = dn
+            skewed_pairs.append([sn, dn])
+
         # keep src<dst convention consistent
         for pair_iter in range(num_skewed_pairs):
             pair = skewed_pairs[pair_iter]
@@ -898,7 +902,9 @@ def gen_multimodal_node_pair_dist(eps,
         for pair in range(len(src)):
             src[pair] = skewed_pairs[pair][0]
             dst[pair] = skewed_pairs[pair][1]
+
     else:
+        # skewed pairs already given
         assert (any(isinstance(pair,list) for pair in skewed_pairs)), \
                 'must enter skewed_pairs as list of lists'
         src = [pair[0] for pair in skewed_pairs]
@@ -917,66 +923,59 @@ def gen_multimodal_node_pair_dist(eps,
         skewed_pair_probs = np.random.uniform(min_prob, 
                                               max_prob, 
                                               size=num_skewed_pairs)
-        skewed_pair_probs = list(skewed_pair_probs,2)
+        skewed_pair_probs = list(skewed_pair_probs)
     if print_data:
         print('Skew probs:\n{}'.format(skewed_pair_probs))
 
-    # get indices of node pairs to skew
-    skewed_pair_indices = np.zeros(len(skewed_pairs))
-    skewed_pair_iter = 0
-    for pair in range(len(skewed_pairs)):
-        matrix_iter = 0
-        for src in eps:
-            for dst in eps:
-                if src == dst:
-                    continue
-                elif src > dst:
-                    continue
-                else:
-                    if skewed_pairs[pair][0] == src and skewed_pairs[pair][1] == dst:
-                        skewed_pair_indices[skewed_pair_iter] = matrix_iter
-                        skewed_pair_iter += 1
-                    elif skewed_pairs[pair][0] == dst and skewed_pairs[pair][1] == src:
-                        skewed_pair_indices[skewed_pair_iter] = matrix_iter
-                        skewed_pair_iter += 1
-                    matrix_iter += 1
-    if print_data:
-        print('Skew indices:\n{}'.format(skewed_pair_indices))
 
-    # update prob pair chosen for each skewed pair
-    prob_pair_chosen = np.zeros(num_pairs)
-    iter = np.nditer(np.asarray(skewed_pair_probs))
-    for skewed_pair_iter in range(num_skewed_pairs):
-        for pair_iter in range(num_pairs):
-            if pair_iter == skewed_pair_indices[skewed_pair_iter]:
-                # add to skew of pair
-                prob = next(iter)
-                prob_pair_chosen[pair_iter] += prob
-            else:
-                continue
-    # will allocate twice
-    prob_pair_chosen = prob_pair_chosen / 2
-    total_skew_prob = np.sum(prob_pair_chosen)
+    # find prob of each skewed node pair being chosen
+    pairs_per_node = num_nodes - 1
+    probs_per_skewed_pair = {json.dumps(pair): prob for pair, prob in zip(skewed_pairs, [p for p in skewed_pair_probs])}
 
-    # assign prob pair chosen to any pairs w/o skew
+    # update prob pair chosen for each pair with a skewed node
+    prob_pair_chosen = {pair: 0 for pair in pair_to_index.keys()}
+    unskewed_pairs = {pair: 0 for pair in pair_to_index.keys()} # maintain for efficient hashing
+    for skewed_pair in probs_per_skewed_pair.keys():
+        try:
+            prob_pair_chosen[skewed_pair] += probs_per_skewed_pair[skewed_pair]/2
+            try:
+                del unskewed_pairs[skewed_pair]
+            except KeyError:
+                # already registered as no longer being unskewed
+                pass
+        except KeyError:
+            skewed_pair = json.loads(skewed_pair)
+            skewed_pair = [skewed_pair[1],skewed_pair[0]]
+            skewed_pair = json.dumps(skewed_pair)
+            prob_pair_chosen[skewed_pair] += probs_per_skewed_pair[skewed_pair]/2
+            try:
+                del unskewed_pairs[skewed_pair]
+            except KeyError:
+                # already registered as no longer being unskewed
+                pass
+    total_skew_prob = np.sum(list(prob_pair_chosen.values()))
+
+    # assign prob pair chosen to any pairs w/o skewed nodes
     if total_skew_prob < 0.5:
-        remaining_pairs = np.count_nonzero(prob_pair_chosen == 0)
-        prob_dist = np.ones((remaining_pairs))/((remaining_pairs))
-        counter_array = np.random.multinomial(500,
+        num_remaining_pairs = list(prob_pair_chosen.values()).count(0)
+        prob_dist = np.ones((num_remaining_pairs))/((num_remaining_pairs))
+        num_experiments = num_remaining_pairs * 100
+        counter_array = np.random.multinomial(num_experiments,
                                               prob_dist,
                                               size=1)[0]
-        counter_array_prob_dist = (counter_array/1000)
+        counter_array_prob_dist = (counter_array/(num_experiments*2))
         counter_array_prob_dist = ((0.5-total_skew_prob)/0.5) * counter_array_prob_dist
-        iter = np.nditer(counter_array_prob_dist)
-        for pair in range(len(prob_pair_chosen)):
-            if prob_pair_chosen[pair] == 0:
-                prob_pair_chosen[pair] = next(iter)
+        iterable = np.nditer(counter_array_prob_dist)
+        for pair in unskewed_pairs.keys():
+            prob_pair_chosen[pair] = next(iterable)
+
+
     if print_data:
         print('Prob pair chosen:\n{}'.format(prob_pair_chosen))
 
     # assign probabilites to normalised demand matrix
     node_dist = assign_probs_to_matrix(eps=eps,
-                                       probs=prob_pair_chosen,
+                                       probs=list(prob_pair_chosen.values()),
                                        matrix=node_dist)
 
     if rack_prob_config is not None:
@@ -985,12 +984,6 @@ def gen_multimodal_node_pair_dist(eps,
                                                           eps,
                                                           node_dist,
                                                           print_data=print_data)
-
-
-
-
-                
-
 
 
     matrix_sum = np.round(np.sum(node_dist),2)
@@ -1010,6 +1003,212 @@ def gen_multimodal_node_pair_dist(eps,
 
     else:
         return node_dist
+
+# def gen_multimodal_node_pair_dist(eps,
+                                  # skewed_pairs = [],
+                                  # skewed_pair_probs = [],
+                                  # num_skewed_pairs=None,
+                                  # rack_prob_config=None,
+                                  # path_to_save=None,
+                                  # plot_fig=False,
+                                  # show_fig=False,
+                                  # print_data=False):
+    # '''Generates a multimodal node pair distribution.
+
+    # Generates a multimodal node pair demand distribution i.e. certain node
+    # pairs have a certain specified probability of being chosen. If no
+    # skewed pairs given, randomly selects pair to skew. If no skew 
+    # pair probabilities given, random selects probability with which
+    # to skew the pair between 0.1 and 0.3. If no num skewed pairs given,
+    # randomly chooses number of pairs to skew.
+
+    # Args:
+        # eps (list): List of network node endpoints that can act as sources
+            # & destinations.
+        # skewed_pairs (list of lists): List of the node pairs [src,dst] to 
+            # skew.
+        # skewed_pair_probs (list): Probabilities of node pairs being
+            # chosen.
+        # num_skewed_pairs (int): Number of pairs to randomly skew.
+        # rack_prob_config (dict): Network endpoints/servers are often grouped into
+            # physically local clusters or `racks'. Different networks may have 
+            # different levels of inter- (between) and intra- (within) rack communication.
+            # If rack_prob_config is left as None, will assume that server-server
+            # srs-dst requests are independent of which rack they might be in.
+            # If specified, dict should have a `racks_dict' key, whose value is a dict
+            # with keys as rack labels (e.g. 'rack_0', 'rack_1' etc.) and whose value
+            # for each key is a list of the endpoints in the respective rack
+            # (e.g. [`server_0', `server_24', `server_56', ...]), and a `prob_inter_rack'
+            # key whose value is a float (e.g. 0.9), setting the probability
+            # that a chosen src endpoint has a destination which is outside of its rack.
+            # If you want to e.g. designate an entire rack as a 'hot rack' (many
+            # traffic requests occur from this rack), would specify skewed_nodes to
+            # contain the list of servers in this rack and configure rack_prob_config
+            # appropriately.
+        # path_to_save (str): Path to directory (with file name included) in which
+            # to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
+        # plot_fig (bool): Whether or not to plot fig. If True, will return fig.
+        # show_fig (bool): Whether or not to plot and show fig. If True, will
+            # return and display fig.
+        # print_data (bool): Whether or not to print extra information about the
+            # generated data.
+    
+    # Returns:
+        # tuple: Tuple containing:
+            # - **node_dist** (*numpy array*): 2D matrix array of souce-destination pair
+              # probabilities of being chosen.
+            # - **fig** (*matplotlib.figure.Figure, optional*): Node distributions
+              # plotted as a 2D matrix. To return, set show_fig=True and/or plot_fig=True.
+
+    # '''
+    # # initialise graph params
+    # num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
+    # node_dist = np.zeros((num_nodes, num_nodes))
+    
+    # if num_skewed_pairs is None:
+        # num_skewed_pairs = len(skewed_pairs)
+
+    # if len(skewed_pairs) == 0:
+        # if num_skewed_pairs == 0:
+            # #randomly choose number of nodes to skew
+            # min_skews = int(0.1*num_pairs)
+            # max_skews = int(0.3*num_pairs)
+            # if min_skews < 1:
+                # min_skews = 1
+                # max_skews = 2
+            # num_skewed_pairs = np.random.randint(min_skews, max_skews+1)
+        # # randomly choose src and dst for pairs
+        # nodes = eps
+        # src = np.random.choice(nodes, size=num_skewed_pairs)
+        # dst = np.random.choice(nodes, size=num_skewed_pairs)
+        # # remove src-dst conflicts and repeated pairs
+        # for pair_iter in range(num_skewed_pairs):
+            # try:
+                # pair = skewed_pairs[pair_iter]
+            # except IndexError:
+                # pair = []
+            # while (skewed_pairs.count(pair) > 1 or  src[pair_iter] == dst[pair_iter]):
+                # # remove repeated pairs and src-dst conflicts
+                # dst[pair_iter] = np.random.choice(nodes, size=1)[0]
+            # skewed_pairs.append([src[pair_iter],dst[pair_iter]])
+        # # keep src<dst convention consistent
+        # for pair_iter in range(num_skewed_pairs):
+            # pair = skewed_pairs[pair_iter]
+            # if pair[0] > pair[1]:
+                # # swap src and dst to keep convention consistent
+                # temp_src = pair[1]
+                # temp_dst = pair[0]
+                # skewed_pairs[pair_iter] = [temp_src,temp_dst]
+        # # update src and dst
+        # for pair in range(len(src)):
+            # src[pair] = skewed_pairs[pair][0]
+            # dst[pair] = skewed_pairs[pair][1]
+    # else:
+        # assert (any(isinstance(pair,list) for pair in skewed_pairs)), \
+                # 'must enter skewed_pairs as list of lists'
+        # src = [pair[0] for pair in skewed_pairs]
+        # dst = [pair[1] for pair in skewed_pairs]
+    
+    # if print_data:
+        # print('Chosen sources:\n{}'.format(src))
+        # print('Chosen destinations:\n{}'.format(dst))
+        # print('Num skewed pairs: {}'.format(num_skewed_pairs))
+        # print('Chosen pairs to skew:\n{}'.format(skewed_pairs))
+
+    # if len(skewed_pair_probs) == 0:
+        # # randomly choose skew between range
+        # min_prob = 0.3/num_skewed_pairs
+        # max_prob = 0.5/num_skewed_pairs
+        # skewed_pair_probs = np.random.uniform(min_prob, 
+                                              # max_prob, 
+                                              # size=num_skewed_pairs)
+        # skewed_pair_probs = list(skewed_pair_probs)
+    # if print_data:
+        # print('Skew probs:\n{}'.format(skewed_pair_probs))
+
+    # # get indices of node pairs to skew
+    # skewed_pair_indices = np.zeros(len(skewed_pairs))
+    # skewed_pair_iter = 0
+    # for pair in range(len(skewed_pairs)):
+        # matrix_iter = 0
+        # for src in eps:
+            # for dst in eps:
+                # if src == dst:
+                    # continue
+                # elif src > dst:
+                    # continue
+                # else:
+                    # if skewed_pairs[pair][0] == src and skewed_pairs[pair][1] == dst:
+                        # skewed_pair_indices[skewed_pair_iter] = matrix_iter
+                        # skewed_pair_iter += 1
+                    # elif skewed_pairs[pair][0] == dst and skewed_pairs[pair][1] == src:
+                        # skewed_pair_indices[skewed_pair_iter] = matrix_iter
+                        # skewed_pair_iter += 1
+                    # matrix_iter += 1
+    # if print_data:
+        # print('Skew indices:\n{}'.format(skewed_pair_indices))
+
+    # # update prob pair chosen for each skewed pair
+    # prob_pair_chosen = np.zeros(num_pairs)
+    # iter = np.nditer(np.asarray(skewed_pair_probs))
+    # for skewed_pair_iter in range(num_skewed_pairs):
+        # for pair_iter in range(num_pairs):
+            # if pair_iter == skewed_pair_indices[skewed_pair_iter]:
+                # # add to skew of pair
+                # prob = next(iter)
+                # prob_pair_chosen[pair_iter] += prob
+            # else:
+                # continue
+    # # will allocate twice
+    # prob_pair_chosen = prob_pair_chosen / 2
+    # total_skew_prob = np.sum(prob_pair_chosen)
+
+    # # assign prob pair chosen to any pairs w/o skew
+    # if total_skew_prob < 0.5:
+        # remaining_pairs = np.count_nonzero(prob_pair_chosen == 0)
+        # prob_dist = np.ones((remaining_pairs))/((remaining_pairs))
+        # counter_array = np.random.multinomial(500,
+                                              # prob_dist,
+                                              # size=1)[0]
+        # counter_array_prob_dist = (counter_array/1000)
+        # counter_array_prob_dist = ((0.5-total_skew_prob)/0.5) * counter_array_prob_dist
+        # iter = np.nditer(counter_array_prob_dist)
+        # for pair in range(len(prob_pair_chosen)):
+            # if prob_pair_chosen[pair] == 0:
+                # prob_pair_chosen[pair] = next(iter)
+    # if print_data:
+        # print('Prob pair chosen:\n{}'.format(prob_pair_chosen))
+
+    # # assign probabilites to normalised demand matrix
+    # node_dist = assign_probs_to_matrix(eps=eps,
+                                       # probs=prob_pair_chosen,
+                                       # matrix=node_dist)
+
+    # if rack_prob_config is not None:
+        # # adjust node prob dist to account for rack prob config
+        # node_dist = adjust_node_dist_for_rack_prob_config(rack_prob_config,
+                                                          # eps,
+                                                          # node_dist,
+                                                          # print_data=print_data)
+
+
+    # matrix_sum = np.round(np.sum(node_dist),2)
+    # assert matrix_sum == 1, \
+        # 'matrix must sum to 1, but is {}'.format(matrix_sum)
+    
+    # if print_data:
+        # print('Normalised matrix:\n{}'.format(node_dist))
+        # print('Normalised matrix sum: {}'.format(matrix_sum))
+    # if path_to_save is not None:
+        # tools.pickle_data(path, node_dist)
+    # if plot_fig or show_fig:
+        # fig = plot_dists.plot_node_dist(node_dist=node_dist, 
+                                        # eps=eps,
+                                        # show_fig=show_fig)
+        # return node_dist, fig
+
+    # else:
+        # return node_dist
    
 
 def gen_node_demands(eps,
@@ -1192,6 +1391,38 @@ def adjust_probability_array_sum(probs, target_sum=1, print_data=False):
         print('Final sum: {}'.format(np.sum(adjusted_probs)))
 
     return adjusted_probs
+
+
+
+def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps):
+    '''Gets prob dict of each pair being chosen given node dist of probabilities.'''
+    index_to_pair, pair_to_index = get_network_pair_mapper(eps)
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
+
+    pair_prob_dict = {pair: 0 for pair in list(pair_to_index.keys())}
+    for src in eps:
+        for dst in eps:
+            src_idx = node_to_index[src]
+            dst_idx = node_to_index[dst]
+            if src_idx == dst_idx:
+                continue
+            elif src_idx > dst_idx:
+                # making symmetric so skip this side of diagonal
+                continue
+            else:
+                pair = json.dumps([src, dst])
+                try:
+                    pair_prob_dict[pair] = node_dist[src_idx, dst_idx]
+                except KeyError:
+                    pair = json.loads(pair)
+                    pair = [pair[1],pair[0]]
+                    pair = json.dumps(pair)
+                    pair_prob_dict[pair] = node_dist[src_idx, dst_idx]
+
+    return pair_prob_dict
+
+
+
 
 
 
