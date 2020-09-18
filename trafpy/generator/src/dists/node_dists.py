@@ -316,7 +316,6 @@ def gen_multimodal_node_dist(eps,
     probs_per_skewed_pair = {node: prob for node, prob in zip(skewed_nodes, [p/pairs_per_node for p in skewed_node_probs])}
 
     # update prob pair chosen for each pair with a skewed node
-    print('update prob pair chosen for each node')
     prob_pair_chosen = {pair: 0 for pair in pair_to_index.keys()}
     unskewed_pairs = {pair: 0 for pair in pair_to_index.keys()} # maintain for efficient hashing
     for node in probs_per_skewed_pair.keys():
@@ -340,24 +339,19 @@ def gen_multimodal_node_dist(eps,
                     except KeyError:
                         # already registered as no longer being unskewed
                         pass
-
     total_skew_prob = np.sum(list(prob_pair_chosen.values()))
-    print('total skew prob: {}'.format(total_skew_prob))
                     
     # assign prob pair chosen to any pairs w/o skewed nodes
-    print('assign prob pair chosen...')
     if total_skew_prob < 0.5:
         num_remaining_pairs = list(prob_pair_chosen.values()).count(0)
         prob_dist = np.ones((num_remaining_pairs))/((num_remaining_pairs))
         num_experiments = num_remaining_pairs * 100
-        print('num experiments: {}'.format(num_experiments))
         counter_array = np.random.multinomial(num_experiments,
                                               prob_dist,
                                               size=1)[0]
         counter_array_prob_dist = (counter_array/(num_experiments*2))
         counter_array_prob_dist = ((0.5-total_skew_prob)/0.5) * counter_array_prob_dist
         iterable = np.nditer(counter_array_prob_dist)
-        print('iterating through remaining pairs...')
         for pair in unskewed_pairs.keys():
             prob_pair_chosen[pair] = next(iterable)
 
@@ -365,7 +359,6 @@ def gen_multimodal_node_dist(eps,
             print('Prob pair chosen:\n{}'.format(prob_pair_chosen))
 
     # assign probabilites to normalised demand matrix
-    print('assigning probs...')
     node_dist = assign_probs_to_matrix(eps=eps,
                                        probs=list(prob_pair_chosen.values()),
                                        matrix=node_dist)
@@ -606,7 +599,8 @@ def get_suitable_destination_node_for_rack_config(sn, node_dist, eps, ep_to_rack
         dn = gen_demand_nodes(eps=dn_eps_flat,
                               node_dist=node_dist,
                               size=1,
-                              axis=1)[0]
+                              axis=1,
+                              check_sum_valid=False)[0]
 
     return dn
 
@@ -677,7 +671,8 @@ def adjust_node_dist_for_rack_prob_config(rack_prob_config,
         sn = gen_demand_nodes(eps=eps,
                               node_dist=node_dist,
                               size=1,
-                              axis=0)[0]
+                              axis=0,
+                              check_sum_valid=False)[0]
 
         # sample destination node given inter_rack config
         dn = get_suitable_destination_node_for_rack_config(sn, 
@@ -922,7 +917,7 @@ def gen_multimodal_node_pair_dist(eps,
         skewed_pair_probs = np.random.uniform(min_prob, 
                                               max_prob, 
                                               size=num_skewed_pairs)
-        skewed_pair_probs = list(np.round(skewed_pair_probs,2))
+        skewed_pair_probs = list(skewed_pair_probs,2)
     if print_data:
         print('Skew probs:\n{}'.format(skewed_pair_probs))
 
@@ -1077,7 +1072,8 @@ def gen_node_demands(eps,
             dn[request] = gen_demand_nodes(eps=eps,
                                            node_dist=node_dist, 
                                            size=1, 
-                                           axis=1)[0]
+                                           axis=1,
+                                           check_sum_valid=False)[0]
     if duplicate:
         dn[num_demands:] = dn[:num_demands] # duplicate
 
@@ -1138,7 +1134,8 @@ def gen_demand_nodes(eps,
                      node_dist, 
                      size, 
                      axis,
-                     path_to_save=None):
+                     path_to_save=None,
+                     check_sum_valid=True):
     '''Generates demand nodes following the node_dist distribution
 
     Args:
@@ -1149,10 +1146,13 @@ def gen_demand_nodes(eps,
             E.g. If generating src nodes, axis=0. If dst nodes, axis=1
         path_to_save (str): Path to directory (with file name included) in which
             to save generated distribution. E.g. path_to_save='data/dists/my_dist'.
+        check_sum_valid (bool): Whether or not to ensure node dist sums to 1.
+            If need efficiency, should set to False.
     '''
-    matrix_sum = np.round(np.sum(node_dist),2)
-    assert matrix_sum == 1, \
-        'matrix must sum to 1, but is {}'.format(matrix_sum)
+    if check_sum_valid:
+        matrix_sum = np.round(np.sum(node_dist),2)
+        assert matrix_sum == 1, \
+            'matrix must sum to 1, but is {}'.format(matrix_sum)
 
 
     if len(eps) != len(np.sum(node_dist,axis=axis)):
