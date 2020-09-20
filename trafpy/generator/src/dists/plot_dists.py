@@ -39,13 +39,15 @@ def plot_node_dist(node_dist,
     '''
     if type(node_dist[0]) == str and eps is None:
         eps = list(set(node_dist))
+    # else:
+        # assert eps is not None, 'must provide list of end points as arg if node_dist contains no endpoint labels.'
     else:
-        assert eps is not None, 'must provide list of end points as arg if node_dist contains no endpoint labels.'
+        eps = [str(i) for i in range(np.array(node_dist).shape[0])]
 
     if node_to_index_dict is None:
         _,_,node_to_index_dict,_=tools.get_network_params(eps) 
-    fig = plt.figure()
-    plt.matshow(node_dist, cmap='YlOrBr')
+    # fig = plt.figure()
+    fig = plt.matshow(node_dist, cmap='YlOrBr')
     cbar = plt.colorbar()
     if add_labels == True:
         for (i, j), z in np.ndenumerate(node_dist):
@@ -80,6 +82,9 @@ def plot_val_dist(rand_vars,
                   prob_rand_var_less_than=None,
                   num_bins=0,
                   plot_cdf=True,
+                  plot_horizontally=True,
+                  fig_scale=1,
+                  font_size=20,
                   show_fig=False):
     '''Plots (1) probability distribution and (2) cumulative distribution function.
     
@@ -96,6 +101,10 @@ def plot_val_dist(rand_vars,
             case the number of bins chosen will be automatically selected.
         plot_cdf (bool): Whether or not to plot the CDF as well as the probability
             distribution.
+        plot_horizontally (bool): Wheter to plot PDF and CDF horizontally (True)
+            or vertically (False).
+        fig_scale (int/float): Scale by which to multiply figure size.
+        font_size (int): Size of axes ticks and titles.
         show_fig (bool): Whether or not to plot and show fig. If True, will
             return and display fig.
     
@@ -103,6 +112,7 @@ def plot_val_dist(rand_vars,
         matplotlib.figure.Figure: node distribution plotted as a 2d matrix. 
 
     '''
+
     if num_bins==0:
         histo, bins = np.histogram(rand_vars,density=True,bins='auto')
     else:
@@ -113,9 +123,13 @@ def plot_val_dist(rand_vars,
         alpha=1.0
     
     # PROBABILITY DENSITY
-    fig = plt.figure(figsize=(15,5))
+    if plot_horizontally:
+        fig = plt.figure(figsize=(15*fig_scale,5*fig_scale))
+        plt.subplot(1,2,1)
+    else:
+        fig = plt.figure(figsize=(10*fig_scale,15*fig_scale))
+        plt.subplot(2,1,1)
     plt.style.use('ggplot')
-    plt.subplot(1,2,1)
     if logscale:
         ax = plt.gca()
         ax.set_xscale('log')
@@ -146,8 +160,8 @@ def plot_val_dist(rand_vars,
         shape, loc, scale = stats.pareto.fit(rand_vars, floc=0)
         y = stats.pareto.pdf(plotbins, shape, loc, scale)
 
-    plt.xlabel(rand_var_name)
-    plt.ylabel('Probability Density')
+    plt.xlabel(rand_var_name, fontsize=font_size)
+    plt.ylabel('Probability Density', fontsize=font_size)
     try:
         plt.xlim(xlim)
     except NameError:
@@ -156,7 +170,10 @@ def plot_val_dist(rand_vars,
     if plot_cdf:
         # CDF
         # empirical hist
-        plt.subplot(1,2,2)
+        if plot_horizontally:
+            plt.subplot(1,2,2)
+        else:
+            plt.subplot(2,1,2)
         if logscale:
             ax = plt.gca()
             ax.set_xscale('log')
@@ -173,8 +190,8 @@ def plot_val_dist(rand_vars,
         # theoretical line
         ecdf = ECDF(rand_vars)
         plt.plot(ecdf.x, ecdf.y, alpha=0.5, color='tab:blue')
-        plt.xlabel(rand_var_name)
-        plt.ylabel('CDF')
+        plt.xlabel(rand_var_name, fontsize=font_size)
+        plt.ylabel('CDF', fontsize=font_size)
         try:
             plt.xlim(xlim)
         except NameError:

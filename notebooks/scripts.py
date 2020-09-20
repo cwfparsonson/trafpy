@@ -3,16 +3,25 @@ import config
 
 import matplotlib.pyplot as plt
 import json
+import time
 
 
 
-net = tpg.gen_fat_tree(k=4, N=30, num_channels=1)
+net = tpg.gen_fat_tree(k=6, N=30, num_channels=1)
 fig = tpg.plot_network(net, draw_node_labels=False, network_node_size=1000, linewidths=1)
 
-
-for prob_inter_rack in [0.1, 0.4, 0.6, 0.8, 0.9]:
+num_skewed_nodes = int(0.2 * len(net.graph['endpoints']))
+skewed_node_probs = [0.8/num_skewed_nodes for _ in range(num_skewed_nodes)]
+figs = []
+for prob_inter_rack in [0.5]:
     rack_prob_config = {'racks_dict': net.graph['rack_to_ep_dict'], 'prob_inter_rack': prob_inter_rack}
-    node_dist, _ = tpg.gen_multimodal_node_dist(net.graph['endpoints'], rack_prob_config=rack_prob_config, show_fig=True, print_data=False)
+    start = time.time()
+    node_dist, fig = tpg.gen_multimodal_node_dist(net.graph['endpoints'], rack_prob_config=rack_prob_config, num_skewed_nodes=num_skewed_nodes, skewed_node_probs=skewed_node_probs, plot_fig=True, show_fig=False, print_data=False)
+    figs.append(fig)
+    end = time.time()
+    print('Generated in {} s'.format(end-start))
+for fig in figs:
+    plt.show()
 
 
 
