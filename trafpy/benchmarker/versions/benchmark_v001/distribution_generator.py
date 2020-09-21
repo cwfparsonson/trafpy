@@ -242,7 +242,7 @@ class DistributionGenerator:
     def plot_benchmark_dists(self):
         '''Plots dist info of all benchmarks.'''
 
-        num_demands = 1000
+        num_demands = 10000 
 
         # load dists
         dists = {benchmark: {dist_name: None for dist_name in self.dist_names} for benchmark in self.valid_benchmark_sets}
