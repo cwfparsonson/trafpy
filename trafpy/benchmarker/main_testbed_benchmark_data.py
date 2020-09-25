@@ -52,7 +52,7 @@ class TestBed:
                                   demand, 
                                   scheduler, 
                                   slot_size=config['slot_size'],
-                                  sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler),
+                                  sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
                                   max_flows=config['max_flows'], 
                                   max_time=config['max_time'])
                         p = multiprocessing.Process(target=self.run_test,
@@ -138,25 +138,26 @@ if __name__ == '__main__':
     MAX_TIME = None
 
 
-    path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/private_enterprise_benchmark_data.json'
+    path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/small_university_benchmark_data.json'
     tb = TestBed(path_to_benchmark_data)
 
     # networks
     NUM_CHANNELS = 1
-    networks = [gen_fat_tree(k=6, N=30, num_channels=NUM_CHANNELS)]
+    networks = [gen_fat_tree(k=4, N=3, num_channels=NUM_CHANNELS, edge_to_agg_channel_capacity=10, agg_to_core_channel_capacity=10)]
 
     # rwas
     NUM_K_PATHS = 2
     rwas = [RWA(gen_channel_names(NUM_CHANNELS), NUM_K_PATHS)]
 
     # schedulers
-    SLOT_SIZE = 1e6 
+    # SLOT_SIZE = 1e6
+    SLOT_SIZE = 1e4
     schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
                   BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=5)]
 
 
 
-    test_config = {'test_name': 'private_enterprise_benchmark_test_1',
+    test_config = {'test_name': 'small_university_benchmark_testbed',
                    'max_time': MAX_TIME,
                    'max_flows': None,
                    'slot_size': SLOT_SIZE,

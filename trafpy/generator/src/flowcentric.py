@@ -168,7 +168,7 @@ def get_first_last_flow_arrival_times(demand_data):
     arrival_times = []
     for idx in range(len(demand_data['event_time'])):
         if demand_data['flow_size'][idx] > 0 and demand_data['sn'][idx] != demand_data['dn'][idx]:
-            arrival_times.append(demand_data['flow_size'][idx])
+            arrival_times.append(demand_data['event_time'][idx])
         else:
             pass
     if len(arrival_times) == 0:

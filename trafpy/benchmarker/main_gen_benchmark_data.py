@@ -5,6 +5,6 @@ if __name__ == '__main__':
     import os
 
 
-    path_to_save = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/social_media_cloud_benchmark_data'
+    path_to_save = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/small_university_benchmark_data'
     benchmark_demands = gen_benchmark_demands(path_to_save=path_to_save,
-                                              load_prev_dists=False)
+            load_prev_dists=False)

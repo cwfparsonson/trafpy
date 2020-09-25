@@ -1550,7 +1550,7 @@ class DCN:
         flow_sizes_arrived = []
         num_arrived_flows = len(self.arrived_flows.keys())
         
-        for idx in range(num_arrived_flows.keys()):
+        for idx in range(num_arrived_flows):
             flow_sizes_arrived.append(self.arrived_flow_dicts[idx]['size'])
 
         total_info_arrived = sum(flow_sizes_arrived)
@@ -1558,7 +1558,7 @@ class DCN:
         return flow_sizes_arrived, total_info_arrived
     
     def get_general_summary(self):
-        _,self.info_arrived = self.calc_total_info_transported()
+        _,self.info_arrived = self.calc_total_info_arrived()
         _,self.info_transported = self.calc_total_info_transported()
         
         self.session_duration = self.time_last_flow_completed-self.time_first_flow_arrived

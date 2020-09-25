@@ -293,27 +293,18 @@ class DistributionGenerator:
         fig.tight_layout(pad=0)
         fig.subplots_adjust(hspace=0.1, wspace=0.1)
         i = 1
-        # for benchmark in self.valid_benchmark_sets:
-            # for dist_name in self.dist_names:
         for dist_name in self.dist_names:
             for benchmark in self.valid_benchmark_sets:
-                # fig.add_subplot(len(self.valid_benchmark_sets), len(self.dist_names), i)
                 fig.add_subplot(len(self.dist_names), len(self.valid_benchmark_sets), i)
                 ax = fig.gca()
                 ax.axis('off')
                 dist_fig = plots[benchmark][dist_name]
                 img = self.conv_fig_to_image(dist_fig)
-                # img = np.fromstring(canvas.tostring_rgb(), dtype='uint8')
-                # img = np.frombuffer(dist_fig.canvas.tostring_rgb(), dtype=np.uint8)
-                # img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
                 plt.imshow(img)
                 i += 1
-                # axs[benchmark_to_idx[benchmark], dist_to_idx[dist_name]] = plots[benchmark][dist_name]
-
 
         plt.show()
-
         
         return plots, dists, plotted_rand_vars
 

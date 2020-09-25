@@ -191,7 +191,7 @@ def gen_fat_tree(k=4,
                  server_to_rack_channel_capacity=1,
                  rack_to_edge_channel_capacity=10,
                  edge_to_agg_channel_capacity=40,
-                 agg_to_core_channel_capacity=100,
+                 agg_to_core_channel_capacity=40,
                  show_fig=False):
     '''Generates a data centre network with a 3-layer fat tree topology.
     
