@@ -79,8 +79,9 @@ def create_flow_centric_demand_data(num_demands,
     return demand_data
 
 
-def set_flow_centric_demand_data_network_load(demand_data, network_rate_capacity, target_load_fraction, print_data=False):
+def set_flow_centric_demand_data_network_load(demand_data, interarrival_time_dist, eps, node_dist, flow_size_dist, network_rate_capacity, target_load_fraction, print_data=False):
     demand_data = copy.deepcopy(demand_data)
+    num_demands = len(demand_data['flow_size'])
     
     assert target_load_fraction <= 1, \
         'Must have target load fraction <= 1 for compatability with network rate capacity.'
@@ -89,14 +90,33 @@ def set_flow_centric_demand_data_network_load(demand_data, network_rate_capacity
     load_rate = get_flow_centric_demand_data_load_rate(demand_data)
     init_load_rate = copy.deepcopy(load_rate)
     init_load_fraction = init_load_rate / network_rate_capacity
-    
+
     change_in_num_demands = 0
     if load_rate > target_load_rate:
-        # randomly drop demands until get target load rate
+        # randomly drop demands and increase interarrival time dist until get target load rate
+        num_loops = 1
         while load_rate > target_load_rate:
+            # adjust interarrival dist
+            new_interarrival_time_dist = {}
+            for rand_var, prob in interarrival_time_dist.items():
+                new_rand_var = rand_var * 1.01
+                new_interarrival_time_dist[new_rand_var] = prob
+
+            # update interarrival time dist
+            interarrival_time_dist = new_interarrival_time_dist
+
+            # re-create
+            demand_data = create_flow_centric_demand_data(num_demands=num_demands,
+                                                                      eps=eps,
+                                                                      node_dist=node_dist,
+                                                                      flow_size_dist=flow_size_dist,
+                                                                      interarrival_time_dist=interarrival_time_dist,
+                                                                      print_data=print_data)
+
             demand_data = drop_random_flow_from_demand_data(demand_data)
             load_rate = get_flow_centric_demand_data_load_rate(demand_data)
             change_in_num_demands -= 1
+
     elif load_rate < target_load_rate:
         load_fraction = load_rate / network_rate_capacity
         raise Exception('Load is {}, but requested target load is {}. Either decrease target load or increase load in demand_data. To increase load in demand_data, increase number of demands generated or adjust e.g. event size, interarrival time, etc., then re-construct demand_data and pass back into this function.'.format(load_fraction, target_load_fraction))
@@ -116,7 +136,7 @@ def set_flow_centric_demand_data_network_load(demand_data, network_rate_capacity
         print('Change in number of demands: {}'.format(change_in_num_demands))
         print('Final number of demands: {}'.format(len(demand_data['flow_id'])))
     
-    return demand_data
+    return demand_data, new_interarrival_time_dist
 
 def drop_random_flow_from_demand_data(demand_data):
     event_indices = [i for i in range(len(demand_data['event_time']))]
@@ -147,6 +167,8 @@ def drop_random_flow_from_demand_data(demand_data):
 def get_flow_centric_demand_data_load_rate(demand_data):
     info_arrived = get_flow_centric_demand_data_total_info_arrived(demand_data)
     first_event_time, last_event_time = get_first_last_flow_arrival_times(demand_data)
+
+    # print('first event: {} | last event: {} | total time: {}'.format(first_event_time, last_event_time, last_event_time-first_event_time))
     
     load_rate = info_arrived/(last_event_time-first_event_time)
     

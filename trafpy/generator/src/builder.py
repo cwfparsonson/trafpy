@@ -6,6 +6,7 @@ from trafpy.generator.src import tools
 import numpy as np
 import time
 import json
+import copy
 
 
 def create_demand_data(eps,
@@ -35,7 +36,7 @@ def create_demand_data(eps,
             interarrival time value-probability pairs. 
         num_demands (int): Number of demands to generate. If None, must specify
             network_load_config
-        network_load_config (dict): Dict of form {'network_rate_capacity': <int/float>, 'target_load_fraction': <float>, 'disable_timeouts': <bool>},
+        network_load_config (dict): Dict of form {'network_rate_capacity': <int/float>, 'target_load_fraction': <float>, 'disable_timeouts': <bool>, 'return_new_interarrival_time_dist': <bool>},
             where network_rate_capacity is the maximum rate (in e.g. Gbps) at which
             information can be reliably transmitted over the communication network
             which the demand data will be inserted into, and where target_load_fraction
@@ -43,7 +44,9 @@ def create_demand_data(eps,
             (e.g. target_load_fraction=0.75 would generate demands which request
             a load that is 75% of the network rate capacity from the first to 
             the last demand arriving). disable_timeouts defines whether or not 
-            to stop looping when trying to meet specified network load.
+            to stop looping when trying to meet specified network load. return_new_interarrival_time_dist
+            defines whether or not to return the new interarrival time dist which
+            was adjusted to meet the network node requested.
             If network_load_config is None, must specify num_demands
         duration_time_dist (dict): Probability distribution whose key-value pairs are 
             duration time value-probability pairs. If specified, half events
@@ -69,7 +72,12 @@ def create_demand_data(eps,
 
     Returns:
         dict: Generated demand data (either flow-centric or job-centric demand
-        demand data depending on the args given to the function).
+            demand data depending on the args given to the function).
+
+        N.B. If network_load_config is not None, will return tuple of
+        (demand_data, interarrival_time_dist) to give updated interarrival time dist
+        needed to meet network_load_config requested.
+            
 
     """
     # check num demands and load config 
@@ -141,9 +149,12 @@ def create_demand_data(eps,
         'demand distribution matrix must sum to 1, but is {}'.format(matrix_sum)
 
     if network_load_config is not None:
-        if 'disabled_timeouts' not in network_load_config.keys():
+        if 'disable_timeouts' not in network_load_config.keys():
             # assume not disabling timeouts
             network_load_config['disable_timeouts'] = False
+        if 'return_new_interarrival_time_dist' not in network_load_config.keys():
+            # assume not returning new interarrival_time_dist
+            network_load_config['return_new_interarrival_time_dist'] = False
 
     if network_load_config is not None:
         # init a guess for number of demands needed to meet desired load
@@ -170,12 +181,24 @@ def create_demand_data(eps,
                                                                   duration_time_dist=duration_time_dist,
                                                                   print_data=print_data)
         if network_load_config is not None:
+            print('Reconfiguring interarrival times and number of demands to match requested network load config...')
             load_rate = flowcentric.get_flow_centric_demand_data_load_rate(demand_data)
             load_fraction = load_rate / network_load_config['network_rate_capacity']
-            num_loops = 0
+            num_loops = 1
             while load_fraction < network_load_config['target_load_fraction']:
-                # increase number of demands to try increase loads
-                num_demands *= 2
+
+                # increase number of demands by 10% to try increase loads
+                num_demands = int(1.1 * num_demands)
+
+                # decrease interarrival times to try increase load
+                new_interarrival_time_dist = {}
+                for rand_var, prob in interarrival_time_dist.items():
+                    new_rand_var = rand_var * 0.5
+                    new_interarrival_time_dist[new_rand_var] = prob
+
+                # update interarrival time dist
+                interarrival_time_dist = new_interarrival_time_dist
+
                 demand_data = flowcentric.create_flow_centric_demand_data(num_demands=num_demands,
                                                                           eps=eps,
                                                                           node_dist=node_dist,
@@ -195,19 +218,31 @@ def create_demand_data(eps,
                             print('Warning: Have disabled timeouts. Ran {} loops to try to reach {} network load (reached {} load so far). Set network_load_config[\'disable_timeouts\']=True if desired. Disable this warning by setting print_data=False when calling create_demand_data.'.format(num_loops, network_load_config['target_load_fraction'], load_fraction))
                 else:
                     if num_loops > 15:
-                        raise Exception('Time out trying to reach requested network load fraction (reached {} but requested {}). Consider adjusting demand data parameters (e.g. increase flow size, decrease interarrival time, etc.), decreasing target_load_fraction, or decreasing network_rate_capacity. Alternatively, to disable timeouts, set network_load_config[\'disable_timeouts\'] = True}.'.format(load_fraction, network_load_config['target_load_fraction']))
+                        raise Exception('Time out trying to reach requested network load fraction (reached {} but requested {}). Consider adjusting demand data parameters (e.g. increase flow size, decrease interarrival time, etc.), decreasing target_load_fraction, or decreasing network_rate_capacity. Alternatively, to disable timeouts, set network_load_config[\'disable_timeouts\'] = True.'.format(load_fraction, network_load_config['target_load_fraction']))
 
-            # remove demands to get load fraction <= target load fraction
-            demand_data = flowcentric.set_flow_centric_demand_data_network_load(demand_data, 
+            # adjust to get load fraction <= target load fraction
+            demand_data, new_interarrival_time_dist = flowcentric.set_flow_centric_demand_data_network_load(demand_data, 
+                                                                                interarrival_time_dist=interarrival_time_dist,
+                                                                                eps=eps,
+                                                                                node_dist=node_dist,
+                                                                                flow_size_dist=flow_size_dist,
                                                                                 network_rate_capacity=network_load_config['network_rate_capacity'],
                                                                                 target_load_fraction=network_load_config['target_load_fraction'],
                                                                                 print_data=print_data)
 
 
+
     if path_to_save is not None:
         tools.pickle_data(path_to_save, demand_data)
-    
-    return demand_data
+
+    if network_load_config is not None:
+        if network_load_config['return_new_interarrival_time_dist']:
+            return demand_data, new_interarrival_time_dist
+        else:
+            return demand_data
+
+    else:
+        return demand_data
 
 
 
