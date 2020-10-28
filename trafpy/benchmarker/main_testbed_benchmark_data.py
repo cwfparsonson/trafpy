@@ -137,13 +137,12 @@ if __name__ == '__main__':
     # _________________________________________________________________________
     MAX_TIME = None
 
-
-    path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/small_university_benchmark_data.json'
+    path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/small_uniform_benchmark_data.json'
     tb = TestBed(path_to_benchmark_data)
 
     # networks
     NUM_CHANNELS = 1
-    networks = [gen_fat_tree(k=4, N=3, num_channels=NUM_CHANNELS, edge_to_agg_channel_capacity=10, agg_to_core_channel_capacity=10)]
+    networks = [gen_fat_tree(k=3, N=2, num_channels=NUM_CHANNELS, rack_to_edge_channel_capacity=5, edge_to_agg_channel_capacity=5, agg_to_core_channel_capacity=5)]
 
     # rwas
     NUM_K_PATHS = 2
@@ -151,13 +150,13 @@ if __name__ == '__main__':
 
     # schedulers
     # SLOT_SIZE = 1e6
-    SLOT_SIZE = 1e4
+    SLOT_SIZE = 1e3
     schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
                   BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=5)]
 
 
 
-    test_config = {'test_name': 'small_university_benchmark_testbed',
+    test_config = {'test_name': 'small_uniform_testbed_data',
                    'max_time': MAX_TIME,
                    'max_flows': None,
                    'slot_size': SLOT_SIZE,
@@ -166,7 +165,7 @@ if __name__ == '__main__':
                    'schedulers': schedulers}
 
     tb.reset()
-    tb.run_tests(test_config, path_to_save = os.path.dirname(trafpy.__file__)+'/../data/')
+    tb.run_tests(test_config, path_to_save = os.path.dirname(trafpy.__file__)+'/../data/testbed_data/')
 
     
 

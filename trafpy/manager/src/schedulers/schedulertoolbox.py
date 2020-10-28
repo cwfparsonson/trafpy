@@ -16,7 +16,8 @@ class SchedulerToolbox:
         self.RWA = RWA
         self.slot_size = slot_size
         
-        self.packet_size = 3000
+        # self.packet_size = 3000
+        self.packet_size = 300
         
         self.reset()
 

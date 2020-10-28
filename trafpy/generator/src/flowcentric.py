@@ -79,9 +79,102 @@ def create_flow_centric_demand_data(num_demands,
     return demand_data
 
 
-def set_flow_centric_demand_data_network_load(demand_data, interarrival_time_dist, eps, node_dist, flow_size_dist, network_rate_capacity, target_load_fraction, print_data=False):
-    demand_data = copy.deepcopy(demand_data)
-    num_demands = len(demand_data['flow_size'])
+def adjust_demand_load(demand_data,
+                       network_load_config,
+                       num_demands,
+                       eps,
+                       node_dist,
+                       flow_size_dist,
+                       interarrival_time_dist,
+                       duration_time_dist,
+                       print_data=False):
+    # adjust to get load fraction > target load fraction
+    demand_data, new_interarrival_time_dist, new_num_demands = increase_demand_load_to_target(demand_data, 
+                                                                             num_demands,
+                                                                             interarrival_time_dist, 
+                                                                             eps, 
+                                                                             node_dist, 
+                                                                             flow_size_dist, 
+                                                                             network_load_config, 
+                                                                             print_data=print_data)
+
+    # adjust back down to get load fraction <= target load fraction
+    demand_data, new_interarrival_time_dist = decrease_demand_load_to_target(demand_data, 
+                                                                        new_num_demands,
+                                                                        interarrival_time_dist=new_interarrival_time_dist,
+                                                                        eps=eps,
+                                                                        node_dist=node_dist,
+                                                                        flow_size_dist=flow_size_dist,
+                                                                        network_load_config=network_load_config,
+                                                                        print_data=True)
+    return demand_data, interarrival_time_dist
+
+
+
+
+def increase_demand_load_to_target(demand_data, 
+                                   num_demands, 
+                                   interarrival_time_dist, 
+                                   eps, 
+                                   node_dist, 
+                                   flow_size_dist, 
+                                   network_load_config, 
+                                   print_data=False):
+    load_rate = get_flow_centric_demand_data_load_rate(demand_data)
+    load_fraction = load_rate / network_load_config['network_rate_capacity']
+
+    num_loops = 1
+    # adjust to get load fraction >= target load fraction
+    while load_fraction < network_load_config['target_load_fraction']:
+
+        # increase number of demands by 10% to try increase loads
+        num_demands = int(1.1 * num_demands)
+
+        # decrease interarrival times to try increase load
+        new_interarrival_time_dist = {}
+        for rand_var, prob in interarrival_time_dist.items():
+            new_rand_var = rand_var * 0.5
+            new_interarrival_time_dist[new_rand_var] = prob
+
+        # update interarrival time dist
+        interarrival_time_dist = new_interarrival_time_dist
+
+        demand_data = create_flow_centric_demand_data(num_demands=num_demands,
+                                                                  eps=eps,
+                                                                  node_dist=node_dist,
+                                                                  flow_size_dist=flow_size_dist,
+                                                                  interarrival_time_dist=interarrival_time_dist,
+                                                                  print_data=print_data)
+        load_rate = get_flow_centric_demand_data_load_rate(demand_data)
+        load_fraction = load_rate / network_load_config['network_rate_capacity']
+        num_loops += 1
+        if print_data:
+            print('Reached load of {} (target load {}) after {} loops.'.format(load_fraction, network_load_config['target_load_fraction'], num_loops))
+        if network_load_config['disable_timeouts']:
+            # keep running loop to infinity
+            if num_loops % 10 == 0:
+                if print_data:
+                    print('Warning: Have disabled timeouts. Ran {} loops to try to reach {} network load (reached {} load so far). Set network_load_config[\'disable_timeouts\']=True if desired. Disable this warning by setting print_data=False when calling create_demand_data.'.format(num_loops, network_load_config['target_load_fraction'], load_fraction))
+        else:
+            if num_loops > 15:
+                raise Exception('Time out trying to reach requested network load fraction (reached {} but requested {}). Consider adjusting demand data parameters (e.g. increase flow size, decrease interarrival time, etc.), decreasing target_load_fraction, or decreasing network_rate_capacity. Alternatively, to disable timeouts, set network_load_config[\'disable_timeouts\'] = True.'.format(load_fraction, network_load_config['target_load_fraction']))
+
+    return demand_data, interarrival_time_dist, num_demands
+
+
+
+def decrease_demand_load_to_target(demand_data, 
+                                   num_demands, 
+                                   interarrival_time_dist, 
+                                   eps, 
+                                   node_dist, 
+                                   flow_size_dist, 
+                                   network_load_config, 
+                                   print_data=False):
+    load_rate = get_flow_centric_demand_data_load_rate(demand_data)
+    load_fraction = load_rate / network_load_config['network_rate_capacity']
+    target_load_fraction = network_load_config['target_load_fraction']
+    network_rate_capacity = network_load_config['network_rate_capacity']
     
     assert target_load_fraction <= 1, \
         'Must have target load fraction <= 1 for compatability with network rate capacity.'
@@ -116,6 +209,8 @@ def set_flow_centric_demand_data_network_load(demand_data, interarrival_time_dis
             demand_data = drop_random_flow_from_demand_data(demand_data)
             load_rate = get_flow_centric_demand_data_load_rate(demand_data)
             change_in_num_demands -= 1
+
+            print('Load rate: {} | Target load rate: {}'.format(load_rate, target_load_rate))
 
     elif load_rate < target_load_rate:
         load_fraction = load_rate / network_rate_capacity

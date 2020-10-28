@@ -13,6 +13,9 @@ import seaborn as sns
 from statsmodels.distributions.empirical_distribution import ECDF
 from scipy import stats
 
+# import warnings # for catching warnings rather than just exceptions
+# warnings.filterwarnings('error')
+
 
 
 def plot_node_dist(node_dist, 
@@ -123,7 +126,7 @@ def plot_val_dist(rand_vars,
     else:
         alpha=1.0
     
-    # PROBABILITY DENSITY
+    # HISTOGRAM
     if plot_horizontally:
         fig = plt.figure(figsize=(15*fig_scale,5*fig_scale))
         plt.subplot(1,2,1)
@@ -134,6 +137,8 @@ def plot_val_dist(rand_vars,
     if logscale:
         ax = plt.gca()
         ax.set_xscale('log')
+        if bins[0] == 0:
+            bins[0] = 1
         logbins = np.logspace(np.log10(bins[0]),np.log10(bins[-1]),len(bins))
         plotbins = logbins
     else:
@@ -162,7 +167,7 @@ def plot_val_dist(rand_vars,
         y = stats.pareto.pdf(plotbins, shape, loc, scale)
 
     plt.xlabel(rand_var_name, fontsize=font_size)
-    plt.ylabel('Probability Density', fontsize=font_size)
+    plt.ylabel('Number of Occurrences', fontsize=font_size)
     try:
         plt.xlim(xlim)
     except NameError:
@@ -245,6 +250,38 @@ def plot_val_bar(x_values,
     return fig
 
 
+def plot_val_line(plot_dict={},
+                     xlabel='Random Variable',
+                     ylabel='Random Variable Value',
+                     show_fig=False):
+    '''Plots line plot.
+
+    plot_dict= {'class_1': {'x_values': [0.1, 0.2, 0.3], 'y_values': [20, 40, 80]},
+                'class_2': {'x_values': [0.1, 0.2, 0.3], 'y_values': [80, 60, 20]}}
+
+    '''
+    keys = list(plot_dict.keys())
+    # num_vals = len(plot_dict[keys[0]]['x_values'])
+    # for key in keys:
+        # if len(plot_dict[key]['x_values']) != num_vals or len(plot_dict[key]['y_values']) != num_vals:
+            # raise Exception('Must have equal number of x and y values to plot.')
+
+    fig = plt.figure()
+    plt.style.use('ggplot')
+
+    class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
+    for _class in plot_dict.keys():
+        plt.plot(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], c=next(class_colours), label=str(_class))
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend()
+
+    if show_fig:
+        plt.show()
+    
+
+    return fig
 
 def plot_val_scatter(plot_dict={},
                      xlabel='Random Variable',

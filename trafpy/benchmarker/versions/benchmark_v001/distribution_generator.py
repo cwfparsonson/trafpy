@@ -8,7 +8,6 @@ import os
 import json
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import numpy as np
 import cv2
 import io
@@ -102,6 +101,9 @@ class DistributionGenerator:
                 # node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
                 node_dist = node_dists.gen_multimodal_node_dist(eps, rack_prob_config=rack_prob_config, num_skewed_nodes=num_skewed_nodes, skewed_node_probs=skewed_node_probs, show_fig=False, print_data=False)
 
+            elif benchmark == 'uniform':
+                node_dist = node_dists.gen_uniform_node_dist(eps, show_fig=False, print_data=False)
+
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
 
@@ -162,6 +164,13 @@ class DistributionGenerator:
                                                               show_fig=False,
                                                               print_data=False,
                                                               round_to_nearest=1)
+
+            elif benchmark == 'uniform':
+                flow_size_dist = val_dists.gen_uniform_val_dist(min_val=100,
+                                                                 max_val=10000,
+                                                                 round_to_nearest=1,
+                                                                 show_fig=False,
+                                                                 print_data=False)
 
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
@@ -227,6 +236,13 @@ class DistributionGenerator:
                                                                       print_data=False,
                                                                       round_to_nearest=1)
 
+            elif benchmark == 'uniform':
+                interarrival_time_dist = val_dists.gen_uniform_val_dist(min_val=10,
+                                                                 max_val=10000,
+                                                                 round_to_nearest=1,
+                                                                 show_fig=False,
+                                                                 print_data=False)
+
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
 
@@ -239,18 +255,26 @@ class DistributionGenerator:
     
 
 
-    def plot_benchmark_dists(self):
-        '''Plots dist info of all benchmarks.'''
+    def plot_benchmark_dists(self, benchmarks):
+        '''Plots dist info of all benchmark(s).
 
-        num_demands = 10000 
+        e.g. benchmarks = ['uniform', 'university']
+
+        '''
+
+        for benchmark in benchmarks:
+            if benchmark not in self.valid_benchmark_sets:
+                raise Exception('Benchmark \'{}\' not recognised. Must be one of: {}'.format(benchmark, self.valid_benchmark_sets))
+
 
         # load dists
-        dists = {benchmark: {dist_name: None for dist_name in self.dist_names} for benchmark in self.valid_benchmark_sets}
+        dists = {benchmark: {dist_name: None for dist_name in self.dist_names} for benchmark in benchmarks}
         plotted_rand_vars = copy.deepcopy(dists)
         plots = copy.deepcopy(dists)
-        for benchmark in self.valid_benchmark_sets:
+        for benchmark in benchmarks:
             for dist_name in self.dist_names:
-                # store dist
+
+                # load dist
                 dists[benchmark][dist_name], path_to_data = self.load_dist(benchmark, dist_name)
                 dists[benchmark][dist_name] = json.loads(dists[benchmark][dist_name])
 
@@ -258,6 +282,7 @@ class DistributionGenerator:
                 if dists[benchmark][dist_name] is None:
                     raise Exception('Dist {} for benchmark {} not found in {}. Ensure dist is named as one of {}, and that dist has been saved in correct location.'.format(dist_name, benchmark, path_to_data, self.dist_names))
 
+                num_demands = len(dists[benchmark]['node_dist']) * 1000 # estimate appropriate number of rand vars to gen 
 
                 if dist_name == 'flow_size_dist' or dist_name == 'interarrival_time_dist':
                     # remove str keys
@@ -269,12 +294,17 @@ class DistributionGenerator:
                                                                                 num_demands=num_demands)
                     plotted_rand_vars[benchmark][dist_name] = rand_vars
 
+                    if all(prob == list(dists[benchmark][dist_name].values())[0] for prob in dists[benchmark][dist_name].values()):
+                        # uniform dist, do not plot logscale
+                        logscale = False
+                    else:
+                        logscale = True
+
                     if dist_name == 'flow_size_dist':
-                        # plot flow size dist
-                        fig = plot_dists.plot_val_dist(rand_vars, show_fig=False, plot_horizontally=False, logscale=True, num_bins=20, rand_var_name='Flow Size (Bytes)')
+                        fig = plot_dists.plot_val_dist(rand_vars, show_fig=False, plot_horizontally=False, logscale=logscale, num_bins=20, rand_var_name='Flow Size (Bytes)')
                         plots[benchmark][dist_name] = fig
                     elif dist_name == 'interarrival_time_dist':
-                        fig = plot_dists.plot_val_dist(rand_vars, show_fig=False, plot_horizontally=False, logscale=True, num_bins=20, rand_var_name='Interarrival Time (us)')
+                        fig = plot_dists.plot_val_dist(rand_vars, show_fig=False, plot_horizontally=False, logscale=logscale, num_bins=20, rand_var_name='Interarrival Time (us)')
                         plots[benchmark][dist_name] = fig
 
                 elif dist_name == 'node_dist':
@@ -285,26 +315,26 @@ class DistributionGenerator:
                     raise Exception('Unrecognised dist_name {}'.format(dist_name))
                     
         
-        # create plot of sub plots
-        fig = plt.figure()
-        ax = fig.gca()
-        ax.axis('off')
-        ax.margins(0) # remove large white borders
-        fig.tight_layout(pad=0)
-        fig.subplots_adjust(hspace=0.1, wspace=0.1)
-        i = 1
-        for dist_name in self.dist_names:
-            for benchmark in self.valid_benchmark_sets:
-                fig.add_subplot(len(self.dist_names), len(self.valid_benchmark_sets), i)
-                ax = fig.gca()
-                ax.axis('off')
-                dist_fig = plots[benchmark][dist_name]
-                img = self.conv_fig_to_image(dist_fig)
+        # # create plot of sub plots
+        # fig = plt.figure()
+        # ax = fig.gca()
+        # ax.axis('off')
+        # ax.margins(0) # remove large white borders
+        # fig.tight_layout(pad=0)
+        # fig.subplots_adjust(hspace=0.1, wspace=0.1)
+        # i = 1
+        # for dist_name in self.dist_names:
+            # for benchmark in benchmarks:
+                # fig.add_subplot(len(self.dist_names), len(benchmarks), i)
+                # ax = fig.gca()
+                # ax.axis('off')
+                # dist_fig = plots[benchmark][dist_name]
+                # img = self.conv_fig_to_image(dist_fig)
 
-                plt.imshow(img)
-                i += 1
+                # plt.imshow(img)
+                # i += 1
 
-        plt.show()
+        # plt.show()
         
         return plots, dists, plotted_rand_vars
 

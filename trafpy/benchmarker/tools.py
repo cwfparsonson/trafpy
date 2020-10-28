@@ -31,11 +31,14 @@ def gen_benchmark_demands(path_to_save=None, load_prev_dists=True):
         
         # get racks and endpoints
         racks_dict = config.RACKS_DICTS[benchmark]
-        eps_racks_list = [eps for eps in racks_dict.values()]
-        eps = []
-        for rack in eps_racks_list:
-            for ep in rack:
-                eps.append(ep)
+        if racks_dict is not None:
+            eps_racks_list = [eps for eps in racks_dict.values()]
+            eps = []
+            for rack in eps_racks_list:
+                for ep in rack:
+                    eps.append(ep)
+        else:
+            eps = config.NETS[benchmark].graph['endpoints']
 
         start_benchmark = time.time()
         load_counter = 1
@@ -43,7 +46,9 @@ def gen_benchmark_demands(path_to_save=None, load_prev_dists=True):
         for load in config.LOADS:
             start_load = time.time()
             network_load_config = {'network_rate_capacity': config.NETWORK_CAPACITIES[benchmark], 
-                                   'target_load_fraction': load}
+                                   'target_load_fraction': load,
+                                   'disable_timeouts': True}
+            # print('\n~~~~~~ network load config ~~~~~~~\n{}'.format(network_load_config))
             for repeat in range(config.NUM_REPEATS):
                 flow_centric_demand_data = create_demand_data(network_load_config=network_load_config,
                                                               eps=eps,
