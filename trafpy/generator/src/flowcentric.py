@@ -127,8 +127,8 @@ def increase_demand_load_to_target(demand_data,
     # adjust to get load fraction >= target load fraction
     while load_fraction < network_load_config['target_load_fraction']:
 
-        # increase number of demands by 10% to try increase loads
-        num_demands = int(1.1 * num_demands)
+        # # increase number of demands by 1% to try increase loads
+        # num_demands = int(1.01 * num_demands)
 
         # decrease interarrival times to try increase load
         new_interarrival_time_dist = {}
@@ -206,11 +206,19 @@ def decrease_demand_load_to_target(demand_data,
                                                                       interarrival_time_dist=interarrival_time_dist,
                                                                       print_data=print_data)
 
-            demand_data = drop_random_flow_from_demand_data(demand_data)
+            # demand_data = drop_random_flow_from_demand_data(demand_data)
             load_rate = get_flow_centric_demand_data_load_rate(demand_data)
-            change_in_num_demands -= 1
+            # change_in_num_demands -= 1
 
-            print('Load rate: {} | Target load rate: {}'.format(load_rate, target_load_rate))
+            num_loops += 1
+            if network_load_config['disable_timeouts']:
+                # keep running loop to infinity
+                if num_loops % 10 == 0:
+                    if print_data:
+                        print('Warning: Have disabled timeouts. Ran {} loops to try to reach {} network load (reached {} load so far). Set network_load_config[\'disable_timeouts\']=True if desired. Disable this warning by setting print_data=False when calling create_demand_data.'.format(num_loops, network_load_config['target_load_fraction'], load_fraction))
+            else:
+                if num_loops > 15:
+                    raise Exception('Time out trying to reach requested network load fraction (reached {} but requested {}). Consider adjusting demand data parameters (e.g. increase flow size, decrease interarrival time, etc.), decreasing target_load_fraction, or decreasing network_rate_capacity. Alternatively, to disable timeouts, set network_load_config[\'disable_timeouts\'] = True.'.format(load_fraction, network_load_config['target_load_fraction']))
 
     elif load_rate < target_load_rate:
         load_fraction = load_rate / network_rate_capacity

@@ -696,7 +696,7 @@ class DCN:
         flows = []
         network_nodes = []
         ops = []
-        network_nodes_dict = self.get_node_type_dict(network, self.network.graph['node_labels'])
+        network_nodes_dict = networks.get_node_type_dict(network, self.network.graph['node_labels'])
         for nodes in list(network_nodes_dict.values()):
             for network_node in nodes:
                 pos[network_node] = self.net_node_positions[network_node]
@@ -707,26 +707,32 @@ class DCN:
             y_offset = -appended_node_y_spacing
             for ep_queue in ep_queues.values():
                 for flow in ep_queue['queued_flows']:
-                    f_id = str(flow['job_id']+'_'+flow['flow_id'])
+                    if self.demand.job_centric:
+                        f_id = str(flow['job_id']+'_'+flow['flow_id'])
+                    else:
+                        f_id = str(flow['flow_id'])
                     network.add_node(f_id)
                     network.add_edge(f_id, flow['src'], type='queue_link')
                     flows.append(f_id)
                     pos[f_id] = (list(pos[flow['src']])[0]+appended_node_x_spacing, list(pos[flow['src']])[1]+y_offset)
                     y_offset-=appended_node_y_spacing
 
-        for ep in eps:
-            y_offset = -appended_node_y_spacing
-            for op in self.running_ops.keys():
-                op_machine = self.running_ops[op]
-                if ep == op_machine:
-                    network.add_node(op)
-                    network.add_edge(op, op_machine, type='op_link')
-                    ops.append(op)
-                    pos[op] = (list(pos[op_machine])[0]-appended_node_x_spacing, list(pos[op_machine])[1]+y_offset)
-                    y_offset-=appended_node_y_spacing
-                else:
-                    # op not placed on this end point machine
-                    pass
+        if self.demand.job_centric:
+            for ep in eps:
+                y_offset = -appended_node_y_spacing
+                for op in self.running_ops.keys():
+                    op_machine = self.running_ops[op]
+                    if ep == op_machine:
+                        network.add_node(op)
+                        network.add_edge(op, op_machine, type='op_link')
+                        ops.append(op)
+                        pos[op] = (list(pos[op_machine])[0]-appended_node_x_spacing, list(pos[op_machine])[1]+y_offset)
+                        y_offset-=appended_node_y_spacing
+                    else:
+                        # op not placed on this end point machine
+                        pass
+        else:
+            pass
 
         # find edges
         fibre_links = []

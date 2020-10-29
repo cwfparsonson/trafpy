@@ -130,7 +130,6 @@ def gen_nsfnet_network(ep_label='server',
     add_edges_capacity_attrs(network, edges, channel_names, rack_to_rack_channel_capacity)
 
     # set gloabl network attrs
-    print('Nodes:\n{}'.format(network.nodes))
     network.graph['endpoints'] = get_endpoints(network, ep_label)
     max_nw_capacity = len(network.edges) * num_channels * rack_to_rack_channel_capacity
     init_global_network_attrs(network, 

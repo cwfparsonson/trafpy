@@ -137,7 +137,7 @@ if __name__ == '__main__':
     # _________________________________________________________________________
     MAX_TIME = None
 
-    path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/small_uniform_benchmark_data.json'
+    path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/ndf50_uniform_benchmark_data.json'
     tb = TestBed(path_to_benchmark_data)
 
     # networks
@@ -152,11 +152,15 @@ if __name__ == '__main__':
     # SLOT_SIZE = 1e6
     SLOT_SIZE = 1e3
     schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
-                  BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=5)]
+                  BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10)]
+    # schedulers = []
+    # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]
+    # for V in Vs:
+        # schedulers.append(BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=V, scheduler_name='V{}_basrpt'.format(V)))
 
 
 
-    test_config = {'test_name': 'small_uniform_testbed_data',
+    test_config = {'test_name': 'ndf50_uniform_testbed_data_V10basrpt',
                    'max_time': MAX_TIME,
                    'max_flows': None,
                    'slot_size': SLOT_SIZE,
