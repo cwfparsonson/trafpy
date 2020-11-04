@@ -356,14 +356,20 @@ def gen_fat_tree(k=4,
 
     # calc total network byte capacity
     num_agg_core_links = num_cores * k
-    num_edge_agg_links = num_pods * k
+    if k > 3:
+        num_edge_agg_links = num_pods * k
+    else:
+        # not high enough k to have inter pod links
+        num_edge_agg_links = num_pods
     num_rack_edge_links = num_edges * (k/2)
     num_server_rack_links = num_racks * N
-    agg_core_capacity = num_agg_core_links * agg_to_core_channel_capacity * num_channels
-    edge_agg_capacity = num_edge_agg_links * edge_to_agg_channel_capacity * num_channels
-    rack_edge_capacity = num_rack_edge_links * rack_to_edge_channel_capacity * num_channels
+    # agg_core_capacity = num_agg_core_links * agg_to_core_channel_capacity * num_channels
+    # edge_agg_capacity = num_edge_agg_links * edge_to_agg_channel_capacity * num_channels
+    # rack_edge_capacity = num_rack_edge_links * rack_to_edge_channel_capacity * num_channels
+    # server_rack_capacity = num_server_rack_links * server_to_rack_channel_capacity * num_channels
+    # max_nw_capacity = server_rack_capacity + rack_edge_capacity + edge_agg_capacity + agg_core_capacity
     server_rack_capacity = num_server_rack_links * server_to_rack_channel_capacity * num_channels
-    max_nw_capacity = server_rack_capacity + rack_edge_capacity + edge_agg_capacity + agg_core_capacity
+    max_nw_capacity = server_rack_capacity 
 
     # init global network attrs
     init_global_network_attrs(fat_tree_network, 

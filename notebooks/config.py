@@ -13,9 +13,9 @@ MAX_INTERARRIVAL = 1e8
 SLOT_SIZE = 1e3 # 0.2
 MAX_FLOWS = None
 MAX_TIME = None # 0.4
-# ENDPOINT_LABEL = 'server'
-# ENDPOINT_LABELS = [ENDPOINT_LABEL+'_'+str(ep) for ep in range(12)]
-ENDPOINT_LABELS = None
+ENDPOINT_LABEL = 'server'
+ENDPOINT_LABELS = [ENDPOINT_LABEL+'_'+str(ep) for ep in range(12)]
+# ENDPOINT_LABELS = None
 PATH_FIGURES = '../figures/'
 PATH_PICKLES = '../pickles/demand/tf_graphs/real/'
 
