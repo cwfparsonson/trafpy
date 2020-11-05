@@ -79,6 +79,30 @@ def create_flow_centric_demand_data(num_demands,
     return demand_data
 
 
+
+def duplicate_demands_in_demand_data_dict(demand_data):
+    num_demands = len(demand_data['flow_id'])
+    final_event_time = max(demand_data['event_time'])
+    copy_demand_data = copy.deepcopy(demand_data) 
+
+    # ensure values of dict are lists
+    for key, value in copy_demand_data.items():
+        copy_demand_data[key] = list(value)
+
+    for idx in range(len(demand_data['flow_id'])):
+        copy_demand_data['flow_id'].append('flow_{}'.format(int(idx+num_demands)))
+        copy_demand_data['sn'].append(demand_data['sn'][idx])
+        copy_demand_data['dn'].append(demand_data['dn'][idx])
+        copy_demand_data['flow_size'].append(demand_data['flow_size'][idx])
+        copy_demand_data['event_time'].append(final_event_time + demand_data['event_time'][idx])
+        copy_demand_data['establish'].append(demand_data['establish'][idx])
+        copy_demand_data['index'].append(demand_data['index'][idx] + idx)
+
+    return copy_demand_data
+
+
+
+
 def adjust_demand_load(demand_data,
                        network_load_config,
                        num_demands,

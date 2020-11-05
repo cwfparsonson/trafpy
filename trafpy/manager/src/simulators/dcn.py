@@ -70,6 +70,8 @@ class DCN:
         '''
         Resets DCN simulation environment
         '''
+        print('Resetting simulation \'{}\''.format(self.sim_name))
+
         self.curr_step = 0
         self.curr_time = 0
 

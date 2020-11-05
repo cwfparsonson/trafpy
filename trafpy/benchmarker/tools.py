@@ -56,6 +56,7 @@ def gen_benchmark_demands(path_to_save=None, load_prev_dists=True):
                                                               flow_size_dist=benchmark_dists[benchmark]['flow_size_dist'],
                                                               interarrival_time_dist=benchmark_dists[benchmark]['interarrival_time_dist'],
                                                               num_demands_factor=config.NUM_DEMANDS_FACTOR,
+                                                              min_last_demand_arrival_time=config.MIN_LAST_DEMAND_ARRIVAL_TIME,
                                                               print_data=False)
                 benchmark_demands[benchmark][load][repeat] = flow_centric_demand_data
             end_load = time.time()

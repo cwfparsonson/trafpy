@@ -20,6 +20,7 @@ def create_demand_data(eps,
                        c=None,
                        use_multiprocessing=True,
                        num_demands_factor=50,
+                       min_last_demand_arrival_time=None,
                        print_data=False,
                        path_to_save=None):
     """Create demand data dictionary using given distributions.
@@ -68,6 +69,9 @@ def create_demand_data(eps,
             graphs, it is recommended to use multiprocessing.
         num_demands_factor (int): Factor by which to multipl number of 
             network endpoint pairs by to get the number of demands.
+        min_last_demand_arrival_time (int, float): Minimum last time of arrival
+            for final demand (helps user specify a minimum simulation time). Will
+            keep doubling number of demands until get >= min_last_demand_arrival_time.
         print_data (bool): whether or not to print extra information about the
             generated data (such as time to generate).
         path_to_save (str): Path to directory (with file name included) in which
@@ -195,58 +199,16 @@ def create_demand_data(eps,
                                                                                      interarrival_time_dist=interarrival_time_dist,
                                                                                      duration_time_dist=duration_time_dist,
                                                                                      print_data=print_data)
+
+        if min_last_demand_arrival_time is not None:
+            print('Ensuring last event arrives at time >= min_last_demand_arrival_time...')
+            while max(demand_data['event_time']) < min_last_demand_arrival_time:
+                print('Final event time: {} | Target final event time: {}'.format(max(demand_data['event_time']), min_last_demand_arrival_time))
+                demand_data = flowcentric.duplicate_demands_in_demand_data_dict(demand_data)
+
             
 
 
-            # load_rate = flowcentric.get_flow_centric_demand_data_load_rate(demand_data)
-            # load_fraction = load_rate / network_load_config['network_rate_capacity']
-            # num_loops = 1
-
-            # # adjust to get load fraction >= target load fraction
-            # while load_fraction < network_load_config['target_load_fraction']:
-
-                # # increase number of demands by 10% to try increase loads
-                # num_demands = int(1.1 * num_demands)
-
-                # # decrease interarrival times to try increase load
-                # new_interarrival_time_dist = {}
-                # for rand_var, prob in interarrival_time_dist.items():
-                    # new_rand_var = rand_var * 0.5
-                    # new_interarrival_time_dist[new_rand_var] = prob
-
-                # # update interarrival time dist
-                # interarrival_time_dist = new_interarrival_time_dist
-
-                # demand_data = flowcentric.create_flow_centric_demand_data(num_demands=num_demands,
-                                                                          # eps=eps,
-                                                                          # node_dist=node_dist,
-                                                                          # flow_size_dist=flow_size_dist,
-                                                                          # interarrival_time_dist=interarrival_time_dist,
-                                                                          # duration_time_dist=duration_time_dist,
-                                                                          # print_data=print_data)
-                # load_rate = flowcentric.get_flow_centric_demand_data_load_rate(demand_data)
-                # load_fraction = load_rate / network_load_config['network_rate_capacity']
-                # num_loops += 1
-                # if print_data:
-                    # print('Reached load of {} (target load {}) after {} loops.'.format(load_fraction, network_load_config['target_load_fraction'], num_loops))
-                # if network_load_config['disable_timeouts']:
-                    # # keep running loop to infinity
-                    # if num_loops % 10 == 0:
-                        # if print_data:
-                            # print('Warning: Have disabled timeouts. Ran {} loops to try to reach {} network load (reached {} load so far). Set network_load_config[\'disable_timeouts\']=True if desired. Disable this warning by setting print_data=False when calling create_demand_data.'.format(num_loops, network_load_config['target_load_fraction'], load_fraction))
-                # else:
-                    # if num_loops > 15:
-                        # raise Exception('Time out trying to reach requested network load fraction (reached {} but requested {}). Consider adjusting demand data parameters (e.g. increase flow size, decrease interarrival time, etc.), decreasing target_load_fraction, or decreasing network_rate_capacity. Alternatively, to disable timeouts, set network_load_config[\'disable_timeouts\'] = True.'.format(load_fraction, network_load_config['target_load_fraction']))
-
-            # # adjust back down to get load fraction <= target load fraction
-            # demand_data, new_interarrival_time_dist = flowcentric.set_flow_centric_demand_data_network_load(demand_data, 
-                                                                                # interarrival_time_dist=interarrival_time_dist,
-                                                                                # eps=eps,
-                                                                                # node_dist=node_dist,
-                                                                                # flow_size_dist=flow_size_dist,
-                                                                                # network_rate_capacity=network_load_config['network_rate_capacity'],
-                                                                                # target_load_fraction=network_load_config['target_load_fraction'],
-                                                                                # print_data=print_data)
 
 
 
