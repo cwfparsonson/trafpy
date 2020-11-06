@@ -223,9 +223,11 @@ class DCN:
             if curr_num_flows == self.max_flows:
                 # queue full, cannot add flow to queue
                 add_flow = False
-            else:
+            elif curr_num_flows < self.max_flows:
                 # there is enough space to add flow to queue
                 add_flow = True
+            else:
+                raise Exception('Error: max flows per queue is {}, but have {} flows in queue.'.format(self.max_flows, curr_num_flows))
         
         if add_flow:
             # enough space in queue, add flow
@@ -1216,7 +1218,7 @@ class DCN:
                     if num_flows_in_queue == self.max_flows:
                         num_full_queues += 1
                     elif num_flows_in_queue > self.max_flows:
-                        sys.exit('Error: Num queued flows exceeded max_flows')
+                        raise Exception('Error: max flows per queue is {}, but have {} flows in queue.'.format(self.max_flows, num_flows_in_queue))
                     else:
                         pass
                 else:

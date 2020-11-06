@@ -136,6 +136,7 @@ if __name__ == '__main__':
     # BASIC CONFIGURATION
     # _________________________________________________________________________
     MAX_TIME = None
+    MAX_FLOWS = 4
 
     path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/ndf50_1s_university_benchmark_data.json'
     tb = TestBed(path_to_benchmark_data)
@@ -162,7 +163,7 @@ if __name__ == '__main__':
 
     test_config = {'test_name': 'ndf50_1s_university_testbed_data',
                    'max_time': MAX_TIME,
-                   'max_flows': None,
+                   'max_flows': MAX_FLOWS,
                    'slot_size': SLOT_SIZE,
                    'networks': networks,
                    'rwas': rwas,
