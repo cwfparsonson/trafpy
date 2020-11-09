@@ -1228,6 +1228,11 @@ class DCN:
         return num_queued_flows, num_full_queues
 
 
+    def calc_num_queued_jobs(self):
+        '''Calc num queued jobs in network.'''
+        return len(self.network.graph['queued_jobs'])
+
+
     def calc_reward(self):
         if self.max_flows is None:
             # no maximum number of flows per queue therefore no full queues
@@ -1317,17 +1322,17 @@ class DCN:
     def check_if_done(self):
         '''
         Checks if all flows (if flow centric) or all jobs (if job centric) have arrived &
-        been completed
+        been completed &/or dropped
         '''
         if self.max_time is None:
             if self.demand.job_centric:
-                if (len(self.arrived_jobs.keys()) != len(self.completed_jobs) and len(self.arrived_jobs.keys()) != 0) or len(self.arrived_jobs.keys()) != self.demand.num_demands:
+                if (len(self.arrived_jobs.keys()) != len(self.completed_jobs) and len(self.arrived_jobs.keys()) != 0 and self.demand.num_demands != len(self.dropped_jobs)+len(self.completed_jobs)) or len(self.arrived_jobs.keys()) != self.demand.num_demands:
                     return False
                 else:
                     self.check_if_any_flows_arrived()
                     return True
             else:
-                if (len(self.arrived_flows.keys()) != len(self.completed_flows) and len(self.arrived_flows.keys()) != 0) or len(self.arrived_flows.keys()) != self.demand.num_demands:
+                if (len(self.arrived_flows.keys()) != len(self.completed_flows) and len(self.arrived_flows.keys()) != 0 and self.demand.num_demands != len(self.dropped_flows)+len(self.completed_flows)) or len(self.arrived_flows.keys()) != self.demand.num_demands:
                     return False
                 else:
                     self.check_if_any_flows_arrived()
@@ -1338,7 +1343,7 @@ class DCN:
                 if self.curr_time >= self.max_time:
                     self.check_if_any_flows_arrived()
                     return True
-                elif (len(self.arrived_jobs.keys()) != len(self.completed_jobs) and len(self.arrived_jobs.keys()) != 0) or len(self.arrived_jobs.keys()) != self.demand.num_demands:
+                elif (len(self.arrived_jobs.keys()) != len(self.completed_jobs) and len(self.arrived_jobs.keys()) != 0 and self.demand.num_demands != len(self.dropped_jobs)+len(self.completed_jobs)) or len(self.arrived_jobs.keys()) != self.demand.num_demands:
                     return False
                 else:
                     self.check_if_any_flows_arrived()
@@ -1347,7 +1352,7 @@ class DCN:
                 if self.curr_time >= self.max_time:
                     self.check_if_any_flows_arrived()
                     return True
-                elif (len(self.arrived_flows.keys()) != len(self.completed_flows) and len(self.arrived_flows.keys()) != 0) or len(self.arrived_flows.keys()) != self.demand.num_demands:
+                elif (len(self.arrived_flows.keys()) != len(self.completed_flows) and len(self.arrived_flows.keys()) != 0 and self.demand.num_demands != len(self.dropped_flows)+len(self.completed_flows)) or len(self.arrived_flows.keys()) != self.demand.num_demands:
                     return False
                 else:
                     self.check_if_any_flows_arrived()
@@ -1580,7 +1585,8 @@ class DCN:
     def get_flow_summary(self):
         self.num_arrived_flows = len(self.arrived_flows.keys())
         self.num_completed_flows = len(self.completed_flows)
-        self.num_dropped_flows = len(self.dropped_flows) + (self.num_arrived_flows-self.num_completed_flows)
+        self.num_queued_flows, _ = self.calc_num_queued_flows_num_full_queues()
+        self.num_dropped_flows = len(self.dropped_flows)
         
         times_arrived = []
         times_completed = []
@@ -1665,7 +1671,8 @@ class DCN:
         print('Time last flow completed: {} time units'.format(self.time_last_flow_completed))
         print('Total number of demands that arrived and became flows: {}'.format(self.num_arrived_flows))
         print('Total number of flows that were completed: {}'.format(self.num_completed_flows))
-        print('Total number of dropped flows + flows in queues at end of session: {}'.format(self.num_dropped_flows))
+        print('Total number of dropped flows: {}'.format(self.num_dropped_flows))
+        print('Total number of flows in queues at end of session: {}'.format(self.num_queued_flows))
         print('Average FCT: {} time units'.format(self.avrg_fct))
         print('99th percentile FCT: {} time units'.format(self.nn_fct))
         
@@ -1678,7 +1685,8 @@ class DCN:
             print('Time last job completed: {} time units'.format(self.time_last_job_completed))
             print('Total number of job demands that arrived: {}'.format(self.num_arrived_jobs))
             print('Total number of job demands that were completed: {}'.format(self.num_completed_jobs))
-            print('Total number of dropped jobs + jobs in queues at end of session: {}'.format(self.num_dropped_jobs))
+            print('Total number of dropped jobs: {}'.format(self.num_dropped_jobs))
+            print('Total number of jobs in queues at end of session: {}'.format(self.calc_num_queued_jobs()))
             print('Total number of control dependencies that arrived: {}'.format(len(self.arrived_control_deps)))
             print('Total number of control deps that were data deps but had src==dst: {}'.format(len(self.arrived_control_deps_that_were_flows)))
             print('Average JCT: {} time units'.format(self.avrg_jct))
