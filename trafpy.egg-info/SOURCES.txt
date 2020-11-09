@@ -45,4 +45,6 @@ trafpy/manager/src/simulators/__init__.py
 trafpy/manager/src/simulators/analysers.py
 trafpy/manager/src/simulators/dcn.py
 trafpy/manager/src/simulators/env_analyser.py
+trafpy/manager/src/simulators/env_plotter.py
+trafpy/manager/src/simulators/plotters.py
 trafpy/manager/src/simulators/simulators.py

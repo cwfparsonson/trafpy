@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class EnvAnalyser:
 
     def __init__(self, env):
@@ -6,21 +9,196 @@ class EnvAnalyser:
         '''
         self.env = env
 
-    def compute_flow_summary(self, warm_up_end_time=None, cool_down_start_time=None, print_summary=False):
+
+    def compute_metrics(self, warm_up_end_time=None, cool_down_start_time=None, print_summary=False):
         '''
         warm_up_end_time (int, float): Simulation time at which to begin recording
             metrics etc.
         cool_down_start_time (int, float): Simulation time at which to stop recording
             metrics etc.
         '''
+        self._compute_flow_summary(warm_up_end_time, cool_down_start_time)
+        self._compute_general_summary(warm_up_end_time, cool_down_start_time)
+        if self.env.demand.job_centric:
+            self._compute_job_summary(warm_up_end_time, cool_down_start_time)
+
+        if print_summary:
+            print('\n\n-=-=-=-=-=-=--= Summary -=-=-=-=-=-=-=-')
+            self._print_general_summary()
+            self._print_flow_summary()
+            if self.env.demand.job_centric:
+                self._print_job_summary()
+
+
+    ####################################### GENERAL ##########################################
+    def _print_general_summary(self):
+        print('\n ~* General Information *~')
+        print('Simulation name: \'{}\''.format(self.env.sim_name))
+        print('Measurement duration: {} (Start time : {} | End time: {})'.format(self.measurement_duration, self.measurement_start_time, self.measurement_end_time))
+        print('Total number of generated demands (jobs or flows) passed to env: {}'.format(self.env.demand.num_demands)) 
+        print('Total number of these demands which arrived during measurement period: {}'.format(len(self.arrived_flow_dicts)))
+        print('Total info arrived: {} info unit demands arrived'.format(self.total_info_arrived))
+        print('Total info transported: {} info unit demands transported'.format(self.total_info_transported))
+        print('Load (abs): {} info unit demands arrived per unit time (from first to last flow arriving)'.format(self.load_abs))
+        print('Load (frac): {} fraction of network capacity requested (from first to last flow arriving)'.format(self.load_frac))
+        print('Throughput (abs): {} info units transported per unit time'.format(self.throughput_abs))
+        print('Throughput (frac): {} fraction of arrived info successfully transported'.format(self.throughput_frac))
+
+    def _compute_general_summary(self, warm_up_end_time=None, cool_down_start_time=None):
+        self.total_info_arrived = self._calc_total_info_arrived()
+        self.total_info_transported = self._calc_total_info_transported()
+        self.measurement_duration, self.measurement_start_time, self.measurement_end_time = self._get_measurement_times(warm_up_end_time, cool_down_start_time)
+        self.load_abs = self._calc_network_load_abs()
+        self.load_frac = self._calc_network_load_frac()
+        self.throughput_abs = self._calc_throughput_abs()
+        self.throughput_frac = self._calc_throughput_frac()
+
+    def _calc_total_info_arrived(self):
+        return sum([self.arrived_flow_dicts[i]['size'] for i in range(len(self.arrived_flow_dicts))])
+
+    def _calc_total_info_transported(self):
+        return sum([self.completed_flow_dicts[i]['size'] for i in range(len(self.completed_flow_dicts))])
+    
+    def _calc_network_load_abs(self):
+        '''Calc absolute network load (i.e. is load rate during measurement period).'''
+        return self.total_info_arrived / self.measurement_duration
+
+    def _calc_network_load_frac(self):
+        '''Calc fraction network load (i.e. is fraction of network capacity requested during measurement period).'''
+        return self.load_abs / self.env.network.graph['max_nw_capacity']
+
+    def _calc_throughput_abs(self):
+        return self.total_info_transported / self.measurement_duration
+
+    def _calc_throughput_frac(self):
+        return self.total_info_transported / self.total_info_arrived
+
+    def _get_measurement_times(self, warm_up_end_time, cool_down_start_time):
+        if warm_up_end_time is None:
+            measurement_start_time = min(self.flow_times_arrived)
+        else:
+            measurement_start_time = warm_up_end_time
+
+        if cool_down_start_time is None:
+            measurement_end_time = max(self.flow_times_arrived)
+        else:
+            measurement_end_time = cool_down_start_time
+        measurement_duration = measurement_end_time - measurement_start_time
+
+        return measurement_duration, measurement_start_time, measurement_end_time
+
+
+    ################################## FLOW ################################################
+    def _print_flow_summary(self):
+        print('\n ~* Flow Information *~')
+        print('Total number of generated flows passed to env (src != dst, dependency_type == \'data_dep\'): {}'.format(self.env.demand.num_flows))
+        print('Total number of these flows which arrived during measurement period: {}'.format(len(self.arrived_flow_dicts)))
+        print('Time first flow arrived: {}'.format(min(self.flow_times_arrived)))
+        print('Time last flow arrived: {}'.format(max(self.flow_times_arrived)))
+        print('Total number of flows that were completed: {}'.format(len(self.completed_flow_dicts)))
+        print('Total number of flows that were dropped: {}'.format(len(self.dropped_flow_dicts)))
+        print('Total number of flows that were left in queue at end of measurement period: {}'.format(len(self.queued_flow_dicts)))
+        print('Average flow completion time (FCT): {}'.format(self.average_fct))
+        print('99th percentile FCT: {}'.format(self.nn_fct))
+
+    def _compute_flow_summary(self, warm_up_end_time=None, cool_down_start_time=None):
+        '''
+        warm_up_end_time (int, float): Simulation time at which to begin recording
+            metrics etc.
+        cool_down_start_time (int, float): Simulation time at which to stop recording
+            metrics etc.
+        '''
+        self._compute_flow_arrival_metrics(warm_up_end_time, cool_down_start_time)
+        self._compute_flow_completion_metrics(warm_up_end_time, cool_down_start_time)
+        self._compute_flow_dropped_metrics(warm_up_end_time, cool_down_start_time)
+        self._compute_flow_queued_metrics()
+
+    def _calc_flow_completion_times(self):
+        flow_completion_times = []
+        for flow in self.completed_flow_dicts:
+            flow_completion_times.append(flow['time_completed'] - flow['time_arrived'])
+
+        if len(flow_completion_times) == 0:
+            average_fct, ninetyninth_percentile_fct = float('inf'), float('inf')
+        else:
+            average_fct = np.average(np.asarray(flow_completion_times))
+            ninetyninth_percentile_fct = np.percentile(np.asarray(flow_completion_times), 99)
+
+        return flow_completion_times, average_fct, ninetyninth_percentile_fct
+
+    def _compute_flow_arrival_metrics(self, warm_up_end_time, cool_down_start_time):
         self.arrived_flow_dicts = self._get_flows_arrived_in_measurement_period(warm_up_end_time, cool_down_start_time) 
         self.flow_times_arrived = [self.arrived_flow_dicts[i]['time_arrived'] for i in range(len(self.arrived_flow_dicts))]
-        self.measurement_duration, self.measurement_start_time, self.measurement_end_time = self._get_measurement_times(warm_up_end_time, cool_down_start_time)
         self.num_arrived_flows = len(self.arrived_flow_dicts)
 
+    def _compute_flow_completion_metrics(self, warm_up_end_time, cool_down_start_time):
         self.completed_flow_dicts = self._get_flows_completed_in_measurement_period(warm_up_end_time, cool_down_start_time)
-        self.flow_times_completed = [self.completed_flow_dicts[i]['time_completed'] for i in range(len(self.completed_flow_dicts))]
         self.num_completed_flows = len(self.completed_flow_dicts)
+
+        self.fcts, self.average_fct, self.nn_fct = self._calc_flow_completion_times()
+
+    def _compute_flow_dropped_metrics(self, warm_up_end_time, cool_down_start_time):
+        self.dropped_flow_dicts = self._get_flows_dropped_in_measurement_period(warm_up_end_time, cool_down_start_time)
+        self.num_dropped_flows = len(self.dropped_flow_dicts)
+
+    def _compute_flow_queued_metrics(self):
+        self.queued_flow_dicts = self._get_flows_remaining_in_queue_at_end_of_measurement_period()
+        self.num_queued_flows = len(self.queued_flow_dicts)
+
+
+    def _get_flows_remaining_in_queue_at_end_of_measurement_period(self):
+        queued_flow_dicts = []
+
+        # create dicts to enable efficient hash searching
+        completed_flow_ids = {self.completed_flow_dicts[i]['flow_id']: i for i in range(len(self.completed_flow_dicts))}
+        dropped_flow_ids = {self.dropped_flow_dicts[i]['flow_id']: i for i in range(len(self.dropped_flow_dicts))}
+
+        for i in range(len(self.arrived_flow_dicts)):
+            flow_id = self.arrived_flow_dicts[i]['flow_id']
+            if flow_id not in completed_flow_ids and flow_id not in dropped_flow_ids:
+                queued_flow_dicts.append(self.arrived_flow_dicts[i])
+
+        return queued_flow_dicts
+
+    def _get_flows_dropped_in_measurement_period(self, warm_up_end_time, cool_down_start_time):
+        '''Find all flows which arrived during measurement period and were dropped.'''
+        dropped_flow_dicts = []
+
+        if warm_up_end_time is None and cool_down_start_time is None:
+            return self.env.dropped_flows
+
+        elif warm_up_end_time is None and cool_down_start_time is not None:
+            for idx in range(len(self.env.dropped_flows)):
+                arr_time = self.env.dropped_flows[idx]['time_arrived']
+                if arr_time < cool_down_start_time:
+                    dropped_flow_dicts.append(self.env.dropped_flows[idx])
+                else:
+                    # cooling down
+                    pass
+
+        elif warm_up_end_time is not None and cool_down_start_time is None:
+            for idx in range(len(self.env.dropped_flows)):
+                arr_time = self.env.dropped_flows[idx]['time_arrived']
+                if arr_time > warm_up_end_time:
+                    dropped_flow_dicts.append(self.env.dropped_flows[idx])
+                else:
+                    # warming up
+                    pass
+
+        else:
+            for idx in range(len(self.env.dropped_flows)):
+                arr_time = self.env.dropped_flows[idx]['time_arrived']
+                if arr_time < warm_up_end_time:
+                    # warming up
+                    pass
+                elif arr_time > warm_up_end_time and arr_time < cool_down_start_time:
+                    # measure
+                    dropped_flow_dicts.append(self.env.dropped_flows[idx])
+                elif arr_time > warm_up_end_time and arr_time > cool_down_start_time:
+                    # cooling down
+                    pass
+
+        return dropped_flow_dicts 
 
     def _get_flows_completed_in_measurement_period(self, warm_up_end_time, cool_down_start_time):
         '''Find all flows which arrived during measurement period and were completed.'''
@@ -33,7 +211,7 @@ class EnvAnalyser:
             for idx in range(len(self.env.completed_flows)):
                 arr_time = self.env.completed_flows[idx]['time_arrived']
                 if arr_time < cool_down_start_time:
-                    completed_flow_dicts.append(env.completed_flows[idx])
+                    completed_flow_dicts.append(self.env.completed_flows[idx])
                 else:
                     # cooling down
                     pass
@@ -42,7 +220,7 @@ class EnvAnalyser:
             for idx in range(len(self.env.completed_flows)):
                 arr_time = self.env.completed_flows[idx]['time_arrived']
                 if arr_time > warm_up_end_time:
-                    completed_flow_dicts.append(env.completed_flows[idx])
+                    completed_flow_dicts.append(self.env.completed_flows[idx])
                 else:
                     # warming up
                     pass
@@ -55,24 +233,12 @@ class EnvAnalyser:
                     pass
                 elif arr_time > warm_up_end_time and arr_time < cool_down_start_time:
                     # measure
-                    completed_flow_dicts.append(env.completed_flows[idx])
+                    completed_flow_dicts.append(self.env.completed_flows[idx])
                 elif arr_time > warm_up_end_time and arr_time > cool_down_start_time:
                     # cooling down
                     pass
 
         return completed_flow_dicts 
-
-
-
-    def _get_measurement_times(self, warm_up_end_time, cool_down_start_time):
-        if warm_up_end_time is None:
-            measurement_start_time = min(self.flow_times_arrived)
-        if cool_down_start_time is None:
-            measurement_end_time = max(self.flow_times_arrived)
-        measurement_duration = measurement_end_time - measurement_start_time
-
-        return measurement_duration, measurement_start_time, measurement_end_time
-
 
     def _get_flows_arrived_in_measurement_period(self, warm_up_end_time, cool_down_start_time):
         '''Find flows arrived during measurement period.'''
@@ -85,7 +251,7 @@ class EnvAnalyser:
             for idx in range(len(self.env.arrived_flow_dicts)):
                 arr_time = self.env.arrived_flow_dicts[idx]['time_arrived']
                 if arr_time < cool_down_start_time:
-                    flows_arrived.append(env.arrived_flow_dicts[idx])
+                    flows_arrived.append(self.env.arrived_flow_dicts[idx])
                 else:
                     # cooling down
                     pass
@@ -94,7 +260,7 @@ class EnvAnalyser:
             for idx in range(len(self.env.arrived_flow_dicts)):
                 arr_time = self.env.arrived_flow_dicts[idx]['time_arrived']
                 if arr_time > warm_up_end_time:
-                    flows_arrived.append(env.arrived_flow_dicts[idx])
+                    flows_arrived.append(self.env.arrived_flow_dicts[idx])
                 else:
                     # warming up
                     pass
@@ -107,7 +273,7 @@ class EnvAnalyser:
                     pass
                 elif arr_time > warm_up_end_time and arr_time < cool_down_start_time:
                     # measure
-                    flows_arrived.append(env.arrived_flow_dicts[idx])
+                    flows_arrived.append(self.env.arrived_flow_dicts[idx])
                 elif arr_time > warm_up_end_time and arr_time > cool_down_start_time:
                     # cooling down
                     pass
@@ -115,7 +281,193 @@ class EnvAnalyser:
         return flows_arrived 
 
 
-        return flows_completed 
+    #################################### JOB ##################################
+    def _print_job_summary(self):
+        print('\n ~* Job Information *~')
+        print('Total number of generated jobs passed to env: {}'.format(self.env.demand.num_demands))
+        print('Total number of these jobs which arrived during measurement period: {}'.format(len(self.arrived_job_dicts)))
+        print('Time first job arrived: {}'.format(min(self.job_times_arrived)))
+        print('Time last job arrived: {}'.format(max(self.job_times_arrived)))
+        print('Total number of jobs that were completed: {}'.format(len(self.completed_job_dicts)))
+        print('Total number of jobs that were dropped: {}'.format(len(self.dropped_job_dicts)))
+        print('Total number of jobs that were left in queue at end of measurement period: {}'.format(len(self.queued_job_dicts)))
+        print('Average job completion time (JCT): {}'.format(self.average_jct))
+        print('99th percentile JCT: {}'.format(self.nn_jct))
+
+    def _compute_job_summary(self, warm_up_end_time, cool_down_start_time):
+        self._compute_job_arrival_metrics(warm_up_end_time, cool_down_start_time)
+        self._compute_job_completion_metrics(warm_up_end_time, cool_down_start_time)
+        self._compute_job_dropped_metrics(warm_up_end_time, cool_down_start_time)
+        self._compute_job_queued_metrics()
+
+    def _compute_job_arrival_metrics(self, warm_up_end_time, cool_down_start_time):
+        self.arrived_job_dicts = self._get_jobs_arrived_in_measurement_period(warm_up_end_time, cool_down_start_time)
+        self.job_times_arrived = [self.arrived_job_dicts[i]['time_arrived'] for i in range(len(self.arrived_job_dicts))]
+        self.num_arrived_jobs = len(self.arrived_job_dicts)
+
+    def _compute_job_completion_metrics(self, warm_up_end_time, cool_down_start_time):
+        self.completed_job_dicts = self._get_jobs_completed_in_measurement_period(warm_up_end_time, cool_down_start_time)
+        self.num_completed_jobs = len(self.completed_job_dicts)
+
+        self.jcts, self.average_jct, self.nn_jct = self._calc_job_completion_times()
+        
+    def _compute_job_dropped_metrics(self, warm_up_end_time, cool_down_start_time):
+        self.dropped_job_dicts = self._get_jobs_dropped_in_measurement_period(warm_up_end_time, cool_down_start_time)
+        self.num_dropped_jobs = len(self.dropped_job_dicts)
+
+    def _compute_job_queued_metrics(self):
+        self.queued_job_dicts = self._get_job_remaining_in_queue_at_end_of_measurement_period()
+        self.num_queued_jobs = len(self.queued_job_dicts)
+
+    def _get_jobs_remaining_in_queue_at_end_of_measurement_period(self):
+        queued_job_dicts = []
+
+        # create dicts to enable efficient hash searching
+        completed_job_ids = {self.completed_job_dicts[i]['job_id']: i for i in range(len(self.completed_job_dicts))}
+        dropped_job_ids = {self.dropped_job_dicts[i]['job_id']: i for i in range(len(self.dropped_job_dicts))}
+
+        for i in range(len(self.arrived_job_dicts)):
+            job_id = self.arrived_job_dicts[i]['job_id']
+            if job_id not in completed_job_ids and job_id not in dropped_job_ids:
+                queued_job_dicts.append(self.arrived_job_dicts[i])
+
+        return queued_job_dicts
+
+    def _get_jobs_arrived_in_measurement_period(self, warm_up_end_time, cool_down_start_time):
+        '''Find jobs arrived during measurement period.'''
+        jobs_arrived = []
+
+        if warm_up_end_time is None and cool_down_start_time is None:
+            return self.env.arrived_job_dicts
+
+        elif warm_up_end_time is None and cool_down_start_time is not None:
+            for idx in range(len(self.env.arrived_job_dicts)):
+                arr_time = self.env.arrived_job_dicts[idx]['time_arrived']
+                if arr_time < cool_down_start_time:
+                    jobs_arrived.append(self.env.arrived_job_dicts[idx])
+                else:
+                    # cooling down
+                    pass
+
+        elif warm_up_end_time is not None and cool_down_start_time is None:
+            for idx in range(len(self.env.arrived_job_dicts)):
+                arr_time = self.env.arrived_job_dicts[idx]['time_arrived']
+                if arr_time > warm_up_end_time:
+                    jobs_arrived.append(self.env.arrived_job_dicts[idx])
+                else:
+                    # warming up
+                    pass
+
+        else:
+            for idx in range(len(self.env.arrived_job_dicts)):
+                arr_time = self.env.arrived_job_dicts[idx]['time_arrived']
+                if arr_time < warm_up_end_time:
+                    # warming up
+                    pass
+                elif arr_time > warm_up_end_time and arr_time < cool_down_start_time:
+                    # measure
+                    jobs_arrived.append(self.env.arrived_job_dicts[idx])
+                elif arr_time > warm_up_end_time and arr_time > cool_down_start_time:
+                    # cooling down
+                    pass
+
+        return jobs_arrived 
+
+    def _get_jobs_completed_in_measurement_period(self, warm_up_end_time, cool_down_start_time):
+        '''Find all jobs which arrived during measurement period and were completed.'''
+        completed_job_dicts = []
+
+        if warm_up_end_time is None and cool_down_start_time is None:
+            return self.env.completed_job_dicts
+
+        elif warm_up_end_time is None and cool_down_start_time is not None:
+            for idx in range(len(self.env.completed_jobs)):
+                arr_time = self.env.completed_jobs[idx]['time_arrived']
+                if arr_time < cool_down_start_time:
+                    completed_job_dicts.append(self.env.completed_jobs[idx])
+                else:
+                    # cooling down
+                    pass
+
+        elif warm_up_end_time is not None and cool_down_start_time is None:
+            for idx in range(len(self.env.completed_jobs)):
+                arr_time = self.env.completed_jobs[idx]['time_arrived']
+                if arr_time > warm_up_end_time:
+                    completed_job_dicts.append(self.env.completed_jobs[idx])
+                else:
+                    # warming up
+                    pass
+
+        else:
+            for idx in range(len(self.env.completed_jobs)):
+                arr_time = self.env.completed_jobs[idx]['time_arrived']
+                if arr_time < warm_up_end_time:
+                    # warming up
+                    pass
+                elif arr_time > warm_up_end_time and arr_time < cool_down_start_time:
+                    # measure
+                    completed_job_dicts.append(self.env.completed_jobs[idx])
+                elif arr_time > warm_up_end_time and arr_time > cool_down_start_time:
+                    # cooling down
+                    pass
+
+        return completed_job_dicts 
+
+    def _calc_job_completion_times(self):
+        job_completion_times = []
+        for job in self.completed_job_dicts:
+            job_completion_times.append(job['time_completed'] - job['time_arrived'])
+
+        if len(job_completion_times) == 0:
+            average_jct, ninetyninth_percentile_jct = float('inf'), float('inf')
+        else:
+            average_jct = np.average(np.asarray(job_completion_times))
+            ninetyninth_percentile_jct = np.percentile(np.asarray(job_completion_times), 99)
+
+        return job_completion_times, average_jct, ninetyninth_percentile_jct
+
+
+    def _get_jobs_dropped_in_measurement_period(self, warm_up_end_time, cool_down_start_time):
+        '''Find all jobs which arrived during measurement period and were dropped.'''
+        dropped_job_dicts = []
+
+        if warm_up_end_time is None and cool_down_start_time is None:
+            return self.env.dropped_jobs
+
+        elif warm_up_end_time is None and cool_down_start_time is not None:
+            for idx in range(len(self.env.dropped_jobs)):
+                arr_time = self.env.dropped_jobs[idx]['time_arrived']
+                if arr_time < cool_down_start_time:
+                    dropped_job_dicts.append(self.env.dropped_jobs[idx])
+                else:
+                    # cooling down
+                    pass
+
+        elif warm_up_end_time is not None and cool_down_start_time is None:
+            for idx in range(len(self.env.dropped_jobs)):
+                arr_time = self.env.dropped_jobs[idx]['time_arrived']
+                if arr_time > warm_up_end_time:
+                    dropped_job_dicts.append(self.env.dropped_jobs[idx])
+                else:
+                    # warming up
+                    pass
+
+        else:
+            for idx in range(len(self.env.dropped_jobs)):
+                arr_time = self.env.dropped_jobs[idx]['time_arrived']
+                if arr_time < warm_up_end_time:
+                    # warming up
+                    pass
+                elif arr_time > warm_up_end_time and arr_time < cool_down_start_time:
+                    # measure
+                    dropped_job_dicts.append(self.env.dropped_jobs[idx])
+                elif arr_time > warm_up_end_time and arr_time > cool_down_start_time:
+                    # cooling down
+                    pass
+
+        return dropped_job_dicts 
+
+
 
 
 
@@ -123,28 +475,6 @@ class EnvAnalyser:
 
 
 
-    def cal_total_info_arrived(self, env):
-        flow_sizes_arrived = []
-        num_arrived_flows = len(env.arrived_flows.keys())
-
-        for idx in range(num_arrived_flows):
-            arr_time = env.arrived_flow_dicts[idx]['time_arrived']
-            if arr_time < self.warm_up_end_time:
-                # not finished warming up sim env
-                pass
-            elif arr_time > self.warm_up_end_time and arr_time < self.cool_down_start_time:
-                # measure
-                flow_sizes_arrived.append(env.arrived_flow_dicts[idx]['size'])
-            elif arr_time > self.warm_up_end_time and arr_time > self.cool_down_start_time:
-                # cooling down
-                pass
-
-        total_info_arrived = sum(flow_sizes_arrived)
-
-        return flow_sizes_arrived, total_info_arrived
-    
-    def calc_network_load_abs(self, env):
-        pass
 
 
 
