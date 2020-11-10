@@ -1,6 +1,7 @@
 from trafpy.generator.src.tools import load_data_from_json
 from trafpy.generator.src.demand import Demand
 from trafpy.manager.src.simulators.simulators import DCN
+from trafpy.manager.src.simulators.env_analyser import EnvAnalyser
 
 import multiprocessing
 # from progress.spinner import Spinner
@@ -74,7 +75,9 @@ class TestBed:
             action = scheduler.get_action(observation)
             observation, reward, done, info = env.step(action)
             if done:
-                env.get_scheduling_session_summary(print_summary=True)
+                # env.get_scheduling_session_summary(print_summary=True)
+                analyser = EnvAnalyser(env)
+                analyser.compute_metrics(print_summary=True)
                 try:
                     envs.append(env) # store env
                 except EOFError:

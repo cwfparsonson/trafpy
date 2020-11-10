@@ -34,38 +34,6 @@ class DCN:
         self.max_time = max_time
 
 
-
-    # def get_fat_tree_positions(self, net, width_scale=500, height_scale=10):
-        # pos = {}
-
-        # node_type_dict = self.get_node_type_dict(net, net.graph['node_labels'])
-        # node_types = list(node_type_dict.keys())
-        
-        # heights = {} # dict for heigh separation between fat tree layers
-        # widths = {} # dict for width separation between nodes within layers
-        # h = iter([1, 2, 3, 4]) # server, edge, agg, core heights
-        # for node_type in node_types: 
-            # heights[node_type] = next(h)
-            # widths[node_type] = 1/(len(node_type_dict[node_type])+1)
-            # idx = 0
-            # for node in node_type_dict[node_type]:
-                # pos[node] = ((idx+1)*widths[node_type]*width_scale,heights[node_type]*height_scale)
-                # idx += 1
-
-        # return pos
-        
-
-
-    # def init_network_node_positions(self, net):
-        # if net.graph['topology_type'] == 'fat_tree':
-            # pos = self.get_fat_tree_positions(net)
-
-
-        # else:
-            # pos = nx.nx_agraph.graphviz_layout(net, prog='neato')
-        
-        # return pos
-
     def reset(self, pickled_demand_path=None, return_obs=True):
         '''
         Resets DCN simulation environment
@@ -144,7 +112,8 @@ class DCN:
         q_dict = {src: 
                     {dst: 
                         {'times': [0],
-                         'queue_lengths': [0]}
+                         'queue_lengths_info_units': [0],
+                         'queue_lengths_num_flows': [0]}
                         for dst in [dst for dst in Graph.graph['endpoints'] if dst != src]}
                     for src in Graph.graph['endpoints']} 
 
@@ -157,7 +126,7 @@ class DCN:
         queue = self.network.nodes[src][dst]
         num_flows = len(queue['queued_flows'])
         
-        queue_length = 0
+        queue_length_bytes = 0
         for flow_idx in range(num_flows):
             flow_dict = queue['queued_flows'][flow_idx]
             if flow_dict['packets'] is None:
@@ -168,9 +137,9 @@ class DCN:
                 # scheduler agent has since chosen flow, use packets left
                 # to get queue length
                 queued_flow_bytes = sum(flow_dict['packets'])
-            queue_length += queued_flow_bytes
+            queue_length_bytes += queued_flow_bytes
 
-        return queue_length
+        return queue_length_bytes, num_flows
     
     def update_queue_evolution(self):
         q_dict = self.queue_evolution_dict
@@ -179,9 +148,10 @@ class DCN:
         for src in self.network.graph['endpoints']:
             for dst in self.network.graph['endpoints']:
                 if dst != src:
-                    length = self.calc_queue_length(src, dst)
+                    queue_length_bytes, queue_length_flows = self.calc_queue_length(src, dst)
                     q_dict[src][dst]['times'].append(time)
-                    q_dict[src][dst]['queue_lengths'].append(length)
+                    q_dict[src][dst]['queue_lengths_info_units'].append(queue_length_bytes)
+                    q_dict[src][dst]['queue_lengths_num_flows'].append(queue_length_flows)
                 else:
                     # can't have src == dst
                     pass
@@ -311,30 +281,6 @@ class DCN:
         if print_times:
             print('Total time to add job to queue & register completed flows: {}'.format(time_finished_adding-time_started_adding))
        
-       # # go through added flows and check for size == 0 'flows' that can sched
-       # for flow_dict in job_dict['flow_dicts']:
-       #     '''
-       #     NOTE: 'Flows' with src == dst or size == 0 (data deps) never become flows. But,
-       #     they still have prior dependencies in job graph. At some point, need
-       #     to account for these dependencies by only counting can_schedule = 1 
-       #     size 0 flows as having been completed. To do this, will also need
-       #     to update child dependencies when register size 0 flow as complete or
-       #     will get stuck in infinite scheduling loop since child dependencies
-       #     will never know prev flow completed
-       #     '''
-       #     #if flow_dict['can_schedule'] == 1 and flow_dict['src'] == flow_dict['dst']:
-       #     if flow_dict['src'] == flow_dict['dst']:
-       #         flow_dict['time_arrived'] = job_dict['time_arrived']
-       #         # For size == 0 'flows', count 'flow' as complete
-       #         self.register_completed_flow(flow_dict)
-            
-        
-        
-        
-        
-        
-        
-            
             
     def update_curr_time(self, slot_dict):
         '''
@@ -457,15 +403,6 @@ class DCN:
                         pass
 
         self.arrived_jobs[job_dict['job_id']] = 'removed' 
-        #idx = 0
-        #for job in self.network.graph['queued_jobs']:
-        #    if job['job_id'] == job_dict['job_id']:
-        #        del self.network.graph['queued_jobs'][idx]
-        #        break
-        #    else:
-        #        # not this job, move to next job
-        #        idx += 1
-            
         
     
     def remove_flow_from_queue(self, flow_dict):
@@ -548,23 +485,6 @@ class DCN:
                 else:
                     # 'flow' never actually becomes flow (is ctrl dependency or src==dst)
                     pass
-            #flow_arrived, _ = self.check_flow_present(flow_dict, self.arrived_flows)
-            #if flow_arrived:
-            #    # flow already counted as arrived
-            #    pass
-            #else:
-            #    # flow not yet counted as arrived
-            #    if flow_dict['src'] != flow_dict['dst'] and flow_dict['size'] != 0:
-            #        if flow_dict['time_arrived'] is None:
-            #            # record time flow arrived
-            #            flow_dict['time_arrived'] = self.curr_time
-            #        else:
-            #            # already recorded time of arrival
-            #            pass
-            #        self.arrived_flows.append(flow_dict)
-            #    else:
-            #        # 'flow' never actually becomes flow (is ctrl dependency or src==dst)
-            #        pass
         else:
             # can't yet schedule therefore don't count as arrived
             pass
@@ -652,27 +572,6 @@ class DCN:
                 pass
         
         return num_channels_used, num_channels
-
-
-    # def get_node_type_dict(self, network, node_types=[]):
-        # '''
-        # Gets dict where keys are node types and values are list of nodes for
-        # each node type in graph
-        # '''
-        # network_nodes = []
-        # for network_node in network.nodes:
-            # network_nodes.append(network_node)
-        # network_nodes_dict = {node_type: [] for node_type in node_types}
-        # for n in network_nodes:
-            # for node_type in node_types:
-                # if node_type in n:
-                    # network_nodes_dict[node_type].append(n)
-                # else:
-                    # # not this node type
-                    # pass
-        
-        # return network_nodes_dict
-
 
 
     def draw_network_state(self,
@@ -980,50 +879,6 @@ class DCN:
         else:
             # job not yet completed, has outstanding dependencies
             pass
-                    
-    #def check_if_flow_has_null_child(self, flow_dict):
-    #    '''
-    #    checks if flow has a null child
-    #    '''
-    #    child_deps = null_flow['child_deps']
-    #    null_flow_dict = None
-
-    #    eps = self.network.grap['endpoints']
-    #    for child_dep in child_deps:
-    #        for ep in eps:
-    #            ep_queues = self.network.nodes[ep]
-    #            for ep_queue in ep_queues.values():
-    #                for flow_dict in ep_queue['queued_flows']:
-    #                    if flow_dict['job_id'] == null_flow['job_id']:
-    #                        # only consider if part of same job
-    #                        if flow_dict['id'] == child_dep:
-    #                            # child found
-    #                            if flow_dict['size'] == 0:
-    #                                null_flow_dict = flow_dict
-    #                                return null_flow_dict
-  
-    #    return null_flow_dict
-
-    #                
-    #def update_null_flow_size_dependencies(self, null_flow):
-    #    '''
-    #    Goes through flows in job and updates any child dependencies of flows
-    #    which can now be 'scheduled' but which have size = 0 (i.e. src== dst) 
-    #    therefore never becomes flow.  
-    #    '''
-    #    child_deps = null_flow['child_deps']
-    #    null_child = False
-    #    flows_to_consider = [null_flow]
-    #    null_flow_dict = null_flow
-
-    #    while True:
-    #        while null_flow_dict is not None:
-    #            null_flow_dict = self.check_if_flow_has_null_child(null_flow_dict)
-    #            flows_to_consider.append(self.check_if_flow_has_null_child(null_flow_dict))
-
-    #        for flow in flows_to_consider:
-    #            null_child, null_flow_dict = self.check_if_flow_has_null_child(flow)
-
             
     
     def update_job_flow_dependencies(self, completed_flow):
@@ -1182,6 +1037,7 @@ class DCN:
         info = None
         obs = self.next_observation()
 
+        # # DEBUG:
         # queues = self.get_current_queue_states()
         # print('arrived flows:\n{}'.format(self.arrived_flow_dicts))
         # print('arrived flow ids:\n{}'.format(self.arrived_flows))
@@ -1243,43 +1099,6 @@ class DCN:
             r = - (self.slot_size) * (num_queued_flows + num_full_queues)
 
         return r
-
-    # def plot_single_queue_evolution(self, src, dst, path_figure):
-        # '''
-        # Plot queue evolution (queue length vs time) for a given src-dst queue
-        # '''
-        # q_dict = self.queue_evolution_dict
-        # times = q_dict[src][dst]['times']
-        # lengths = q_dict[src][dst]['queue_lengths']
-        
-        # fig = plt.figure()
-        # plt.style.use('ggplot')
-        # plt.plot(times, lengths)
-        # plt.xlabel('Times (a.u.)')
-        # plt.ylabel('{}-{} Q Length (a.u.)'.format(src,dst))
-        # plt.savefig(path_figure + '{}-{}_q_length.png'.format(src,dst))
-        # plt.close()
-
-    # def plot_all_queue_evolution(self, path_figure):
-        # '''
-        # Plots queue evolution for all queues in network
-        # '''
-        # q_dict = self.queue_evolution_dict
-        # srcs = list(q_dict.keys())
-        # for src in srcs:
-            # dsts = list(q_dict[src].keys())
-            # for dst in dsts:
-                # self.plot_single_queue_evolution(src,dst,path_figure)
-    
-    # def plot_set_queue_evolution(self, srcs, dsts, path_figure):
-        # '''
-        # Plots queue evolution for set of src-dst pairs (given as lists)
-        # '''
-        # for idx in range(len(srcs)):
-            # src = srcs[idx]
-            # dst = dsts[idx]
-            # self.plot_single_queue_evolution(src,dst,path_figure)
-            
     
     def save_rendered_animation(self, path_animation, fps=1, bitrate=1800, animation_name='anim'):
         if len(self.animation_images) > 0:
@@ -1521,202 +1340,6 @@ class DCN:
             # update global graph property
             self.network.graph['curr_nw_capacity_used'] -= flow_size
         self.network.graph['num_active_connections'] -= 1
-    
-    # def calc_flow_completion_times(self,times_arrived,times_completed):
-        # '''
-        # Calculates flow completion times of all recorded completed flows
-        # '''
-        # flow_completion_times = np.asarray(times_completed) - np.asarray(times_arrived)
-        
-        # if len(flow_completion_times) == 0:
-            # average_fct, ninetyninth_percentile_fct = float('inf'), float('inf')
-        # else:
-            # average_fct = np.average(flow_completion_times)
-            # ninetyninth_percentile_fct = np.percentile(flow_completion_times,99)
-
-        # return flow_completion_times,average_fct,ninetyninth_percentile_fct
-
-    
-    # def calc_job_completion_times(self,times_arrived,times_completed):
-        # job_completion_times = np.asarray(times_completed) - np.asarray(times_arrived)
-        
-        # if len(job_completion_times) == 0:
-            # average_jct, ninetyninth_percentile_jct = float('inf'), float('inf')
-        # else:
-            # average_jct = np.average(job_completion_times)
-            # ninetyninth_percentile_jct = np.percentile(job_completion_times,99)
-        
-
-        # return job_completion_times,average_jct,ninetyninth_percentile_jct
-        
-    
-    # def calc_total_info_transported(self):
-        # flow_sizes_transported = []
-        # num_completed_flows = len(self.completed_flows)
-
-        # for idx in range(num_completed_flows):
-            # flow_sizes_transported.append(self.completed_flows[idx]['size'])
-
-        # total_info_transported = sum(flow_sizes_transported)
-
-        # return flow_sizes_transported, total_info_transported
-
-    # def calc_total_info_arrived(self):
-        # flow_sizes_arrived = []
-        # num_arrived_flows = len(self.arrived_flows.keys())
-        
-        # for idx in range(num_arrived_flows):
-            # flow_sizes_arrived.append(self.arrived_flow_dicts[idx]['size'])
-
-        # total_info_arrived = sum(flow_sizes_arrived)
-
-        # return flow_sizes_arrived, total_info_arrived
-    
-    # def get_general_summary(self):
-        # _,self.info_arrived = self.calc_total_info_arrived()
-        # _,self.info_transported = self.calc_total_info_transported()
-        
-        # self.session_duration = self.time_last_flow_completed-self.time_first_flow_arrived
-        
-        # self.load = self.info_arrived/(self.time_last_flow_arrived-self.time_first_flow_arrived)
-        # self.throughput = self.info_transported/self.session_duration
-    
-    
-    # def get_flow_summary(self):
-        # self.num_arrived_flows = len(self.arrived_flows.keys())
-        # self.num_completed_flows = len(self.completed_flows)
-        # self.num_queued_flows, _ = self.calc_num_queued_flows_num_full_queues()
-        # self.num_dropped_flows = len(self.dropped_flows)
-        
-        # times_arrived = []
-        # times_completed = []
-        # for idx in range(self.num_completed_flows):
-            # times_arrived.append(self.completed_flows[idx]['time_arrived'])
-            # times_completed.append(self.completed_flows[idx]['time_completed'])
-        # _,self.avrg_fct,self.nn_fct = self.calc_flow_completion_times(times_arrived,times_completed)
-        
-        # times_all_arrived = []
-        # for idx in range(self.num_arrived_flows):
-            # times_all_arrived.append(self.arrived_flow_dicts[idx]['time_arrived'])
-
-        # self.time_first_flow_arrived = min(times_all_arrived)
-        # self.time_last_flow_arrived = max(times_all_arrived)
-        # if len(times_completed) == 0:
-            # self.time_first_flow_completed = float('inf')
-            # self.time_last_flow_completed = float('inf')
-        # else:
-            # self.time_first_flow_completed = min(times_completed)
-            # self.time_last_flow_completed = max(times_completed)
-
-
-    # def get_job_summary(self):
-        # self.num_arrived_jobs = len(self.arrived_jobs.keys())
-        # self.num_completed_jobs = len(self.completed_jobs)
-        # self.num_dropped_jobs = len(self.dropped_jobs) + (self.num_arrived_jobs-self.num_completed_jobs)
-        
-        # times_arrived = []
-        # times_completed = []
-        # for idx in range(self.num_completed_jobs):
-            # times_arrived.append(self.completed_jobs[idx]['time_arrived'])
-            # times_completed.append(self.completed_jobs[idx]['time_completed'])
-        # _,self.avrg_jct,self.nn_jct = self.calc_job_completion_times(times_arrived,times_completed)
-        
-        # times_all_arrived = []
-        # for job in self.arrived_job_dicts:
-            # times_all_arrived.append(job['time_arrived'])
-
-        # self.time_first_job_arrived = min(times_all_arrived)
-        # self.time_last_job_arrived = max(times_all_arrived)
-        # if len(times_completed) == 0:
-            # self.time_first_job_completed = float('inf')
-            # self.time_last_job_completed = float('inf')
-        # else: 
-            # self.time_first_job_completed = min(times_completed)
-            # self.time_last_job_completed = max(times_completed)
-        
-        
-        
-
-    # def get_scheduling_session_summary(self, print_summary=True):
-        # self.get_flow_summary()
-        # self.get_general_summary()
-        # if self.demand.job_centric:
-            # self.get_job_summary()
-        # if print_summary:
-            # self.print_scheduling_session_summary()
-        
-
-
-
-    # def print_scheduling_session_summary(self):
-        # print('-=-=-=-=-=-=-= Scheduling Session Ended -=-=-=-=-=-=-=')
-        # print('SUMMARY:')
-        # print('~* General Info *~')
-        # print('Simulation name: \'{}\''.format(self.sim_name))
-        # print('Total session duration: {} time units'.format(self.session_duration))
-        # print('Total number of generated demands (jobs or flows): {}'.format(self.demand.num_demands))
-        # print('Total info arrived: {} info units'.format(self.info_arrived))
-        # print('Load: {} info unit demands arrived per unit time (from first to last flow arriving)'.format(self.load))
-        # print('Total info transported: {} info units'.format(self.info_transported))
-        # print('Throughput: {} info units transported per unit time'.format(self.throughput))
-        
-        # print('\n~* Flow Info *~')
-        # if self.demand.job_centric:
-            # print('Total number generated data dependencies: {}'.format(self.demand.num_data_deps))
-            # print('Total number generated control dependencies: {}'.format(self.demand.num_control_deps))
-        # print('Total number generated flows (src!=dst,dependency_type==\'data_dep\'): {}'.format(self.demand.num_flows))
-        # print('Time first flow arrived: {} time units'.format(self.time_first_flow_arrived))
-        # print('Time last flow arrived: {} time units'.format(self.time_last_flow_arrived))
-        # print('Time first flow completed: {} time units'.format(self.time_first_flow_completed))
-        # print('Time last flow completed: {} time units'.format(self.time_last_flow_completed))
-        # print('Total number of demands that arrived and became flows: {}'.format(self.num_arrived_flows))
-        # print('Total number of flows that were completed: {}'.format(self.num_completed_flows))
-        # print('Total number of dropped flows: {}'.format(self.num_dropped_flows))
-        # print('Total number of flows in queues at end of session: {}'.format(self.num_queued_flows))
-        # print('Average FCT: {} time units'.format(self.avrg_fct))
-        # print('99th percentile FCT: {} time units'.format(self.nn_fct))
-        
-        
-        # if self.demand.job_centric:
-            # print('\n~* Job Info *~')
-            # print('Time first job arrived: {} time units'.format(self.time_first_job_arrived))
-            # print('Time last job arrived: {} time units'.format(self.time_last_job_arrived))
-            # print('Time first job completed: {} time units'.format(self.time_first_job_completed))
-            # print('Time last job completed: {} time units'.format(self.time_last_job_completed))
-            # print('Total number of job demands that arrived: {}'.format(self.num_arrived_jobs))
-            # print('Total number of job demands that were completed: {}'.format(self.num_completed_jobs))
-            # print('Total number of dropped jobs: {}'.format(self.num_dropped_jobs))
-            # print('Total number of jobs in queues at end of session: {}'.format(self.calc_num_queued_jobs()))
-            # print('Total number of control dependencies that arrived: {}'.format(len(self.arrived_control_deps)))
-            # print('Total number of control deps that were data deps but had src==dst: {}'.format(len(self.arrived_control_deps_that_were_flows)))
-            # print('Average JCT: {} time units'.format(self.avrg_jct))
-            # print('99th percentile JCT: {} time units'.format(self.nn_jct))
-   
-        
-    #def save_demand(self, path, name=None, overwrite=False):
-    #    '''
-    #    Save demand object of this simulation
-    #    '''
-    #    if name is None:
-    #        name = 'demand_{}_jobcentric_{}'.format(str(self.demand.num_demands), str(self.demand.job_centric))
-    #    else:
-    #        # name already given
-    #        pass
-    #    
-    #    filename = path+name+'.obj'
-    #    if overwrite:
-    #        # overwrite prev saved file
-    #        pass
-    #    else:
-    #        # avoid overwriting
-    #        v = 2
-    #        while os.path.exists(str(filename)):
-    #            filename = path+name+'_v{}'.format(v)+'.obj'
-    #            v += 1
-    #    filehandler = open(filename, 'wb')
-    #    pickle.dump(dict(self.demand.__dict__), filehandler)
-    #    filehandler.close()
-
 
     def save_sim(self, 
                  path, 

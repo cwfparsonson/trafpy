@@ -253,6 +253,8 @@ def plot_val_bar(x_values,
 def plot_val_line(plot_dict={},
                      xlabel='Random Variable',
                      ylabel='Random Variable Value',
+                     ylim=None,
+                     vertical_lines=[],
                      show_fig=False):
     '''Plots line plot.
 
@@ -261,20 +263,20 @@ def plot_val_line(plot_dict={},
 
     '''
     keys = list(plot_dict.keys())
-    # num_vals = len(plot_dict[keys[0]]['x_values'])
-    # for key in keys:
-        # if len(plot_dict[key]['x_values']) != num_vals or len(plot_dict[key]['y_values']) != num_vals:
-            # raise Exception('Must have equal number of x and y values to plot.')
 
     fig = plt.figure()
     plt.style.use('ggplot')
 
     class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
-    for _class in plot_dict.keys():
+    for _class in sorted(plot_dict.keys()):
         plt.plot(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], c=next(class_colours), label=str(_class))
+        for vline in vertical_lines:
+            plt.axvline(x=vline, color='r', linestyle='--')
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+    if ylim is not None:
+        plt.ylim(bottom=ylim[0], top=ylim[1])
     plt.legend()
 
     if show_fig:
@@ -303,7 +305,7 @@ def plot_val_scatter(plot_dict={},
     plt.style.use('ggplot')
 
     class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
-    for _class in plot_dict.keys():
+    for _class in sorted(plot_dict.keys()):
         plt.scatter(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], c=next(class_colours), label=str(_class))
 
     plt.xlabel(xlabel)
@@ -316,6 +318,43 @@ def plot_val_scatter(plot_dict={},
 
     return fig
 
+
+def plot_val_cdf(plot_dict={},
+                 xlabel='Random Variable',
+                 ylabel='CDF',
+                 complementary_cdf=False,
+                 show_fig=False):
+    '''Plots CDF plot.
+
+    plot_dict= {'class_1': {'rand_vars': [0.1, 0.1, 0.3],
+                'class_2': {'rand_vars': [0.2, 0.2, 0.3]}}
+
+    '''
+    fig = plt.figure()
+    plt.style.use('ggplot')
+
+    keys = list(plot_dict.keys())
+    class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
+    for _class in sorted(plot_dict.keys()):
+        ecdf = ECDF(plot_dict[_class]['rand_vars'])
+        colour = next(class_colours)
+        if complementary_cdf:
+            ylabel = 'Complementary CDF'
+            plt.plot(ecdf.x, 1-ecdf.y, c=colour, label=str(_class))
+            plt.scatter(ecdf.x, 1-ecdf.y, c=colour)
+        else:
+            plt.plot(ecdf.x, ecdf.y, c=colour, label=str(_class))
+            plt.scatter(ecdf.x, ecdf.y, c=colour)
+    plt.ylim(top=1, bottom=0)
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend()
+
+    if show_fig:
+        plt.show()
+
+    return fig
 
 
 def plot_val_stacked_bar(plot_dict={},
@@ -347,7 +386,7 @@ def plot_val_stacked_bar(plot_dict={},
 
     plots = {}
     curr_bottom = None # init bottom y coords of bar to plot
-    for _class in plot_dict.keys():
+    for _class in sorted(plot_dict.keys()):
         plots[_class] = plt.bar(x_pos, plot_dict[_class]['y_values'], bar_width, bottom=curr_bottom)
         # update bottom y coords for next bar
         curr_bottom = plot_dict[_class]['y_values']
