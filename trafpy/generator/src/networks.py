@@ -135,6 +135,7 @@ def gen_nsfnet_network(ep_label='server',
     init_global_network_attrs(network, 
                             max_nw_capacity, 
                             num_channels, 
+                            endpoint_label=ep_label,
                             node_labels=[ep_label, rack_label],
                             topology_type='14_node_nsfnet',
                             racks_dict=racks_dict)
@@ -183,6 +184,7 @@ def gen_simple_network(ep_label='server',
     init_global_network_attrs(network, 
                             max_nw_capacity, 
                             num_channels, 
+                            endpoint_label=ep_label,
                             node_labels=[ep_label],
                             topology_type='5_node_simple_network')
 
@@ -375,6 +377,7 @@ def gen_fat_tree(k=4,
     init_global_network_attrs(fat_tree_network, 
                               max_nw_capacity, 
                               num_channels, 
+                              endpoint_label=ep_label,
                               node_labels=[ep_label,
                                            rack_label,
                                            edge_label,
@@ -392,6 +395,7 @@ def gen_fat_tree(k=4,
 def init_global_network_attrs(network, 
                               max_nw_capacity, 
                               num_channels, 
+                              endpoint_label = 'server',
                               topology_type='unknown', 
                               node_labels=['server'],
                               racks_dict=None):
@@ -410,6 +414,7 @@ def init_global_network_attrs(network,
             rack.
 
     '''
+    network.graph['endpoint_label'] = endpoint_label
     network.graph['num_channels_per_link'] = num_channels
     network.graph['max_nw_capacity'] = max_nw_capacity
     network.graph['curr_nw_capacity_used'] = 0

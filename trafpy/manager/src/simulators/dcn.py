@@ -1,4 +1,9 @@
 from trafpy.generator.src import networks
+from trafpy.generator.src import tools
+
+import gym
+import tensorflow as tf
+import json
 import numpy as np
 import copy
 import pickle
@@ -14,7 +19,8 @@ import io
 import time
 
 
-class DCN:
+class DCN(gym.Env):
+
     def __init__(self, 
                  Network, 
                  Demand, 
@@ -32,6 +38,15 @@ class DCN:
         self.sim_name = sim_name 
         self.max_flows = max_flows # max number of flows per queue
         self.max_time = max_time
+
+        # init representation generator
+        self.repgen = RepresentationGenerator(self)
+
+        # gym env reqs
+        self.action_space = gym.spaces.Discrete(self.repgen.num_actions)
+        self.observation_space = gym.spaces.Dict({'action_mask': gym.spaces.Box(0, 1, shape=(self.repgen.num_actions,)),
+                                                  'avail_actions': gym.spaces.Box(-1, 1e12, shape=(self.repgen.num_actions, self.repgen.action_embedding_size)),
+                                                  'machine_readable_network': gym.spaces.Box(-1, 1e12, shape=(self.repgen.num_actions, self.repgen.action_embedding_size))})
 
 
     def reset(self, pickled_demand_path=None, return_obs=True):
@@ -554,8 +569,36 @@ class DCN:
         if self.demand.job_centric:
             observation = self.update_running_op_dependencies(observation)
 
+        # create machine readable version of current network state
+        observation['machine_readable_network'] = self.repgen.gen_machine_readable_network_observation(observation['network'])
+
+        # update available actions
+        observation['avail_actions'], action_dict = observation['machine_readable_network']
+
+        # mask any placeholder actions not occupied by flows
+        action_mask = [0 for _ in range(self.repgen.num_actions)]
+        action_indices_with_flow_present = self.get_indices_of_action_placeholders_occupied_by_flows(action_dict)
+        for i in action_indices_with_flow_present:
+            action_mask[i] = 1
+        observation['action_mask'] = action_mask
+
             
         return observation
+
+    def get_indices_of_action_placeholders_occupied_by_flows(self, action_dict):
+        indices = []
+        for index in action_dict.keys():
+            if action_dict[index]['flow_present'] == 1:
+                # flow present
+                indices.append(index)
+            else:
+                # no flow present at this placeholder action
+                pass
+
+        return indices
+                
+
+
 
     def check_num_channels_used(self, graph, edge):
         '''
@@ -1026,7 +1069,6 @@ class DCN:
         Performs an action in the DCN simulation environment, moving simulator
         to next step
         '''
-       
         self.action = action # save action
         
         self.take_action(action)
@@ -1036,6 +1078,8 @@ class DCN:
         done = self.check_if_done()
         info = None
         obs = self.next_observation()
+
+
 
         # # DEBUG:
         # queues = self.get_current_queue_states()
@@ -1378,6 +1422,120 @@ class DCN:
             print('Time to save sim: {}'.format(end-start))
 
         
+
+
+
+
+class RepresentationGenerator:
+    def __init__(self, env):
+        self.env = env
+        
+        # init network params
+        self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(env.network.graph['endpoints'])
+        self.ep_label = env.network.graph['endpoint_label']
+        
+        # init onehot encoding
+        self.onehot_endpoints, self.endpoint_to_onehot = self.onehot_encode_endpoints()
+        self.onehot_paths, self.path_to_onehot = self.onehot_encode_paths()
+
+        # get init representation to get action embedding size
+        init_rep, _ = self.gen_machine_readable_network_observation(self.env.network)
+        self.num_actions = tf.shape(init_rep)[0]
+        self.action_embedding_size = tf.shape(init_rep)[1]
+        
+    def onehot_encode_endpoints(self):
+        onehot_endpoints = tf.one_hot(indices=list(self.index_to_node.keys()), depth=self.num_nodes)
+        endpoint_to_onehot = {endpoint: onehot for endpoint, onehot in zip(self.index_to_node.values(), onehot_endpoints)}
+        
+        return onehot_endpoints, endpoint_to_onehot
+    
+    def onehot_encode_paths(self):
+        num_k_paths = self.env.scheduler.RWA.num_k
+        all_paths = []
+        for src in self.node_to_index.keys():
+            for dst in self.node_to_index.keys():
+                if src == dst:
+                    pass
+                else:
+                    paths = self.env.scheduler.RWA.k_shortest_paths(self.env.network, src, dst)
+                    for path in paths:
+                        if path[::-1] not in all_paths and path not in all_paths:
+                            all_paths.append(path)
+        indices = [i for i in range(len(all_paths))]
+        path_to_index = {json.dumps(path): index for path, index in zip(all_paths, indices)}
+        index_to_path = {index: json.dumps(path) for index, path in zip(indices, all_paths)}
+        onehot_paths = tf.one_hot(indices=list(index_to_path.keys()), depth=len(all_paths))
+        path_to_onehot = {path: onehot for path, onehot in zip(index_to_path.values(), onehot_paths)}
+        
+        return onehot_paths, path_to_onehot        
+    
+    def gen_machine_readable_network_observation(self, network_observation, dtype=tf.float32):
+        num_placeholder_flows = self.num_nodes * self.env.max_flows * (self.num_nodes - 1)
+        num_actions = num_placeholder_flows * self.env.scheduler.RWA.num_k
+        
+        # init action representations with empty (no) flows
+        action_indices = [i for i in range(num_actions)]
+        action_dict = {index: {'src': tf.cast(tf.zeros(len(self.onehot_endpoints[0])), dtype=dtype),
+                               'dst': tf.cast(tf.zeros(len(self.onehot_endpoints[0])), dtype=dtype),
+                               'path': tf.cast(tf.zeros(len(self.onehot_paths[0])), dtype=dtype),
+                               'size': tf.cast(-1, dtype=dtype),
+                               'time_arrived': tf.cast(-1, dtype=dtype),
+                               'selected': tf.cast(0, dtype=dtype),
+                               'null_action': tf.cast(0, dtype=dtype),
+                               'flow_present': tf.cast(0, dtype=dtype)} for index in action_indices}
+        
+        # go through network_observation queued flows and update action_dict representations
+        action_iterator = iter(action_indices)
+        for node in network_observation.nodes:
+            if node[:len(self.ep_label)] == self.ep_label:
+                queues = network_observation.nodes[node]
+                for queue in queues.values():
+                    for flow in queue['queued_flows']:
+                        paths = self.env.scheduler.RWA.k_shortest_paths(self.env.network, flow['src'], flow['dst'])
+                        for path in paths:
+                            # each path is a separate action
+                            idx = next(action_iterator)
+                            action_dict[idx]['src'] = tf.cast(self.endpoint_to_onehot[flow['src']], dtype=dtype)
+                            action_dict[idx]['dst'] = tf.cast(self.endpoint_to_onehot[flow['dst']], dtype=dtype)
+                            try:
+                                action_dict[idx]['path'] = tf.cast(self.path_to_onehot[json.dumps(path)], dtype=dtype)
+                            except KeyError:
+                                action_dict[idx]['path'] = tf.cast(self.path_to_onehot[json.dumps(path[::-1])], dtype=dtype)
+                            action_dict[idx]['size'] = tf.cast(flow['size'], dtype=dtype)
+                            action_dict[idx]['time_arrived'] = tf.cast(flow['time_arrived'], dtype=dtype)
+                            action_dict[idx]['selected'] = tf.cast(0, dtype=dtype)
+                            action_dict[idx]['null_action'] = tf.cast(0, dtype=dtype)
+                            action_dict[idx]['flow_present'] = tf.cast(1, dtype=dtype)
+            
+            else:
+                # flow placeholder in queue is empty
+                pass
+            
+        # concat each action_dict key's values into single action_vector and stack all action vectors into single tensor
+        action_stack = []
+        for action in action_dict.keys():
+            action_vector = self._stack_list_of_tensors([s for s in action_dict[action].values()], dtype=dtype)
+            action_stack.append(action_vector)
+        machine_readable_observation = tf.cast(action_stack, dtype=dtype)
+        
+        return machine_readable_observation, action_dict
+
+
+    def _stack_list_of_tensors(self, list_of_tensors, dtype=tf.float32):
+        stacked_tensor = []
+        for tensor in list_of_tensors:
+            try:
+                # stack each element in tensor
+                for el in tensor.numpy():
+                    stacked_tensor.append(el)
+            except TypeError:
+                # tensor only has one element
+                stacked_tensor.append(tensor.numpy())
+                
+        return tf.cast(stacked_tensor, dtype=dtype)
+
+
+
 
 
 
