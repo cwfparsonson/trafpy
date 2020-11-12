@@ -9,6 +9,7 @@ import copy
 import pickle
 import bz2
 import networkx as nx
+import queue
 import sys
 import os
 import matplotlib.pyplot as plt
@@ -24,7 +25,7 @@ class DCN(gym.Env):
     def __init__(self, 
                  Network, 
                  Demand, 
-                 Scheduler, 
+                 num_k_paths,
                  slot_size, 
                  sim_name='dcn_sim',
                  max_flows=None, 
@@ -33,8 +34,8 @@ class DCN(gym.Env):
         # initialise DCN environment characteristics
         self.network = Network
         self.demand = Demand
-        self.scheduler = Scheduler
         self.slot_size = slot_size
+        self.num_k_paths = num_k_paths
         self.sim_name = sim_name 
         self.max_flows = max_flows # max number of flows per queue
         self.max_time = max_time
@@ -46,7 +47,7 @@ class DCN(gym.Env):
         #         'src': spaces.Box(low=0, high=1, shape=(len(env.repgen.onehot_endpoints[0]),)), # don't need to onehot encode, gym.spaces.Discrete() does automatically
         #         'path': spaces.MultiBinary(nlen(env.repgen.onehot_paths[0])), #TODO: Use this for encoding paths?
         network_representation_space = gym.spaces.Dict({
-                'action_placeholder_{}'.format(index): gym.spaces.Dict({
+            index: gym.spaces.Dict({
                     'src': gym.spaces.Discrete(self.repgen.num_endpoints),
                     'dst': gym.spaces.Discrete(self.repgen.num_endpoints),
                     'path': gym.spaces.Discrete(self.repgen.num_paths),
@@ -584,14 +585,14 @@ class DCN(gym.Env):
             observation = self.update_running_op_dependencies(observation)
 
         # create machine readable version of current network state
-        observation['machine_readable_network'] = self.repgen.gen_machine_readable_network_observation(observation['network'])
+        _, observation['machine_readable_network'] = self.repgen.gen_machine_readable_network_observation(observation['network'])
 
         # update available actions
-        observation['avail_actions'], action_dict = observation['machine_readable_network']
+        observation['avail_actions'] = observation['machine_readable_network']
 
         # mask any placeholder actions not occupied by flows
         action_mask = [0 for _ in range(self.repgen.num_actions)]
-        action_indices_with_flow_present = self.get_indices_of_action_placeholders_occupied_by_flows(action_dict)
+        action_indices_with_flow_present = self.get_indices_of_action_placeholders_occupied_by_flows(observation['machine_readable_network'])
         for i in action_indices_with_flow_present:
             action_mask[i] = 1
         observation['action_mask'] = action_mask
@@ -1399,6 +1400,121 @@ class DCN(gym.Env):
             self.network.graph['curr_nw_capacity_used'] -= flow_size
         self.network.graph['num_active_connections'] -= 1
 
+    def path_cost(self, graph, path, weight=None):
+        '''
+        Calculates cost of path. If no weight specified, 1 unit of cost is 1
+        link/edge in the path
+
+        Args:
+        - path (list): list of node labels making up path from src to dst
+        - weight (dict key): label of weight to be considered when evaluating
+        path cost
+
+        Returns:
+        - pathcost (int, float): total cost of path
+        '''
+        pathcost = 0
+        
+        for i in range(len(path)):
+            if i > 0:
+                edge = (path[i-1], path[i])
+                if weight != None:
+                    pathcost += 1
+                    # bugged: if in future want 1 edge cost != 1, fix this
+                    #pathcost += graph[edge[0]][edge[1]][weight]
+                else:
+                    # just count the number of edges
+                    pathcost += 1
+
+        return pathcost
+
+    def k_shortest_paths(self, graph, source, target, num_k=None, weight='weight'):
+        '''
+        Uses Yen's algorithm to compute the k-shortest paths between a source
+        and a target node. The shortest path is that with the lowest pathcost,
+        defined by external path_cost() function. Paths are returned in order
+        of path cost, with lowest past cost being first etc.
+
+        Args:
+        - source (label): label of source node
+        - target (label): label of destination node
+        - num_k (int, float): number of shortest paths to compute
+        - weight (dict key): dictionary key of value to be 'minimised' when
+        finding 'shortest' paths
+
+        Returns:
+        - A (list of lists): list of shortest paths between src and dst
+        '''
+        if num_k is None:
+            num_k = self.num_k_paths
+
+        # Shortest path from the source to the target
+        A = [nx.shortest_path(graph, source, target, weight=weight)]
+        A_costs = [self.path_cost(graph, A[0], weight)]
+
+        # Initialize the heap to store the potential kth shortest path
+        B = queue.PriorityQueue()
+
+        for k in range(1, num_k):
+            # spur node ranges first node to next to last node in shortest path
+            try:
+                for i in range(len(A[k-1])-1):
+                    # Spur node retrieved from the prev k-shortest path, k - 1
+                    spurNode = A[k-1][i]
+                    # seq of nodes from src to spur node of prev k-shrtest path
+                    rootPath = A[k-1][:i]
+
+                    # We store the removed edges
+                    removed_edges = []
+
+                    for path in A:
+                        if len(path) - 1 > i and rootPath == path[:i]:
+                            # Remove edges of prev shrtest path w/ same root
+                            edge = (path[i], path[i+1])
+                            if not graph.has_edge(*edge):
+                                continue
+                            removed_edges.append((edge, graph.get_edge_data(*edge)))
+                            graph.remove_edge(*edge)
+
+                    # Calculate the spur path from the spur node to the sink
+                    try:
+                        spurPath = nx.shortest_path(graph, spurNode, target, weight=weight)
+
+                        # Entire path is made up of the root path and spur path
+                        totalPath = rootPath + spurPath
+                        totalPathCost = self.path_cost(graph, totalPath, weight)
+                        # Add the potential k-shortest path to the heap
+                        B.put((totalPathCost, totalPath))
+
+                    except nx.NetworkXNoPath:
+                        pass
+
+                    #Add back the edges that were removed from the graph
+                    for removed_edge in removed_edges:
+                        graph.add_edge(
+                            *removed_edge[0],
+                            **removed_edge[1]
+                        )
+
+                # Sort the potential k-shortest paths by cost
+                # B is already sorted
+                # Add the lowest cost path becomes the k-shortest path.
+                while True:
+                    try:
+                        cost_, path_ = B.get(False)
+                        if path_ not in A:
+                            A.append(path_)
+                            A_costs.append(cost_)
+                            break
+                    except queue.Empty:
+                        break
+            except IndexError:
+                pass
+        
+        
+
+        return A 
+
     def save_sim(self, 
                  path, 
                  name=None, 
@@ -1445,7 +1561,7 @@ class RepresentationGenerator:
         self.env = env
         
         # init network params
-        self.num_endpoints, self.num_pairs, self.endpoint_to_index, self.index_to_node = tools.get_network_params(env.network.graph['endpoints'])
+        self.num_endpoints, self.num_pairs, self.endpoint_to_index, self.index_to_endpoint = tools.get_network_params(env.network.graph['endpoints'])
         self.ep_label = env.network.graph['endpoint_label']
         
         # init onehot encoding
@@ -1459,20 +1575,20 @@ class RepresentationGenerator:
         self.action_embedding_size = tf.shape(init_rep)[1]
         
     def onehot_encode_endpoints(self):
-        onehot_endpoints = tf.one_hot(indices=list(self.index_to_node.keys()), depth=self.num_endpoints)
-        endpoint_to_onehot = {endpoint: onehot for endpoint, onehot in zip(self.index_to_node.values(), onehot_endpoints)}
+        onehot_endpoints = tf.one_hot(indices=list(self.index_to_endpoint.keys()), depth=self.num_endpoints)
+        endpoint_to_onehot = {endpoint: onehot for endpoint, onehot in zip(self.index_to_endpoint.values(), onehot_endpoints)}
         
         return onehot_endpoints, endpoint_to_onehot
     
     def onehot_encode_paths(self):
-        num_k_paths = self.env.scheduler.RWA.num_k
+        num_k_paths = self.env.num_k_paths
         all_paths = []
         for src in self.endpoint_to_index.keys():
             for dst in self.endpoint_to_index.keys():
                 if src == dst:
                     pass
                 else:
-                    paths = self.env.scheduler.RWA.k_shortest_paths(self.env.network, src, dst)
+                    paths = self.env.k_shortest_paths(self.env.network, src, dst)
                     for path in paths:
                         if path[::-1] not in all_paths and path not in all_paths:
                             all_paths.append(path)
@@ -1483,6 +1599,35 @@ class RepresentationGenerator:
         path_to_onehot = {path: onehot for path, onehot in zip(self.index_to_path.values(), onehot_paths)}
         
         return onehot_paths, path_to_onehot        
+
+    def conv_human_readable_flow_to_machine_readable_flow(self, flow, return_onehot_vectors=False, dtype=tf.float32):
+        machine_readable_flow = {}
+
+        if return_onehot_vectors:
+            # return onehot vector
+            machine_readable_flow['src'] = tf.cast(self.endpoint_to_onehot[flow['src']], dtype=dtype)
+            machine_readable_flow['dst'] = tf.cast(self.endpoint_to_onehot[flow['dst']], dtype=dtype)
+        else:
+            # return int
+            machine_readable_flow['src'] = tf.cast(self.endpoint_to_index[flow['src']], dtype=dtype)
+            machine_readable_flow['dst'] = tf.cast(self.endpoint_to_index[flow['dst']], dtype=dtype)
+        try:
+            if return_onehot_vectors:
+                machine_readable_flow['path'] = tf.cast(self.path_to_onehot[json.dumps(flow['path'])], dtype=dtype)
+            else:
+                machine_readable_flow['path'] = tf.cast(self.path_to_index[json.dumps(flow['path'])], dtype=dtype)
+        except KeyError:
+            if return_onehot_vectors:
+                machine_readable_flow['path'] = tf.cast(self.path_to_onehot[json.dumps(flow['path'][::-1])], dtype=dtype)
+            else:
+                machine_readable_flow['path'] = tf.cast(self.path_to_index[json.dumps(flow['path'][::-1])], dtype=dtype)
+        machine_readable_flow['size'] = tf.cast(flow['size'], dtype=dtype)
+        machine_readable_flow['time_arrived'] = tf.cast(flow['time_arrived'], dtype=dtype)
+        machine_readable_flow['selected'] = tf.cast(0, dtype=dtype)
+        machine_readable_flow['null_action'] = tf.cast(0, dtype=dtype)
+        machine_readable_flow['flow_present'] = tf.cast(1, dtype=dtype)
+
+        return machine_readable_flow
     
     def gen_machine_readable_network_observation(self, network_observation, return_onehot_vectors=False, dtype=tf.float32):
         '''
@@ -1491,7 +1636,7 @@ class RepresentationGenerator:
         observation spaces which automatically one-hot encode Discrete observation space variables.
         '''
         num_placeholder_flows = self.num_endpoints * self.env.max_flows * (self.num_endpoints - 1)
-        num_actions = num_placeholder_flows * self.env.scheduler.RWA.num_k
+        num_actions = num_placeholder_flows * self.env.num_k_paths
         
         # init action representations with empty (no) flows
         action_indices = [i for i in range(num_actions)]
@@ -1523,34 +1668,12 @@ class RepresentationGenerator:
                 queues = network_observation.nodes[node]
                 for queue in queues.values():
                     for flow in queue['queued_flows']:
-                        paths = self.env.scheduler.RWA.k_shortest_paths(self.env.network, flow['src'], flow['dst'])
+                        paths = self.env.k_shortest_paths(self.env.network, flow['src'], flow['dst'])
                         for path in paths:
                             # each path is a separate action
                             idx = next(action_iterator)
-                            if return_onehot_vectors:
-                                # return onehot vector
-                                action_dict[idx]['src'] = tf.cast(self.endpoint_to_onehot[flow['src']], dtype=dtype)
-                                action_dict[idx]['dst'] = tf.cast(self.endpoint_to_onehot[flow['dst']], dtype=dtype)
-                            else:
-                                # return int
-                                action_dict[idx]['src'] = tf.cast(self.endpoint_to_index[flow['src']], dtype=dtype)
-                                action_dict[idx]['dst'] = tf.cast(self.endpoint_to_index[flow['dst']], dtype=dtype)
-                            try:
-                                if return_onehot_vectors:
-                                    action_dict[idx]['path'] = tf.cast(self.path_to_onehot[json.dumps(path)], dtype=dtype)
-                                else:
-                                    action_dict[idx]['path'] = tf.cast(self.path_to_index[json.dumps(path)], dtype=dtype)
-                            except KeyError:
-                                if return_onehot_vectors:
-                                    action_dict[idx]['path'] = tf.cast(self.path_to_onehot[json.dumps(path[::-1])], dtype=dtype)
-                                else:
-                                    action_dict[idx]['path'] = tf.cast(self.path_to_index[json.dumps(path[::-1])], dtype=dtype)
-                            action_dict[idx]['size'] = tf.cast(flow['size'], dtype=dtype)
-                            action_dict[idx]['time_arrived'] = tf.cast(flow['time_arrived'], dtype=dtype)
-                            action_dict[idx]['selected'] = tf.cast(0, dtype=dtype)
-                            action_dict[idx]['null_action'] = tf.cast(0, dtype=dtype)
-                            action_dict[idx]['flow_present'] = tf.cast(1, dtype=dtype)
-            
+                            flow['path'] = path 
+                            action_dict[idx] = self.conv_human_readable_flow_to_machine_readable_flow(flow, return_onehot_vectors, dtype)
             else:
                 # flow placeholder in queue is empty
                 pass
