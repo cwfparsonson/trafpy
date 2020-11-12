@@ -1,6 +1,7 @@
 import gym
 import tensorflow as tf
 from ray.rllib.agents.dqn.distributional_q_tf_model import DistributionalQTFModel
+from ray.rllib.models.tf.tf_modelv2 import TFModelV2
 from ray.rllib.models.tf.fcnet import FullyConnectedNetwork
 
 class ParametricAgent(DistributionalQTFModel):
