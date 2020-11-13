@@ -75,6 +75,7 @@ class RandomAgent(SchedulerToolbox):
                 action = self.env.action_space.sample()
             chosen_actions.append(action)
 
+        print('\n Chosen action indices: {}'.format(chosen_actions))
         return self.conv_chosen_action_indices_to_chosen_flows(chosen_actions)
 
 

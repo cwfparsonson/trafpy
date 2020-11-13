@@ -1667,13 +1667,26 @@ class RepresentationGenerator:
             if node[:len(self.ep_label)] == self.ep_label:
                 queues = network_observation.nodes[node]
                 for queue in queues.values():
-                    for flow in queue['queued_flows']:
-                        paths = self.env.k_shortest_paths(self.env.network, flow['src'], flow['dst'])
-                        for path in paths:
-                            # each path is a separate action
-                            idx = next(action_iterator)
-                            flow['path'] = path 
-                            action_dict[idx] = self.conv_human_readable_flow_to_machine_readable_flow(flow, return_onehot_vectors, dtype)
+                    for i in range(self.env.max_flows):
+                        idx = next(action_iterator)
+                        try:
+                            flow = queue['queued_flows'][i]
+                            paths = self.env.k_shortest_paths(self.env.network, flow['src'], flow['dst'])
+                            for path in paths:
+                                # each path is a separate action
+                                # idx = next(action_iterator)
+                                flow['path'] = path 
+                                action_dict[idx] = self.conv_human_readable_flow_to_machine_readable_flow(flow, return_onehot_vectors, dtype)
+                        except IndexError:
+                            # no more flows in this queue 
+                            pass
+                    # for flow in queue['queued_flows']:
+                        # paths = self.env.k_shortest_paths(self.env.network, flow['src'], flow['dst'])
+                        # for path in paths:
+                            # # each path is a separate action
+                            # idx = next(action_iterator)
+                            # flow['path'] = path 
+                            # action_dict[idx] = self.conv_human_readable_flow_to_machine_readable_flow(flow, return_onehot_vectors, dtype)
             else:
                 # flow placeholder in queue is empty
                 pass
