@@ -1,4 +1,3 @@
-# TODO: Get rand agent choosing 1 flow per time slot
 # TODO: Get rand agent choosing multiple flows per time slot
 # TODO: Get rand agent choosing a chosen number of flows per time slot (until select null action or until invalid)
 
@@ -18,10 +17,29 @@ class RandomAgent(SchedulerToolbox):
         self.action_space = self.env.action_space
         self.scheduler_name = scheduler_name
 
-    def update_avail_actions(self):
+    def update_avail_actions(self, *chosen_actions):
         self.action_assignments = np.array([0.] * self.action_space.n.numpy())
         self.action_mask = np.array([0.] * self.action_space.n.numpy())
 
+        # any actions with a path and channel that has already been chosen cannot be reselected
+        chosen_flows = []
+        for action in chosen_actions:
+            flow = conv_chosen_action_index_to_chosen_flow(action)
+            establish_flow, path, channel = self.look_for_available_lightpath(flow, chosen_flows, search_k_shortest=False)
+            if not establish_flow:
+                raise Exception('Error: Trying to establish flow {} which is not available given chosen flows {}'.format(flow, chosen_flows))
+            flow['channel'] = channel
+            chosen_flows.append(flow)
+        for action in self.obs['machine_readable_network'].keys():
+            if self.obs['machine_readable_network'][action]['flow_present'] == 1 and self.obs['machine_readable_network'][action]['selected'] == 0 and self.obs['machine_readable_network'][action]['null_action'] == 0:
+                # flow present, not yet selected and currently registered as available
+                flow = self.conv_chosen_action_index_to_chosen_flow(action, chosen_flows)
+                establish_flow, path, channel = self.look_for_available_lightpath(flow, chosen_flows, search_k_shortest=False)
+                if not establish_flow:
+                    # no way to establish flow, register as null action
+                    self.obs['machine_readable_network'][action]['null_action'] = 1
+
+        # get indices of available actions and create action mask
         self.avail_action_indices = self.get_indices_of_available_actions(self.obs['machine_readable_network'])
         for i in self.avail_action_indices:
             self.action_mask[i] = 1
@@ -40,12 +58,11 @@ class RandomAgent(SchedulerToolbox):
 
     
 
-    def get_scheduler_action(self, obs, choose_multiple_actions=False):
+    def get_scheduler_action(self, obs, choose_multiple_actions=True):
         self.obs = obs
         self.update_network_state(obs, hide_child_dependency_flows=True)
 
-        chosen_actions = []
-
+        self.chosen_actions = []
         if choose_multiple_actions:
             while True:
                 # choose flows
@@ -58,7 +75,7 @@ class RandomAgent(SchedulerToolbox):
                         action = self.env.action_space.sample()
 
                     # add sampled action to chosen actions
-                    chosen_actions.append(action)
+                    self.chosen_actions.append(action)
 
                     # update action as having been chosen
                     self.obs['machine_readable_network'][action]['selected'] = 1
@@ -73,43 +90,51 @@ class RandomAgent(SchedulerToolbox):
             action = self.env.action_space.sample()
             while action not in self.avail_action_indices:
                 action = self.env.action_space.sample()
-            chosen_actions.append(action)
-
-        print('\n Chosen action indices: {}'.format(chosen_actions))
-        return self.conv_chosen_action_indices_to_chosen_flows(chosen_actions)
+            self.chosen_actions.append(action)
 
 
+        self.chosen_flows = []
+        for action in self.chosen_actions:
+            self.chosen_flows.append(self.conv_chosen_action_index_to_chosen_flow(action))
+
+        return self.chosen_flows
 
 
-    def conv_chosen_action_indices_to_chosen_flows(self, chosen_actions):
-            # conv chosen actions to chosen flows
-            chosen_flows = []
-            for action in chosen_actions:
-                # find src and dst of chosen action flow
-                src_rep = self.obs['machine_readable_network'][action]['src']
-                dst_rep = self.obs['machine_readable_network'][action]['dst']
-                src = self.env.repgen.index_to_endpoint[src_rep.numpy()]
-                dst = self.env.repgen.index_to_endpoint[dst_rep.numpy()]
-                # find other unique chars of flow
-                time_arrived = self.obs['machine_readable_network'][action]['time_arrived']
-                size = self.obs['machine_readable_network'][action]['size']
-                # find queued flows at this src-dst queue
-                queued_flows = self.SchedulerNetwork.nodes[src][dst]['queued_flows']
-                found_flow = False
-                for flow in queued_flows:
-                    if flow['src'] == src and flow['dst'] == dst and flow['time_arrived'] == time_arrived and flow['size'] == size:
-                        found_flow = True
-                        if flow['packets'] is None:
-                            _, packets = self.gen_flow_packets(flow['size'])
-                            flow['packets'] = packets
-                        chosen_flows.append(flow)
-                    else:
-                        # not this flow
-                        pass
-                if not found_flow:
-                    raise Exception('Unable to find action {} in queue flows {}'.format(self.obs['machine_readable_network'][action], queued_flows))
 
-            return chosen_flows
+    def conv_chosen_action_index_to_chosen_flow(self, action, chosen_flows=None):
+        if chosen_flows is None:
+            chosen_flows = self.chosen_flows
+        else:
+            pass
+        # find src and dst of chosen action flow
+        src_rep = self.obs['machine_readable_network'][action]['src']
+        dst_rep = self.obs['machine_readable_network'][action]['dst']
+        src = self.env.repgen.index_to_endpoint[src_rep.numpy()]
+        dst = self.env.repgen.index_to_endpoint[dst_rep.numpy()]
+        # find other unique chars of flow
+        time_arrived = self.obs['machine_readable_network'][action]['time_arrived']
+        size = self.obs['machine_readable_network'][action]['size']
+        # find queued flows at this src-dst queue
+        queued_flows = self.SchedulerNetwork.nodes[src][dst]['queued_flows']
+        found_flow = False
+        for flow in queued_flows:
+            if flow['src'] == src and flow['dst'] == dst and flow['time_arrived'] == time_arrived and flow['size'] == size:
+                found_flow = True
+                if flow['packets'] is None:
+                    flow = self.init_paths_and_packets(flow)
+                if flow['channel'] is None:
+                    establish_flow, path, channel = self.look_for_available_lightpath(flow, chosen_flows, search_k_shortest=False)
+                    if not establish_flow:
+                        raise Exception('Error: Trying to establish flow {} which is not available given chosen flows {}'.format(flow, self.chosen_flows))
+                    flow['channel'] = channel
+                return flow
+            else:
+                # not this flow
+                pass
+        if not found_flow:
+            raise Exception('Unable to find action {} in queue flows {}'.format(self.obs['machine_readable_network'][action], queued_flows))
+
+
 
 
 

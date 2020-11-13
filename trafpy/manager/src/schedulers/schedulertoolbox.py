@@ -337,16 +337,23 @@ class SchedulerToolbox:
         
         return queues
 
-    def look_for_available_lightpath(self, chosen_flow, chosen_flows):
+    def look_for_available_lightpath(self, chosen_flow, chosen_flows, search_k_shortest=True):
+        '''
+        If search_k_shortest, will look at all k shortest paths available. 
+        in flow['k_shortest_paths']. If False, will only consider flow['path'] 
+        already assigned.
+
+        '''
         # check for link contentions
-        paths = chosen_flow['k_shortest_paths']
+        if search_k_shortest:
+            paths = chosen_flow['k_shortest_paths']
+        else:
+            paths = [chosen_flow['path']]
         channels = self.RWA.channel_names
         taken_paths = [flow['path'] for flow in chosen_flows]
         taken_edges = [self.get_path_edges(taken_path) for taken_path in taken_paths]
         taken_channels = [flow['channel'] for flow in chosen_flows]
         establish_flow = False
-        path = None
-        channel = None
         # check if any lightpath available without needing to take down connection
         for path in paths:
             for channel in channels:
@@ -357,6 +364,5 @@ class SchedulerToolbox:
             else:
                 continue
             break
-
 
         return establish_flow, path, channel
