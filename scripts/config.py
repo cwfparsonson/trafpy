@@ -24,4 +24,3 @@ if ENDPOINT_LABELS is None:
     print('Warning: ENDPOINTS left as None. Will need to provide own networkx \
             graph with correct labelling. To avoid this, specify list of endpoint \
             labels in config.py')
-

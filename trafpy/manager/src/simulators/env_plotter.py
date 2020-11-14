@@ -93,7 +93,7 @@ class EnvsPlotter:
         fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='Load', ylabel='Flows Dropped', show_fig=False)
 
         # complementary cdf
-        fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Flows Dropped', ylabel='CDF', complementary_cdf=False, show_fig=False)
+        fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Flows Dropped', ylabel='Complementary CDF', complementary_cdf=True, show_fig=False)
 
         return [fig1, fig2]
 
@@ -147,16 +147,21 @@ class EnvsPlotter:
         figs = []
         for load in plot_dict.keys():
             figs.append(plot_dists.plot_val_line(plot_dict=plot_dict[load], xlabel='Time', ylabel='Load {} {}-{} Queue Length'.format(str(round(load,2)), src, dst), ylim=load_to_ylim[load], vertical_lines=[load_to_meas_time[load][0], load_to_meas_time[load][1]], show_fig=False))
+
         
         return figs
 
-    def plot_throughput_vs_test_subject_for_different_loads(self, *analysers):
+    def plot_throughput_vs_load(self, *analysers):
         classes = self._group_analyser_classes(*analysers)
 
         # init plot dict
         plot_dict = {}
+        plot_dict2 = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
         for analyser in analysers:
             self._check_analyser_valid(analyser)
+            plot_dict2[analyser.subject_class_name]['x_values'].append(analyser.load_frac)
+            plot_dict2[analyser.subject_class_name]['y_values'].append(analyser.throughput_abs)
+            plot_dict2[analyser.subject_class_name]['rand_vars'].append(analyser.throughput_abs)
             try:
                 plot_dict[analyser.load_frac]['x_values'].append(analyser.subject_class_name)
                 plot_dict[analyser.load_frac]['y_values'].append(analyser.throughput_abs)
@@ -174,11 +179,19 @@ class EnvsPlotter:
                     plot_dict[analyser.load_frac]['x_values'].append(analyser.subject_class_name)
                     plot_dict[analyser.load_frac]['y_values'].append(analyser.throughput_abs)
 
+        # individual bar chars
         figs = []
         for load in plot_dict.keys():
             figs.append(plot_dists.plot_val_bar(x_values=plot_dict[load]['x_values'], y_values=plot_dict[load]['y_values'], xlabel='Test Subject Class', ylabel='Load {} Throughput Rate'.format(str(round(load,2)), show_fig=False)))
 
-        return figs
+        # scatter
+        fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict2, xlabel='Load', ylabel='Throughput Rate', show_fig=False)
+
+        # complementary cdf
+        fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict2, xlabel='Throughput Rate', ylabel='Complementary CDF', complementary_cdf=True, show_fig=False)
+
+        return [figs, fig1, fig2]
+
 
 
 

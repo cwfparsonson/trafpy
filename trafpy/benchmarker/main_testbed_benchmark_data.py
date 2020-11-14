@@ -10,6 +10,7 @@ import json
 import pickle
 import sys
 import os
+import tensorflow as tf
 
 
 class TestBed:
@@ -26,7 +27,6 @@ class TestBed:
 
     def load_benchmark_data(self, demand_file_path):
         return json.loads(load_data_from_json(demand_file_path))
-
 
     def run_tests(self, config, path_to_save):
         self.config = config
@@ -51,7 +51,8 @@ class TestBed:
                         demand = Demand(demand_data)
                         env = DCN(config['networks'][0], 
                                   demand, 
-                                  scheduler, 
+                                  scheduler,
+                                  num_k_paths=config['num_k_paths'],
                                   slot_size=config['slot_size'],
                                   sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
                                   max_flows=config['max_flows'], 
@@ -71,9 +72,16 @@ class TestBed:
 
     def run_test(self, scheduler, env, envs, path_to_save):
         observation = env.reset()
+        try:
+            scheduler.register_env(env)
+        except:
+            # no need to register env
+            pass
         while True:
             action = scheduler.get_action(observation)
             observation, reward, done, info = env.step(action)
+            # if len(env.completed_flows)+len(env.dropped_flows) % 100 == 0:
+                # print('Simulation `{}`: Flows arrived: {} | Flows completed+dropped: {}'.format(env.sim_name, len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)))
             if done:
                 # env.get_scheduling_session_summary(print_summary=True)
                 analyser = EnvAnalyser(env)
@@ -130,52 +138,55 @@ if __name__ == '__main__':
     import trafpy
     from trafpy.generator.src.networks import gen_fat_tree, gen_channel_names
     from trafpy.manager.src.routers.routers import RWA
-    from trafpy.manager.src.schedulers.schedulers import SRPT, BASRPT
+    from trafpy.manager.src.schedulers.schedulers import SRPT, BASRPT, RandomAgent
 
 
 
+    with tf.device('/cpu'):
 
-    # _________________________________________________________________________
-    # BASIC CONFIGURATION
-    # _________________________________________________________________________
-    MAX_TIME = None
-    MAX_FLOWS = 4
+        # _________________________________________________________________________
+        # BASIC CONFIGURATION
+        # _________________________________________________________________________
+        MAX_TIME = None
+        MAX_FLOWS = 4
 
-    path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/ndf50_1s_university_benchmark_data.json'
-    tb = TestBed(path_to_benchmark_data)
+        path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/ndf50_1s_university_benchmark_data.json'
+        tb = TestBed(path_to_benchmark_data)
 
-    # networks
-    NUM_CHANNELS = 1
-    networks = [gen_fat_tree(k=3, N=2, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=1, rack_to_edge_channel_capacity=5, edge_to_agg_channel_capacity=5, agg_to_core_channel_capacity=5)]
+        # networks
+        NUM_CHANNELS = 1
+        networks = [gen_fat_tree(k=3, N=2, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=1, rack_to_edge_channel_capacity=5, edge_to_agg_channel_capacity=5, agg_to_core_channel_capacity=5)]
 
-    # rwas
-    NUM_K_PATHS = 2
-    rwas = [RWA(gen_channel_names(NUM_CHANNELS), NUM_K_PATHS)]
+        # rwas
+        NUM_K_PATHS = 1
+        rwas = [RWA(gen_channel_names(NUM_CHANNELS), NUM_K_PATHS)]
 
-    # schedulers
-    # SLOT_SIZE = 1e6
-    SLOT_SIZE = 1e3
-    schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
-                  BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10)]
-    # schedulers = []
-    # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]
-    # for V in Vs:
-        # schedulers.append(BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=V, scheduler_name='V{}_basrpt'.format(V)))
+        # schedulers
+        # SLOT_SIZE = 1e6
+        SLOT_SIZE = 1e3
+        schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
+                      BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10),
+                      RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE)]
+        # schedulers = []
+        # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]
+        # for V in Vs:
+            # schedulers.append(BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=V, scheduler_name='V{}_basrpt'.format(V)))
 
 
 
-    test_config = {'test_name': 'ndf50_1s_university_testbed_data',
-                   'max_time': MAX_TIME,
-                   'max_flows': MAX_FLOWS,
-                   'slot_size': SLOT_SIZE,
-                   'networks': networks,
-                   'rwas': rwas,
-                   'schedulers': schedulers}
+        test_config = {'test_name': 'ndf50_1s_university_testbed_data',
+                       'num_k_paths': NUM_K_PATHS,
+                       'max_time': MAX_TIME,
+                       'max_flows': MAX_FLOWS,
+                       'slot_size': SLOT_SIZE,
+                       'networks': networks,
+                       'rwas': rwas,
+                       'schedulers': schedulers}
 
-    tb.reset()
-    tb.run_tests(test_config, path_to_save = os.path.dirname(trafpy.__file__)+'/../data/testbed_data/')
+        tb.reset()
+        tb.run_tests(test_config, path_to_save = os.path.dirname(trafpy.__file__)+'/../data/testbed_data/')
 
-    
+        
 
 
 

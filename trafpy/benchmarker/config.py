@@ -20,6 +20,7 @@ MIN_LAST_DEMAND_ARRIVAL_TIME = 3e6 # units of us
 
 # define network load fractions
 LOADS = np.arange(0.1, 1.1, 0.1).tolist()
+# LOADS = np.arange(0.1, 0.6, 0.1).tolist()
 LOADS = [round(load, 3) for load in LOADS] # ensure no python floating point arithmetic errors
 
 # define number of repetitions to perform for each benchmark for each load

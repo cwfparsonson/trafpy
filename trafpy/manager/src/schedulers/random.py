@@ -7,14 +7,11 @@ import numpy as np
 import json
 import tensorflow as tf
 
-
-
 class RandomAgent(SchedulerToolbox):
 
-    def __init__(self, Graph, RWA, slot_size, env, scheduler_name='random'):
+    def __init__(self, Graph, RWA, slot_size, env=None, scheduler_name='random'):
         super().__init__(Graph, RWA, slot_size)
         self.env = env
-        self.action_space = self.env.action_space
         self.scheduler_name = scheduler_name
 
     def update_avail_actions(self, *chosen_actions):
@@ -24,7 +21,7 @@ class RandomAgent(SchedulerToolbox):
         # any actions with a path and channel that has already been chosen cannot be reselected
         chosen_flows = []
         for action in chosen_actions:
-            flow = conv_chosen_action_index_to_chosen_flow(action)
+            flow = self.conv_chosen_action_index_to_chosen_flow(action, chosen_flows)
             establish_flow, path, channel = self.look_for_available_lightpath(flow, chosen_flows, search_k_shortest=False)
             if not establish_flow:
                 raise Exception('Error: Trying to establish flow {} which is not available given chosen flows {}'.format(flow, chosen_flows))
@@ -32,7 +29,7 @@ class RandomAgent(SchedulerToolbox):
             chosen_flows.append(flow)
         for action in self.obs['machine_readable_network'].keys():
             if self.obs['machine_readable_network'][action]['flow_present'] == 1 and self.obs['machine_readable_network'][action]['selected'] == 0 and self.obs['machine_readable_network'][action]['null_action'] == 0:
-                # flow present, not yet selected and currently registered as available
+                # flow present, not yet selected and currently registered as available, check if is available given chosen actions
                 flow = self.conv_chosen_action_index_to_chosen_flow(action, chosen_flows)
                 establish_flow, path, channel = self.look_for_available_lightpath(flow, chosen_flows, search_k_shortest=False)
                 if not establish_flow:
@@ -56,8 +53,6 @@ class RandomAgent(SchedulerToolbox):
 
         return indices
 
-    
-
     def get_scheduler_action(self, obs, choose_multiple_actions=True):
         self.obs = obs
         self.update_network_state(obs, hide_child_dependency_flows=True)
@@ -66,13 +61,10 @@ class RandomAgent(SchedulerToolbox):
         if choose_multiple_actions:
             while True:
                 # choose flows
-                self.update_avail_actions()
+                self.update_avail_actions(*self.chosen_actions)
                 if len(self.avail_action_indices) > 0:
                     # still have available actions to choose from
-                    action = self.env.action_space.sample()
-                    while action not in self.avail_action_indices:
-                        # sample an action until get one that is available
-                        action = self.env.action_space.sample()
+                    action = np.random.choice(self.avail_action_indices)
 
                     # add sampled action to chosen actions
                     self.chosen_actions.append(action)
@@ -86,20 +78,17 @@ class RandomAgent(SchedulerToolbox):
                     break
 
         else:
-            self.update_avail_actions()
-            action = self.env.action_space.sample()
-            while action not in self.avail_action_indices:
-                action = self.env.action_space.sample()
+            self.update_avail_actions(*self.chosen_actions)
+            action = np.random.choice(self.avail_action_indices)
             self.chosen_actions.append(action)
-
+            self.obs['machine_readable_network'][action]['selected'] = 1
+            self.obs['machine_readable_network'][action]['null_action'] = 1
 
         self.chosen_flows = []
         for action in self.chosen_actions:
             self.chosen_flows.append(self.conv_chosen_action_index_to_chosen_flow(action))
 
         return self.chosen_flows
-
-
 
     def conv_chosen_action_index_to_chosen_flow(self, action, chosen_flows=None):
         if chosen_flows is None:
@@ -134,18 +123,13 @@ class RandomAgent(SchedulerToolbox):
         if not found_flow:
             raise Exception('Unable to find action {} in queue flows {}'.format(self.obs['machine_readable_network'][action], queued_flows))
 
-
-
-
-
-
-
-        
-
-
-    
+    def register_env(self, env):
+        self.env = env
+        self.action_space = self.env.action_space
 
     def get_action(self, obs):
+        if self.env is None:
+            raise Exception('Must call register_env(env) method or instantiate scheduler with env != None before getting action from scheduler.')
         chosen_flows = self.get_scheduler_action(obs)
         action = {'chosen_flows': chosen_flows}
 
