@@ -631,6 +631,7 @@ def gen_val_dist_data(val_dist,
                       num_vals_to_gen,
                       path_to_save=None):
     '''Generates values between min_val and max_val following val_dist distribution'''
+    raise Exception('CHRIS NOTE TO SELF 16/11/2020: Not sure what this function is for when have gen_rand_vars_from_discretised_dist() function. This funciton seems to be bugged and generates strange distribution random variables which differ from input distribution. At some point think should delete this function and replace all references to it with gen_rand_vars_from_discretised_dist(), but not sure atm where this function is being used. If this message pops up, comment out this Exception in val_dists.py and investiate bug or replace function.')
     array_sum = np.round(np.sum(val_dist),2)
     assert array_sum == 1, \
         'array must sum to 1, but is {}'.format(array_sum)

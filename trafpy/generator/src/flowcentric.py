@@ -42,11 +42,16 @@ def create_flow_centric_demand_data(num_demands,
                                          num_demands=num_demands, 
                                          duplicate=duplicate)
 
+    
     # create demand flow_sizes
-    flow_sizes[:num_demands] = val_dists.gen_val_dist_data(val_dist=list(flow_size_dist.values()), 
-                                                           num_vals_to_gen=num_demands, 
-                                                           min_val=min(flow_size_dist.keys()), 
-                                                           max_val=max(flow_size_dist.keys()))
+    # TODO: Not sure what below function was for but generates strange rand var dists, should use gen_rand_vars_from_discretised_dist() instead.
+    # flow_sizes[:num_demands] = val_dists.gen_val_dist_data(val_dist=list(flow_size_dist.values()), 
+                                                           # num_vals_to_gen=num_demands, 
+                                                           # min_val=min(flow_size_dist.keys()), 
+                                                           # max_val=max(flow_size_dist.keys()))
+    flow_sizes[:num_demands] = val_dists.gen_rand_vars_from_discretised_dist(unique_vars=list(flow_size_dist.keys()),
+                                                                             probabilities=list(flow_size_dist.values()),
+                                                                             num_demands=num_demands)
     if duration_time_dist is not None:
         flow_sizes[num_demands:] = flow_sizes[:num_demands]
     

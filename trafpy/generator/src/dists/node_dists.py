@@ -753,7 +753,67 @@ def adjust_node_dist_for_rack_prob_config(rack_prob_config,
 
 
 
+def convert_sampled_pairs_into_node_dist(sampled_pairs, eps):
+    # convert sampled pairs dict to rand vars
+    sampled_pairs = val_dists.convert_key_occurrences_to_data(list(sampled_pairs.keys()), list(sampled_pairs.values()))
+
+    # convert sampled pairs list into prob dist
+    unique_vals, pmf = val_dists.gen_discrete_prob_dist(sampled_pairs)
+    sampled_pair_prob_dist = {unique_var: prob for unique_var, prob in zip(unique_vals, pmf)}
+
+    # insert 0 probabilites for any pairs that were never sampled
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
+    index_to_pair, pair_to_index = get_network_pair_mapper(eps)
+    if num_pairs != len(sampled_pair_prob_dist.keys()):
+        # some pairs were never chosen, find which are missing
+        chosen_pair_indices = {}
+        for pair in sampled_pair_prob_dist.keys():
+            try:
+                chosen_pair_indices[pair_to_index[pair]] = None
+            except KeyError:
+                pair = json.loads(pair)
+                pair = [pair[1],pair[0]]
+                pair = json.dumps(pair)
+                chosen_pair_indices[pair_to_index[pair]] = None
+
+        for index in index_to_pair.keys():
+            if index not in chosen_pair_indices:
+                # index is missing, update sampled pairs dict with 0 prob for this index
+                sampled_pair_prob_dist[json.dumps(index_to_pair[index])] = 0
     
+    # convert prob dist into dict whose keys are node dist matrix indices
+    index_to_pair, pair_to_index = get_network_pair_mapper(eps)
+    matrix_pair_prob_dist = {}
+    for key in sampled_pair_prob_dist.keys():
+        try:
+            matrix_index = pair_to_index[key]
+        except KeyError:
+            # switch src and dst
+            pair = json.loads(key)
+            key = json.dumps([pair[1], pair[0]])
+            matrix_index = pair_to_index[key]
+        try:
+            matrix_pair_prob_dist[matrix_index] = sampled_pair_prob_dist[key]
+        except KeyError:
+            # switch src and dst back for sampled pair prob dist
+            pair = json.loads(key)
+            key = json.dumps([pair[1], pair[0]])
+            matrix_pair_prob_dist[matrix_index] = sampled_pair_prob_dist[key]
+
+    # sort so that get correct ordering of pair probs when assign to node matrix
+    sorted_matrix_pair_prob_dist_keys = sorted((matrix_pair_prob_dist.keys()))
+
+    # generate new node matrix prob dist (which now accounts for rack probs)
+    prob_pair_chosen = []
+    for key in sorted_matrix_pair_prob_dist_keys:
+        prob = matrix_pair_prob_dist[key]/2 # divide by 2 since one side of diagonal
+        prob_pair_chosen.append(prob)
+
+    
+    node_dist = assign_probs_to_matrix(eps=eps,
+                                       probs=prob_pair_chosen)
+
+    return node_dist
 
 
 

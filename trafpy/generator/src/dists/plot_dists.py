@@ -125,7 +125,6 @@ def plot_val_dist(rand_vars,
         alpha=0.30
     else:
         alpha=1.0
-    
     # HISTOGRAM
     if plot_horizontally:
         fig = plt.figure(figsize=(15*fig_scale,5*fig_scale))
@@ -144,6 +143,8 @@ def plot_val_dist(rand_vars,
     else:
         plotbins = bins
     
+
+
     plt.hist(rand_vars,
              bins=plotbins,
              align='mid',
@@ -167,7 +168,7 @@ def plot_val_dist(rand_vars,
         y = stats.pareto.pdf(plotbins, shape, loc, scale)
 
     plt.xlabel(rand_var_name, fontsize=font_size)
-    plt.ylabel('Number of Occurrences', fontsize=font_size)
+    plt.ylabel('Counts', fontsize=font_size)
     try:
         plt.xlim(xlim)
     except NameError:
@@ -315,6 +316,33 @@ def plot_val_scatter(plot_dict={},
     if show_fig:
         plt.show()
     
+
+    return fig
+
+def plot_multiple_kdes(plot_dict={},
+                       plot_hist=False,
+                       xlabel='Random Variable',
+                       ylabel='Density',
+                       logscale=False,
+                       show_fig=False):
+    fig = plt.figure()
+    plt.style.use('ggplot')
+    if logscale:
+        ax = plt.gca()
+        ax.set_xscale('log')
+
+    keys = list(plot_dict.keys())
+    class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
+    for _class in sorted(plot_dict.keys()):
+        color = next(class_colours)
+        sns.distplot(plot_dict[_class]['rand_vars'], hist=plot_hist, kde=True, norm_hist=True, label=str(_class))
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend()
+
+    if show_fig:
+        plt.show()
 
     return fig
 
