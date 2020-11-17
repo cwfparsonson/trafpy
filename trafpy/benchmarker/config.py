@@ -16,7 +16,7 @@ BENCHMARK_VERSION = '0.0.1'
 NUM_DEMANDS_FACTOR = 50
 
 # define minimum time of last demand's arrival (helps define minimum simulation time)
-MIN_LAST_DEMAND_ARRIVAL_TIME = 3e6 # units of us
+MIN_LAST_DEMAND_ARRIVAL_TIME = 6e7 # units of us 3e6
 
 # define network load fractions
 LOADS = np.arange(0.1, 1.1, 0.1).tolist()

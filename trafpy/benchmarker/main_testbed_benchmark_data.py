@@ -80,8 +80,7 @@ class TestBed:
         while True:
             action = scheduler.get_action(observation)
             observation, reward, done, info = env.step(action)
-            # if len(env.completed_flows)+len(env.dropped_flows) % 100 == 0:
-                # print('Simulation `{}`: Flows arrived: {} | Flows completed+dropped: {}'.format(env.sim_name, len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)))
+            # print('Simulation `{}`: Flows arrived: {} | Flows completed+dropped: {}'.format(env.sim_name, len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)))
             if done:
                 # env.get_scheduling_session_summary(print_summary=True)
                 analyser = EnvAnalyser(env)
@@ -150,7 +149,7 @@ if __name__ == '__main__':
         MAX_TIME = None
         MAX_FLOWS = 4
 
-        path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/ndf50_1s_university_benchmark_data.json'
+        path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/ndf50_1s_university_benchmark_data_v2.json'
         tb = TestBed(path_to_benchmark_data)
 
         # networks
@@ -163,7 +162,7 @@ if __name__ == '__main__':
 
         # schedulers
         # SLOT_SIZE = 1e6
-        SLOT_SIZE = 1e3
+        SLOT_SIZE = 1e5 #1e4
         schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
                       BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10),
                       RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE)]
