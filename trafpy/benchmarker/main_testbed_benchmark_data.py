@@ -149,7 +149,7 @@ if __name__ == '__main__':
         MAX_TIME = None
         MAX_FLOWS = 4
 
-        path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/ndf50_1s_university_benchmark_data_v2.json'
+        path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/ndf50_1s_university_benchmark_data.json'
         tb = TestBed(path_to_benchmark_data)
 
         # networks
