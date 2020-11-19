@@ -3,7 +3,7 @@ from trafpy.generator.src.demand import Demand
 from trafpy.manager.src.simulators.simulators import DCN
 from trafpy.manager.src.simulators.env_analyser import EnvAnalyser
 
-import multiprocessing
+# import multiprocessing
 # from progress.spinner import Spinner
 import time
 import json
@@ -12,6 +12,9 @@ import sys
 import os
 import tensorflow as tf
 tf.keras.backend.clear_session()
+
+import ray
+ray.init()
 
 
 class TestBed:
@@ -23,7 +26,8 @@ class TestBed:
         self.reset()
 
     def reset(self):
-        self.envs = multiprocessing.Manager().list()
+        # self.envs = multiprocessing.Manager().list()
+        self.envs = []
         self.config = None
 
     def load_benchmark_data(self, demand_file_path):
@@ -43,6 +47,8 @@ class TestBed:
 
         jobs = []
         start_time = time.time()
+        ray_remote_args = {}
+        test = 0
         for benchmark in self.benchmarks:
             # for load in self.benchmark_data[benchmark]:
             for load in list(self.benchmark_data[benchmark].keys()):
@@ -58,12 +64,17 @@ class TestBed:
                                   sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
                                   max_flows=config['max_flows'], 
                                   max_time=config['max_time'])
-                        p = multiprocessing.Process(target=self.run_test,
-                                                    args=(scheduler, env, self.envs, path_to_save,))
-                        jobs.append(p)
-                        p.start()
-        for job in jobs:
-            job.join() # only execute below code when all jobs finished
+                        ray_remote_args[test] = [scheduler, env, path_to_save]
+                        test += 1
+                        # self.envs.append(env)
+                        # p = multiprocessing.Process(target=self.run_test,
+                                                    # args=(scheduler, env, self.envs, path_to_save,))
+                        # jobs.append(p)
+                        # p.start()
+        # for job in jobs:
+            # job.join() # only execute below code when all jobs finished
+        self._envs = [run_test.remote(*list(ray_remote_args[test].values())) for test in ray_remote_args.keys()]
+        self.envs = ray.get(_envs) # get envs
         end_time = time.time()
         total_time = round(end_time-start_time, 2)
         print('\n{} tests completed in {} seconds.'.format(num_jobs, total_time))
@@ -71,7 +82,8 @@ class TestBed:
         self.save(path=path_to_save, overwrite=False) # save final testbed state
 
 
-    def run_test(self, scheduler, env, envs, path_to_save):
+    @ray.remote
+    def run_test(self, scheduler, env, path_to_save):
         observation = env.reset()
         try:
             scheduler.register_env(env)
@@ -86,13 +98,14 @@ class TestBed:
                 # env.get_scheduling_session_summary(print_summary=True)
                 analyser = EnvAnalyser(env)
                 analyser.compute_metrics(print_summary=True)
-                try:
-                    envs.append(env) # store env
-                except EOFError:
-                    print('Memory error appending env to list. See https://stackoverflow.com/questions/57370803/multiprocessing-pool-manager-namespace-eof-error for example. Allocate more system memory or reduce size of TestBed experiment.')
-                    sys.exit()
+                # try:
+                    # envs.append(env) # store env
+                # except EOFError:
+                    # print('Memory error appending env to list. See https://stackoverflow.com/questions/57370803/multiprocessing-pool-manager-namespace-eof-error for example. Allocate more system memory or reduce size of TestBed experiment.')
+                    # sys.exit()
                 # self.save(path_to_save, overwrite=True, conv_back_to_mp_manager_list=True) # save curr TestBed state
                 break
+        return env
 
     def save(self, path, overwrite=False, conv_back_to_mp_manager_list=False):
         self.envs = list(self.envs) # conv to list so is picklable
