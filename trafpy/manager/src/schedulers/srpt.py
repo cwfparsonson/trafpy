@@ -41,15 +41,20 @@ class SRPT(SchedulerToolbox):
                     chosen_flow, _ = self.find_shortest_flow_in_queue(queued_flows,completion_times)
                    
                     # check for contentions
+                    contending_flows = [None]
                     contending_flow = None
                     establish_flow = False
                     if len(chosen_flows) != 0:
                         establish_flow, p, c = self.look_for_available_lightpath(chosen_flow,chosen_flows)
                         chosen_flow['path'], chosen_flow['channel'] = p, c
                         if not establish_flow:
-                            contending_flow,contending_flow_fct,p,c = self.find_contending_flow(chosen_flow,chosen_flows)
+                            # print('======== CONTENTION FOUND =======')
+                            contending_flows,contending_flow,contending_flow_fct,p,c = self.find_contending_flow(chosen_flow,chosen_flows)
                             chosen_flow['path'], chosen_flow['channel'] = p, c
                             comp_time, _ = self.estimate_time_to_completion(chosen_flow)
+                            # print('Chosen flow:\n{}'.format(chosen_flow))
+                            # print('Contending flow:\n{}'.format(contending_flow))
+                            # print('Contending flows:\n{}'.format(contending_flows))
 
                             if contending_flow_fct > comp_time:
                                 # new choice has lower fct that established flow
@@ -65,11 +70,12 @@ class SRPT(SchedulerToolbox):
                         establish_flow = True
                     
                     if establish_flow:
-                        try:
-                            chosen_flows.remove(contending_flow)
-                        except (NameError, ValueError):
-                            # already not present
-                            pass
+                        for contending_flow in contending_flows:
+                            try:
+                                chosen_flows.remove(contending_flow)
+                            except (NameError, ValueError):
+                                # already not present
+                                pass
                         chosen_flows.append(chosen_flow)
                     else:
                         # contention was found and lost
@@ -91,10 +97,12 @@ class SRPT(SchedulerToolbox):
         Goes through chosen flow possible path & channel combinations & 
         compares to path-channel combinations in chosen flows. Saves all
         contentions that arise. When all possible contentions have been checked,
-        finds the 'least contentious' (i.e. longest flow completion time) in
+        finds the 'most contentious' (i.e. shortest flow completion time) in
         chosen_flows and returns this as the contending flow (since other
-        flows in chosen_flows will have a lower FCT than least contentious flow
-        and therefore should not be removed)
+        flows in contending_flows will have a higher FCT than this most contentious flow
+        and therefore if the chosen flow has a lower FCT than the most contentious flow,
+        it will also have a lower FCT than all competing flows and therefore should
+        replace all contending flows)
         '''
         
         contending_flows = {'contending_flows': []}
@@ -126,13 +134,16 @@ class SRPT(SchedulerToolbox):
         if found_contention == False:
             sys.exit('ERROR: Could not find where contention was')
 
-        idx_max_fct = contending_comp_times.index(max(contending_comp_times))
-        contending_flow = contending_flows['contending_flows'][idx_max_fct]['cont_f']
-        contending_flow_fct = contending_comp_times[idx_max_fct]
-        chosen_path = contending_flows['contending_flows'][idx_max_fct]['chosen_p']
-        chosen_channel = contending_flows['contending_flows'][idx_max_fct]['chosen_c']
+        idx_min_fct = contending_comp_times.index(min(contending_comp_times))
+        contending_flow = contending_flows['contending_flows'][idx_min_fct]['cont_f']
+        contending_flow_fct = contending_comp_times[idx_min_fct]
+        chosen_path = contending_flows['contending_flows'][idx_min_fct]['chosen_p']
+        chosen_channel = contending_flows['contending_flows'][idx_min_fct]['chosen_c']
         
+        contending_flows_list = []
+        for f in contending_flows['contending_flows']:
+            contending_flows_list.append(f['cont_f'])
          
-        return contending_flow, contending_flow_fct, chosen_path, chosen_channel
+        return contending_flows_list, contending_flow, contending_flow_fct, chosen_path, chosen_channel
         
 

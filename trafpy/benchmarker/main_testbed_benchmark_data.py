@@ -153,7 +153,7 @@ if __name__ == '__main__':
         tb = TestBed(path_to_benchmark_data)
 
         # dcn
-        MAX_TIME = None
+        MAX_TIME = 1e5 # None
         MAX_FLOWS = 4 
 
         # networks
@@ -167,6 +167,7 @@ if __name__ == '__main__':
         # schedulers
         # SLOT_SIZE = 1e6
         SLOT_SIZE = 1e4 #1e4 1e5
+        # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE)]
         schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
                       BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10),
                       RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE)]

@@ -194,23 +194,97 @@ class DCN(gym.Env):
         grid_slot_dict = {ep:
                             {channel:
                                 {'times': [0],
-                                 'demands': [None]}
+                                 'demands': [None],
+                                 'demands_info': [None]}
                              for channel in self.channel_names} 
                           for ep in Graph.graph['endpoints']}
 
         return grid_slot_dict
 
+    def get_path_edges(self, path):
+        '''
+        Takes a path and returns list of edges in the path
+
+        Args:
+        - path (list): path in which you want to find all edges
+
+        Returns:
+        - edges (list of lists): all edges contained within the path
+        '''
+        num_nodes = len(path)
+        num_edges = num_nodes - 1
+        edges = [path[edge:edge+2] for edge in range(num_edges)]
+
+        return edges
+
+    def check_chosen_flows_valid(self, chosen_flows):
+        # init channel link occupation dict
+        edge_channel_occupation = {json.dumps(edge): 
+                                    {channel: 'unoccupied' for channel in self.channel_names}
+                                   for edge in self.network.edges}
+
+        # update any channel links which are now occupied 
+        for flow in chosen_flows:
+            path, channel = flow['path'], flow['channel']
+            edges = self.get_path_edges(path)
+            for edge in edges:
+                try:
+                    if edge_channel_occupation[json.dumps(edge)][channel] != 'unoccupied':
+                        raise Exception('Scheduler chose flow {}, however at least one of the edge channels in this chosen path-channel is already occupied by flow {}. Resolve contentions before passing chosen flows to DCN simulation environment.'.format(flow, edge_channel_occupation[json.dumps(edge)][channel]))
+                    edge_channel_occupation[json.dumps(edge)][channel] = flow
+                except KeyError:
+                    if edge_channel_occupation[json.dumps(edge[::-1])][channel] != 'unoccupied':
+                        raise Exception('Scheduler chose flow {}, however at least one of the edge channels in this chosen path-channel is already occupied by flow {}. Resolve contentions before passing chosen flows to DCN simulation environment.'.format(flow, edge_channel_occupation[json.dumps(edge[::-1])][channel]))
+                    edge_channel_occupation[json.dumps(edge[::-1])][channel] = flow
+
+
+        
+
     def update_grid_slot_evolution(self, chosen_flows):
         time = self.curr_time
+                    
+        # init ep channel link occupation dict
+        ep_link_occupation = {ep: 
+                                {channel: 'unoccupied' for channel in self.channel_names}
+                             for ep in self.network.graph['endpoints']}
 
+        # update grid slot evolution with any ep link channels which are now occupied 
         for flow in chosen_flows:
             sn, dn, channel = flow['src'], flow['dst'], flow['channel']
-            # src ep link
-            self.grid_slot_dict[sn][channel]['demands'].append(flow['flow_id'])
-            self.grid_slot_dict[sn][channel]['times'].append(time)
-            # dst ep link
-            self.grid_slot_dict[dn][channel]['demands'].append(flow['flow_id'])
-            self.grid_slot_dict[dn][channel]['times'].append(time)
+            if sn == dn:
+                # does not become flow therefore does not occupy an ep channel link
+                pass
+            else:
+                # src ep link
+                self.grid_slot_dict[sn][channel]['demands'].append(flow['flow_id'])
+                self.grid_slot_dict[sn][channel]['times'].append(time)
+                self.grid_slot_dict[sn][channel]['demands_info'].append(flow) # useful for debugging
+                ep_link_occupation[sn][channel] = 'occupied'
+                # dst ep link
+                self.grid_slot_dict[dn][channel]['demands'].append(flow['flow_id'])
+                self.grid_slot_dict[dn][channel]['times'].append(time)
+                self.grid_slot_dict[dn][channel]['demands_info'].append(flow) # useful for debugging
+                ep_link_occupation[dn][channel] = 'occupied'
+
+        # update grid slot evolution of any ep link channels which are unoccupied
+        for ep in ep_link_occupation.keys():
+            for channel in ep_link_occupation[ep].keys():
+                if ep_link_occupation[ep][channel] == 'occupied':
+                    # ep link channel occupied, grid slot has already been updated
+                    pass
+                else:
+                    # ep link channel unoccupied, grid slot not yet updated
+                    self.grid_slot_dict[ep][channel]['demands'].append(None)
+                    self.grid_slot_dict[ep][channel]['times'].append(time)
+                    self.grid_slot_dict[ep][channel]['demands_info'].append(None) # useful for debugging
+
+
+
+
+
+
+
+
     
     def init_virtual_queues(self, Graph):
         # queues_per_ep = self.num_endpoints-1
@@ -1043,6 +1117,9 @@ class DCN(gym.Env):
     def take_action(self, action):
         # unpack chosen action
         chosen_flows = action['chosen_flows']
+
+        # check chosen flows valid
+        self.check_chosen_flows_valid(chosen_flows)
         
         # update any flow attrs in dcn network that have been updated by agent
         self.update_flow_attrs(chosen_flows)
@@ -1082,12 +1159,12 @@ class DCN(gym.Env):
         
         #self.update_completed_flows(chosen_flows) 
 
-        self.update_queue_evolution()
-        self.update_grid_slot_evolution(chosen_flows)
 
         # all chosen flows established and any removed flows taken down
         # update connected_flows
         self.connected_flows = chosen_flows.copy()
+
+        self.update_queue_evolution()
 
 
     def step(self, action):
@@ -1096,7 +1173,7 @@ class DCN(gym.Env):
         to next step
         '''
         self.action = action # save action
-        
+
         self.take_action(action)
 
         self.curr_step += 1

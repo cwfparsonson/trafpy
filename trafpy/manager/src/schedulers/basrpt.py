@@ -34,10 +34,11 @@ class BASRPT(SchedulerToolbox):
         Goes through chosen flow possible path & channel combinations & 
         compares to path-channel combinations in chosen flows. Saves all
         contentions that arise. When all possible contentions have been checked,
-        finds the 'least contentious' (i.e. highest BASRPT cost) in
+        finds the 'most contentious' (i.e. lowest BASRPT cost) in
         chosen_flows and returns this as the contending flow (since other
-        flows in chosen_flows will have a lower cost than least contentious flow
-        and therefore should not be removed)
+        flows in chosen_flows will have a higher cost than most contentious flow
+        and therefore should also be removed if chosen flow beats most contentious
+        flow)
         '''
         
         contending_flows = {'contending_flows': []}
@@ -70,14 +71,17 @@ class BASRPT(SchedulerToolbox):
         if found_contention == False:
             sys.exit('ERROR: Could not find where contention was')
 
-        idx_max_cost = contending_costs.index(max(contending_costs))
-        contending_flow = contending_flows['contending_flows'][idx_max_cost]['cont_f']
-        contending_flow_cost = contending_costs[idx_max_cost]
-        chosen_path = contending_flows['contending_flows'][idx_max_cost]['chosen_p']
-        chosen_channel = contending_flows['contending_flows'][idx_max_cost]['chosen_c']
-        
+        idx_min_cost = contending_costs.index(min(contending_costs))
+        contending_flow = contending_flows['contending_flows'][idx_min_cost]['cont_f']
+        contending_flow_cost = contending_costs[idx_min_cost]
+        chosen_path = contending_flows['contending_flows'][idx_min_cost]['chosen_p']
+        chosen_channel = contending_flows['contending_flows'][idx_min_cost]['chosen_c']
+
+        contending_flows_list = []
+        for f in contending_flows['contending_flows']:
+            contending_flows_list.append(f['cont_f'])
          
-        return contending_flow, contending_flow_cost, chosen_path, chosen_channel
+        return contending_flows_list, contending_flow, contending_flow_cost, chosen_path, chosen_channel
 
     def calc_basrpt_cost(self, flow, flow_queue):
         num_queued_flows = len(flow_queue)
@@ -120,13 +124,14 @@ class BASRPT(SchedulerToolbox):
                     chosen_flow, _ = self.find_shortest_flow_in_queue(queued_flows,completion_times)
                     
                     # check for contentions
+                    contending_flows = [None]
                     contending_flow = None
                     establish_flow = False
                     if len(chosen_flows) != 0:
                         establish_flow, p, c = self.look_for_available_lightpath(chosen_flow,chosen_flows)
                         chosen_flow['path'], chosen_flow['channel'] = p, c
                         if not establish_flow:
-                            contending_flow,contending_flow_cost,p,c = self.find_contending_flow(chosen_flow,chosen_flows)
+                            contending_flows,contending_flow,contending_flow_cost,p,c = self.find_contending_flow(chosen_flow,chosen_flows)
                             chosen_flow['path'],chosen_flow['channel'] = p,c
                             chosen_cost = self.calc_basrpt_cost(chosen_flow, queued_flows)
                             
@@ -144,11 +149,12 @@ class BASRPT(SchedulerToolbox):
                         establish_flow = True
                     
                     if establish_flow:
-                        try:
-                            chosen_flows.remove(contending_flow)
-                        except (NameError, ValueError):
-                            # already not present
-                            pass
+                        for contending_flow in contending_flows:
+                            try:
+                                chosen_flows.remove(contending_flow)
+                            except (NameError, ValueError):
+                                # already not present
+                                pass
                         chosen_flows.append(chosen_flow)
                     else:
                         # contention was found and lost
