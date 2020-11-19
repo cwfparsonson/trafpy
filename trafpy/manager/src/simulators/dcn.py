@@ -1165,6 +1165,7 @@ class DCN(gym.Env):
         self.connected_flows = chosen_flows.copy()
 
         self.update_queue_evolution()
+        self.update_grid_slot_evolution(chosen_flows)
 
 
     def step(self, action):

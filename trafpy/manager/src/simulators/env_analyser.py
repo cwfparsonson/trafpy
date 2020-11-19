@@ -107,6 +107,38 @@ class EnvAnalyser:
         self._compute_flow_completion_metrics()
         self._compute_flow_dropped_metrics()
         self._compute_flow_queued_metrics()
+        self._generate_grid_demands_numpy_array()
+
+    def _generate_grid_demands_numpy_array(self):
+        # collect ep link channel demand info into numpy array grid
+        self.grid_demands = []
+        for ep in self.env.grid_slot_dict.keys():
+            for channel in self.env.grid_slot_dict[ep].keys():
+                self.grid_demands.append(self.env.grid_slot_dict[ep][channel]['demands'])
+        self.grid_demands = np.array([np.array(xi) for xi in self.grid_demands]) # unpack and conv to numpy array
+
+        # conv grid demands to unique integer ids (for colour coding)
+        unique_id_counter = 0
+        demand_to_id = {}
+        for demand_idx in range(self.grid_demands.shape[0]):
+            for time_idx in range(self.grid_demands.shape[1]):
+                d = self.grid_demands[demand_idx][time_idx]
+                if d not in demand_to_id.keys():
+                    # not yet encountered demand id, update demand_to_id dict
+                    demand_to_id[d] = unique_id_counter
+                    unique_id_counter += 1
+                    # update grid_demands
+                    self.grid_demands[demand_idx][time_idx] = demand_to_id[d]
+                else:
+                    # update grid_demands
+                    self.grid_demands[demand_idx][time_idx] = demand_to_id[d]
+
+        # conv grid elements to ints
+        self.grid_demands = self.grid_demands.astype(int)
+
+
+
+
 
     def _calc_flow_completion_times(self):
         flow_completion_times = []

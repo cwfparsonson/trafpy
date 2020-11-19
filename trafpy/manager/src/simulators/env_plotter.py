@@ -194,6 +194,16 @@ class EnvsPlotter:
 
 
 
+    def plot_demand_slot_colour_grid_for_different_schedulers(self, *analysers):
+        figs = []
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            figs.append(plot_dists.plot_demand_slot_colour_grid(analyser.grid_demands, title=analyser.env.sim_name, xlim=None, show_fig=False))
+
+        return figs
+
+
+
 
     ############################### BASRPT #################################
 
@@ -250,6 +260,8 @@ class EnvsPlotter:
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Throughput Rate', ylabel='Complementary CDF', complementary_cdf=True, show_fig=False)
 
         return [fig1, fig2]
+
+
 
 
 

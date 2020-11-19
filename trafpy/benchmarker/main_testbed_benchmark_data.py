@@ -80,9 +80,17 @@ class TestBed:
         while True:
             action = scheduler.get_action(observation)
             observation, reward, done, info = env.step(action)
-            # print('Simulation `{}`: Flows arrived: {} | Flows completed+dropped: {}'.format(env.sim_name, len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)))
+
+            # print progress
+            flows_arrived, flows_processed = len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)
+            percent_demands_processed = round(100*(flows_processed/env.demand.num_demands), 0)
+            if percent_demands_processed % 10 == 0:
+                if percent_demands_processed != 0 and percent_demands_processed != 100:
+                    print('Sim: {} | Flows arrived: {} of {} | Flows processed: {}%'.format(env.sim_name, flows_arrived, env.demand.num_demands, percent_demands_processed))
+
             if done:
                 # env.get_scheduling_session_summary(print_summary=True)
+                print('Completed simulation \'{}\''.format(env.sim_name))
                 analyser = EnvAnalyser(env)
                 analyser.compute_metrics(print_summary=True)
                 try:
@@ -146,7 +154,7 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        DATA_NAME = 'ndf50_mldat6e6_0.4load_university'
+        DATA_NAME = 'ndf50_mldat6e6_load0.4_university'
 
         # benchmark data
         path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/{}_benchmark_data.json'.format(DATA_NAME)
@@ -167,10 +175,10 @@ if __name__ == '__main__':
         # schedulers
         # SLOT_SIZE = 1e6
         SLOT_SIZE = 1e4 #1e4 1e5
-        # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE)]
-        schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
-                      BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10),
-                      RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE)]
+        schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE)]
+        # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
+                      # BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10),
+                      # RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE)]
         # schedulers = []
         # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]
         # for V in Vs:

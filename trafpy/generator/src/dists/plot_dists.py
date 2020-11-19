@@ -9,6 +9,7 @@ import copy
 np.set_printoptions(threshold=np.inf)
 import matplotlib.pyplot as plt
 import matplotlib
+from matplotlib import colors
 import seaborn as sns
 from statsmodels.distributions.empirical_distribution import ECDF
 from scipy import stats
@@ -432,6 +433,32 @@ def plot_val_stacked_bar(plot_dict={},
         plt.show()
 
     return fig
+
+
+
+def plot_demand_slot_colour_grid(grid_demands, title=None, xlim=None, show_fig=False):
+    # set colours
+    # class_colours = sns.color_palette(palette='hls', n_colors=None, desat=None)
+    # cmap = colors.ListedColormap(class_colours
+    cmap = None
+
+    # plot grid
+    fig, ax = plt.subplots()
+    c = ax.pcolor(grid_demands, cmap=cmap)
+    plt.xlabel('Time Slot')
+    plt.ylabel('Flow Slot')
+
+    if title is not None:
+        ax.set_title(title)
+
+    if xlim is not None:
+        plt.xlim(xlim)
+
+    if show_fig:
+        plt.show()
+
+    return fig
+
 
 
 
