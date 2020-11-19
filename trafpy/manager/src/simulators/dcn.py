@@ -112,6 +112,7 @@ class DCN(gym.Env):
 
         self.network = self.init_virtual_queues(self.network)
         self.queue_evolution_dict = self.init_queue_evolution(self.network)
+        self.grid_slot_dict = self.init_grid_slot_evolution(self.network)
 
         if return_obs:
             return self.next_observation()
@@ -188,9 +189,31 @@ class DCN(gym.Env):
                 else:
                     # can't have src == dst
                     pass
+
+    def init_grid_slot_evolution(self, Graph):
+        grid_slot_dict = {ep:
+                            {channel:
+                                {'times': [0],
+                                 'demands': [None]}
+                             for channel in self.channel_names} 
+                          for ep in Graph.graph['endpoints']}
+
+        return grid_slot_dict
+
+    def update_grid_slot_evolution(self, chosen_flows):
+        time = self.curr_time
+
+        for flow in chosen_flows:
+            sn, dn, channel = flow['src'], flow['dst'], flow['channel']
+            # src ep link
+            self.grid_slot_dict[sn][channel]['demands'].append(flow['flow_id'])
+            self.grid_slot_dict[sn][channel]['times'].append(time)
+            # dst ep link
+            self.grid_slot_dict[dn][channel]['demands'].append(flow['flow_id'])
+            self.grid_slot_dict[dn][channel]['times'].append(time)
     
     def init_virtual_queues(self, Graph):
-        queues_per_ep = self.num_endpoints-1
+        # queues_per_ep = self.num_endpoints-1
       
         # initialise queues at each endpoint as node attributes
         attrs = {ep: 
@@ -1060,6 +1083,7 @@ class DCN(gym.Env):
         #self.update_completed_flows(chosen_flows) 
 
         self.update_queue_evolution()
+        self.update_grid_slot_evolution(chosen_flows)
 
         # all chosen flows established and any removed flows taken down
         # update connected_flows

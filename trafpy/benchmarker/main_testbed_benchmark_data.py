@@ -146,11 +146,15 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        MAX_TIME = None
-        MAX_FLOWS = 4
+        DATA_NAME = 'ndf50_mldat6e6_0.4load_university'
 
-        path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/ndf50_1s_university_benchmark_data_v2.json'
+        # benchmark data
+        path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/{}_benchmark_data.json'.format(DATA_NAME)
         tb = TestBed(path_to_benchmark_data)
+
+        # dcn
+        MAX_TIME = None
+        MAX_FLOWS = 4 
 
         # networks
         NUM_CHANNELS = 1
@@ -162,7 +166,7 @@ if __name__ == '__main__':
 
         # schedulers
         # SLOT_SIZE = 1e6
-        SLOT_SIZE = 1e5 #1e4
+        SLOT_SIZE = 1e4 #1e4 1e5
         schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
                       BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10),
                       RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE)]
@@ -173,7 +177,7 @@ if __name__ == '__main__':
 
 
 
-        test_config = {'test_name': 'ndf50_1s_university_testbed_data',
+        test_config = {'test_name': '{}_testbed_data'.format(DATA_NAME),
                        'num_k_paths': NUM_K_PATHS,
                        'max_time': MAX_TIME,
                        'max_flows': MAX_FLOWS,
