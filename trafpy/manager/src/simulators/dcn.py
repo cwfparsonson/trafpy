@@ -32,7 +32,13 @@ class DCN(gym.Env):
                  slot_size, 
                  sim_name='dcn_sim',
                  max_flows=None, 
-                 max_time=None):
+                 max_time=None,
+                 track_grid_slot_evolution=False,
+                 track_queue_length_evolution=False):
+        '''
+        To reduce memory usage, set tracking grid slot & queue length evolution
+        to False
+        '''
 
         # initialise DCN environment characteristics
         self.network = Network
@@ -45,6 +51,9 @@ class DCN(gym.Env):
         self.sim_name = sim_name 
         self.max_flows = max_flows # max number of flows per queue
         self.max_time = max_time
+        
+        self.track_grid_slot_evolution = track_grid_slot_evolution
+        self.track_queue_length_evolution = track_queue_length_evolution
 
         # init representation generator
         with tf.device('/cpu'):
@@ -115,8 +124,10 @@ class DCN(gym.Env):
 
 
         self.network = self.init_virtual_queues(self.network)
-        self.queue_evolution_dict = self.init_queue_evolution(self.network)
-        self.grid_slot_dict = self.init_grid_slot_evolution(self.network)
+        if self.track_queue_length_evolution:
+            self.queue_evolution_dict = self.init_queue_evolution(self.network)
+        if self.track_grid_slot_evolution:
+            self.grid_slot_dict = self.init_grid_slot_evolution(self.network)
 
         if return_obs:
             return self.next_observation()
@@ -684,10 +695,12 @@ class DCN(gym.Env):
             self.update_curr_time(observation['slot_dict'])
             # add any new events (flows or jobs) to queues
             observation = self.add_flows_to_queues(observation)
+            # save step used as most recent valid curr_step for slots_dict indexing
+            self.most_recent_valid_curr_step = self.curr_step
         except KeyError:
-            # curr step exceeded slots dict indices, no new flows/jobs arriving
-            slot_keys = list(self.slots_dict.keys())
-            observation = {'slot_dict': self.slots_dict[slot_keys[-1]],
+            # curr step either exceeded slots dict indices (no new flows/jobs arriving) or this step was not included in slots_dict since no demands arrived
+            # index slot_dict with most recent valid curr step
+            observation = {'slot_dict': self.slots_dict[self.most_recent_valid_curr_step],
                            'network': copy.deepcopy(self.network)}
             self.update_curr_time(observation['slot_dict'])
         
@@ -1176,8 +1189,10 @@ class DCN(gym.Env):
         # update connected_flows
         self.connected_flows = chosen_flows.copy()
 
-        self.update_queue_evolution()
-        self.update_grid_slot_evolution(chosen_flows)
+        if self.track_queue_length_evolution:
+            self.update_queue_evolution()
+        if self.track_grid_slot_evolution:
+            self.update_grid_slot_evolution(chosen_flows)
 
 
     def display_env_memory_usage(self, obs):
@@ -1186,6 +1201,13 @@ class DCN(gym.Env):
 
         # network
         network_size = sys.getsizeof(pickle.dumps(self.network)) 
+
+        # grid slot evolution
+        if self.track_grid_slot_evolution:
+            grid_slot_size = sys.getsizeof(json.dumps(self.grid_slot_dict))
+
+        if self.track_queue_length_evolution:
+            queue_length_size = sys.getsizeof(json.dumps(self.queue_evolution_dict))
 
         # # machine readable representation
         # machine_readable_network_size = sys.getsizeof(json.dumps(obs['machine_readable_network']))
@@ -1200,10 +1222,11 @@ class DCN(gym.Env):
         summary_dict = {
                 'Time': [self.curr_time],
                 'Slots Dict (B)': [slots_dict_size],
-                'Network (B)': [network_size]
-                # 'Machine Readable': machine_readable_network_size,
-                # 'Obs': obs_size
-                }
+                'Network (B)': [network_size]}
+        if self.track_grid_slot_evolution:
+            summary_dict['Grid Slot (B)'] = [grid_slot_size]
+        if self.track_queue_length_evolution:
+            summary_dict['Queue Evol (B)'] = [queue_length_size]
         df = pd.DataFrame(summary_dict)
         print('')
         print(tabulate(df, showindex=False, headers='keys', tablefmt='psql'))
@@ -1236,11 +1259,8 @@ class DCN(gym.Env):
 
 
         # # DEBUG:
-        # print('\nTime: {}'.format(self.curr_time))
+        # print('\nTime: {} Step: {} | Sim flows: {} | Flows arrived: {} | Flows completed: {} | Flows dropped: {}'.format(self.curr_time, self.curr_step, self.demand.num_flows, len(self.arrived_flow_dicts), len(self.completed_flows), len(self.dropped_flows)))
         # queues = self.get_current_queue_states()
-        # # print('arrived flows:\n{}'.format(self.arrived_flow_dicts))
-        # # print('arrived flow ids:\n{}'.format(self.arrived_flows))
-        # # print('Num completed flows: {}/{}'.format(len(self.completed_flows), self.demand.num_flows))
         # print('Queues being given to scheduler:')
         # i = 0
         # for q in queues:

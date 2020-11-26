@@ -107,7 +107,8 @@ class EnvAnalyser:
         self._compute_flow_completion_metrics()
         self._compute_flow_dropped_metrics()
         self._compute_flow_queued_metrics()
-        self._generate_grid_demands_numpy_array()
+        if self.env.track_grid_slot_evolution:
+            self._generate_grid_demands_numpy_array()
 
     def _generate_grid_demands_numpy_array(self):
         # collect ep link channel demand info into numpy array grid

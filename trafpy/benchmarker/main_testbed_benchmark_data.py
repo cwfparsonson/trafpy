@@ -48,21 +48,21 @@ class TestBed:
             for load in list(self.benchmark_data[benchmark].keys()):
                 for repeat in self.benchmark_data[benchmark][load]:
                     for scheduler in config['schedulers']:
-                        if json.loads(load) == 0.2 and scheduler.scheduler_name == 'srpt': # DEBUG 
-                            demand_data = self.benchmark_data[benchmark][load][repeat]
-                            demand = Demand(demand_data)
-                            env = DCN(config['networks'][0], 
-                                      demand, 
-                                      scheduler,
-                                      num_k_paths=config['num_k_paths'],
-                                      slot_size=config['slot_size'],
-                                      sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
-                                      max_flows=config['max_flows'], 
-                                      max_time=config['max_time'])
-                            p = multiprocessing.Process(target=self.run_test,
-                                                        args=(scheduler, env, self.envs, path_to_save,))
-                            jobs.append(p)
-                            p.start()
+                        # if json.loads(load) == 0.2 and scheduler.scheduler_name == 'srpt': # DEBUG 
+                        demand_data = self.benchmark_data[benchmark][load][repeat]
+                        demand = Demand(demand_data)
+                        env = DCN(config['networks'][0], 
+                                  demand, 
+                                  scheduler,
+                                  num_k_paths=config['num_k_paths'],
+                                  slot_size=config['slot_size'],
+                                  sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
+                                  max_flows=config['max_flows'], 
+                                  max_time=config['max_time'])
+                        p = multiprocessing.Process(target=self.run_test,
+                                                    args=(scheduler, env, self.envs, path_to_save,))
+                        jobs.append(p)
+                        p.start()
         for job in jobs:
             job.join() # only execute below code when all jobs finished
         end_time = time.time()
@@ -82,7 +82,7 @@ class TestBed:
             pass
         while True:
             action = scheduler.get_action(observation)
-            observation, reward, done, info = env.step(action, print_memory_usage=True)
+            observation, reward, done, info = env.step(action, print_memory_usage=False)
 
             # print progress
             flows_arrived, flows_processed = len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)
@@ -179,7 +179,7 @@ if __name__ == '__main__':
 
         # schedulers
         # SLOT_SIZE = 1e6
-        SLOT_SIZE = 1e3 #1e4 1e5 1e2 0.1  1e3
+        SLOT_SIZE = 1e4 #1e4 1e5 1e2 0.1  1e3
         PACKET_SIZE = 1 # 300 0.01 1e1 1e2
         #schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
         schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),

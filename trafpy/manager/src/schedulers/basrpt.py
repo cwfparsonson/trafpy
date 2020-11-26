@@ -93,7 +93,7 @@ class BASRPT(SchedulerToolbox):
             if flow_dict['packets'] is None:
                 queued_flow_bytes = flow_dict['size']
             else:
-                queued_flow_bytes = sum(flow_dict['packets'])
+                queued_flow_bytes = flow_dict['packets'] * flow_dict['packet_size']
             queue_length += queued_flow_bytes
 
         # calc flow fct

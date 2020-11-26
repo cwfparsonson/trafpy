@@ -5,6 +5,7 @@ from trafpy.generator.src.builder import *
 from trafpy.generator.src.jobcentric import *
 from trafpy.generator.src.flowcentric import *
 from trafpy.generator.src.networks import *
+from trafpy.generator.src.demand import *
 
 # src.dists
 from trafpy.generator.src.dists.val_dists import *

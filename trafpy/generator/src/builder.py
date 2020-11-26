@@ -7,6 +7,7 @@ import numpy as np
 import time
 import json
 import copy
+import sys
 
 
 def create_demand_data(eps,
@@ -227,7 +228,9 @@ def create_demand_data(eps,
 
 
 def construct_demand_slots_dict(demand_data,
-                                slot_size=0.1):
+                                slot_size=0.1,
+                                include_empty_slots=False,
+                                print_info=False):
     '''Takes demand data (job-centric or flow-centric) and generates time-slot demand dictionaries.
 
     Often when simulating networks, it is useful to divide the arriving demands
@@ -241,12 +244,16 @@ def construct_demand_slots_dict(demand_data,
     Args:
         demand_data (dict): Generated demand data (either flow-centric or job-centric).
         slot_size (float): Time period of each time slot. MUST BE FLOAT!!
+        include_empty_slots (bool): Whether or not to include empty (i.e. no flows arriving)
+            slots in slots_dict values. If True, will have keys for all slots of simulation,
+            but will larger memory usage, making the slots_dict less scalable.
 
     Returns:
         dict: Dictionary containing the original demand data organised into time 
         slots.
 
     '''
+    start = time.time()
 
     if type(slot_size) is not float:
         raise Exception('slot_size must be float (e.g. 1.0), but is {}'.format(slot_size))
@@ -303,6 +310,46 @@ def construct_demand_slots_dict(demand_data,
             slot_time = slot_times[slot_iter+1]
         except IndexError:
             break
+
+    if not include_empty_slots or print_info:
+        original_num_keys = len(slot_dict.keys())
+        # remove any slots which do not contain any new flows
+        new_slot_dict = {}
+        num_empty_slots = 0
+        num_demands = 0
+        for slot in slot_dict.keys():
+            num_demands_arrived = len(slot_dict[slot]['new_event_dicts'])
+            num_demands += num_demands_arrived
+            if num_demands_arrived == 0:
+                # no new demands arrived, do not add to new slot dict
+                num_empty_slots += 1
+            else:
+                # new demands arrived this slot, add to new slot dict
+                new_slot_dict[slot] = slot_dict[slot]
+        # slot_dict = copy.deepcopy(new_slot_dict)
+        if not include_empty_slots:
+            slot_dict = copy.deepcopy(new_slot_dict)
+    end = time.time()
+
+    if print_info:
+        new_num_keys = len(slot_dict.keys())
+        num_redundant_slots = original_num_keys - new_num_keys
+        frac_redundant_slots = round(num_redundant_slots/original_num_keys, 3)
+        avrg_num_demands_per_slot = round(num_demands / original_num_keys, 3)
+        print('Generated slot dict in {} s with slot size {} and total session time {} for {} demands.'.format(round(end-start, 4), slot_size, total_session_time, num_demands))
+        print('Approx memory size of slot dict: {} Bytes'.format(sys.getsizeof(json.dumps(slot_dict))))
+        print('Number of slots making up total session time: {}'.format(original_num_keys))
+        print('Number of these slots in which no new demands arrived: {}'.format(num_empty_slots))
+        print('Fraction of the {} total time slots from simulation start to finish in which no new demands arrive: {}'.format(original_num_keys, frac_redundant_slots))
+        print('Average number of demands arriving per time slot: {}'.format(avrg_num_demands_per_slot))
+        if not include_empty_slots:
+            print('Number of keys in updated slot dict (after removing empty slots where no new demands arrived): {}'.format(new_num_keys))
+
+        print('\nNotice: In simulation, the scheduler makes a decision at every time slot. Therefore the more time slots there are, the more processing overhead there is, and therefore the longer the simulation will take. If many of your slot sizes are redundant (i.e. no new flow information is arriving), it is advisable to increase the slot size -> decrease the number of slots -> decrease the number steps in the simulation -> decrease the simulation time. Conversely, if you have a high number of demands arriving per time slot, your scheduler will have a lower resolution to process the flows which can lead to poorer performance and more flows being perhaps unnecesserily dropped from your network. As a rule of thumb, having an average number of flows arriving per time slot of less than 1 is not needed.')
+
+
+
+
     
     return slot_dict
 

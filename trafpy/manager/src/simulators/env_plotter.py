@@ -198,6 +198,8 @@ class EnvsPlotter:
     def plot_demand_slot_colour_grid_for_different_schedulers(self, *analysers):
         figs = []
         for analyser in analysers:
+            if not analyser.env.track_grid_slot_evolution:
+                raise Exception('Must set track_grid_slot_evolution=True when instantiating env simulation in order to plot grid.')
             self._check_analyser_valid(analyser)
             figs.append(plot_dists.plot_demand_slot_colour_grid(analyser.grid_demands, title=analyser.env.sim_name, xlim=None, show_fig=False))
 
@@ -207,6 +209,8 @@ class EnvsPlotter:
         # init plot dict
         plot_dict = {}
         for analyser in analysers:
+            if not analyser.env.track_grid_slot_evolution:
+                raise Exception('Must set track_grid_slot_evolution=True when instantiating env simulation in order to plot number of concurrent demands.')
             self._check_analyser_valid(analyser)
             try:
                 plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None
