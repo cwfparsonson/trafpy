@@ -13,8 +13,8 @@ import itertools
 
 class BASRPT(SchedulerToolbox):
 
-    def __init__(self, Graph, RWA, slot_size, V, scheduler_name='basrpt'):
-        super().__init__(Graph, RWA, slot_size)
+    def __init__(self, Graph, RWA, slot_size, V, packet_size=300, scheduler_name='basrpt'):
+        super().__init__(Graph, RWA, slot_size, packet_size)
         self.scheduler_name = scheduler_name
         self.V = V # BASRPT V parameter
         self.N = int(len(self.Graph.graph['endpoints'])) # number of servers

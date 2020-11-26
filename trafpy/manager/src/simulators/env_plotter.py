@@ -124,13 +124,13 @@ class EnvsPlotter:
                     plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None
                     plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = None
 
+
+        load_to_meas_time = {} # collect measurement times for verical line plotting
         # plot src-dst queue evolution for each load
         for analyser in analysers:
             plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = analyser.env.queue_evolution_dict[src][dst]['times']
             plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = analyser.env.queue_evolution_dict[src][dst][length_type]
-
-        # collect measurement times for vertical line plotting
-        load_to_meas_time = {analyser.load_frac: [analyser.measurement_start_time, analyser.measurement_end_time] for analyser in analysers}
+            load_to_meas_time[analyser.load_frac] = [analyser.measurement_start_time, analyser.measurement_end_time]
 
         # set y-axis limits
         if length_type == 'queue_lengths_num_flows':
@@ -195,6 +195,106 @@ class EnvsPlotter:
 
 
 
+    def plot_demand_slot_colour_grid_for_different_schedulers(self, *analysers):
+        figs = []
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            figs.append(plot_dists.plot_demand_slot_colour_grid(analyser.grid_demands, title=analyser.env.sim_name, xlim=None, show_fig=False))
+
+        return figs
+
+    def plot_num_concurrent_demands_vs_time_for_different_loads(self, *analysers):
+        # init plot dict
+        plot_dict = {}
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            try:
+                plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None
+                plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = None
+            except KeyError:
+                # not yet added this load
+                try:
+                    plot_dict[analyser.load_frac][analyser.subject_class_name] = {}
+                    plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None
+                    plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = None
+                except KeyError:
+                    # not yet added this class
+                    plot_dict[analyser.load_frac] = {}
+                    plot_dict[analyser.load_frac][analyser.subject_class_name] = {}
+                    plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None
+                    plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = None
+
+        load_to_meas_time = {} # collect measurement times for verical line plotting
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            load_to_meas_time[analyser.load_frac] = [int(analyser.measurement_start_time/analyser.env.slot_size), int(analyser.measurement_end_time/analyser.env.slot_size)]
+
+            concurrent_demands = []
+            time_slots = [t for t in range(analyser.grid_demands.shape[1])]
+            for time_slot in time_slots:
+                num_flows_in_network = 0
+                for ep in analyser.env.grid_slot_dict.keys():
+                    for channel in analyser.env.grid_slot_dict[ep].keys():
+                        if analyser.env.grid_slot_dict[ep][channel]['demands'][time_slot] is not None:
+                            # flow present in this flow slot
+                            num_flows_in_network += 1
+                        else:
+                            # no flow present at this flow slot
+                            pass
+                concurrent_demands.append(num_flows_in_network)
+            plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = time_slots
+            plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = concurrent_demands
+
+        figs = []
+        for load in plot_dict.keys():
+            fig = plot_dists.plot_val_line(plot_dict=plot_dict[load], xlabel='Time Slot', ylabel='Load {} Concurrent Demands'.format(str(round(load,2))), vertical_lines=load_to_meas_time[load], show_fig=False)
+            figs.append(fig)
+
+        return figs
+
+
+    def plot_demand_completion_time_vs_size_for_different_loads(self, *analysers):
+        # init plot dict
+        plot_dict = {}
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            try:
+                plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None
+                plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = None
+            except KeyError:
+                # not yet added this load
+                try:
+                    plot_dict[analyser.load_frac][analyser.subject_class_name] = {}
+                    plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None
+                    plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = None
+                except KeyError:
+                    # not yet added this class
+                    plot_dict[analyser.load_frac] = {}
+                    plot_dict[analyser.load_frac][analyser.subject_class_name] = {}
+                    plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None
+                    plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = None
+
+        load_to_meas_time = {} # collect measurement times for verical line plotting
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            load_to_meas_time[analyser.load_frac] = [int(analyser.measurement_start_time/analyser.env.slot_size), int(analyser.measurement_end_time/analyser.env.slot_size)]
+
+            flow_completion_times = []
+            flow_sizes = []
+            for flow in analyser.completed_flow_dicts:
+                flow_completion_times.append(flow['time_completed'] - flow['time_arrived'])
+                flow_sizes.append(flow['size'])
+            plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = flow_sizes
+            plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = flow_completion_times
+
+        figs = []
+        for load in plot_dict.keys():
+            fig = plot_dists.plot_val_scatter(plot_dict=plot_dict[load], xlabel='Flow Size', ylabel='Load {} Flow Completion Time'.format(str(round(load,2))), alpha=0.5, logscale=True, show_fig=False)
+            figs.append(fig)
+
+        return figs
+
+
     ############################### BASRPT #################################
 
     def plot_average_fct_vs_basrpt_v(self, *analysers):
@@ -250,6 +350,8 @@ class EnvsPlotter:
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Throughput Rate', ylabel='Complementary CDF', complementary_cdf=True, show_fig=False)
 
         return [fig1, fig2]
+
+
 
 
 

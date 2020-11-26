@@ -104,6 +104,9 @@ class DistributionGenerator:
             elif benchmark == 'uniform':
                 node_dist = node_dists.gen_uniform_node_dist(eps, show_fig=False, print_data=False)
 
+            elif benchmark == 'artificial_light':
+                node_dist = node_dists.gen_uniform_node_dist(eps, show_fig=False, print_data=False)
+
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
 
@@ -137,33 +140,33 @@ class DistributionGenerator:
                 flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
                                                               params={'_mu': 7, '_sigma': 2.5},
                                                               min_val=1,
+                                                              round_to_nearest=1,
                                                               show_fig=False,
-                                                              print_data=False,
-                                                              round_to_nearest=1)
+                                                              print_data=False)
 
             elif benchmark == 'private_enterprise':
                 flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
                                                               params={'_mu': 7, '_sigma': 2.5},
                                                               min_val=1,
+                                                              round_to_nearest=1,
                                                               show_fig=False,
-                                                              print_data=False,
-                                                              round_to_nearest=1)
+                                                              print_data=False)
 
             elif benchmark == 'commercial_cloud':
                 flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
                                                               params={'_mu': 7, '_sigma': 2.5},
                                                               min_val=1,
+                                                              round_to_nearest=1,
                                                               show_fig=False,
-                                                              print_data=False,
-                                                              round_to_nearest=1)
+                                                              print_data=False)
 
             elif benchmark == 'social_media_cloud':
                 flow_size_dist = val_dists.gen_named_val_dist(dist='weibull',
                                                               params={'_alpha': 0.5, '_lambda': 21000},
                                                               min_val=1,
+                                                              round_to_nearest=1,
                                                               show_fig=False,
-                                                              print_data=False,
-                                                              round_to_nearest=1)
+                                                              print_data=False)
 
             elif benchmark == 'uniform':
                 flow_size_dist = val_dists.gen_uniform_val_dist(min_val=100,
@@ -171,6 +174,15 @@ class DistributionGenerator:
                                                                  round_to_nearest=1,
                                                                  show_fig=False,
                                                                  print_data=False)
+
+            elif benchmark == 'artificial_light':
+                flow_size_dist = val_dists.gen_named_val_dist(dist='normal',
+                                                              params={'_loc': 3, '_scale': 0.5},
+                                                              min_val=1,
+                                                              round_to_nearest=1,
+                                                              show_fig=False,
+                                                              print_data=False)
+
 
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
@@ -208,8 +220,7 @@ class DistributionGenerator:
                 interarrival_time_dist = val_dists.gen_named_val_dist(dist='weibull',
                                                                       params={'_alpha': 0.9, '_lambda': 6000},
                                                                       show_fig=False,
-                                                                      print_data=False,
-                                                                      round_to_nearest=1)
+                                                                      print_data=False)
 
             elif benchmark == 'private_enterprise':
                 interarrival_time_dist = val_dists.gen_multimodal_val_dist(min_val=1,
@@ -233,15 +244,18 @@ class DistributionGenerator:
                 interarrival_time_dist = val_dists.gen_named_val_dist(dist='lognormal',
                                                                       params={'_mu': 6, '_sigma': 2.3},
                                                                       show_fig=False,
-                                                                      print_data=False,
-                                                                      round_to_nearest=1)
+                                                                      print_data=False)
 
             elif benchmark == 'uniform':
                 interarrival_time_dist = val_dists.gen_uniform_val_dist(min_val=10,
                                                                  max_val=10000,
-                                                                 round_to_nearest=1,
                                                                  show_fig=False,
                                                                  print_data=False)
+            elif benchmark == 'artificial_light':
+                interarrival_time_dist = val_dists.gen_named_val_dist(dist='normal',
+                                                                      params={'_loc': 3, '_scale': 0.5},
+                                                                      show_fig=False,
+                                                                      print_data=False)
 
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))

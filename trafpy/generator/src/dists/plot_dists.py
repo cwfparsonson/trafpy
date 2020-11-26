@@ -9,6 +9,7 @@ import copy
 np.set_printoptions(threshold=np.inf)
 import matplotlib.pyplot as plt
 import matplotlib
+from matplotlib import colors
 import seaborn as sns
 from statsmodels.distributions.empirical_distribution import ECDF
 from scipy import stats
@@ -289,6 +290,8 @@ def plot_val_line(plot_dict={},
 def plot_val_scatter(plot_dict={},
                      xlabel='Random Variable',
                      ylabel='Random Variable Value',
+                     alpha=1,
+                     logscale=False,
                      show_fig=False):
     '''Plots scatter plot.
 
@@ -297,17 +300,21 @@ def plot_val_scatter(plot_dict={},
 
     '''
     keys = list(plot_dict.keys())
-    num_vals = len(plot_dict[keys[0]]['x_values'])
-    for key in keys:
-        if len(plot_dict[key]['x_values']) != num_vals or len(plot_dict[key]['y_values']) != num_vals:
-            raise Exception('Must have equal number of x and y values to plot.')
+    # num_vals = len(plot_dict[keys[0]]['x_values'])
+    # for key in keys:
+        # if len(plot_dict[key]['x_values']) != num_vals or len(plot_dict[key]['y_values']) != num_vals:
+            # raise Exception('Must have equal number of x and y values to plot.')
 
     fig = plt.figure()
     plt.style.use('ggplot')
 
     class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
     for _class in sorted(plot_dict.keys()):
-        plt.scatter(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], c=next(class_colours), label=str(_class))
+        plt.scatter(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], c=next(class_colours), alpha=alpha, label=str(_class))
+
+    if logscale:
+        ax = plt.gca()
+        ax.set_xscale('log')
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -432,6 +439,32 @@ def plot_val_stacked_bar(plot_dict={},
         plt.show()
 
     return fig
+
+
+
+def plot_demand_slot_colour_grid(grid_demands, title=None, xlim=None, show_fig=False):
+    # set colours
+    # class_colours = sns.color_palette(palette='hls', n_colors=None, desat=None)
+    # cmap = colors.ListedColormap(class_colours
+    cmap = None
+
+    # plot grid
+    fig, ax = plt.subplots()
+    c = ax.pcolor(grid_demands, cmap=cmap)
+    plt.xlabel('Time Slot')
+    plt.ylabel('Flow Slot')
+
+    if title is not None:
+        ax.set_title(title)
+
+    if xlim is not None:
+        plt.xlim(xlim)
+
+    if show_fig:
+        plt.show()
+
+    return fig
+
 
 
 

@@ -11,13 +11,13 @@ import itertools
 
 class SchedulerToolbox:
 
-    def __init__(self, Graph, RWA, slot_size):
+    def __init__(self, Graph, RWA, slot_size, packet_size=300):
         self.Graph = Graph
         self.RWA = RWA
         self.slot_size = slot_size
         
         # self.packet_size = 3000
-        self.packet_size = 300
+        self.packet_size = packet_size
         
         self.reset()
 

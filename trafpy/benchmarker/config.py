@@ -12,15 +12,15 @@ import numpy as np
 # define benchmark version
 BENCHMARK_VERSION = '0.0.1'
 
-# define factor by which to multiply num endpoitns by to get num_demands
+# define factor by which to multiply num endpoints by to get num_demands
 NUM_DEMANDS_FACTOR = 50
 
 # define minimum time of last demand's arrival (helps define minimum simulation time)
-MIN_LAST_DEMAND_ARRIVAL_TIME = 6e6 # units of us 3e6 6e7 6e8
+MIN_LAST_DEMAND_ARRIVAL_TIME = 6e7 # units of us 3e6 6e7 6e8 None 3000.0
 
 # define network load fractions
-# LOADS = np.arange(0.1, 1.1, 0.1).tolist()
-LOADS = np.array([0.4])
+LOADS = np.arange(0.1, 1.1, 0.1).tolist()
+# LOADS = np.array([0.4])
 LOADS = [round(load, 3) for load in LOADS] # ensure no python floating point arithmetic errors
 
 # define number of repetitions to perform for each benchmark for each load
@@ -173,6 +173,28 @@ RACKS_DICTS = {'university': NETS['university'].graph['rack_to_ep_dict']}
 # RACKS_DICTS = {'uniform': None}
 
 
+
+
+
+
+
+
+
+# # ARTIFICIAL LIGHT
+# # -------------------------------------------------------------------------
+# # define benchmarks to generate
+# BENCHMARKS = ['artificial_light']
+
+# # define network topology for each benchmark
+# # NETS = {'university': gen_fat_tree(k=4, N=30, num_channels=1)}
+# # NETS = {'university': gen_fat_tree(k=4, N=3, num_channels=1, rack_to_edge_channel_capacity=1250, edge_to_agg_channel_capacity=1250, agg_to_core_channel_capacity=1250)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
+# NETS = {'artificial_light': gen_fat_tree(k=3, N=2, num_channels=1, server_to_rack_channel_capacity=1, rack_to_edge_channel_capacity=500, edge_to_agg_channel_capacity=500, agg_to_core_channel_capacity=500)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
+
+# # define network capacity for each benchmark
+# NETWORK_CAPACITIES = {'artificial_light': NETS['artificial_light'].graph['max_nw_capacity']}
+
+# # define network racks for each benchmark
+# RACKS_DICTS = {'artificial_light': NETS['artificial_light'].graph['rack_to_ep_dict']}
 
 
 

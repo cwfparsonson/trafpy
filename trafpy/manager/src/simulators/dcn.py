@@ -37,6 +37,8 @@ class DCN(gym.Env):
         self.demand = Demand
         self.scheduler = Scheduler
         self.slot_size = slot_size
+        if type(slot_size) is not float:
+            raise Exception('slot_size must be float (e.g. 1.0), but is {}'.format(slot_size))
         self.num_k_paths = num_k_paths
         self.sim_name = sim_name 
         self.max_flows = max_flows # max number of flows per queue
@@ -631,9 +633,10 @@ class DCN(gym.Env):
         link_bws = []
         for link in path_links:
             link_bws.append(self.network[link[0]][link[1]]['max_channel_capacity'])
-        lowest_bw = min(link_bws)
-        size_per_slot = lowest_bw/(1/self.slot_size)
-        packets_per_slot = int(size_per_slot / packet_size) # round down 
+        capacity = min(link_bws) # channel capacity == info transferred per unit time
+        # size_per_slot = lowest_bw/(1/self.slot_size)
+        info_per_slot = capacity  * self.slot_size # info transferred per slot == info transferred per unit time * number of time units (i.e. slot size)
+        packets_per_slot = int(info_per_slot / packet_size) # round down 
         
         sn = flow_dict['src']
         dn = flow_dict['dst']
@@ -1165,9 +1168,29 @@ class DCN(gym.Env):
         self.connected_flows = chosen_flows.copy()
 
         self.update_queue_evolution()
+        self.update_grid_slot_evolution(chosen_flows)
 
 
-    def step(self, action):
+    def display_env_memory_usage(self, obs):
+        # slots_dict
+        slots_dict_size = sys.getsizeof(json.dumps(self.slots_dict))
+
+        # network
+        network_size = sys.getsizeof(pickle.dumps(self.network)) 
+
+        # machine readable representation
+        machine_readable_network_size = sys.getsizeof(json.dumps(obs['machine_readable_network']))
+
+        # observation
+        obs_size = sys.getsizeof(json.dumps(obs))
+
+
+
+
+        pass
+
+
+    def step(self, action, print_memory_usage=False):
         '''
         Performs an action in the DCN simulation environment, moving simulator
         to next step
@@ -1183,23 +1206,33 @@ class DCN(gym.Env):
         obs = self.next_observation()
 
 
+        if print_memory_usage:
+            # print memory usage of key components
+            self.display_env_memory_usage(obs)
+
+
+
+
+
 
         # # DEBUG:
+        # print('\nTime: {}'.format(self.curr_time))
         # queues = self.get_current_queue_states()
-        # print('arrived flows:\n{}'.format(self.arrived_flow_dicts))
-        # print('arrived flow ids:\n{}'.format(self.arrived_flows))
-        # print('Num completed flows: {}/{}'.format(len(self.completed_flows), self.demand.num_flows))
+        # # print('arrived flows:\n{}'.format(self.arrived_flow_dicts))
+        # # print('arrived flow ids:\n{}'.format(self.arrived_flows))
+        # # print('Num completed flows: {}/{}'.format(len(self.completed_flows), self.demand.num_flows))
         # print('Queues being given to scheduler:')
         # i = 0
         # for q in queues:
            # print('queue {}:\n{}'.format(i, q))
            # i+=1
-        # print('Incomplete control deps:')
-        # for c in self.arrived_control_deps:
-           # if c['time_completed'] is None or c['time_parent_op_started'] is None:
-               # print(c)
-           # else:
-               # pass
+        # print('Chosen action:\n{}'.format(action))
+        # # print('Incomplete control deps:')
+        # # for c in self.arrived_control_deps:
+           # # if c['time_completed'] is None or c['time_parent_op_started'] is None:
+               # # print(c)
+           # # else:
+               # # pass
 
         return obs, reward, done, info
   

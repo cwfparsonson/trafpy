@@ -10,6 +10,7 @@ from scipy.stats import skewnorm
 from scipy import stats
 import math
 import matplotlib.pyplot as plt
+import sys
 
 import ipywidgets as widgets
 from ipywidgets import interact, interactive, interactive_output, interact_manual, fixed
@@ -164,7 +165,7 @@ def gen_uniform_val_dist(min_val,
     if print_data:
         print('Prob dist:\n{}'.format(prob_dist))
     if path_to_save is not None:
-        tools.pickle_data(path_to_save, node_dist)
+        tools.pickle_data(path_to_save, prob_dist)
     if plot_fig or show_fig:
         min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
         num_occurrences = [int(val*(1/min_prob)*occurrence_multiplier) for val in list(prob_dist.values())]
@@ -193,7 +194,7 @@ def gen_skew_dists(min_val,
                    xlim=None,
                    rand_var_name='Unknown',
                    round_to_nearest=None,
-                   num_decimal_places=0.2):
+                   num_decimal_places=2):
     
     # initialise widget and data dicts
     widget_dict = {mode_iter: {'num_bins_widget': widgets.IntText(description='bins:',value=0,step=1,disabled=False),
@@ -243,7 +244,7 @@ def gen_skew_data(location,
                   rand_var_name='Unknown',
                   num_bins=0,
                   round_to_nearest=None,
-                  num_decimal_places=0.2):
+                  num_decimal_places=2):
     '''Generates and plots skewed data for interactive multimodal distributions.
 
     Args:
@@ -311,7 +312,7 @@ def combine_multiple_mode_dists(data_dict,
                                 xlim=None,
                                 rand_var_name='Unknown',
                                 round_to_nearest=None,
-                                num_decimal_places=0.2):
+                                num_decimal_places=2):
     bg_factor = widgets.FloatText(min=0,max=10,step=0.001,value=0.5)
     num_bins_widget = widgets.IntText(description='bins:',value=0,step=1,disabled=False)
     
@@ -342,7 +343,7 @@ def combine_skews(data_dict,
                   rand_var_name='Unknown',
                   num_bins=0,
                   round_to_nearest=None,
-                  num_decimal_places=0.2):
+                  num_decimal_places=2):
     '''Combines multiple probability distributions for multimodal plotting.
 
     Args:
@@ -725,6 +726,8 @@ def gen_discrete_prob_dist(rand_vars,
 
 def gen_exponential_dist(_beta, 
                          size,
+                         round_to_nearest=None,
+                         num_decimal_places=2,
                          min_val=None,
                          max_val=None,
                          interactive_params=None,
@@ -789,6 +792,12 @@ def gen_exponential_dist(_beta,
             if counter > 10000:
                 sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
 
+    if round_to_nearest is not None:
+        rand_vars = [x_round(val, round_to_nearest, num_decimal_places) for val in rand_vars]
+    else:
+        # no need to discretise
+        pass
+
     if interactive_params is not None:
         # gen interactive plot
         data_description = stats.describe(rand_vars) 
@@ -809,6 +818,8 @@ def gen_exponential_dist(_beta,
 def gen_lognormal_dist(_mu, 
                        _sigma, 
                        size, 
+                       round_to_nearest=None,
+                       num_decimal_places=2,
                        min_val=None,
                        max_val=None,
                        interactive_params=None, 
@@ -879,6 +890,11 @@ def gen_lognormal_dist(_mu,
             if counter > 10000:
                 sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
 
+    if round_to_nearest is not None:
+        rand_vars = [x_round(val, round_to_nearest, num_decimal_places) for val in rand_vars]
+    else:
+        # no need to discretise
+        pass
 
     if interactive_params is not None:
         # gen interactive plot
@@ -895,10 +911,93 @@ def gen_lognormal_dist(_mu,
                                  prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
     return rand_vars
 
+def gen_normal_dist(loc,
+                    scale,
+                    size, 
+                    round_to_nearest=None,
+                    num_decimal_places=2,
+                    min_val=None,
+                    max_val=None,
+                    interactive_params=None,
+                    logscale=False,
+                    transparent=False):
+    '''Generates a normal/gaussian distribution of random variable values.
+
+    Args:
+        size (int): number of random variable values to sample from distribution.
+        interactive_params (dict): Dictionary of distribution parameter values
+            (must provide if in interactive mode).
+        logscale (bool): Whether or not plot should have logscale x-axis and bins.
+        transparent (bool): Whether or not to make plot bins slightly transparent.
+    
+    Returns:
+        list: random variable values generated by sampling from the distribution.
+
+    '''
+    rand_vars = np.random.normal(loc=loc, scale=scale, size=size)
+
+    # check min and max vals 
+    min_rand_var, max_rand_var = min(rand_vars), max(rand_vars)
+    counter = 0
+    if min_val is None and max_val is None:
+        # don't need to worry about any min or max allowed values
+        pass
+    elif min_val is not None and max_val is None:
+        # ensure greater than min_val
+        while min(rand_vars) < min_val:
+            min_idx = np.argmin(np.array(rand_vars))
+            rand_vars[min_idx] = np.random.normal(loc=loc, scale=scale, size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+    elif min_val is None and max_val is not None:
+        # ensure less than max val
+        while max(rand_vars) > max_val:
+            max_idx = np.argmin(np.array(rand_vars))
+            rand_vars[max_idx] = np.random.normal(loc=loc, scale=scale, size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+    elif min_val is not None and max_val is not None:
+        # ensure less than max val and greater than min val
+        while min(rand_vars) < min_val or max(rand_vars) > max_val:
+            if min(rand_vars) < min_val:
+                min_idx = np.argmin(np.array(rand_vars))
+                rand_vars[min_idx] = np.random.normal(loc=loc, scale=scale, size=1)
+            if max(rand_vars) > max_val:
+                max_idx = np.argmin(np.array(rand_vars))
+                rand_vars[max_idx] = np.random.normal(loc=loc, scale=scale, size=1)
+            counter += 1
+            if counter > 10000:
+                sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+
+    if round_to_nearest is not None:
+        rand_vars = [x_round(val, round_to_nearest, num_decimal_places) for val in rand_vars]
+    else:
+        # no need to discretise
+        pass
+    
+    if interactive_params is not None:
+        # gen interactive plot
+        data_description = stats.describe(rand_vars) 
+        print('Characteristics of generated distribution:\n{}'.format(data_description))
+        
+        plot_dists.plot_val_dist(rand_vars, 
+                                 xlim=interactive_params['xlim'], 
+                                 logscale=logscale,
+                                 num_bins=interactive_params['num_bins'],
+                                 transparent=transparent,
+                                 dist_fit_line='normal', 
+                                 rand_var_name=interactive_params['rand_var_name'],
+                                 prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
+    return rand_vars
+
 
 def gen_pareto_dist(_alpha, 
                     _mode,  
                     size, 
+                    round_to_nearest=None,
+                    num_decimal_places=2,
                     min_val=None,
                     max_val=None,
                     interactive_params=None,
@@ -966,6 +1065,12 @@ def gen_pareto_dist(_alpha,
             counter += 1
             if counter > 10000:
                 sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
+
+    if round_to_nearest is not None:
+        rand_vars = [x_round(val, round_to_nearest, num_decimal_places) for val in rand_vars]
+    else:
+        # no need to discretise
+        pass
     
     if interactive_params is not None:
         # gen interactive plot
@@ -986,6 +1091,8 @@ def gen_pareto_dist(_alpha,
 def gen_weibull_dist(_alpha, 
                      _lambda, 
                      size, 
+                     round_to_nearest=None,
+                     num_decimal_places=2,
                      min_val=None,
                      max_val=None,
                      interactive_params=None, 
@@ -1068,6 +1175,12 @@ def gen_weibull_dist(_alpha,
             if counter > 10000:
                 sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
 
+    if round_to_nearest is not None:
+        rand_vars = [x_round(val, round_to_nearest, num_decimal_places) for val in rand_vars]
+    else:
+        # no need to discretise
+        pass
+
     if interactive_params is not None:
         # gen interactive plot
         data_description = stats.describe(rand_vars) 
@@ -1091,6 +1204,7 @@ def gen_named_val_dist(dist,
                        occurrence_multiplier=100,
                        return_data=False, 
                        round_to_nearest=None, 
+                       num_decimal_places=2,
                        path_to_save=None,
                        plot_fig=False,
                        show_fig=False,
@@ -1176,6 +1290,8 @@ def gen_named_val_dist(dist,
                                     {'manual': True},
                                     _beta=_beta_exp_widget,
                                     size=fixed(size),
+                                    round_to_nearest=fixed(round_to_nearest),
+                                    num_decimal_places=fixed(num_decimal_places),
                                     min_val=fixed(min_val),
                                     max_val=fixed(max_val),
                                     interactive_params=fixed({'xlim': xlim, 
@@ -1185,6 +1301,8 @@ def gen_named_val_dist(dist,
         else:
             rand_vars = gen_exponential_dist(_beta=params['_beta'], 
                                              size=size,
+                                             round_to_nearest=round_to_nearest,
+                                             num_decimal_places=num_decimal_places,
                                              min_val=min_val,
                                              max_val=max_val)
 
@@ -1197,6 +1315,8 @@ def gen_named_val_dist(dist,
                                     _mu=_mu_lognormal_widget,
                                     _sigma=_sigma_lognormal_widget,
                                     size=fixed(size),
+                                    round_to_nearest=fixed(round_to_nearest),
+                                    num_decimal_places=fixed(num_decimal_places),
                                     min_val=fixed(min_val),
                                     max_val=fixed(max_val),
                                     interactive_params=fixed({'xlim': xlim, 
@@ -1207,6 +1327,8 @@ def gen_named_val_dist(dist,
             rand_vars = gen_lognormal_dist(_mu=params['_mu'],
                                            _sigma=params['_sigma'],
                                            size=size,
+                                           round_to_nearest=round_to_nearest,
+                                           num_decimal_places=num_decimal_places,
                                            min_val=min_val,
                                            max_val=max_val)
 
@@ -1219,6 +1341,8 @@ def gen_named_val_dist(dist,
                                     _alpha=_alpha_weibull_widget,
                                     _lambda=_lambda_weibull_widget,
                                     size=fixed(size),
+                                    round_to_nearest=fixed(round_to_nearest),
+                                    num_decimal_places=fixed(num_decimal_places),
                                     min_val=fixed(min_val),
                                     max_val=fixed(max_val),
                                     interactive_params=fixed({'xlim': xlim, 
@@ -1229,6 +1353,8 @@ def gen_named_val_dist(dist,
             rand_vars = gen_weibull_dist(_alpha=params['_alpha'],
                                          _lambda=params['_lambda'],
                                          size=size,
+                                         round_to_nearest=round_to_nearest,
+                                         num_decimal_places=num_decimal_places,
                                          min_val=min_val,
                                          max_val=max_val)
 
@@ -1241,6 +1367,8 @@ def gen_named_val_dist(dist,
                                     _alpha=_alpha_pareto_widget,
                                     _mode=_mode_pareto_widget,
                                     size=fixed(size),
+                                    round_to_nearest=fixed(round_to_nearest),
+                                    num_decimal_places=fixed(num_decimal_places),
                                     min_val=fixed(min_val),
                                     max_val=fixed(max_val),
                                     interactive_params=fixed({'xlim': xlim, 
@@ -1251,11 +1379,40 @@ def gen_named_val_dist(dist,
             rand_vars = gen_pareto_dist(_alpha=params['_alpha'],
                                         _mode=params['_mode'],
                                         size=size,
+                                        round_to_nearest=round_to_nearest,
+                                        num_decimal_places=num_decimal_places,
                                         min_val=min_val,
                                         max_val=max_val)
 
+    elif dist == 'normal':
+        if interactive_plot:
+            _loc_normal_widget = widgets.FloatText(description='_loc:',value=1.5,step=0.005,disabled=False)
+            _scale_widget = widgets.FloatText(description='_scale:',value=3.0,step=0.1,disabled=False)
+            rand_vars = interactive(gen_normal_dist,
+                                    {'manual': True},
+                                    loc=_loc_normal_widget,
+                                    scale=_scale_widget,
+                                    size=fixed(size),
+                                    round_to_nearest=fixed(round_to_nearest),
+                                    num_decimal_places=fixed(num_decimal_places),
+                                    min_val=fixed(min_val),
+                                    max_val=fixed(max_val),
+                                    interactive_params=fixed({'xlim': xlim, 
+                                                              'rand_var_name': rand_var_name,
+                                                              'prob_rand_var_less_than': prob_rand_var_less_than,
+                                                              'num_bins': num_bins}))
+        else:
+            rand_vars = gen_normal_dist(loc=params['_loc'],
+                                        scale=params['_scale'],
+                                        size=size,
+                                        round_to_nearest=round_to_nearest,
+                                        num_decimal_places=num_decimal_places,
+                                        min_val=min_val,
+                                        max_val=max_val)
+
+
     else:
-        sys.exist('Must provide valid name distribution to use')
+        raise Exception('Must provide valid name distribution to use')
    
     if interactive_plot:
         display(rand_vars)
@@ -1269,7 +1426,7 @@ def gen_named_val_dist(dist,
         if print_data:
             print('Prob dist:\n{}'.format(prob_dist))
         if path_to_save is not None:
-            tools.pickle_data(path_to_save, node_dist)
+            tools.pickle_data(path_to_save, prob_dist)
         if plot_fig or show_fig:
             min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
             num_occurrences = [int(val*(1/min_prob)*occurrence_multiplier) for val in list(prob_dist.values())]

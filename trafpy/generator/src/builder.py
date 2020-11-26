@@ -240,13 +240,16 @@ def construct_demand_slots_dict(demand_data,
 
     Args:
         demand_data (dict): Generated demand data (either flow-centric or job-centric).
-        slot_size (int/float): Time period of each time slot.
+        slot_size (float): Time period of each time slot. MUST BE FLOAT!!
 
     Returns:
         dict: Dictionary containing the original demand data organised into time 
         slots.
 
     '''
+
+    if type(slot_size) is not float:
+        raise Exception('slot_size must be float (e.g. 1.0), but is {}'.format(slot_size))
 
     if 'job_id' in demand_data:
         job_centric = True
@@ -268,6 +271,8 @@ def construct_demand_slots_dict(demand_data,
     # ensure slot times have specified number of decimal places
     dummy_slot_size = str(slot_size)
     num_decimals = dummy_slot_size[::-1].find('.')
+    if num_decimals == -1:
+        raise Exception('Given slot_size {} has invalid num_decimals of {}. Make sure slot_size is given as a float e.g. use slot_size=1.0 rather than slot_size=1'.format(slot_size, num_decimals))
     for slot_iter in range(len(slot_times)):
         slot_times[slot_iter] = np.round(slot_times[slot_iter], num_decimals)
 

@@ -13,8 +13,8 @@ import itertools
 
 class SRPT(SchedulerToolbox):
 
-    def __init__(self, Graph, RWA, slot_size, scheduler_name='srpt'):
-        super().__init__(Graph, RWA, slot_size)
+    def __init__(self, Graph, RWA, slot_size, packet_size=300, scheduler_name='srpt'):
+        super().__init__(Graph, RWA, slot_size, packet_size)
         self.scheduler_name = scheduler_name
 
     def get_scheduler_action(self, observation):

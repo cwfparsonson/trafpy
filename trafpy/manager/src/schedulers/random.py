@@ -9,8 +9,8 @@ import tensorflow as tf
 
 class RandomAgent(SchedulerToolbox):
 
-    def __init__(self, Graph, RWA, slot_size, env=None, scheduler_name='random'):
-        super().__init__(Graph, RWA, slot_size)
+    def __init__(self, Graph, RWA, slot_size, packet_size=300, env=None, scheduler_name='random'):
+        super().__init__(Graph, RWA, slot_size, packet_size)
         self.env = env
         self.scheduler_name = scheduler_name
 

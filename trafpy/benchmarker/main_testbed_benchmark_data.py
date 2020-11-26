@@ -48,20 +48,21 @@ class TestBed:
             for load in list(self.benchmark_data[benchmark].keys()):
                 for repeat in self.benchmark_data[benchmark][load]:
                     for scheduler in config['schedulers']:
-                        demand_data = self.benchmark_data[benchmark][load][repeat]
-                        demand = Demand(demand_data)
-                        env = DCN(config['networks'][0], 
-                                  demand, 
-                                  scheduler,
-                                  num_k_paths=config['num_k_paths'],
-                                  slot_size=config['slot_size'],
-                                  sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
-                                  max_flows=config['max_flows'], 
-                                  max_time=config['max_time'])
-                        p = multiprocessing.Process(target=self.run_test,
-                                                    args=(scheduler, env, self.envs, path_to_save,))
-                        jobs.append(p)
-                        p.start()
+                        if json.loads(load) == 0.2 and scheduler.scheduler_name == 'srpt': # DEBUG 
+                            demand_data = self.benchmark_data[benchmark][load][repeat]
+                            demand = Demand(demand_data)
+                            env = DCN(config['networks'][0], 
+                                      demand, 
+                                      scheduler,
+                                      num_k_paths=config['num_k_paths'],
+                                      slot_size=config['slot_size'],
+                                      sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
+                                      max_flows=config['max_flows'], 
+                                      max_time=config['max_time'])
+                            p = multiprocessing.Process(target=self.run_test,
+                                                        args=(scheduler, env, self.envs, path_to_save,))
+                            jobs.append(p)
+                            p.start()
         for job in jobs:
             job.join() # only execute below code when all jobs finished
         end_time = time.time()
@@ -72,6 +73,7 @@ class TestBed:
 
 
     def run_test(self, scheduler, env, envs, path_to_save):
+        printed_percents = [0]
         observation = env.reset()
         try:
             scheduler.register_env(env)
@@ -81,9 +83,19 @@ class TestBed:
         while True:
             action = scheduler.get_action(observation)
             observation, reward, done, info = env.step(action)
-            # print('Simulation `{}`: Flows arrived: {} | Flows completed+dropped: {}'.format(env.sim_name, len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)))
+
+            # print progress
+            flows_arrived, flows_processed = len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)
+            percent_demands_processed = round(100*(flows_processed/env.demand.num_demands), 0)
+            if percent_demands_processed % 10 == 0:
+                if percent_demands_processed not in printed_percents:
+                    percent_demands_arrived = round(100*(flows_arrived/env.demand.num_demands))
+                    print('Sim: {} | Flows arrived: {}% | Flows processed: {}%'.format(env.sim_name, percent_demands_arrived, percent_demands_processed))
+                    printed_percents.append(percent_demands_processed)
+
             if done:
                 # env.get_scheduling_session_summary(print_summary=True)
+                print('Completed simulation \'{}\''.format(env.sim_name))
                 analyser = EnvAnalyser(env)
                 analyser.compute_metrics(print_summary=True)
                 try:
@@ -147,15 +159,15 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        DATA_NAME = 'ndf50_1s_university'
+        DATA_NAME = 'university_chancap1_mldat6e7'
 
         # benchmark data
         path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/{}_benchmark_data.json'.format(DATA_NAME)
         tb = TestBed(path_to_benchmark_data)
 
         # dcn
-        MAX_TIME = None
-        MAX_FLOWS = 4 
+        MAX_TIME = None 
+        MAX_FLOWS = 10
 
         # networks
         NUM_CHANNELS = 1
@@ -167,11 +179,14 @@ if __name__ == '__main__':
 
         # schedulers
         # SLOT_SIZE = 1e6
-        SLOT_SIZE = 1e5 #1e4 1e5
-        # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE)]
-        schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE),
-                      BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10),
-                      RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE)]
+        SLOT_SIZE = 1e3 #1e4 1e5 1e2 0.1 
+        PACKET_SIZE = 1e1 # 300 0.01
+        #schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
+        schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                      BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10, packet_size=PACKET_SIZE)]
+        # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                      # BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10, packet_size=PACKET_SIZE),
+                      # RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
         # schedulers = []
         # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]
         # for V in Vs:
@@ -184,6 +199,7 @@ if __name__ == '__main__':
                        'max_time': MAX_TIME,
                        'max_flows': MAX_FLOWS,
                        'slot_size': SLOT_SIZE,
+                       'packet_size': PACKET_SIZE,
                        'networks': networks,
                        'rwas': rwas,
                        'schedulers': schedulers}
