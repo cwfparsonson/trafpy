@@ -18,6 +18,8 @@ import matplotlib.animation as animation
 import cv2
 import io
 import time
+import pandas as pd
+from tabulate import tabulate
 
 
 class DCN(gym.Env):
@@ -172,7 +174,8 @@ class DCN(gym.Env):
             else:
                 # scheduler agent has since chosen flow, use packets left
                 # to get queue length
-                queued_flow_bytes = sum(flow_dict['packets'])
+                # queued_flow_bytes = sum(flow_dict['packets'])
+                queued_flow_bytes = flow_dict['packets']*flow_dict['packet_size']
             queue_length_bytes += queued_flow_bytes
 
         return queue_length_bytes, num_flows
@@ -628,7 +631,8 @@ class DCN(gym.Env):
         Takes flow dict that has been schedueled to be activated for curr
         time slot and removes corresponding number of packets flow in queue
         '''
-        packet_size = flow_dict['packets'][0] 
+        # packet_size = flow_dict['packets'][0] 
+        packet_size = flow_dict['packet_size']
         path_links = self.get_path_edges(flow_dict['path'])
         link_bws = []
         for link in path_links:
@@ -642,10 +646,14 @@ class DCN(gym.Env):
         dn = flow_dict['dst']
         queued_flows = self.network.nodes[sn][dn]['queued_flows']
         idx = self.find_flow_idx(flow_dict, queued_flows)
-        queued_flows[idx]['packets'] = queued_flows[idx]['packets'][packets_per_slot:]
+        # queued_flows[idx]['packets'] = queued_flows[idx]['packets'][packets_per_slot:]
+        queued_flows[idx]['packets'] -= packets_per_slot
+        if queued_flows[idx]['packets'] < 0:
+            queued_flows[idx]['packets'] = 0
         
         updated_flow = copy.copy(queued_flows[idx])
-        if len(updated_flow['packets']) == 0:
+        # if len(updated_flow['packets']) == 0:
+        if updated_flow['packets'] == 0:
             # all packets transported, flow completed
             self.register_completed_flow(updated_flow)
                 
@@ -1112,6 +1120,7 @@ class DCN(gym.Env):
             if dated_flow['packets'] is None:
                 # udpate flow packets and k shortest paths
                 dated_flow['packets'] = flow['packets']
+                dated_flow['packet_size'] = flow['packet_size']
                 dated_flow['k_shortest_paths'] = flow['k_shortest_paths']
             else:
                 # agent updates already applied
@@ -1178,16 +1187,27 @@ class DCN(gym.Env):
         # network
         network_size = sys.getsizeof(pickle.dumps(self.network)) 
 
-        # machine readable representation
-        machine_readable_network_size = sys.getsizeof(json.dumps(obs['machine_readable_network']))
+        # # machine readable representation
+        # machine_readable_network_size = sys.getsizeof(json.dumps(obs['machine_readable_network']))
 
-        # observation
-        obs_size = sys.getsizeof(json.dumps(obs))
-
-
+        # # observation
+        # obs_size = sys.getsizeof(json.dumps(obs))
 
 
-        pass
+        
+
+        # create table
+        summary_dict = {
+                'Time': [self.curr_time],
+                'Slots Dict (B)': [slots_dict_size],
+                'Network (B)': [network_size]
+                # 'Machine Readable': machine_readable_network_size,
+                # 'Obs': obs_size
+                }
+        df = pd.DataFrame(summary_dict)
+        print('')
+        print(tabulate(df, showindex=False, headers='keys', tablefmt='psql'))
+
 
 
     def step(self, action, print_memory_usage=False):
@@ -1746,7 +1766,8 @@ class RepresentationGenerator:
         if flow['packets'] is None:
             machine_readable_flow['packets'] = tf.cast(-1, dtype=dtype)
         else:
-            machine_readable_flow['packets'] = tf.cast(len(flow['packets']), dtype=dtype)
+            # machine_readable_flow['packets'] = tf.cast(len(flow['packets']), dtype=dtype)
+            machine_readable_flow['packets'] = tf.cast(flow['packets'], dtype=dtype)
         machine_readable_flow['time_arrived'] = tf.cast(flow['time_arrived'], dtype=dtype)
         machine_readable_flow['selected'] = tf.cast(0, dtype=dtype)
         machine_readable_flow['null_action'] = tf.cast(0, dtype=dtype)

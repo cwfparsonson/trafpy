@@ -96,8 +96,9 @@ class SchedulerToolbox:
     
     def gen_flow_packets(self, flow_size):
         num_packets = math.ceil(flow_size/self.packet_size) # round up 
-        packets = (np.ones(num_packets)) * self.packet_size
-        return self.packet_size, packets
+        # packets = [self.packet_size for _ in range(num_packets)]
+
+        return self.packet_size, num_packets
     
     def get_flow_from_network(self, server, queue, flow_idx):
         '''
@@ -188,12 +189,14 @@ class SchedulerToolbox:
         return True
     
     def estimate_time_to_completion(self, flow_dict):
-        num_packets = len(flow_dict['packets'])
-        try:
-            packet_size = flow_dict['packets'][0]
-        except IndexError:
-            print('Flow has 0 packets since has 0 size. Flows should not have 0 size by definition. This usually results from not setting a minimum bound on the possible values when generating your flow size distribution.')
-            sys.exit()
+        # num_packets = len(flow_dict['packets'])
+        num_packets = flow_dict['packets']
+        packet_size = flow_dict['packet_size']
+        # try:
+            # packet_size = flow_dict['packets'][0]
+        # except IndexError:
+            # print('Flow has 0 packets since has 0 size. Flows should not have 0 size by definition. This usually results from not setting a minimum bound on the possible values when generating your flow size distribution.')
+            # sys.exit()
         
         path_links = self.get_path_edges(flow_dict['path'])
         link_bws = []
@@ -229,13 +232,13 @@ class SchedulerToolbox:
 
         return binary_encoded_time_in_queue
 
-    def binary_encode_num_packets(self, num_packets, max_record_num_packets):
-        binary_encoded_num_packets = [0 for _ in range(max_record_num_packets+1)]
-        if num_packets > max_record_num_packets:
-            num_packets = num_packets
-        binary_encoded_num_packets[num_packets] = 1
+    # def binary_encode_num_packets(self, num_packets, max_record_num_packets):
+        # binary_encoded_num_packets = [0 for _ in range(max_record_num_packets+1)]
+        # if num_packets > max_record_num_packets:
+            # num_packets = num_packets
+        # binary_encoded_num_packets[num_packets] = 1
         
-        return binary_encoded_num_packets
+        # return binary_encoded_num_packets
 
     def binary_encode_num_flows_in_queue(self, num_flows_in_queue, max_num_flows_in_queue):
         binary_encoded_num_flows = [0 for _ in range(max_num_flows_in_queue+1)]
@@ -289,8 +292,9 @@ class SchedulerToolbox:
             pass
         
         if flow_dict['packets'] is None:
-            _, packets = self.gen_flow_packets(flow_dict['size'])
-            flow_dict['packets'] = packets
+            _, num_packets = self.gen_flow_packets(flow_dict['size'])
+            flow_dict['packets'] = num_packets
+            flow_dict['packet_size'] = self.packet_size
         else:
             # previously calculated and saved
             pass

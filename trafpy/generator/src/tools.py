@@ -148,6 +148,7 @@ def gen_event_dict(demand_data, event_iter=None):
                   'path': None,
                   'channel': None,
                   'packets': None,
+                  'packet_size': None,
                   'time_arrived': arrived,
                   'time_completed': None,
                   'k_shortest_paths': None}

@@ -82,7 +82,7 @@ class TestBed:
             pass
         while True:
             action = scheduler.get_action(observation)
-            observation, reward, done, info = env.step(action)
+            observation, reward, done, info = env.step(action, print_memory_usage=True)
 
             # print progress
             flows_arrived, flows_processed = len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)
@@ -179,8 +179,8 @@ if __name__ == '__main__':
 
         # schedulers
         # SLOT_SIZE = 1e6
-        SLOT_SIZE = 1e3 #1e4 1e5 1e2 0.1 
-        PACKET_SIZE = 1e1 # 300 0.01
+        SLOT_SIZE = 1e3 #1e4 1e5 1e2 0.1  1e3
+        PACKET_SIZE = 1 # 300 0.01 1e1 1e2
         #schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
         schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
                       BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10, packet_size=PACKET_SIZE)]
