@@ -107,6 +107,9 @@ class EnvsPlotter:
         # init plot dict
         plot_dict = {}
         for analyser in analysers:
+            if not analyser.env.track_queue_evolution:
+                raise Exception('Must set track_queue_evolution=True when instantiating env simulation in order to plot queue evolution.')
+
             self._check_analyser_valid(analyser)
             try:
                 plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None

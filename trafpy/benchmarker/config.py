@@ -1,4 +1,4 @@
-from trafpy.generator.src.networks import gen_fat_tree
+from trafpy.generator.src.networks import gen_fat_tree, gen_arbitrary_network
 
 import numpy as np
 
@@ -16,7 +16,7 @@ BENCHMARK_VERSION = '0.0.1'
 NUM_DEMANDS_FACTOR = 50
 
 # define minimum time of last demand's arrival (helps define minimum simulation time)
-MIN_LAST_DEMAND_ARRIVAL_TIME = 6e7 # units of us 3e6 6e7 6e8 None 3000.0
+MIN_LAST_DEMAND_ARRIVAL_TIME = 2e6 # units of us 3e6 6e7 6e8 None 3000.0 2e6 2.4e5pulse
 
 # define network load fractions
 LOADS = np.arange(0.1, 1.1, 0.1).tolist()
@@ -76,9 +76,10 @@ NUM_REPEATS = 1
 BENCHMARKS = ['university']
 
 # define network topology for each benchmark
+# NETS = {'university': gen_arbitrary_network(ep_label=None, server_to_rack_channel_capacity=12500, num_channels=1, num_eps=64)}
 # NETS = {'university': gen_fat_tree(k=4, N=30, num_channels=1)}
 # NETS = {'university': gen_fat_tree(k=4, N=3, num_channels=1, rack_to_edge_channel_capacity=1250, edge_to_agg_channel_capacity=1250, agg_to_core_channel_capacity=1250)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
-NETS = {'university': gen_fat_tree(k=3, N=2, num_channels=1, server_to_rack_channel_capacity=1, rack_to_edge_channel_capacity=500, edge_to_agg_channel_capacity=500, agg_to_core_channel_capacity=500)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
+NETS = {'university': gen_fat_tree(k=3, N=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 
 # define network capacity for each benchmark
 NETWORK_CAPACITIES = {'university': NETS['university'].graph['max_nw_capacity']}

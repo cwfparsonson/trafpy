@@ -602,11 +602,7 @@ class SchedulerToolbox:
                             contending_flows[channel]['chosen_c'] = [channel]
                             contending_flows[channel]['chosen_num_packets'] = [chosen_flows[idx]['packets_this_slot']]
                             if cost_metric == 'basrpt_cost':
-                                cost = self.calc_basrpt_cost(chosen_flows[idx], kwargs['V'], kwargs['N'])
-                            elif cost_metric == 'fct':
-                                cost, _ = self.estimate_time_to_completion(chosen_flows[idx])
-                            contending_flows[channel]['cost'] = [cost]
-
+                                contending_flows[channel]['cost'] = [self.calc_basrpt_cost(chosen_flows[idx], kwargs['V'], kwargs['N'])]
                         else:
                             # register contending flow
                             contending_flows[channel]['cont_f'].append(chosen_flows[idx])
@@ -614,11 +610,7 @@ class SchedulerToolbox:
                             contending_flows[channel]['chosen_c'].append(channel)
                             contending_flows[channel]['chosen_num_packets'].append(chosen_flows[idx]['packets_this_slot'])
                             if cost_metric == 'basrpt_cost':
-                                cost = self.calc_basrpt_cost(chosen_flows[idx], kwargs['V'], kwargs['N'])
-                            elif cost_metric == 'fct':
-                                cost, _ = self.estimate_time_to_completion(chosen_flows[idx])
-                            contending_flows[channel]['cost'].append(cost)
-
+                                contending_flows[channel]['cost'].append(self.calc_basrpt_cost(chosen_flows[idx], kwargs['V'], kwargs['N']))
                         found_contention = False # reset for next contention check
         if len(contending_flows.keys()) == 0:
             raise Exception('Could not find where any contentions occurred')
@@ -747,13 +739,7 @@ class SchedulerToolbox:
             # on all edges in chosen path
             # choose the least contentious (highest cost) flow to drop
             if cost_metric == 'basrpt_cost':
-                costs = [self.calc_basrpt_cost(f, kwargs['V'], kwargs['N']) for f in contending_flows_list]
-            elif cost_metric == 'fct':
-                costs = []
-                for f in contending_flows_list:
-                    cost, _ = self.estimate_time_to_completion(f)
-                    costs.append(cost)
-
+                costs = [self.calc_basrpt_cost(f, kwargs['V'], ['N']) for f in contending_flows_list]
             idx_max_cost = costs.index(max(costs))
             contending_flows_corrected.append(contending_flows_list[idx_max_cost])
             edges_freed = self.get_path_edges(contending_flows_list[idx_max_cost]['path'])
@@ -771,7 +757,7 @@ class SchedulerToolbox:
                         pass
 
             del contending_flows_list[idx_max_cost]
-            # print('Packets requested: {} | Packets freed: {} | chosen_edge_packets_available:\n{}'.format(max_packets_requested_by_chosen_flow, packets_available_if_drop_all_contending_flows, chosen_edge_packets_available))
+            print('Packets requested: {} | Packets freed: {} | chosen_edge_packets_available:\n{}'.format(max_packets_requested_by_chosen_flow, packets_available_if_drop_all_contending_flows, chosen_edge_packets_available))
             if packets_available_if_drop_all_contending_flows >= max_packets_requested_by_chosen_flow and min(chosen_edge_packets_available.values()) >= max_packets_requested_by_chosen_flow:
                 break
             else:
@@ -781,12 +767,7 @@ class SchedulerToolbox:
         packets_scheduled_if_drop_all_contending_flows = min(max_packets_available_if_all_edges_empty, packets_available_if_drop_all_contending_flows)
         contending_flows_list = contending_flows_corrected
         if cost_metric == 'basrpt_cost':
-            costs = [self.calc_basrpt_cost(f, kwargs['V'], kwargs['N']) for f in contending_flows_list]
-        elif cost_metric == 'fct':
-            costs = []
-            for f in contending_flows_list:
-                cost, _ = self.estimate_time_to_completion(f)
-                costs.append(cost)
+            costs = [self.calc_basrpt_cost(f, kwargs['V'], ['N']) for f in contending_flows_list]
         idx_min_cost = costs.index(min(costs))
         contending_flow = contending_flows_list[idx_min_cost]
         contending_flow_cost = costs[idx_min_cost]

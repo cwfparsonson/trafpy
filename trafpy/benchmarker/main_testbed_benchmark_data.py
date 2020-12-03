@@ -48,7 +48,7 @@ class TestBed:
             for load in list(self.benchmark_data[benchmark].keys()):
                 for repeat in self.benchmark_data[benchmark][load]:
                     for scheduler in config['schedulers']:
-                        # if json.loads(load) == 0.2 and scheduler.scheduler_name == 'srpt': # DEBUG 
+                        # if json.loads(load) == 0.3 and scheduler.scheduler_name == 'basrpt': # DEBUG 
                         demand_data = self.benchmark_data[benchmark][load][repeat]
                         demand = Demand(demand_data)
                         env = DCN(config['networks'][0], 
@@ -82,7 +82,7 @@ class TestBed:
             pass
         while True:
             action = scheduler.get_action(observation)
-            observation, reward, done, info = env.step(action, print_memory_usage=False)
+            observation, reward, done, info = env.step(action, print_memory_usage=False, print_processing_time=False)
 
             # print progress
             flows_arrived, flows_processed = len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)
@@ -159,7 +159,8 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        DATA_NAME = 'university_chancap1_mldat6e7'
+        # DATA_NAME = 'university_chancap2_numchans2_mldat6e7'
+        DATA_NAME = 'university_chancap500_numchans1_mldat2e6_bidirectional'
 
         # benchmark data
         path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/{}_benchmark_data.json'.format(DATA_NAME)
@@ -167,19 +168,19 @@ if __name__ == '__main__':
 
         # dcn
         MAX_TIME = None 
-        MAX_FLOWS = 10
+        MAX_FLOWS = 50 # 10
 
         # networks
         NUM_CHANNELS = 1
-        networks = [gen_fat_tree(k=3, N=2, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=1, rack_to_edge_channel_capacity=5, edge_to_agg_channel_capacity=5, agg_to_core_channel_capacity=5)]
+        networks = [gen_fat_tree(k=3, N=2, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000)]
 
         # rwas
-        NUM_K_PATHS = 1
+        NUM_K_PATHS = 2
         rwas = [RWA(gen_channel_names(NUM_CHANNELS), NUM_K_PATHS)]
 
         # schedulers
         # SLOT_SIZE = 1e6
-        SLOT_SIZE = 1e4 #1e4 1e5 1e2 0.1  1e3
+        SLOT_SIZE = 1e2 #1e4 1e5 1e2 0.1  1e3
         PACKET_SIZE = 1 # 300 0.01 1e1 1e2
         #schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
         schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import json
 
 
-def gen_arbitrary_network(ep_label=None, num_eps=10):
+def gen_arbitrary_network(ep_label=None, server_to_rack_channel_capacity=12500, num_channels=1, num_eps=10):
     '''Generates an arbitrary network with num_eps nodes labelled as ep_label.
 
     Note that no edges are formed in this network; it is purely for ep name 
@@ -42,6 +42,15 @@ def gen_arbitrary_network(ep_label=None, num_eps=10):
             # ep_label is None
             eps.append(node)
     network.graph['endpoints'] = eps
+
+    max_nw_capacity = num_eps * server_to_rack_channel_capacity * num_channels
+
+    init_global_network_attrs(network,
+                              max_nw_capacity,
+                              num_channels,
+                              endpoint_label=ep_label,
+                              node_labels=[ep_label],
+                              topology_type='arbitrary')
     
     return network
 

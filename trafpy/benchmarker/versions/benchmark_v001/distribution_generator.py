@@ -82,22 +82,34 @@ class DistributionGenerator:
             print('Generating {} distribution for {} benchmark...'.format(dist_name, benchmark))
 
             if benchmark == 'university':
-                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.7}
+                if racks_dict is None:
+                    rack_prob_config = None
+                else:
+                    rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.7}
                 # node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
                 node_dist = node_dists.gen_multimodal_node_dist(eps, rack_prob_config=rack_prob_config, num_skewed_nodes=num_skewed_nodes, skewed_node_probs=skewed_node_probs, show_fig=False, print_data=False)
             
             elif benchmark == 'private_enterprise':
-                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.5}
+                if racks_dict is None:
+                    rack_prob_config = None
+                else:
+                    rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.5}
                 # node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
                 node_dist = node_dists.gen_multimodal_node_dist(eps, rack_prob_config=rack_prob_config, num_skewed_nodes=num_skewed_nodes, skewed_node_probs=skewed_node_probs, show_fig=False, print_data=False)
 
             elif benchmark == 'commercial_cloud':
-                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.2}
+                if racks_dict is None:
+                    rack_prob_config = None
+                else:
+                    rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.2}
                 # node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
                 node_dist = node_dists.gen_multimodal_node_dist(eps, rack_prob_config=rack_prob_config, num_skewed_nodes=num_skewed_nodes, skewed_node_probs=skewed_node_probs, show_fig=False, print_data=False)
 
             elif benchmark == 'social_media_cloud':
-                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.129}
+                if racks_dict is None:
+                    rack_prob_config = None
+                else:
+                    rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.129}
                 # node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
                 node_dist = node_dists.gen_multimodal_node_dist(eps, rack_prob_config=rack_prob_config, num_skewed_nodes=num_skewed_nodes, skewed_node_probs=skewed_node_probs, show_fig=False, print_data=False)
 

@@ -80,7 +80,7 @@ class Demand:
 
 class DemandAnalyser:
     
-    def __init__(self, demand, subject_class_name=None):
+    def __init__(self, demand, bidirectional_links=True, subject_class_name=None):
         self.demand = demand
         if subject_class_name is None:
             self.subject_class_name = demand.name
@@ -88,8 +88,9 @@ class DemandAnalyser:
             self.subject_class_name = subject_class_name
         self.computed_metrics = False
 
-    def compute_metrics(self, print_summary=False):
+    def compute_metrics(self, bidirectional_links=True, print_summary=False):
         self.computed_metrics = True
+        self.bidirectional_links = bidirectional_links
         self._compute_general_summary()
         if self.demand.job_centric:
             self._compute_job_summary()
@@ -142,7 +143,11 @@ class DemandAnalyser:
     def _compute_flow_summary(self):
         self.num_flows = self.demand.num_flows
         self.total_flow_info_arrived = sum(self.demand.demand_data['flow_size'])
-        self.load_rate = sum(self.demand.demand_data['flow_size'])/(max(self.demand.demand_data['event_time'])-min(self.demand.demand_data['event_time']))
+        if self.bidirectional_links:
+            # 1 flow occupies 2 endpoint links therefore has 2*flow_size load
+            self.load_rate = sum(2*self.demand.demand_data['flow_size'])/(max(self.demand.demand_data['event_time'])-min(self.demand.demand_data['event_time']))
+        else:
+            self.load_rate = sum(self.demand.demand_data['flow_size'])/(max(self.demand.demand_data['event_time'])-min(self.demand.demand_data['event_time']))
         self.smallest_flow_size = min(self.demand.demand_data['flow_size'])
         self.largest_flow_size = max(self.demand.demand_data['flow_size'])
 

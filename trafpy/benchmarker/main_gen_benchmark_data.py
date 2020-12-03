@@ -5,7 +5,8 @@ if __name__ == '__main__':
     import os
 
 
-    DATA_NAME = 'university_chancap1_mldat6e7'
+    DATA_NAME = 'university_chancap500_numchans1_mldat2e6_bidirectional'
     path_to_save = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/{}_benchmark_data'.format(DATA_NAME)
     benchmark_demands = gen_benchmark_demands(path_to_save=path_to_save,
+                                              save_format='json',
                                               load_prev_dists=False)

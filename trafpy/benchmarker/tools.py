@@ -1,6 +1,6 @@
 from trafpy.benchmarker import config
 from trafpy.generator.src.builder import create_demand_data
-from trafpy.generator.src.tools import save_data_as_json
+from trafpy.generator.src.tools import save_data_as_json, save_data_as_csv
 from trafpy.benchmarker.versions.benchmark_importer import BenchmarkImporter
 
 import numpy as np
@@ -10,7 +10,7 @@ import time
 
 
 
-def gen_benchmark_demands(path_to_save=None, load_prev_dists=True):
+def gen_benchmark_demands(path_to_save=None, save_format='json', load_prev_dists=True):
     # init benchmark importer
     importer = BenchmarkImporter(config.BENCHMARK_VERSION, load_prev_dists=load_prev_dists)
 
@@ -72,7 +72,12 @@ def gen_benchmark_demands(path_to_save=None, load_prev_dists=True):
     print('Saving benchmark data...')
     if path_to_save is not None:
         # save benchmarks
-        save_data_as_json(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
+        if save_format == 'json':
+            save_data_as_json(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
+        elif save_format == 'csv':
+            save_data_as_csv(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
+        else:
+            raise Exception('Unrecognised save format \'{}\''.format(save_format))
 
     print('Finished.')
 

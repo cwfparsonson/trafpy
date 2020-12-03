@@ -33,11 +33,24 @@ class DCN(gym.Env):
                  sim_name='dcn_sim',
                  max_flows=None, 
                  max_time=None,
+                 time_multiplexing=True,
                  track_grid_slot_evolution=False,
-                 track_queue_length_evolution=False):
+                 track_queue_length_evolution=False,
+                 gen_machine_readable_network=False):
         '''
+        If time_multiplexing, will assume perfect/ideal time multiplexing where
+        can schedule as many different flows per channel so long as sum of flow
+        sizes <= maximum channel capacity. If time_multiplexing is False, assume
+        no time multiplexing of flows occurs and therefore can only schedule
+        one flow per channel.
+
         To reduce memory usage, set tracking grid slot & queue length evolution
         to False
+
+        If gen_machine_readable_network, will generate tensor representation
+        of current network state at each step and return it in the obs
+        dict. N.B. This process takes a long time (on the order of seconds) and
+        will therefore greatly increase simulation time.
         '''
 
         # initialise DCN environment characteristics
@@ -52,32 +65,35 @@ class DCN(gym.Env):
         self.max_flows = max_flows # max number of flows per queue
         self.max_time = max_time
         
+        self.time_multiplexing = time_multiplexing
         self.track_grid_slot_evolution = track_grid_slot_evolution
         self.track_queue_length_evolution = track_queue_length_evolution
+        self.gen_machine_readable_network = gen_machine_readable_network
 
         # init representation generator
-        with tf.device('/cpu'):
-            self.repgen = RepresentationGenerator(self)
+        if self.gen_machine_readable_network:
+            with tf.device('/cpu'):
+                self.repgen = RepresentationGenerator(self)
 
-        # gym env reqs
-        #         'src': spaces.Box(low=0, high=1, shape=(len(env.repgen.onehot_endpoints[0]),)), # don't need to onehot encode, gym.spaces.Discrete() does automatically
-        #         'path': spaces.MultiBinary(nlen(env.repgen.onehot_paths[0])), #TODO: Use this for encoding paths?
-        network_representation_space = gym.spaces.Dict({
-            index: gym.spaces.Dict({
-                    'src': gym.spaces.Discrete(self.repgen.num_endpoints),
-                    'dst': gym.spaces.Discrete(self.repgen.num_endpoints),
-                    'path': gym.spaces.Discrete(self.repgen.num_paths),
-                    'size': gym.spaces.Box(low=-1, high=1e12, shape=()),
-                    'packets': gym.spaces.Box(low=-1, high=1e12, shape=()),
-                    'time_arrived': gym.spaces.Box(low=-1, high=1e12, shape=()),
-                    'selected': gym.spaces.Discrete(2),
-                    'null_action': gym.spaces.Discrete(2),
-                    'flow_present': gym.spaces.Discrete(2)
-                })
-            for index in range(self.repgen.num_actions)})
-        self.action_space = gym.spaces.Discrete(self.repgen.num_actions)
-        self.observation_space = gym.spaces.Dict({'avail_actions': network_representation_space,
-                                                  'machine_readable_network': network_representation_space})
+            # gym env reqs
+            #         'src': spaces.Box(low=0, high=1, shape=(len(env.repgen.onehot_endpoints[0]),)), # don't need to onehot encode, gym.spaces.Discrete() does automatically
+            #         'path': spaces.MultiBinary(nlen(env.repgen.onehot_paths[0])), #TODO: Use this for encoding paths?
+            network_representation_space = gym.spaces.Dict({
+                index: gym.spaces.Dict({
+                        'src': gym.spaces.Discrete(self.repgen.num_endpoints),
+                        'dst': gym.spaces.Discrete(self.repgen.num_endpoints),
+                        'path': gym.spaces.Discrete(self.repgen.num_paths),
+                        'size': gym.spaces.Box(low=-1, high=1e12, shape=()),
+                        'packets': gym.spaces.Box(low=-1, high=1e12, shape=()),
+                        'time_arrived': gym.spaces.Box(low=-1, high=1e12, shape=()),
+                        'selected': gym.spaces.Discrete(2),
+                        'null_action': gym.spaces.Discrete(2),
+                        'flow_present': gym.spaces.Discrete(2)
+                    })
+                for index in range(self.repgen.num_actions)})
+            self.action_space = gym.spaces.Discrete(self.repgen.num_actions)
+            self.observation_space = gym.spaces.Dict({'avail_actions': network_representation_space,
+                                                      'machine_readable_network': network_representation_space})
 
 
     def reset(self, pickled_demand_path=None, return_obs=True):
@@ -234,6 +250,8 @@ class DCN(gym.Env):
         return edges
 
     def check_chosen_flows_valid(self, chosen_flows):
+        self.time_check_valid_start = time.time()
+
         # init channel link occupation dict
         edge_channel_occupation = {json.dumps(edge): 
                                     {channel: 'unoccupied' for channel in self.channel_names}
@@ -253,6 +271,7 @@ class DCN(gym.Env):
                         raise Exception('Scheduler chose flow {}, however at least one of the edge channels in this chosen path-channel is already occupied by flow {}. Resolve contentions before passing chosen flows to DCN simulation environment.'.format(flow, edge_channel_occupation[json.dumps(edge[::-1])][channel]))
                     edge_channel_occupation[json.dumps(edge[::-1])][channel] = flow
 
+        self.time_check_valid_end = time.time()
 
         
 
@@ -510,6 +529,8 @@ class DCN(gym.Env):
         Takes observation of current time slot and updates virtual queues in
         network
         '''
+        self.time_queue_flows_start = time.time()
+
         slot_dict = observation['slot_dict']
 
         if len(slot_dict['new_event_dicts']) == 0:
@@ -530,6 +551,8 @@ class DCN(gym.Env):
                         self.add_flow_to_queue(event_dict)
         
         observation['network'] = self.network # update osbervation's network
+
+        self.time_queue_flows_end = time.time()
         
         return observation
     
@@ -635,6 +658,25 @@ class DCN(gym.Env):
             # can't yet schedule therefore don't count as arrived
             pass
         
+    def get_max_flow_info_transferred_per_slot(self, flow_dict):
+        '''
+        Returns maximum possible flow information & number of packets transferred
+        per timeslot given the flow's path (i.e. in point-to-point circuit switched
+        network, max info transferred per slot is the bandwidth of the lowest bw
+        link in the path * the slot size)
+        '''
+        packet_size = flow_dict['packet_size']
+        path_links = self.get_path_edges(flow_dict['path'])
+        channel = flow_dict['channel']
+        link_bws = []
+        for link in path_links:
+            # link_bws.append(self.network[link[0]][link[1]]['max_channel_capacity'])
+            link_bws.append(self.network[link[0]][link[1]]['channels'][channel])
+        capacity = min(link_bws) # channel capacity == info transferred per unit time
+        info_per_slot = capacity  * self.slot_size # info transferred per slot == info transferred per unit time * number of time units (i.e. slot size)
+        packets_per_slot = int(info_per_slot / packet_size) # round down 
+
+        return info_per_slot, packets_per_slot
 
 
     def update_flow_packets(self, flow_dict):
@@ -642,28 +684,21 @@ class DCN(gym.Env):
         Takes flow dict that has been schedueled to be activated for curr
         time slot and removes corresponding number of packets flow in queue
         '''
-        # packet_size = flow_dict['packets'][0] 
-        packet_size = flow_dict['packet_size']
-        path_links = self.get_path_edges(flow_dict['path'])
-        link_bws = []
-        for link in path_links:
-            link_bws.append(self.network[link[0]][link[1]]['max_channel_capacity'])
-        capacity = min(link_bws) # channel capacity == info transferred per unit time
-        # size_per_slot = lowest_bw/(1/self.slot_size)
-        info_per_slot = capacity  * self.slot_size # info transferred per slot == info transferred per unit time * number of time units (i.e. slot size)
-        packets_per_slot = int(info_per_slot / packet_size) # round down 
+        # info_per_slot, packets_per_slot = self.get_max_flow_info_transferred_per_slot(flow_dict)
+        # if flow_dict['packets_this_slot'] > packets_per_slot:
+            # raise Exception('Trying to transfer {} packets this slot, but flow {} can only have up to {} packets transferred per slot.'.format(flow_dict['packets_this_slot'], flow_dict, packets_per_slot))
+
         
         sn = flow_dict['src']
         dn = flow_dict['dst']
         queued_flows = self.network.nodes[sn][dn]['queued_flows']
         idx = self.find_flow_idx(flow_dict, queued_flows)
-        # queued_flows[idx]['packets'] = queued_flows[idx]['packets'][packets_per_slot:]
-        queued_flows[idx]['packets'] -= packets_per_slot
+        queued_flows[idx]['packets'] -= flow_dict['packets_this_slot']
+        queued_flows[idx]['packets_this_slot'] = flow_dict['packets_this_slot']
         if queued_flows[idx]['packets'] < 0:
             queued_flows[idx]['packets'] = 0
         
         updated_flow = copy.copy(queued_flows[idx])
-        # if len(updated_flow['packets']) == 0:
         if updated_flow['packets'] == 0:
             # all packets transported, flow completed
             self.register_completed_flow(updated_flow)
@@ -689,6 +724,7 @@ class DCN(gym.Env):
         '''
         Compiles simulator data and returns observation
         '''
+        self.time_next_obs_start = time.time()
         try:
             observation = {'slot_dict': self.slots_dict[self.curr_step],
                            'network': copy.deepcopy(self.network)}
@@ -708,12 +744,15 @@ class DCN(gym.Env):
         if self.demand.job_centric:
             observation = self.update_running_op_dependencies(observation)
 
-        with tf.device('/cpu'):
-            # create machine readable version of current network state
-            _, observation['machine_readable_network'] = self.repgen.gen_machine_readable_network_observation(observation['network'], dtype=tf.float16)
+        if self.gen_machine_readable_network:
+            with tf.device('/cpu'):
+                # create machine readable version of current network state
+                _, observation['machine_readable_network'] = self.repgen.gen_machine_readable_network_observation(observation['network'], dtype=tf.float16)
 
-            # update available actions
-            observation['avail_actions'] = observation['machine_readable_network']
+                # update available actions
+                observation['avail_actions'] = observation['machine_readable_network']
+
+        self.time_next_obs_end = time.time()
 
 
             
@@ -1124,12 +1163,15 @@ class DCN(gym.Env):
                     
 
     def update_flow_attrs(self, chosen_flows):
+        self.time_update_flow_attrs_start = time.time()
+
         for flow in chosen_flows:
             sn = flow['src']
             dn = flow['dst']
             queued_flows = self.network.nodes[sn][dn]['queued_flows']
             idx = self.find_flow_idx(flow, queued_flows)
             dated_flow = self.network.nodes[sn][dn]['queued_flows'][idx]
+            dated_flow['packets_this_slot'] = flow['packets_this_slot']
             if dated_flow['packets'] is None:
                 # udpate flow packets and k shortest paths
                 dated_flow['packets'] = flow['packets']
@@ -1139,31 +1181,55 @@ class DCN(gym.Env):
                 # agent updates already applied
                 pass
 
+        self.time_update_flow_attrs_end = time.time()
+
+    def reset_channel_capacities_of_edges(self, edges):
+        '''Takes edges and resets their available capacities back to their maximum capacities.'''
+        for edge in edges:
+            for channel in self.network[edge[0]][edge[1]]['channels']:
+                # reset channel capacity
+                self.network[edge[0]][edge[1]]['channels'][channel] = self.network[edge[0]][edge[1]]['max_channel_capacity']
+        # update global graph property
+        self.network.graph['curr_nw_capacity_used'] = 0
+
+
     def take_action(self, action):
+        self.time_take_action_start = time.time()
+
+        # reset channel capacities of all links (start with no flows scheduled therefore all channel capacity is available before action is taken)
+        self.reset_channel_capacities_of_edges(self.network.edges)
+
         # unpack chosen action
         chosen_flows = action['chosen_flows']
 
-        # check chosen flows valid
-        self.check_chosen_flows_valid(chosen_flows)
+        if not self.time_multiplexing:
+            # no time multiplexing -> can only schedule one flow per channel per time slot. Check chosen flows valid
+            self.check_chosen_flows_valid(chosen_flows)
+        else:
+            # assume perfect time multiplexing -> can schedule as many flow packets as possible so long as sum(scheduled_flows_packets) <= max_channel_capacity. If chosen flows are not valid, an exception will be raised later when trying to setup the flows.
+            pass
         
         # update any flow attrs in dcn network that have been updated by agent
         self.update_flow_attrs(chosen_flows)
 
         # establish chosen flows
+        self.time_establish_flows_start = time.time()
         for chosen_flow in chosen_flows:
             #flow_established, _ = self.check_flow_present(chosen_flow, self.connected_flows)
             if len(chosen_flows) == 0:
                 # no flows chosen
                 pass
             #elif flow_established:
-            elif self.check_flow_present(chosen_flow, self.connected_flows):
-                # chosen flow already established, leave
-                pass
+            # elif self.check_flow_present(chosen_flow, self.connected_flows):
+                # # chosen flow already established, leave
+                # pass
             else:
                 # chosen flow not already established, establish connection
                 self.set_up_connection(chosen_flow)
+        self.time_establish_flows_end = time.time()
 
         # take down replaced flows
+        self.time_takedown_flows_start = time.time()
         for prev_chosen_flow in self.connected_flows:
             #flow_established, _ = self.check_flow_present(prev_chosen_flow, chosen_flows)
             if self.connected_flows == 0:
@@ -1176,10 +1242,13 @@ class DCN(gym.Env):
             else:
                 # prev chosen flow not re-chosen, take down connection
                 self.take_down_connection(prev_chosen_flow)
+        self.time_takedown_flows_end = time.time()
 
         #self.update_completed_flows(chosen_flows) 
-        for flow in chosen_flows:
-            self.update_flow_packets(flow)
+        # self.time_update_completed_flows_start = time.time()
+        # for flow in chosen_flows:
+            # self.update_flow_packets(flow) # NOW DONE IN SET_UP_FLOW()
+        # self.time_update_completed_flows_end = time.time()
         
         
         #self.update_completed_flows(chosen_flows) 
@@ -1187,12 +1256,81 @@ class DCN(gym.Env):
 
         # all chosen flows established and any removed flows taken down
         # update connected_flows
+
         self.connected_flows = chosen_flows.copy()
 
         if self.track_queue_length_evolution:
             self.update_queue_evolution()
         if self.track_grid_slot_evolution:
             self.update_grid_slot_evolution(chosen_flows)
+
+        self.time_take_action_end = time.time()
+
+    def display_step_processing_time(self, num_decimals=8):
+        # step
+        step_time = self.time_step_end - self.time_step_start
+
+        # take action
+        take_action_time = self.time_take_action_end - self.time_take_action_start
+
+        # check flow validity
+        check_valid_time = self.time_check_valid_end - self.time_check_valid_start
+
+        # update flow attrs
+        update_flow_attrs_time = self.time_update_flow_attrs_end - self.time_update_flow_attrs_start
+
+        # establish chosen flows
+        establish_flows_time = self.time_establish_flows_end - self.time_establish_flows_start
+
+        # take down replaced flows
+        takedown_flows_time = self.time_takedown_flows_end - self.time_takedown_flows_start
+
+        # reward
+
+        # check done
+
+        # next obs
+        next_obs_time = self.time_next_obs_end - self.time_next_obs_start
+
+        # queue flows
+        if self.most_recent_valid_curr_step == self.curr_step:
+            # attempted to add flows to queue
+            queue_flows_time = self.time_queue_flows_end - self.time_queue_flows_start
+            queued_flows = True
+        else:
+            # no attempt to add flows to queue
+            queued_flows = False
+
+        # gen machine readable
+        if self.gen_machine_readable_network:
+            try:
+                gen_machine_readable_time = self.repgen.time_gen_machine_readable_end - self.repgen.time_gen_machine_readable_start
+                machine_readable = True
+            except AttributeError:
+                # haven't generated a machine readable representation
+                machine_readable = False
+
+        # create table
+        summary_dict = {
+                'Step': [round(step_time, num_decimals)],
+                'Take Action': [round(take_action_time, num_decimals)],
+                'Check Valid': [round(check_valid_time, num_decimals)],
+                'Update Attrs': [round(update_flow_attrs_time, num_decimals)],
+                'Establish': [round(establish_flows_time, num_decimals)],
+                'Takedown': [round(takedown_flows_time, num_decimals)],
+                'Next Obs': [round(next_obs_time, num_decimals)]
+                }
+        if queued_flows:
+            summary_dict['Q Flows'] = [round(queue_flows_time, num_decimals)]
+        if self.gen_machine_readable_network:
+            if machine_readable:
+                summary_dict['Gen Mach'] = [round(gen_machine_readable_time, num_decimals)]
+
+        df = pd.DataFrame(summary_dict)
+        print('')
+        print(tabulate(df, showindex=False, headers='keys', tablefmt='psql'))
+
+
 
 
     def display_env_memory_usage(self, obs):
@@ -1215,9 +1353,6 @@ class DCN(gym.Env):
         # # observation
         # obs_size = sys.getsizeof(json.dumps(obs))
 
-
-        
-
         # create table
         summary_dict = {
                 'Time': [self.curr_time],
@@ -1233,11 +1368,13 @@ class DCN(gym.Env):
 
 
 
-    def step(self, action, print_memory_usage=False):
+    def step(self, action, print_memory_usage=False, print_processing_time=False):
         '''
         Performs an action in the DCN simulation environment, moving simulator
         to next step
         '''
+        self.time_step_start = time.time()
+
         self.action = action # save action
 
         self.take_action(action)
@@ -1248,10 +1385,13 @@ class DCN(gym.Env):
         info = None
         obs = self.next_observation()
 
+        self.time_step_end = time.time()
+
 
         if print_memory_usage:
-            # print memory usage of key components
             self.display_env_memory_usage(obs)
+        if print_processing_time:
+            self.display_step_processing_time()
 
 
 
@@ -1259,7 +1399,7 @@ class DCN(gym.Env):
 
 
         # # DEBUG:
-        # print('\nTime: {} Step: {} | Sim flows: {} | Flows arrived: {} | Flows completed: {} | Flows dropped: {}'.format(self.curr_time, self.curr_step, self.demand.num_flows, len(self.arrived_flow_dicts), len(self.completed_flows), len(self.dropped_flows)))
+        # print('\n\nTime: {} Step: {} | Sim flows: {} | Flows arrived: {} | Flows completed: {} | Flows dropped: {}'.format(self.curr_time, self.curr_step, self.demand.num_flows, len(self.arrived_flow_dicts), len(self.completed_flows), len(self.dropped_flows)))
         # queues = self.get_current_queue_states()
         # print('Queues being given to scheduler:')
         # i = 0
@@ -1267,7 +1407,7 @@ class DCN(gym.Env):
            # print('queue {}:\n{}'.format(i, q))
            # i+=1
         # print('Chosen action:\n{}'.format(action))
-        # # print('Incomplete control deps:')
+        # print('Incomplete control deps:')
         # # for c in self.arrived_control_deps:
            # # if c['time_completed'] is None or c['time_parent_op_started'] is None:
                # # print(c)
@@ -1511,7 +1651,7 @@ class DCN(gym.Env):
 
         return channel_used
         
-    def set_up_connection(self, flow):
+    def set_up_connection(self, flow, num_decimals=6):
         '''
         Sets up connection between src-dst node pair by removing capacity from
         all edges in path connecting them. Also updates graph's global curr 
@@ -1523,21 +1663,36 @@ class DCN(gym.Env):
         path = flow['path']
         channel = flow['channel']
         flow_size = flow['size']
+        packet_size = flow['packet_size']
+        packets = flow['packets']
+        packets_this_slot = flow['packets_this_slot']
+
+        info_to_transfer_this_slot = packets_this_slot * packet_size
+        capacity_used_this_slot = round(info_to_transfer_this_slot / self.slot_size, num_decimals) # info units of this flow transferred this time slot == capacity used on each channel in flow's path this time slot
 
         edges = self.get_path_edges(path)
 
         num_edges = len(edges)
         for edge in range(num_edges):
             node_pair = edges[edge]
-            # update edge property
-            self.network[node_pair[0]][node_pair[1]]['channels'][channel] -= flow_size
+            # update edge capacity remaining after establish this flow
+            self.network[node_pair[0]][node_pair[1]]['channels'][channel] -= capacity_used_this_slot
+            self.network[node_pair[0]][node_pair[1]]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['channels'][channel], num_decimals)
+
+            # check that establishing this flow is valid given edge capacity constraints
+            if self.network[node_pair[0]][node_pair[1]]['channels'][channel] < 0:
+                raise Exception('Tried to set up flow {} on edge {} channel {}, but this results in a negative channel capacity on this edge i.e. this edge\'s channel is full, cannot have more flow packets scheduled! Scheduler should not be giving invalid chosen flow sets to the environment.'.format(flow, edge, channel)) 
+
             # update global graph property
-            self.network.graph['curr_nw_capacity_used'] += flow_size
+            self.network.graph['curr_nw_capacity_used'] += capacity_used_this_slot
         self.network.graph['num_active_connections'] += 1
+
+        # update packets left for this flow
+        self.update_flow_packets(flow)
         
     
 
-    def take_down_connection(self, flow):
+    def take_down_connection(self, flow, num_decimals=6):
         '''
         Removes established connection by adding capacity back onto all edges
         in the path connecting the src-dst node pair. Also updates graph's
@@ -1549,6 +1704,12 @@ class DCN(gym.Env):
         path = flow['path']
         channel = flow['channel']
         flow_size = flow['size']
+        packet_size = flow['packet_size']
+        packets = flow['packets']
+        packets_this_slot = flow['packets_this_slot']
+
+        info_to_transfer_this_slot = packets_this_slot * packet_size
+        capacity_used_this_slot = round(info_to_transfer_this_slot / self.slot_size, num_decimals) # info units of this flow transferred this time slot == capacity used on each channel in flow's path this time slot
 
         edges = self.get_path_edges(path)
         
@@ -1556,9 +1717,11 @@ class DCN(gym.Env):
         for edge in range(num_edges):
             node_pair = edges[edge]
             # update edge property
-            self.network[node_pair[0]][node_pair[1]]['channels'][channel] += flow_size
+            self.network[node_pair[0]][node_pair[1]]['channels'][channel] += capacity_used_this_slot
+            self.network[node_pair[0]][node_pair[1]]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['channels'][channel], num_decimals)
+
             # update global graph property
-            self.network.graph['curr_nw_capacity_used'] -= flow_size
+            self.network.graph['curr_nw_capacity_used'] -= capacity_used_this_slot
         self.network.graph['num_active_connections'] -= 1
 
     def path_cost(self, graph, path, weight=None):
@@ -1801,6 +1964,8 @@ class RepresentationGenerator:
         will return discrete indices of variables. This is useful for gym.spaces.Discrete()
         observation spaces which automatically one-hot encode Discrete observation space variables.
         '''
+        self.time_gen_machine_readable_start = time.time()
+
         num_placeholder_flows = self.num_endpoints * self.env.max_flows * (self.num_endpoints - 1)
         num_actions = num_placeholder_flows * self.env.num_k_paths
         
@@ -1858,6 +2023,8 @@ class RepresentationGenerator:
             action_vector = self._stack_list_of_tensors([s for s in action_dict[action].values()], dtype=dtype)
             action_stack.append(action_vector)
         machine_readable_observation = tf.cast(action_stack, dtype=dtype)
+
+        self.time_gen_machine_readable_end = time.time()
         
         return machine_readable_observation, action_dict
 

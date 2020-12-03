@@ -148,6 +148,7 @@ def increase_demand_load_to_target(demand_data,
                                    node_dist, 
                                    flow_size_dist, 
                                    network_load_config, 
+                                   increment_factor=0.5,
                                    print_data=False):
     load_rate = get_flow_centric_demand_data_load_rate(demand_data)
     load_fraction = load_rate / network_load_config['network_rate_capacity']
@@ -162,7 +163,7 @@ def increase_demand_load_to_target(demand_data,
         # decrease interarrival times to try increase load
         new_interarrival_time_dist = {}
         for rand_var, prob in interarrival_time_dist.items():
-            new_rand_var = rand_var * 0.5
+            new_rand_var = rand_var * increment_factor
             new_interarrival_time_dist[new_rand_var] = prob
 
         # update interarrival time dist
@@ -199,6 +200,7 @@ def decrease_demand_load_to_target(demand_data,
                                    node_dist, 
                                    flow_size_dist, 
                                    network_load_config, 
+                                   increment_factor=1.001,
                                    print_data=False):
     load_rate = get_flow_centric_demand_data_load_rate(demand_data)
     load_fraction = load_rate / network_load_config['network_rate_capacity']
@@ -221,7 +223,7 @@ def decrease_demand_load_to_target(demand_data,
             # adjust interarrival dist
             new_interarrival_time_dist = {}
             for rand_var, prob in interarrival_time_dist.items():
-                new_rand_var = rand_var * 1.01
+                new_rand_var = rand_var * increment_factor
                 new_interarrival_time_dist[new_rand_var] = prob
 
             # update interarrival time dist
@@ -296,13 +298,22 @@ def drop_random_flow_from_demand_data(demand_data):
             
     return demand_data
 
-def get_flow_centric_demand_data_load_rate(demand_data):
+def get_flow_centric_demand_data_load_rate(demand_data, bidirectional_links=True):
+    '''
+    If flow connections are bidirectional_links, 1 flow takes up 2 endpoint links (the
+    source link and the destination link), therefore effecitvely takes up load rate
+    2*flow_size*duration bandwidth. If not bidriectional, only takes up
+    1*flow_size*duration since only occupies bandwidth for 1 of these links.
+    '''
     info_arrived = get_flow_centric_demand_data_total_info_arrived(demand_data)
     first_event_time, last_event_time = get_first_last_flow_arrival_times(demand_data)
 
     # print('first event: {} | last event: {} | total time: {}'.format(first_event_time, last_event_time, last_event_time-first_event_time))
     
-    load_rate = info_arrived/(last_event_time-first_event_time)
+    if bidirectional_links:
+        load_rate = 2*info_arrived/(last_event_time-first_event_time)
+    else:
+        load_rate = info_arrived/(last_event_time-first_event_time)
     
     return load_rate
 
