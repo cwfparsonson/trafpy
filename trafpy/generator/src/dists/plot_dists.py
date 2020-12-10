@@ -256,6 +256,8 @@ def plot_val_line(plot_dict={},
                      xlabel='Random Variable',
                      ylabel='Random Variable Value',
                      ylim=None,
+                     linewidth=1,
+                     alpha=1,
                      vertical_lines=[],
                      show_fig=False):
     '''Plots line plot.
@@ -271,7 +273,7 @@ def plot_val_line(plot_dict={},
 
     class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
     for _class in sorted(plot_dict.keys()):
-        plt.plot(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], c=next(class_colours), label=str(_class))
+        plt.plot(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], c=next(class_colours), linewidth=linewidth, alpha=alpha, label=str(_class))
         for vline in vertical_lines:
             plt.axvline(x=vline, color='r', linestyle='--')
 

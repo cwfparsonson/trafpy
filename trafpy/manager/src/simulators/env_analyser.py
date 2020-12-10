@@ -155,12 +155,13 @@ class EnvAnalyser:
             flow_completion_times.append(flow['time_completed'] - flow['time_arrived'])
 
         if len(flow_completion_times) == 0:
-            average_fct, ninetyninth_percentile_fct = float('inf'), float('inf')
+            average_fct, ninetyninth_percentile_fct, max_fct = float('inf'), float('inf'), float('inf')
         else:
             average_fct = np.average(np.asarray(flow_completion_times))
             ninetyninth_percentile_fct = np.percentile(np.asarray(flow_completion_times), 99)
+            max_fct = np.max(np.asarray(flow_completion_times))
 
-        return flow_completion_times, average_fct, ninetyninth_percentile_fct
+        return flow_completion_times, average_fct, ninetyninth_percentile_fct, max_fct
 
     def _compute_flow_arrival_metrics(self):
         self.arrived_flow_dicts = self._get_flows_arrived_in_measurement_period() 
@@ -173,7 +174,7 @@ class EnvAnalyser:
         self.flow_times_completed = [self.completed_flow_dicts[i]['time_completed'] for i in range(len(self.completed_flow_dicts))]
         self.num_completed_flows = len(self.completed_flow_dicts)
 
-        self.fcts, self.average_fct, self.nn_fct = self._calc_flow_completion_times()
+        self.fcts, self.average_fct, self.nn_fct, self.max_fct = self._calc_flow_completion_times()
 
     def _compute_flow_dropped_metrics(self):
         self.dropped_flow_dicts = self._get_flows_dropped_in_measurement_period()

@@ -36,6 +36,8 @@ class DCN(gym.Env):
                  time_multiplexing=True,
                  track_grid_slot_evolution=False,
                  track_queue_length_evolution=False,
+                 track_link_utilisation_evolution=True,
+                 track_link_concurrent_demands_evolution=True,
                  gen_machine_readable_network=False):
         '''
         If time_multiplexing, will assume perfect/ideal time multiplexing where
@@ -68,7 +70,12 @@ class DCN(gym.Env):
         self.time_multiplexing = time_multiplexing
         self.track_grid_slot_evolution = track_grid_slot_evolution
         self.track_queue_length_evolution = track_queue_length_evolution
+        self.track_link_utilisation_evolution = track_link_utilisation_evolution
+        self.track_link_concurrent_demands_evolution = track_link_concurrent_demands_evolution
         self.gen_machine_readable_network = gen_machine_readable_network
+
+        self.channel_names = self.network.graph['channel_names'] 
+        self.num_channels = len(self.channel_names)
 
         # init representation generator
         if self.gen_machine_readable_network:
@@ -119,7 +126,6 @@ class DCN(gym.Env):
 
         self.action = {'chosen_flows': []} # init
 
-        self.channel_names = self.network.graph['channel_names'] 
 
         if self.demand.job_centric:
             self.network.graph['queued_jobs'] = [] # init list of curr queued jobs in network
@@ -144,6 +150,10 @@ class DCN(gym.Env):
             self.queue_evolution_dict = self.init_queue_evolution(self.network)
         if self.track_grid_slot_evolution:
             self.grid_slot_dict = self.init_grid_slot_evolution(self.network)
+        if self.track_link_utilisation_evolution:
+            self.link_utilisation_dict = self.init_link_utilisation_evolution(self.network)
+        if self.track_link_concurrent_demands_evolution:
+            self.link_concurrent_demands_dict = self.init_link_concurrent_demands_dict(self.network)
 
         if return_obs:
             return self.next_observation()
@@ -222,6 +232,13 @@ class DCN(gym.Env):
                     # can't have src == dst
                     pass
 
+    def get_channel_bandwidth(self, edge, channel):
+        '''Gets current channel bandwidth left on a given edge in the network.'''
+        try:
+            return self.network[edge[0]][edge[1]]['channels'][channel]
+        except KeyError:
+            return self.network[edge[1]][edge[0]]['channels'][channel]
+
     def init_grid_slot_evolution(self, Graph):
         grid_slot_dict = {ep:
                             {channel:
@@ -232,6 +249,24 @@ class DCN(gym.Env):
                           for ep in Graph.graph['endpoints']}
 
         return grid_slot_dict
+    
+    def init_link_utilisation_evolution(self, net):
+        link_utilisation_dict = {json.dumps([link[0],link[1]]):
+                                    {'time_slots': [self.curr_step],
+                                     'util': [0]}
+                                 for link in net.edges}
+
+        return link_utilisation_dict
+
+    def init_link_concurrent_demands_dict(self, net):
+        link_concurrent_demands_dict = {json.dumps([link[0],link[1]]):
+                                            {'time_slots': [self.curr_step],
+                                             'concurrent_demands': [0]}
+                                        for link in net.edges}
+        return link_concurrent_demands_dict
+
+
+
 
     def get_path_edges(self, path):
         '''
@@ -273,7 +308,31 @@ class DCN(gym.Env):
 
         self.time_check_valid_end = time.time()
 
+    def update_link_utilisation_evolution(self):
+        for link in self.network.edges:
+            available_link_bw = 0
+            max_link_bw = 0
+            for channel in self.channel_names:
+                available_link_bw += self.get_channel_bandwidth(link, channel)
+                max_link_bw += self.network[link[0]][link[1]]['max_channel_capacity']
+            link_util = 1-(available_link_bw / max_link_bw)
+            self.link_utilisation_dict[json.dumps(link)]['time_slots'].append(self.curr_step)
+            self.link_utilisation_dict[json.dumps(link)]['util'].append(link_util)
+
+    def update_link_concurrent_demands_evolution(self, link, num_concurrent_demands_to_add=1):
+        '''Adds num_concurrent_demands_to_add to current number of concurrent demands on a given link.'''
+        if self.link_concurrent_demands_dict[json.dumps(link)]['time_slots'][-1] != self.curr_step:
+            # not yet evolved concurrent demands evolution for this time slot
+            self.link_concurrent_demands_dict[json.dumps(link)]['time_slots'].append(self.curr_step)
+            # init num concurrent demands on link for this time slot
+            self.link_concurrent_demands_dict[json.dumps(link)]['concurrent_demands'].append(0)
         
+        # update num concurrent demands tracker for this time slot
+        self.link_concurrent_demands_dict[json.dumps(link)]['concurrent_demands'][-1] += num_concurrent_demands_to_add
+
+
+
+
 
     def update_grid_slot_evolution(self, chosen_flows):
         time = self.curr_time
@@ -1263,6 +1322,9 @@ class DCN(gym.Env):
             self.update_queue_evolution()
         if self.track_grid_slot_evolution:
             self.update_grid_slot_evolution(chosen_flows)
+        if self.track_link_utilisation_evolution:
+            self.update_link_utilisation_evolution()
+        # N.B. update_link_concurrent_demands_evolution() done inside set_up_connection() for efficiency
 
         self.time_take_action_end = time.time()
 
@@ -1679,9 +1741,17 @@ class DCN(gym.Env):
             self.network[node_pair[0]][node_pair[1]]['channels'][channel] -= capacity_used_this_slot
             self.network[node_pair[0]][node_pair[1]]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['channels'][channel], num_decimals)
 
+            if self.track_link_concurrent_demands_evolution:
+                try:
+                    self.update_link_concurrent_demands_evolution(node_pair, num_concurrent_demands_to_add=1)
+                except KeyError:
+                    self.update_link_concurrent_demands_evolution(node_pair[::-1], num_concurrent_demands_to_add=1)
+
+
             # check that establishing this flow is valid given edge capacity constraints
             if self.network[node_pair[0]][node_pair[1]]['channels'][channel] < 0:
                 raise Exception('Tried to set up flow {} on edge {} channel {}, but this results in a negative channel capacity on this edge i.e. this edge\'s channel is full, cannot have more flow packets scheduled! Scheduler should not be giving invalid chosen flow sets to the environment.'.format(flow, edge, channel)) 
+
 
             # update global graph property
             self.network.graph['curr_nw_capacity_used'] += capacity_used_this_slot
