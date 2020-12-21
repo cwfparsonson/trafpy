@@ -48,8 +48,6 @@ pdf_documents = [('index', u'trafpy_documentation', u'TafPy Documentation', u'C 
 # Sample rst2pdf doc - title of the pdf
 # Your Name - author name in the pdf
 
-autodoc_mock_imports = ["django"]
-
 #napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 napoleon_include_init_with_doc = False
