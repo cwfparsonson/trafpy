@@ -412,7 +412,8 @@ def plot_val_stacked_bar(plot_dict={},
     E.g. plot_dict given should be of the form:
 
     plot_dict= {'class_1': {'x_values': ['Uni DCN', 'Private DCN', 'Cloud DCN'], 'y_values': [20, 40, 80]},
-                'class_2': {'x_values': ['Uni DCN', 'Private DCN', 'Cloud DCN'], 'y_values': [80, 60, 20]}}
+    'class_2': {'x_values': ['Uni DCN', 'Private DCN', 'Cloud DCN'], 'y_values': [80, 60, 20]}}
+
     ylim=[0,100]
 
     '''

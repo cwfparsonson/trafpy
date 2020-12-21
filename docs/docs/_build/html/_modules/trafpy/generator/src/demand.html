@@ -1,0 +1,625 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trafpy.generator.src.demand &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Contribute.html">Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../setup.html">setup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../trafpy.html">trafpy package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trafpy.generator.src.demand</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trafpy.generator.src.demand</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">trafpy.generator.src</span> <span class="kn">import</span> <span class="n">builder</span> 
+<span class="kn">from</span> <span class="nn">trafpy.generator.src.dists</span> <span class="kn">import</span> <span class="n">node_dists</span>
+<span class="kn">from</span> <span class="nn">trafpy.generator.src.dists</span> <span class="kn">import</span> <span class="n">val_dists</span>
+<span class="kn">from</span> <span class="nn">trafpy.generator.src.dists</span> <span class="kn">import</span> <span class="n">plot_dists</span>
+<span class="kn">from</span> <span class="nn">trafpy.generator.src</span> <span class="kn">import</span> <span class="n">flowcentric</span>
+
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">tabulate</span> <span class="kn">import</span> <span class="n">tabulate</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">statistics</span> <span class="kn">import</span> <span class="n">mean</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span> <span class="c1"># use for initialising arbitrary length nested dict</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<div class="viewcode-block" id="Demand"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.Demand">[docs]</a><span class="k">class</span> <span class="nc">Demand</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">demand_data</span><span class="p">,</span>
+                 <span class="n">eps</span><span class="p">,</span>
+                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;demand&#39;</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">demand_data</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Demand.reset"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.Demand.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">demand_data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demand_data</span> <span class="o">=</span> <span class="n">demand_data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_demands</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_num_demands</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand_data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;job_id&#39;</span> <span class="ow">in</span> <span class="n">demand_data</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">job_centric</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">job_centric</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_control_deps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_data_deps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_num_deps</span><span class="p">(</span><span class="n">demand_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analyser</span> <span class="o">=</span> <span class="n">DemandAnalyser</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Demand.get_slots_dict"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.Demand.get_slots_dict">[docs]</a>    <span class="k">def</span> <span class="nf">get_slots_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">construct_demand_slots_dict</span><span class="p">(</span><span class="n">demand_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">demand_data</span><span class="p">,</span>
+                                                   <span class="n">slot_size</span><span class="o">=</span><span class="n">slot_size</span><span class="p">,</span>
+                                                   <span class="n">print_info</span><span class="o">=</span><span class="n">print_info</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Demand.get_num_demands"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.Demand.get_num_demands">[docs]</a>    <span class="k">def</span> <span class="nf">get_num_demands</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">demand_data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="ow">in</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">]:</span>
+            <span class="n">takedowns_present</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">takedowns_present</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">takedowns_present</span><span class="p">:</span>
+            <span class="c1"># half events are takedowns for demand establishments</span>
+            <span class="n">num_demands</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># all events are new demands</span>
+            <span class="n">num_demands</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">]))</span>
+
+        <span class="k">return</span> <span class="n">num_demands</span></div>
+
+<div class="viewcode-block" id="Demand.get_num_deps"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.Demand.get_num_deps">[docs]</a>    <span class="k">def</span> <span class="nf">get_num_deps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">demand_data</span><span class="p">):</span>
+        <span class="n">num_control_deps</span><span class="p">,</span><span class="n">num_data_deps</span><span class="p">,</span><span class="n">num_flows</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+            <span class="c1"># calc deps</span>
+            <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;job&#39;</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">job</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                    <span class="n">flows</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">out_edges</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">flows</span><span class="p">:</span>
+                        <span class="n">flow_stats</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">get_edge_data</span><span class="p">(</span><span class="n">flow</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">flow</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="n">src</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">flow</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;attr_dict&#39;</span><span class="p">][</span><span class="s1">&#39;machine&#39;</span><span class="p">]</span>
+                        <span class="n">dst</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">flow</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s1">&#39;attr_dict&#39;</span><span class="p">][</span><span class="s1">&#39;machine&#39;</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">flow_stats</span><span class="p">[</span><span class="s1">&#39;attr_dict&#39;</span><span class="p">][</span><span class="s1">&#39;dependency_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;data_dep&#39;</span><span class="p">:</span>
+                            <span class="n">num_data_deps</span><span class="o">+=</span><span class="mi">1</span>
+                            <span class="k">if</span> <span class="n">src</span> <span class="o">!=</span> <span class="n">dst</span><span class="p">:</span>
+                                <span class="n">num_flows</span><span class="o">+=</span><span class="mi">1</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">num_control_deps</span><span class="o">+=</span><span class="mi">1</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># 1 demand == 1 flow, therefore no dependencies &amp; each demand == flow</span>
+            <span class="n">num_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_demands</span>
+        
+        <span class="k">return</span> <span class="n">num_control_deps</span><span class="p">,</span> <span class="n">num_data_deps</span><span class="p">,</span> <span class="n">num_flows</span></div></div>
+
+
+
+
+
+<div class="viewcode-block" id="DemandAnalyser"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandAnalyser">[docs]</a><span class="k">class</span> <span class="nc">DemandAnalyser</span><span class="p">:</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">demand</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">subject_class_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demand</span> <span class="o">=</span> <span class="n">demand</span>
+        <span class="k">if</span> <span class="n">subject_class_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subject_class_name</span> <span class="o">=</span> <span class="n">demand</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subject_class_name</span> <span class="o">=</span> <span class="n">subject_class_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">computed_metrics</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="DemandAnalyser.compute_metrics"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandAnalyser.compute_metrics">[docs]</a>    <span class="k">def</span> <span class="nf">compute_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_summary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">computed_metrics</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional_links</span> <span class="o">=</span> <span class="n">bidirectional_links</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_general_summary</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_job_summary</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_flow_summary</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">print_summary</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">-=-=-=-=-=-= Summary =-=-=-=-=-=-=-&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_print_general_summary</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_print_job_summary</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_print_flow_summary</span><span class="p">()</span></div>
+
+
+
+    <span class="c1">################################## GENERAL ################################################</span>
+    <span class="k">def</span> <span class="nf">_print_general_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">~* General Information *~&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Demand name: </span><span class="se">\&#39;</span><span class="si">{}</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Traffic type: Job-centric&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Traffic type: Flow-centric&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of demands: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_demands</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time first demand arrived: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_first_demand_arrived</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time last demand arrived: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_last_demand_arrived</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total demand session duration: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_demand_session_duration</span><span class="p">))</span>
+        
+
+
+    <span class="k">def</span> <span class="nf">_compute_general_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_demands</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">num_demands</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_first_demand_arrived</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_last_demand_arrived</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_demand_session_duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_last_demand_arrived</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_first_demand_arrived</span>
+
+
+    <span class="c1">################################## FLOW ################################################</span>
+    <span class="k">def</span> <span class="nf">_print_flow_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">~* Flow Information *~&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of flows: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_flows</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total flow info arrived: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_flow_info_arrived</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Load rate (info units arrived per unit time): </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">load_rate</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Smallest flow size: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smallest_flow_size</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Largest flow size: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">largest_flow_size</span><span class="p">))</span>
+
+
+
+    <span class="k">def</span> <span class="nf">_compute_flow_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">num_flows</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_flow_info_arrived</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_rate</span> <span class="o">=</span> <span class="n">flowcentric</span><span class="o">.</span><span class="n">get_flow_centric_demand_data_overall_load_rate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bidirectional_links</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smallest_flow_size</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">largest_flow_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">])</span>
+
+
+
+    <span class="c1">################################## JOB ################################################</span>
+    <span class="k">def</span> <span class="nf">_print_job_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">~* Job Information *~&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of control dependencies: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_control_deps</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of data dependencies: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_data_deps</span><span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="nf">_compute_job_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_control_deps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">num_control_deps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_data_deps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">num_data_deps</span></div>
+
+
+
+<div class="viewcode-block" id="DemandsAnalyser"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandsAnalyser">[docs]</a><span class="k">class</span> <span class="nc">DemandsAnalyser</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">demands</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demands</span> <span class="o">=</span> <span class="n">demands</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">computed_metrics</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_check_analyser_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analyser</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">analyser</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Must instantiate DemandAnalyser class before passing to DemandPlotter.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">analyser</span><span class="o">.</span><span class="n">computed_metrics</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Must compute metrics with DemandAnalyser.compute_metrics() before passing to DemandPlotter.&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DemandsAnalyser.compute_metrics"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandsAnalyser.compute_metrics">[docs]</a>    <span class="k">def</span> <span class="nf">compute_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">print_summary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">computed_metrics</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">demands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_job_summary</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_flow_summary</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">print_summary</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">summary_dict</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="s1">&#39;keys&#39;</span><span class="p">,</span> <span class="n">tablefmt</span><span class="o">=</span><span class="s1">&#39;psql&#39;</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_compute_flow_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">summary_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Name&#39;</span><span class="p">:</span> <span class="p">[],</span> 
+                             <span class="s1">&#39;Flows&#39;</span><span class="p">:</span> <span class="p">[],</span> 
+                             <span class="s1">&#39;1st&#39;</span><span class="p">:</span> <span class="p">[],</span> 
+                             <span class="s1">&#39;Last&#39;</span><span class="p">:</span> <span class="p">[],</span>
+                             <span class="s1">&#39;Duration&#39;</span><span class="p">:</span> <span class="p">[],</span>
+                             <span class="s1">&#39;Info&#39;</span><span class="p">:</span> <span class="p">[],</span>
+                             <span class="s1">&#39;Load&#39;</span><span class="p">:</span> <span class="p">[],</span>
+                             <span class="s1">&#39;Smallest&#39;</span><span class="p">:</span> <span class="p">[],</span>
+                             <span class="s1">&#39;Largest&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+        <span class="k">for</span> <span class="n">demand</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">demands</span><span class="p">:</span>
+            <span class="n">demand</span><span class="o">.</span><span class="n">analyser</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">print_summary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">summary_dict</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="o">.</span><span class="n">analyser</span><span class="o">.</span><span class="n">subject_class_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">summary_dict</span><span class="p">[</span><span class="s1">&#39;Flows&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="o">.</span><span class="n">analyser</span><span class="o">.</span><span class="n">num_flows</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">summary_dict</span><span class="p">[</span><span class="s1">&#39;1st&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="o">.</span><span class="n">analyser</span><span class="o">.</span><span class="n">time_first_demand_arrived</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">summary_dict</span><span class="p">[</span><span class="s1">&#39;Last&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="o">.</span><span class="n">analyser</span><span class="o">.</span><span class="n">time_last_demand_arrived</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">summary_dict</span><span class="p">[</span><span class="s1">&#39;Duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="o">.</span><span class="n">analyser</span><span class="o">.</span><span class="n">total_demand_session_duration</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">summary_dict</span><span class="p">[</span><span class="s1">&#39;Info&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="o">.</span><span class="n">analyser</span><span class="o">.</span><span class="n">total_flow_info_arrived</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">summary_dict</span><span class="p">[</span><span class="s1">&#39;Load&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="o">.</span><span class="n">analyser</span><span class="o">.</span><span class="n">load_rate</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">summary_dict</span><span class="p">[</span><span class="s1">&#39;Smallest&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="o">.</span><span class="n">analyser</span><span class="o">.</span><span class="n">smallest_flow_size</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">summary_dict</span><span class="p">[</span><span class="s1">&#39;Largest&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="o">.</span><span class="n">analyser</span><span class="o">.</span><span class="n">largest_flow_size</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_job_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="DemandPlotter"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandPlotter">[docs]</a><span class="k">class</span> <span class="nc">DemandPlotter</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">demand</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demand</span> <span class="o">=</span> <span class="n">demand</span>
+
+    <span class="k">def</span> <span class="nf">_check_analyser_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analyser</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">analyser</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Must instantiate DemandAnalyser class before passing to DemandPlotter.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">analyser</span><span class="o">.</span><span class="n">computed_metrics</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Must compute metrics with DemandAnalyser.compute_metrics() before passing to DemandPlotter.&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DemandPlotter.plot_flow_size_dist"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandPlotter.plot_flow_size_dist">[docs]</a>    <span class="k">def</span> <span class="nf">plot_flow_size_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_val_dist</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">],</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="n">logscale</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="n">num_bins</span><span class="p">,</span> <span class="n">rand_var_name</span><span class="o">=</span><span class="s1">&#39;Flow Size&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DemandPlotter.plot_interarrival_time_dist"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandPlotter.plot_interarrival_time_dist">[docs]</a>    <span class="k">def</span> <span class="nf">plot_interarrival_time_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+        <span class="n">interarrival_times</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">num_demands</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_val_dist</span><span class="p">(</span><span class="n">interarrival_times</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="n">logscale</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="n">num_bins</span><span class="p">,</span> <span class="n">rand_var_name</span><span class="o">=</span><span class="s1">&#39;Interarrival Time&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DemandPlotter.plot_node_dist"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandPlotter.plot_node_dist">[docs]</a>    <span class="k">def</span> <span class="nf">plot_node_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+        <span class="n">sampled_pairs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">sources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">]</span>
+        <span class="n">destinations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">num_demands</span><span class="p">):</span>
+            <span class="n">sn</span> <span class="o">=</span> <span class="n">sources</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">dn</span> <span class="o">=</span> <span class="n">destinations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">sn</span><span class="p">,</span> <span class="n">dn</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">pair</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sampled_pairs</span><span class="p">:</span>
+                <span class="c1"># check if switched src-dst pair that already occurred</span>
+                <span class="n">pair_switched</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">dn</span><span class="p">,</span> <span class="n">sn</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">pair_switched</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sampled_pairs</span><span class="p">:</span>
+                    <span class="n">sampled_pairs</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># init first occurrence of pair</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># pair already seen before</span>
+                    <span class="n">sampled_pairs</span><span class="p">[</span><span class="n">pair_switched</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># pair already seen before</span>
+                <span class="n">sampled_pairs</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">node_dist</span> <span class="o">=</span> <span class="n">node_dists</span><span class="o">.</span><span class="n">convert_sampled_pairs_into_node_dist</span><span class="p">(</span><span class="n">sampled_pairs</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_node_dist</span><span class="p">(</span><span class="n">node_dist</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DemandPlotter.find_index_of_int_in_str"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandPlotter.find_index_of_int_in_str">[docs]</a>    <span class="k">def</span> <span class="nf">find_index_of_int_in_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">string</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">int</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">idx</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="c1"># char is not an int</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Could not find an integer in the string </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DemandPlotter.plot_link_loads_vs_time"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandPlotter.plot_link_loads_vs_time">[docs]</a>    <span class="k">def</span> <span class="nf">plot_link_loads_vs_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">,</span> <span class="n">demand</span><span class="p">,</span> <span class="n">mean_period</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># slot_size == time period over which to consider a flow as requesting resources</span>
+        <span class="n">slots_dict</span> <span class="o">=</span> <span class="n">demand</span><span class="o">.</span><span class="n">get_slots_dict</span><span class="p">(</span><span class="n">slot_size</span><span class="p">)</span>
+        
+        <span class="n">ep_links</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">net</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoint_label&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">link</span><span class="p">):</span>
+                <span class="c1"># not an endpoint link</span>
+                <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ep_links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+        <span class="n">ep_to_link</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">ep_link</span> <span class="ow">in</span> <span class="n">ep_links</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">ep_link</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoint_label&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ep</span><span class="p">:</span>
+                    <span class="n">ep_to_link</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ep_link</span><span class="p">)</span>
+
+        <span class="n">link_load_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">link</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">link</span><span class="p">[</span><span class="mi">1</span><span class="p">]]):</span>
+                                    <span class="p">{</span><span class="s1">&#39;time_slots&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">slots_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()],</span>
+                                     <span class="s1">&#39;loads_abs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">slots_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()))]}</span>
+                                    <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">ep_links</span><span class="p">}</span>
+
+        <span class="n">time_slots</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">slots_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">slots_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())):</span>
+            <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">slots_dict</span><span class="p">[</span><span class="nb">next</span><span class="p">(</span><span class="n">time_slots</span><span class="p">)][</span><span class="s1">&#39;new_event_dicts&#39;</span><span class="p">]:</span>
+                <span class="n">bw_requested_this_slot</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">slot_size</span>
+                <span class="n">sn</span><span class="p">,</span> <span class="n">dn</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">],</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;dst&#39;</span><span class="p">]</span>
+                <span class="c1"># update load for src and dst ep links</span>
+                <span class="n">link_load_dict</span><span class="p">[</span><span class="n">ep_to_link</span><span class="p">[</span><span class="n">sn</span><span class="p">]][</span><span class="s1">&#39;loads_abs&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">+=</span> <span class="n">bw_requested_this_slot</span>
+                <span class="n">link_load_dict</span><span class="p">[</span><span class="n">ep_to_link</span><span class="p">[</span><span class="n">dn</span><span class="p">]][</span><span class="s1">&#39;loads_abs&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">+=</span> <span class="n">bw_requested_this_slot</span>
+
+        <span class="n">nested_dict</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">nested_dict</span><span class="p">)</span>
+        <span class="n">plot_dict1</span> <span class="o">=</span> <span class="n">nested_dict</span><span class="p">()</span>
+        <span class="n">plot_dict2</span> <span class="o">=</span> <span class="n">nested_dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">link_load_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">time_slots</span> <span class="o">=</span> <span class="n">link_load_dict</span><span class="p">[</span><span class="n">link</span><span class="p">][</span><span class="s1">&#39;time_slots&#39;</span><span class="p">]</span>
+            <span class="n">loads_abs</span> <span class="o">=</span> <span class="n">link_load_dict</span><span class="p">[</span><span class="n">link</span><span class="p">][</span><span class="s1">&#39;loads_abs&#39;</span><span class="p">]</span>
+
+            <span class="c1"># average every n elements (time slots) in lists to smooth line plot</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">mean_period</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+                <span class="c1"># avrg over all time slots</span>
+                <span class="n">n</span> <span class="o">=</span> <span class="n">time_slots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">avrg_load</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">loads_abs</span><span class="p">))</span>
+                <span class="n">loads_abs</span> <span class="o">=</span> <span class="p">[</span><span class="n">avrg_load</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_slots</span><span class="p">))]</span>
+            <span class="k">elif</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">time_slots</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">([</span><span class="n">mean</span><span class="p">(</span><span class="n">time_slots</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">n</span><span class="p">])]</span><span class="o">*</span><span class="n">n</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">time_slots</span><span class="p">),</span><span class="n">n</span><span class="p">)))</span>
+                <span class="n">loads_abs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">([</span><span class="n">mean</span><span class="p">(</span><span class="n">loads_abs</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">n</span><span class="p">])]</span><span class="o">*</span><span class="n">n</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">loads_abs</span><span class="p">),</span><span class="n">n</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># not smoothing results by taking mean</span>
+                <span class="k">pass</span>
+            <span class="n">plot_dict1</span><span class="p">[</span><span class="n">link</span><span class="p">][</span><span class="s1">&#39;x_values&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_slots</span>
+            <span class="n">plot_dict1</span><span class="p">[</span><span class="n">link</span><span class="p">][</span><span class="s1">&#39;y_values&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loads_abs</span> 
+
+            <span class="n">link_bw_capacity</span> <span class="o">=</span> <span class="n">net</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">link</span><span class="p">)[</span><span class="mi">0</span><span class="p">]][</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">link</span><span class="p">)[</span><span class="mi">1</span><span class="p">]][</span><span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;num_channels_per_link&#39;</span><span class="p">]</span>
+            <span class="n">loads_frac</span> <span class="o">=</span> <span class="p">[</span><span class="n">load_abs</span> <span class="o">/</span> <span class="n">link_bw_capacity</span> <span class="k">for</span> <span class="n">load_abs</span> <span class="ow">in</span> <span class="n">loads_abs</span><span class="p">]</span>
+            <span class="n">plot_dict2</span><span class="p">[</span><span class="n">link</span><span class="p">][</span><span class="s1">&#39;x_values&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_slots</span>
+            <span class="n">plot_dict2</span><span class="p">[</span><span class="n">link</span><span class="p">][</span><span class="s1">&#39;y_values&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loads_frac</span>
+
+
+        <span class="c1"># load absolute</span>
+        <span class="n">fig1</span> <span class="o">=</span> <span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_val_line</span><span class="p">(</span><span class="n">plot_dict</span><span class="o">=</span><span class="n">plot_dict1</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Time Slot&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Link Load (Abs)&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># load fraction</span>
+        <span class="n">fig2</span> <span class="o">=</span> <span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_val_line</span><span class="p">(</span><span class="n">plot_dict</span><span class="o">=</span><span class="n">plot_dict2</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Time Slot&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Link Load (Frac)&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">fig1</span><span class="p">,</span> <span class="n">fig2</span><span class="p">]</span></div></div>
+
+
+
+
+
+
+
+
+
+<span class="c1"># TODO</span>
+<span class="c1"># flow_size_dist</span>
+<span class="c1"># interarrival_time_dist</span>
+<span class="c1"># node_dist</span>
+
+
+<div class="viewcode-block" id="DemandsPlotter"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandsPlotter">[docs]</a><span class="k">class</span> <span class="nc">DemandsPlotter</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">demands</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demands</span> <span class="o">=</span> <span class="n">demands</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">classes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group_analyser_classes</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">demands</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_group_analyser_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">demands</span><span class="p">):</span>
+        <span class="n">classes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">demand</span> <span class="ow">in</span> <span class="n">demands</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">demand</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
+                <span class="n">classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">classes</span>
+
+    <span class="k">def</span> <span class="nf">_check_analyser_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analyser</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">analyser</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Must instantiate DemandAnalyser class before passing to DemandPlotter.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">analyser</span><span class="o">.</span><span class="n">computed_metrics</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Must compute metrics with DemandAnalyser.compute_metrics() before passing to DemandPlotter.&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DemandsPlotter.plot_flow_size_dists"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandsPlotter.plot_flow_size_dists">[docs]</a>    <span class="k">def</span> <span class="nf">plot_flow_size_dists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">plot_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">_class</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;rand_vars&#39;</span><span class="p">:</span> <span class="p">[]}</span> <span class="k">for</span> <span class="n">_class</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">classes</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">demand</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">demands</span><span class="p">:</span>
+            <span class="n">plot_dict</span><span class="p">[</span><span class="n">demand</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;rand_vars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">]</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_multiple_kdes</span><span class="p">(</span><span class="n">plot_dict</span><span class="p">,</span> <span class="n">plot_hist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Flow Size&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Density&#39;</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="n">logscale</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_demand_interarrival_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">demand</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">demand</span><span class="o">.</span><span class="n">num_demands</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+
+<div class="viewcode-block" id="DemandsPlotter.plot_interarrival_time_dists"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandsPlotter.plot_interarrival_time_dists">[docs]</a>    <span class="k">def</span> <span class="nf">plot_interarrival_time_dists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">plot_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">_class</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;rand_vars&#39;</span><span class="p">:</span> <span class="p">[]}</span> <span class="k">for</span> <span class="n">_class</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">classes</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">demand</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">demands</span><span class="p">:</span>
+            <span class="n">plot_dict</span><span class="p">[</span><span class="n">demand</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;rand_vars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_demand_interarrival_times</span><span class="p">(</span><span class="n">demand</span><span class="p">)</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_multiple_kdes</span><span class="p">(</span><span class="n">plot_dict</span><span class="p">,</span> <span class="n">plot_hist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Interarrival Time&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Density&#39;</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="n">logscale</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span></div></div>
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
