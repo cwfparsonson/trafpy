@@ -204,8 +204,14 @@ def create_demand_data(eps,
         if min_last_demand_arrival_time is not None:
             print('Ensuring last event arrives at time >= min_last_demand_arrival_time...')
             while max(demand_data['event_time']) < min_last_demand_arrival_time:
-                print('Final event time: {} | Target final event time: {}'.format(max(demand_data['event_time']), min_last_demand_arrival_time))
-                demand_data = flowcentric.duplicate_demands_in_demand_data_dict(demand_data)
+                # load_rate = flowcentric.get_flow_centric_demand_data_load_rate(demand_data, method='mean_per_ep', eps=eps)
+                load_rate = flowcentric.get_flow_centric_demand_data_overall_load_rate(demand_data, bidirectional_links=True)
+                print('\nFinal event time: {} | Target final event time: {} | load rate: {}'.format(max(demand_data['event_time']), min_last_demand_arrival_time, load_rate))
+                total_info = sum(demand_data['flow_size'])
+                time_last_flow_arrived = max(demand_data['event_time'])
+                rate = total_info / time_last_flow_arrived
+                print('total info: {} | last flow: {} | rate: {}'.format(total_info, time_last_flow_arrived, rate))
+                demand_data = flowcentric.duplicate_demands_in_demand_data_dict(demand_data, method='all_eps', eps=eps)
 
             
 

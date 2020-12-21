@@ -101,6 +101,30 @@ class EnvsPlotter:
 
         return [fig1, fig2]
 
+    def plot_fcts_cdf_for_different_loads(self, *analysers):
+        # plot cdf of all fcts for each test subject for different loads
+        classes = self._group_analyser_classes(*analysers)
+        # plot_dict = {_class: {'x_values': [], 'rand_vars': []} for _class in classes}
+
+        nested_dict = lambda: defaultdict(nested_dict)
+        plot_dict = nested_dict()
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            plot_dict[analyser.load_frac][analyser.subject_class_name]['rand_vars'] = analyser.fcts
+
+        # complementary cdf
+        figs = []
+        for load in plot_dict.keys():
+            fig = plot_dists.plot_val_cdf(plot_dict=plot_dict[load], xlabel='Load {} FCTs'.format(round(load,2)), ylabel='Complementary CDF', logscale=True, plot_points=False, complementary_cdf=True, show_fig=False)
+            figs.append(fig)
+
+        return figs
+
+    def plot_link_fcts_cdf_for_different_loads(self, *analysers):
+        pass
+
+
+
     def plot_fraction_of_arrived_flows_dropped_vs_load(self, *analysers):
         classes = self._group_analyser_classes(*analysers)
         plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
@@ -138,30 +162,6 @@ class EnvsPlotter:
             plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = analyser.env.queue_evolution_dict[src][dst][length_type]
             load_to_meas_time[analyser.load_frac] = [analyser.measurement_start_time, analyser.measurement_end_time]
 
-            # try:
-                # plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None
-                # plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = None
-            # except KeyError:
-                # # not yet added this load
-                # try:
-                    # plot_dict[analyser.load_frac][analyser.subject_class_name] = {}
-                    # plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None
-                    # plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = None
-                # except KeyError:
-                    # # not yet added this class
-                    # plot_dict[analyser.load_frac] = {}
-                    # plot_dict[analyser.load_frac][analyser.subject_class_name] = {}
-                    # plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = None
-                    # plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = None
-
-
-        # load_to_meas_time = {} # collect measurement times for verical line plotting
-        # plot src-dst queue evolution for each load
-        # for analyser in analysers:
-            # plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = analyser.env.queue_evolution_dict[src][dst]['times']
-            # plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = analyser.env.queue_evolution_dict[src][dst][length_type]
-            # load_to_meas_time[analyser.load_frac] = [analyser.measurement_start_time, analyser.measurement_end_time]
-
         # set y-axis limits
         if length_type == 'queue_lengths_num_flows':
             load_to_ylim = {}
@@ -177,7 +177,6 @@ class EnvsPlotter:
         figs = []
         for load in plot_dict.keys():
             figs.append(plot_dists.plot_val_line(plot_dict=plot_dict[load], xlabel='Time', ylabel='Load {} {}-{} Queue Length'.format(str(round(load,2)), src, dst), ylim=load_to_ylim[load], vertical_lines=[load_to_meas_time[load][0], load_to_meas_time[load][1]], show_fig=False))
-
         
         return figs
 
@@ -202,23 +201,6 @@ class EnvsPlotter:
             plot_dict2[analyser.subject_class_name]['x_values'].append(analyser.load_frac)
             plot_dict2[analyser.subject_class_name]['y_values'].append(analyser.throughput_abs)
             plot_dict2[analyser.subject_class_name]['rand_vars'].append(analyser.throughput_abs)
-
-            # try:
-                # plot_dict[analyser.load_frac]['x_values'].append(analyser.subject_class_name)
-                # plot_dict[analyser.load_frac]['y_values'].append(analyser.throughput_abs)
-            # except KeyError:
-                # # not yet added this load
-                # try:
-                    # plot_dict[analyser.load_frac] = {}
-                    # plot_dict[analyser.load_frac]['x_values'].append(analyser.subject_class_name)
-                    # plot_dict[analyser.load_frac]['y_values'].append(analyser.throughput_abs)
-                # except KeyError:
-                    # # not yet added x and y values
-                    # plot_dict[analyser.load_frac] = {}
-                    # plot_dict[analyser.load_frac]['x_values'] = []
-                    # plot_dict[analyser.load_frac]['y_values'] = []
-                    # plot_dict[analyser.load_frac]['x_values'].append(analyser.subject_class_name)
-                    # plot_dict[analyser.load_frac]['y_values'].append(analyser.throughput_abs)
 
         # individual bar chars
         figs = []

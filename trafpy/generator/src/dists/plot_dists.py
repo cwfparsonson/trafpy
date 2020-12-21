@@ -359,6 +359,8 @@ def plot_multiple_kdes(plot_dict={},
 def plot_val_cdf(plot_dict={},
                  xlabel='Random Variable',
                  ylabel='CDF',
+                 logscale=False,
+                 plot_points=True,
                  complementary_cdf=False,
                  show_fig=False):
     '''Plots CDF plot.
@@ -370,6 +372,10 @@ def plot_val_cdf(plot_dict={},
     fig = plt.figure()
     plt.style.use('ggplot')
 
+    if logscale:
+        ax = plt.gca()
+        ax.set_xscale('log')
+
     keys = list(plot_dict.keys())
     class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
     for _class in sorted(plot_dict.keys()):
@@ -378,10 +384,12 @@ def plot_val_cdf(plot_dict={},
         if complementary_cdf:
             ylabel = 'Complementary CDF'
             plt.plot(ecdf.x, 1-ecdf.y, c=colour, label=str(_class))
-            plt.scatter(ecdf.x, 1-ecdf.y, c=colour)
+            if plot_points: 
+                plt.scatter(ecdf.x, 1-ecdf.y, c=colour)
         else:
             plt.plot(ecdf.x, ecdf.y, c=colour, label=str(_class))
-            plt.scatter(ecdf.x, ecdf.y, c=colour)
+            if plot_points:
+                plt.scatter(ecdf.x, ecdf.y, c=colour)
     plt.ylim(top=1, bottom=0)
 
     plt.xlabel(xlabel)

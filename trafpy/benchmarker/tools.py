@@ -46,6 +46,7 @@ def gen_benchmark_demands(path_to_save=None, save_format='json', load_prev_dists
         for load in config.LOADS:
             start_load = time.time()
             network_load_config = {'network_rate_capacity': config.NETWORK_CAPACITIES[benchmark], 
+                                   'ep_link_capacity': config.NETWORK_EP_LINK_CAPACITIES[benchmark],
                                    'target_load_fraction': load,
                                    'disable_timeouts': True}
             # print('\n~~~~~~ network load config ~~~~~~~\n{}'.format(network_load_config))

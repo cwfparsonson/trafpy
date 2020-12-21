@@ -43,11 +43,12 @@ def gen_arbitrary_network(ep_label=None, server_to_rack_channel_capacity=12500, 
             eps.append(node)
     network.graph['endpoints'] = eps
 
-    max_nw_capacity = num_eps * server_to_rack_channel_capacity * num_channels
+    max_nw_capacity = (num_eps * server_to_rack_channel_capacity * num_channels) / 2
 
     init_global_network_attrs(network,
                               max_nw_capacity,
                               num_channels,
+                              ep_link_capacity=server_to_rack_channel_capacity*num_channels,
                               endpoint_label=ep_label,
                               node_labels=[ep_label],
                               topology_type='arbitrary')
@@ -144,6 +145,7 @@ def gen_nsfnet_network(ep_label='server',
     init_global_network_attrs(network, 
                             max_nw_capacity, 
                             num_channels, 
+                            ep_link_capacity=server_to_rack_channel_capacity*num_channels,
                             endpoint_label=ep_label,
                             node_labels=[ep_label, rack_label],
                             topology_type='14_node_nsfnet',
@@ -193,6 +195,7 @@ def gen_simple_network(ep_label='server',
     init_global_network_attrs(network, 
                             max_nw_capacity, 
                             num_channels, 
+                            ep_link_capacity=server_to_rack_channel_capacity*num_channels,
                             endpoint_label=ep_label,
                             node_labels=[ep_label],
                             topology_type='5_node_simple_network')
@@ -386,6 +389,7 @@ def gen_fat_tree(k=4,
     init_global_network_attrs(fat_tree_network, 
                               max_nw_capacity, 
                               num_channels, 
+                              ep_link_capacity=server_to_rack_channel_capacity*num_channels,
                               endpoint_label=ep_label,
                               node_labels=[ep_label,
                                            rack_label,
@@ -404,6 +408,7 @@ def gen_fat_tree(k=4,
 def init_global_network_attrs(network, 
                               max_nw_capacity, 
                               num_channels, 
+                              ep_link_capacity,
                               endpoint_label = 'server',
                               topology_type='unknown', 
                               node_labels=['server'],
@@ -425,6 +430,7 @@ def init_global_network_attrs(network,
     '''
     network.graph['endpoint_label'] = endpoint_label
     network.graph['num_channels_per_link'] = num_channels
+    network.graph['ep_link_capacity'] = ep_link_capacity
     network.graph['max_nw_capacity'] = max_nw_capacity
     network.graph['curr_nw_capacity_used'] = 0
     network.graph['num_active_connections'] = 0

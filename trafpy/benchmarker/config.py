@@ -19,7 +19,7 @@ NUM_DEMANDS_FACTOR = 50
 MIN_LAST_DEMAND_ARRIVAL_TIME = 2e6 # units of us 3e6 6e7 6e8 None 3000.0 2e6 2.4e5pulse
 
 # define network load fractions
-LOADS = np.arange(0.1, 1.1, 0.1).tolist()
+LOADS = np.arange(0.1, 0.9, 0.1).tolist()
 # LOADS = np.array([0.4])
 LOADS = [round(load, 3) for load in LOADS] # ensure no python floating point arithmetic errors
 
@@ -83,6 +83,7 @@ NETS = {'university': gen_fat_tree(k=3, N=2, num_channels=1, server_to_rack_chan
 
 # define network capacity for each benchmark
 NETWORK_CAPACITIES = {'university': NETS['university'].graph['max_nw_capacity']}
+NETWORK_EP_LINK_CAPACITIES = {'university': NETS['university'].graph['ep_link_capacity']}
 
 # define network racks for each benchmark
 RACKS_DICTS = {'university': NETS['university'].graph['rack_to_ep_dict']}

@@ -2,18 +2,25 @@ from trafpy.generator.src import builder
 from trafpy.generator.src.dists import node_dists
 from trafpy.generator.src.dists import val_dists
 from trafpy.generator.src.dists import plot_dists
+from trafpy.generator.src import flowcentric
 
 import inspect
 import sys
 from tabulate import tabulate
 import pandas as pd
 import json
+from statistics import mean
+from itertools import chain
+from collections import defaultdict # use for initialising arbitrary length nested dict
+import numpy as np
 
 class Demand:
     def __init__(self,
                  demand_data,
+                 eps,
                  name='demand'):
 
+        self.eps = eps
         self.name = name
         self.reset(demand_data)
 
@@ -143,11 +150,7 @@ class DemandAnalyser:
     def _compute_flow_summary(self):
         self.num_flows = self.demand.num_flows
         self.total_flow_info_arrived = sum(self.demand.demand_data['flow_size'])
-        if self.bidirectional_links:
-            # 1 flow occupies 2 endpoint links therefore has 2*flow_size load
-            self.load_rate = sum(2*self.demand.demand_data['flow_size'])/(max(self.demand.demand_data['event_time'])-min(self.demand.demand_data['event_time']))
-        else:
-            self.load_rate = sum(self.demand.demand_data['flow_size'])/(max(self.demand.demand_data['event_time'])-min(self.demand.demand_data['event_time']))
+        self.load_rate = flowcentric.get_flow_centric_demand_data_overall_load_rate(self.demand.demand_data, bidirectional_links=self.bidirectional_links)
         self.smallest_flow_size = min(self.demand.demand_data['flow_size'])
         self.largest_flow_size = max(self.demand.demand_data['flow_size'])
 
@@ -260,6 +263,88 @@ class DemandPlotter:
         node_dist = node_dists.convert_sampled_pairs_into_node_dist(sampled_pairs, eps)
 
         return plot_dists.plot_node_dist(node_dist)
+
+    def find_index_of_int_in_str(self, string):
+        idx = 0
+        for char in string:
+            try:
+                int(char)
+                return idx
+            except ValueError:
+                # char is not an int
+                idx += 1
+        raise Exception('Could not find an integer in the string {}'.format(string))
+
+    def plot_link_loads_vs_time(self, net, slot_size, demand, mean_period=None, logscale=False):
+        # slot_size == time period over which to consider a flow as requesting resources
+        slots_dict = demand.get_slots_dict(slot_size)
+        
+        ep_links = []
+        for link in net.edges:
+            if net.graph['endpoint_label'] not in json.dumps(link):
+                # not an endpoint link
+                pass
+            else:
+                ep_links.append(link)
+        ep_to_link = {}
+        for ep_link in ep_links:
+            for ep in ep_link:
+                if net.graph['endpoint_label'] in ep:
+                    ep_to_link[ep] = json.dumps(ep_link)
+
+        link_load_dict = {json.dumps([link[0],link[1]]):
+                                    {'time_slots': [t for t in slots_dict.keys()],
+                                     'loads_abs': [0 for _ in range(len(slots_dict.keys()))]}
+                                    for link in ep_links}
+
+        time_slots = iter(list(slots_dict.keys()))
+        for idx in range(len(slots_dict.keys())):
+            for flow in slots_dict[next(time_slots)]['new_event_dicts']:
+                bw_requested_this_slot = flow['size'] / slot_size
+                sn, dn = flow['src'], flow['dst']
+                # update load for src and dst ep links
+                link_load_dict[ep_to_link[sn]]['loads_abs'][idx] += bw_requested_this_slot
+                link_load_dict[ep_to_link[dn]]['loads_abs'][idx] += bw_requested_this_slot
+
+        nested_dict = lambda: defaultdict(nested_dict)
+        plot_dict1 = nested_dict()
+        plot_dict2 = nested_dict()
+        for link in link_load_dict.keys():
+            time_slots = link_load_dict[link]['time_slots']
+            loads_abs = link_load_dict[link]['loads_abs']
+
+            # average every n elements (time slots) in lists to smooth line plot
+            n = mean_period
+            if n == 'all':
+                # avrg over all time slots
+                n = time_slots[-1]
+                avrg_load = np.mean(np.array(loads_abs))
+                loads_abs = [avrg_load for _ in range(len(time_slots))]
+            elif n is not None:
+                time_slots = list(chain.from_iterable([mean(time_slots[i:i+n])]*n for i in range(0,len(time_slots),n)))
+                loads_abs = list(chain.from_iterable([mean(loads_abs[i:i+n])]*n for i in range(0,len(loads_abs),n)))
+            else:
+                # not smoothing results by taking mean
+                pass
+            plot_dict1[link]['x_values'] = time_slots
+            plot_dict1[link]['y_values'] = loads_abs 
+
+            link_bw_capacity = net[json.loads(link)[0]][json.loads(link)[1]]['max_channel_capacity'] * net.graph['num_channels_per_link']
+            loads_frac = [load_abs / link_bw_capacity for load_abs in loads_abs]
+            plot_dict2[link]['x_values'] = time_slots
+            plot_dict2[link]['y_values'] = loads_frac
+
+
+        # load absolute
+        fig1 = plot_dists.plot_val_line(plot_dict=plot_dict1, xlabel='Time Slot', ylabel='Link Load (Abs)', linewidth=0.4, alpha=1, show_fig=False)
+
+        # load fraction
+        fig2 = plot_dists.plot_val_line(plot_dict=plot_dict2, xlabel='Time Slot', ylabel='Link Load (Frac)', linewidth=0.4, alpha=1, show_fig=False)
+
+        return [fig1, fig2]
+
+
+
 
 
 
