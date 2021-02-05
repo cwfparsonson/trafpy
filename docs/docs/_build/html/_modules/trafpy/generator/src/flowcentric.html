@@ -1,0 +1,897 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trafpy.generator.src.flowcentric &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Contribute.html">Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../setup.html">setup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../trafpy.html">trafpy package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trafpy.generator.src.flowcentric</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trafpy.generator.src.flowcentric</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">trafpy.generator.src.dists</span> <span class="kn">import</span> <span class="n">val_dists</span><span class="p">,</span> <span class="n">node_dists</span>
+<span class="kn">from</span> <span class="nn">trafpy.generator.src</span> <span class="kn">import</span> <span class="n">tools</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span> <span class="c1"># use for initialising arbitrary length nested dict</span>
+
+
+<div class="viewcode-block" id="create_flow_centric_demand_data"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.create_flow_centric_demand_data">[docs]</a><span class="k">def</span> <span class="nf">create_flow_centric_demand_data</span><span class="p">(</span><span class="n">num_demands</span><span class="p">,</span>
+                                    <span class="n">eps</span><span class="p">,</span>
+                                    <span class="n">node_dist</span><span class="p">,</span> 
+                                    <span class="n">flow_size_dist</span><span class="p">,</span>
+                                    <span class="n">interarrival_time_dist</span><span class="p">,</span>
+                                    <span class="n">duration_time_dist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                    <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Generating </span><span class="si">{}</span><span class="s1"> flow demands...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_demands</span><span class="p">))</span>
+    <span class="n">started</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="c1"># initialise</span>
+    <span class="n">f_ids</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;flow_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_demands</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">duration_time_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># duplicate</span>
+        <span class="n">f_ids2</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;flow_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_demands</span><span class="p">)]</span>
+        <span class="n">flow_ids</span> <span class="o">=</span> <span class="n">f_ids</span> <span class="o">+</span> <span class="n">f_ids2</span> <span class="c1"># duplicate</span>
+        <span class="n">establish</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">flow_ids</span><span class="p">)))),</span> 
+                                    <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">flow_ids</span><span class="p">))))))</span> 
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">flow_ids</span> <span class="o">=</span> <span class="n">f_ids</span>
+        <span class="n">establish</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">flow_ids</span><span class="p">)))),</span> 
+                                    <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">flow_ids</span><span class="p">))))))</span> 
+
+    <span class="n">flow_sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">flow_ids</span><span class="p">))))</span>
+    
+    <span class="k">if</span> <span class="n">duration_time_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">duplicate</span><span class="o">=</span><span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">duplicate</span><span class="o">=</span><span class="kc">False</span>
+    <span class="n">sn</span><span class="p">,</span> <span class="n">dn</span> <span class="o">=</span> <span class="n">node_dists</span><span class="o">.</span><span class="n">gen_node_demands</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
+                                         <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span> 
+                                         <span class="n">num_demands</span><span class="o">=</span><span class="n">num_demands</span><span class="p">,</span> 
+                                         <span class="n">duplicate</span><span class="o">=</span><span class="n">duplicate</span><span class="p">)</span>
+
+    
+    <span class="c1"># create demand flow_sizes</span>
+    <span class="c1"># TODO: Not sure what below function was for but generates strange rand var dists, should use gen_rand_vars_from_discretised_dist() instead.</span>
+    <span class="c1"># flow_sizes[:num_demands] = val_dists.gen_val_dist_data(val_dist=list(flow_size_dist.values()), </span>
+                                                           <span class="c1"># num_vals_to_gen=num_demands, </span>
+                                                           <span class="c1"># min_val=min(flow_size_dist.keys()), </span>
+                                                           <span class="c1"># max_val=max(flow_size_dist.keys()))</span>
+    <span class="n">flow_sizes</span><span class="p">[:</span><span class="n">num_demands</span><span class="p">]</span> <span class="o">=</span> <span class="n">val_dists</span><span class="o">.</span><span class="n">gen_rand_vars_from_discretised_dist</span><span class="p">(</span><span class="n">unique_vars</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">flow_size_dist</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                                                                             <span class="n">probabilities</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">flow_size_dist</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+                                                                             <span class="n">num_demands</span><span class="o">=</span><span class="n">num_demands</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">duration_time_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">flow_sizes</span><span class="p">[</span><span class="n">num_demands</span><span class="p">:]</span> <span class="o">=</span> <span class="n">flow_sizes</span><span class="p">[:</span><span class="n">num_demands</span><span class="p">]</span>
+    
+    <span class="c1"># create event time array</span>
+    <span class="n">interarrival_times</span> <span class="o">=</span> <span class="n">val_dists</span><span class="o">.</span><span class="n">gen_rand_vars_from_discretised_dist</span><span class="p">(</span><span class="n">unique_vars</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">interarrival_time_dist</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                                                                       <span class="n">probabilities</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">interarrival_time_dist</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+                                                                       <span class="n">num_demands</span><span class="o">=</span><span class="n">num_demands</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">duration_time_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">interarrival_times</span> <span class="o">=</span> <span class="n">val_dists</span><span class="o">.</span><span class="n">gen_rand_vars_from_discretised_dist</span><span class="p">(</span><span class="n">unique_vars</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">interarrival_time_dist</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                                                                           <span class="n">probabilities</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">interarrival_time_dist</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+                                                                           <span class="n">num_demands</span><span class="o">=</span><span class="n">num_demands</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">duration_times</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">event_times</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">gen_event_times</span><span class="p">(</span><span class="n">interarrival_times</span><span class="p">,</span> <span class="n">duration_times</span><span class="p">)</span>
+    <span class="n">index</span><span class="p">,</span> <span class="n">event_times_sorted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">event_times</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">event_times</span><span class="p">)</span>
+
+    <span class="c1"># compile data into demand data dict</span>
+    <span class="n">demand_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;flow_id&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">flow_ids</span><span class="p">)[</span><span class="n">index</span><span class="p">],</span>
+                   <span class="s1">&#39;sn&#39;</span><span class="p">:</span> <span class="n">sn</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+                   <span class="s1">&#39;dn&#39;</span><span class="p">:</span> <span class="n">dn</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+                   <span class="s1">&#39;flow_size&#39;</span><span class="p">:</span> <span class="n">flow_sizes</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+                   <span class="s1">&#39;event_time&#39;</span><span class="p">:</span> <span class="n">event_times_sorted</span><span class="p">,</span>
+                   <span class="s1">&#39;establish&#39;</span><span class="p">:</span> <span class="n">establish</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+                   <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="n">index</span><span class="p">}</span>
+   
+    <span class="n">ended</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Generated </span><span class="si">{}</span><span class="s1"> flow demands in </span><span class="si">{}</span><span class="s1"> seconds.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_demands</span><span class="p">,</span><span class="n">ended</span><span class="o">-</span><span class="n">started</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">demand_data</span></div>
+
+
+
+<div class="viewcode-block" id="duplicate_demands_in_demand_data_dict"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.duplicate_demands_in_demand_data_dict">[docs]</a><span class="k">def</span> <span class="nf">duplicate_demands_in_demand_data_dict</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;all_eps&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    If method == &#39;all_eps&#39;, will duplicate all demands by adding final event time</span>
+<span class="sd">    over all endpoints to each event time</span>
+
+<span class="sd">    if method == &#39;per_ep&#39;, will duplicate all demands by adding final even time</span>
+<span class="sd">    for each endpoint&#39;s final event time</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">copy_demand_data</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">demand_data</span><span class="p">)</span> 
+
+    <span class="c1"># ensure values of dict are lists</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">copy_demand_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">copy_demand_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;all_eps&#39;</span><span class="p">:</span>
+        <span class="c1"># final_event_time = max(demand_data[&#39;event_time&#39;])</span>
+        <span class="n">num_demands</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])</span>
+        <span class="n">final_event_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+        <span class="n">first_event_time</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+        <span class="n">duration</span> <span class="o">=</span> <span class="n">final_event_time</span> <span class="o">-</span> <span class="n">first_event_time</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])):</span>
+            <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;flow_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="n">num_demands</span><span class="p">)))</span>
+            <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="c1"># copy_demand_data[&#39;event_time&#39;].append(final_event_time + demand_data[&#39;event_time&#39;][idx])</span>
+            <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">duration</span> <span class="o">+</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">idx</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;per_ep&#39;</span><span class="p">:</span>
+        <span class="n">original_ep_info</span> <span class="o">=</span> <span class="n">group_demand_data_into_ep_info</span><span class="p">(</span><span class="n">copy_demand_data</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;eps&#39;</span><span class="p">])</span>
+        <span class="c1"># idx_iterator = iter(range(num_demands))</span>
+        <span class="n">duplicated_flows</span> <span class="o">=</span> <span class="p">{</span><span class="n">flow_id</span><span class="p">:</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">flow_id</span> <span class="ow">in</span> <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]}</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Flows before duplication: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])))</span>
+        <span class="n">idx_iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])))</span>
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;eps&#39;</span><span class="p">]:</span>
+            <span class="c1"># ep_info = group_demand_data_into_ep_info(copy_demand_data, eps=kwargs[&#39;eps&#39;])</span>
+            <span class="n">num_demands</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])</span>
+
+            <span class="n">first_event_time</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+            <span class="n">final_event_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+            <span class="n">duration</span> <span class="o">=</span> <span class="n">final_event_time</span> <span class="o">-</span> <span class="n">first_event_time</span>
+
+            <span class="c1"># DEBUG </span>
+            <span class="n">total_info</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_size&#39;</span><span class="p">])</span>
+            <span class="n">num_flows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])</span>
+            <span class="n">load</span> <span class="o">=</span> <span class="n">total_info</span> <span class="o">/</span> <span class="p">(</span><span class="n">final_event_time</span> <span class="o">-</span> <span class="n">first_event_time</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Init </span><span class="si">{}</span><span class="s1"> duration: </span><span class="si">{}</span><span class="s1"> total info: </span><span class="si">{}</span><span class="s1"> | load: </span><span class="si">{}</span><span class="s1"> | flows: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ep</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">total_info</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">num_flows</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">ep_flow_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])):</span>
+                <span class="n">flow_id</span> <span class="o">=</span> <span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_id&#39;</span><span class="p">][</span><span class="n">ep_flow_idx</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">duplicated_flows</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]:</span>
+                    <span class="n">duplicated_flows</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="c1"># not yet duplicated this flow</span>
+                    <span class="c1"># i = find_index_of_int_in_str(flow_id)</span>
+                    <span class="c1"># idx = int(flow_id[i:])</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">idx_iterator</span><span class="p">)</span>
+
+                    <span class="c1"># copy_demand_data[&#39;flow_id&#39;].append(&#39;flow_{}&#39;.format(int(idx+num_demands)))</span>
+                    <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;flow_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]))))</span>
+                    <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">ep_flow_idx</span><span class="p">])</span>
+                    <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">ep_flow_idx</span><span class="p">])</span>
+                    <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">ep_flow_idx</span><span class="p">])</span>
+                    <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">duration</span> <span class="o">+</span> <span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">ep_flow_idx</span><span class="p">])</span>
+                    <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;establish&#39;</span><span class="p">][</span><span class="n">ep_flow_idx</span><span class="p">])</span>
+                    <span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">original_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;index&#39;</span><span class="p">][</span><span class="n">ep_flow_idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">idx</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># already duplicated this flow in copy_demand_data</span>
+                    <span class="k">pass</span>
+            <span class="c1"># DEBUG</span>
+            <span class="n">_ep_info</span> <span class="o">=</span> <span class="n">group_demand_data_into_ep_info</span><span class="p">(</span><span class="n">copy_demand_data</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;eps&#39;</span><span class="p">])</span>
+            <span class="n">final_event_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+            <span class="n">first_event_time</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+            <span class="n">total_info</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_size&#39;</span><span class="p">])</span>
+            <span class="n">load</span> <span class="o">=</span> <span class="n">total_info</span> <span class="o">/</span> <span class="p">(</span><span class="n">final_event_time</span> <span class="o">-</span> <span class="n">first_event_time</span><span class="p">)</span>
+            <span class="n">num_flows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Adjusted </span><span class="si">{}</span><span class="s1"> duration: </span><span class="si">{}</span><span class="s1"> total info: </span><span class="si">{}</span><span class="s1"> | load: </span><span class="si">{}</span><span class="s1"> | flows: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ep</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">total_info</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">num_flows</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Flows after duplication: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">copy_demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])))</span>
+
+    <span class="c1"># ensure values of dict are lists</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">copy_demand_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">copy_demand_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+
+    <span class="k">return</span> <span class="n">copy_demand_data</span></div>
+
+
+
+
+<div class="viewcode-block" id="find_index_of_int_in_str"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.find_index_of_int_in_str">[docs]</a><span class="k">def</span> <span class="nf">find_index_of_int_in_str</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">string</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">idx</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># char is not an int</span>
+            <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Could not find an integer in the string </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="adjust_demand_load"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.adjust_demand_load">[docs]</a><span class="k">def</span> <span class="nf">adjust_demand_load</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span>
+                       <span class="n">network_load_config</span><span class="p">,</span>
+                       <span class="n">num_demands</span><span class="p">,</span>
+                       <span class="n">eps</span><span class="p">,</span>
+                       <span class="n">node_dist</span><span class="p">,</span>
+                       <span class="n">flow_size_dist</span><span class="p">,</span>
+                       <span class="n">interarrival_time_dist</span><span class="p">,</span>
+                       <span class="n">duration_time_dist</span><span class="p">,</span>
+                       <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="c1"># adjust to get load fraction &gt; target load fraction</span>
+    <span class="n">demand_data</span><span class="p">,</span> <span class="n">new_interarrival_time_dist</span><span class="p">,</span> <span class="n">new_num_demands</span> <span class="o">=</span> <span class="n">increase_demand_load_to_target</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> 
+                                                                             <span class="n">num_demands</span><span class="p">,</span>
+                                                                             <span class="n">interarrival_time_dist</span><span class="p">,</span> 
+                                                                             <span class="n">eps</span><span class="p">,</span> 
+                                                                             <span class="n">node_dist</span><span class="p">,</span> 
+                                                                             <span class="n">flow_size_dist</span><span class="p">,</span> 
+                                                                             <span class="n">network_load_config</span><span class="p">,</span> 
+                                                                             <span class="n">print_data</span><span class="o">=</span><span class="n">print_data</span><span class="p">)</span>
+
+    <span class="c1"># adjust back down to get load fraction &lt;= target load fraction</span>
+    <span class="n">demand_data</span><span class="p">,</span> <span class="n">new_interarrival_time_dist</span> <span class="o">=</span> <span class="n">decrease_demand_load_to_target</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> 
+                                                                        <span class="n">new_num_demands</span><span class="p">,</span>
+                                                                        <span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">new_interarrival_time_dist</span><span class="p">,</span>
+                                                                        <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
+                                                                        <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span>
+                                                                        <span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span>
+                                                                        <span class="n">network_load_config</span><span class="o">=</span><span class="n">network_load_config</span><span class="p">,</span>
+                                                                        <span class="n">print_data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># adjust further to ensure no endpoint link has load fraction &gt;= endpoint link margin of e.g. 0.95 while ensuring still meet target load fraction</span>
+    <span class="n">demand_data</span> <span class="o">=</span> <span class="n">adjust_demand_load_to_ep_link_margin</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> 
+                                                                        <span class="n">new_num_demands</span><span class="p">,</span>
+                                                                        <span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">new_interarrival_time_dist</span><span class="p">,</span>
+                                                                        <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
+                                                                        <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span>
+                                                                        <span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span>
+                                                                        <span class="n">network_load_config</span><span class="o">=</span><span class="n">network_load_config</span><span class="p">,</span>
+                                                                        <span class="n">print_data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># organise data in demand_data in order of events arriving</span>
+    <span class="n">index</span><span class="p">,</span> <span class="n">event_times_sorted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+    <span class="n">demand_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;flow_id&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])[</span><span class="n">index</span><span class="p">],</span>
+                   <span class="s1">&#39;sn&#39;</span><span class="p">:</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">],</span>
+                   <span class="s1">&#39;dn&#39;</span><span class="p">:</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">],</span>
+                   <span class="s1">&#39;flow_size&#39;</span><span class="p">:</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">],</span>
+                   <span class="s1">&#39;event_time&#39;</span><span class="p">:</span> <span class="n">event_times_sorted</span><span class="p">,</span>
+                   <span class="s1">&#39;establish&#39;</span><span class="p">:</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+                   <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="n">index</span><span class="p">}</span>
+
+
+    <span class="k">return</span> <span class="n">demand_data</span><span class="p">,</span> <span class="n">interarrival_time_dist</span></div>
+
+
+<div class="viewcode-block" id="group_demand_data_into_ep_info"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.group_demand_data_into_ep_info">[docs]</a><span class="k">def</span> <span class="nf">group_demand_data_into_ep_info</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">eps</span><span class="p">):</span>
+    <span class="n">nested_dict</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">nested_dict</span><span class="p">)</span>
+    <span class="n">ep_info</span> <span class="o">=</span> <span class="n">nested_dict</span><span class="p">()</span>
+    <span class="n">added_flow</span> <span class="o">=</span> <span class="p">{</span><span class="n">flow_id</span><span class="p">:</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">flow_id</span> <span class="ow">in</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]}</span>
+    <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">:</span>
+        <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;establish&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;sn&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;dn&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># group demand data by ep</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">added_flow</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]]:</span> 
+            <span class="c1"># not yet added this flow</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;flow_size&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;flow_size&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;event_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;event_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;establish&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;establish&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;establish&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;index&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;index&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;sn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;dn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;sn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">ep_info</span><span class="p">[</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]][</span><span class="s1">&#39;dn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># already added this flow</span>
+            <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">ep_info</span></div>
+
+
+<div class="viewcode-block" id="adjust_demand_load_to_ep_link_margin"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.adjust_demand_load_to_ep_link_margin">[docs]</a><span class="k">def</span> <span class="nf">adjust_demand_load_to_ep_link_margin</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> 
+                                           <span class="n">new_num_demands</span><span class="p">,</span>
+                                           <span class="n">interarrival_time_dist</span><span class="p">,</span>
+                                           <span class="n">eps</span><span class="p">,</span>
+                                           <span class="n">node_dist</span><span class="p">,</span>
+                                           <span class="n">flow_size_dist</span><span class="p">,</span>
+                                           <span class="n">network_load_config</span><span class="p">,</span>
+                                           <span class="n">ep_link_margin</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>
+                                           <span class="n">increment_factor</span><span class="o">=</span><span class="mf">1.001</span><span class="p">,</span>
+                                           <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Decrease ep link loads of each ep link until &lt;= ep link margin load (e.g. 0.95).</span>
+<span class="sd">    If after this decrease the overall load is below target load, increase lowest</span>
+<span class="sd">    ep link loads until get to target load. Therefore as target load tends to 1,</span>
+<span class="sd">    node distribution tends towards uniform distribution.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># load_rate = get_flow_centric_demand_data_load_rate(demand_data, method=&#39;mean_per_ep&#39;, eps=eps)</span>
+    <span class="n">load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_overall_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">load_fraction</span> <span class="o">=</span> <span class="n">load_rate</span> <span class="o">/</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;network_rate_capacity&#39;</span><span class="p">]</span>
+    <span class="n">target_load_fraction</span> <span class="o">=</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;target_load_fraction&#39;</span><span class="p">]</span>
+    <span class="n">network_rate_capacity</span> <span class="o">=</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;network_rate_capacity&#39;</span><span class="p">]</span>
+    
+    <span class="k">assert</span> <span class="n">target_load_fraction</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> \
+        <span class="s1">&#39;Must have target load fraction &lt;= 1 for compatability with network rate capacity.&#39;</span>
+    
+    <span class="n">target_load_rate</span> <span class="o">=</span> <span class="n">network_rate_capacity</span><span class="o">*</span><span class="n">target_load_fraction</span>
+    <span class="n">init_load_rate</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">load_rate</span><span class="p">)</span>
+    <span class="n">init_load_fraction</span> <span class="o">=</span> <span class="n">init_load_rate</span> <span class="o">/</span> <span class="n">network_rate_capacity</span>
+
+    <span class="c1"># group ep info from demand data</span>
+    <span class="n">ep_info</span> <span class="o">=</span> <span class="n">group_demand_data_into_ep_info</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+
+    <span class="c1"># decrease ep link load to below ep link margin for all ep links which exceed it</span>
+    <span class="n">adjusted_eps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">:</span>
+        <span class="c1"># total_info = sum(ep_info[ep][&#39;flow_size&#39;])</span>
+        <span class="c1"># time_first_flow_arrived = min(ep_info[ep][&#39;event_time&#39;])</span>
+        <span class="c1"># time_last_flow_arrived = max(ep_info[ep][&#39;event_time&#39;])</span>
+        <span class="c1"># ep_load_frac = (total_info / (time_last_flow_arrived-time_first_flow_arrived)) / network_load_config[&#39;ep_link_capacity&#39;]</span>
+        <span class="n">ep_load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_ep_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">ep</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+        <span class="n">ep_load_frac</span> <span class="o">=</span> <span class="n">ep_load_rate</span> <span class="o">/</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;ep_link_capacity&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ep_load_frac</span> <span class="o">&gt;</span> <span class="n">ep_link_margin</span><span class="p">:</span>
+            <span class="n">adjusted_eps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ep</span><span class="p">)</span>
+            <span class="k">while</span> <span class="n">ep_load_frac</span> <span class="o">&gt;</span> <span class="n">ep_link_margin</span><span class="p">:</span>
+                <span class="c1"># must decrease load by spreading out arrival times</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">])):</span>
+                    <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span> <span class="o">*=</span> <span class="n">increment_factor</span>
+                    <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span>
+                <span class="c1"># time_first_flow_arrived = min(ep_info[ep][&#39;event_time&#39;])</span>
+                <span class="c1"># time_last_flow_arrived = max(ep_info[ep][&#39;event_time&#39;])</span>
+                <span class="c1"># ep_load_frac = (total_info / (time_last_flow_arrived-time_first_flow_arrived)) / network_load_config[&#39;ep_link_capacity&#39;]</span>
+                <span class="n">ep_load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_ep_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">ep</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+                <span class="n">ep_load_frac</span> <span class="o">=</span> <span class="n">ep_load_rate</span> <span class="o">/</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;ep_link_capacity&#39;</span><span class="p">]</span>
+
+    <span class="c1"># if overall load now below target load, increase loads of other ep links until get to target load</span>
+    <span class="c1"># load_rate = get_flow_centric_demand_data_load_rate(demand_data, method=&#39;mean_per_ep&#39;, eps=eps)</span>
+    <span class="c1"># load_frac = load_rate / network_rate_capacity</span>
+    <span class="n">load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_overall_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">load_frac</span> <span class="o">=</span> <span class="n">load_rate</span> <span class="o">/</span> <span class="n">network_rate_capacity</span>
+    <span class="k">while</span> <span class="n">load_frac</span> <span class="o">&lt;</span> <span class="mf">0.99</span> <span class="o">*</span> <span class="n">target_load_fraction</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">adjusted_eps</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">eps</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;All eps have been adjusted to be &lt;= </span><span class="si">{}</span><span class="s1"> load margin, but load frac is still </span><span class="si">{}</span><span class="s1"> (target </span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ep_link_margin</span><span class="p">,</span> <span class="n">load_frac</span><span class="p">,</span> <span class="n">target_load_fraction</span><span class="p">))</span>
+
+        <span class="c1"># DEBUG</span>
+        <span class="n">ep_loads</span> <span class="o">=</span> <span class="p">{</span><span class="n">ep</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">}</span>
+        <span class="n">ep_last_event_times</span> <span class="o">=</span> <span class="p">{</span><span class="n">ep</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">}</span>
+        <span class="n">ep_first_event_times</span> <span class="o">=</span> <span class="p">{</span><span class="n">ep</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">}</span>
+        <span class="c1"># print(&#39;Adjusted eps: {}&#39;.format(adjusted_eps))</span>
+
+        <span class="c1"># NEW</span>
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">ep_info</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">ep_last_event_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+            <span class="n">ep_last_event_times</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span> <span class="o">=</span> <span class="n">ep_last_event_time</span>
+        <span class="n">ep_with_last_event</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ep_last_event_times</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">ep_last_event_times</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">ep_info</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            
+            <span class="c1"># DEBUG</span>
+            <span class="n">ep_load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_ep_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">ep</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+            <span class="n">ep_load_frac</span> <span class="o">=</span> <span class="n">ep_load_rate</span> <span class="o">/</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;ep_link_capacity&#39;</span><span class="p">]</span>
+            <span class="n">first_event_time</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+            <span class="n">ep_loads</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span> <span class="o">=</span> <span class="n">ep_load_frac</span>
+            <span class="n">ep_first_event_times</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span> <span class="o">=</span> <span class="n">first_event_time</span>
+
+            <span class="c1"># update</span>
+            <span class="n">last_event_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+            <span class="n">ep_last_event_times</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_event_time</span>
+            <span class="n">ep_with_last_event</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ep_last_event_times</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">ep_last_event_times</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">adjusted_eps</span><span class="p">:</span>
+                <span class="c1"># already adjusted this ep to &lt;= ep link margin</span>
+                <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># check that not about to exceed ep link rate</span>
+                <span class="c1"># time_last_flow_arrived = max(ep_info[ep][&#39;event_time&#39;])</span>
+                <span class="c1"># time_first_flow_arrived = min(ep_info[ep][&#39;event_time&#39;])</span>
+                <span class="c1"># total_info = sum(ep_info[ep][&#39;flow_size&#39;])</span>
+                <span class="c1"># ep_load_frac = (total_info / (time_last_flow_arrived-time_first_flow_arrived)) / network_load_config[&#39;ep_link_capacity&#39;]</span>
+                <span class="n">ep_load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_ep_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">ep</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+                <span class="n">ep_load_frac</span> <span class="o">=</span> <span class="n">ep_load_rate</span> <span class="o">/</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;ep_link_capacity&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">ep_load_frac</span> <span class="o">&gt;=</span> <span class="mf">0.99</span><span class="o">*</span><span class="n">ep_link_margin</span><span class="p">:</span>
+                    <span class="c1"># can no longer increase load on this ep</span>
+                    <span class="n">adjusted_eps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ep</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># can try increase load on this ep to reach overall target load</span>
+                    <span class="n">found_flow_to_adjust</span> <span class="o">=</span> <span class="kc">False</span> 
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">])):</span>
+                        <span class="n">sn</span><span class="p">,</span> <span class="n">dn</span> <span class="o">=</span> <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">sn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">adjusted_eps</span> <span class="ow">and</span> <span class="n">dn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">adjusted_eps</span><span class="p">:</span>
+                            <span class="n">found_flow_to_adjust</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">if</span> <span class="n">ep_with_last_event</span> <span class="ow">in</span> <span class="n">adjusted_eps</span><span class="p">:</span>
+                                <span class="c1"># cannot change overall load by adjusting total duration since load-limiting ep already at max load, must instead change total info</span>
+                                <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span> <span class="o">*=</span> <span class="n">increment_factor</span>
+                                <span class="c1"># ensure is integer</span>
+                                <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]])</span>
+                                <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="c1"># can change overall load by adjusting total duration since load limiting ep not already at max load</span>
+                                <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="p">(</span><span class="n">increment_factor</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+                                <span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;demand_data_idx&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">found_flow_to_adjust</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Adjusted ep loads as much as possible, but could only reach overall load </span><span class="si">{}</span><span class="s1"> (target </span><span class="si">{}</span><span class="s1">). Either increase ep link margin (currently </span><span class="si">{}</span><span class="s1">), or decrease target load.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_frac</span><span class="p">,</span> <span class="n">target_load_fraction</span><span class="p">,</span> <span class="n">ep_link_margin</span><span class="p">))</span>
+        <span class="c1"># load_rate = get_flow_centric_demand_data_load_rate(demand_data, method=&#39;mean_per_ep&#39;, eps=eps)</span>
+        <span class="c1"># load_frac = load_rate / network_rate_capacity</span>
+        <span class="n">load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_overall_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">load_frac</span> <span class="o">=</span> <span class="n">load_rate</span> <span class="o">/</span> <span class="n">network_rate_capacity</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Overall load frac: </span><span class="si">{}</span><span class="s1"> | Target: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_frac</span><span class="p">,</span> <span class="n">target_load_fraction</span><span class="p">))</span>
+        <span class="c1"># print(&#39;ep loads: {}\nep first event times: {}\nep last event times: {}\nep with last event:{}&#39;.format(ep_loads, ep_first_event_times, ep_last_event_times, max(ep_last_event_times, key=ep_last_event_times.get)))</span>
+        
+
+    <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Final load rate | frac after adjusting ep loads to &lt;= </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1"> | </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ep_link_margin</span><span class="p">,</span> <span class="n">load_rate</span><span class="p">,</span> <span class="n">load_frac</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">demand_data</span></div>
+
+
+    
+
+
+
+<div class="viewcode-block" id="increase_demand_load_to_target"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.increase_demand_load_to_target">[docs]</a><span class="k">def</span> <span class="nf">increase_demand_load_to_target</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> 
+                                   <span class="n">num_demands</span><span class="p">,</span> 
+                                   <span class="n">interarrival_time_dist</span><span class="p">,</span> 
+                                   <span class="n">eps</span><span class="p">,</span> 
+                                   <span class="n">node_dist</span><span class="p">,</span> 
+                                   <span class="n">flow_size_dist</span><span class="p">,</span> 
+                                   <span class="n">network_load_config</span><span class="p">,</span> 
+                                   <span class="n">increment_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+                                   <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="c1"># load_rate = get_flow_centric_demand_data_load_rate(demand_data, method=&#39;mean_per_ep&#39;, eps=eps)</span>
+    <span class="c1"># load_fraction = load_rate / network_load_config[&#39;network_rate_capacity&#39;]</span>
+    <span class="n">load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_overall_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">load_fraction</span> <span class="o">=</span> <span class="n">load_rate</span> <span class="o">/</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;network_rate_capacity&#39;</span><span class="p">]</span>
+
+    <span class="n">num_loops</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="c1"># adjust to get load fraction &gt;= target load fraction</span>
+    <span class="k">while</span> <span class="n">load_fraction</span> <span class="o">&lt;</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;target_load_fraction&#39;</span><span class="p">]:</span>
+
+        <span class="c1"># # increase number of demands by 1% to try increase loads</span>
+        <span class="c1"># num_demands = int(1.01 * num_demands)</span>
+
+        <span class="c1"># decrease interarrival times to try increase load</span>
+        <span class="n">new_interarrival_time_dist</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">rand_var</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">interarrival_time_dist</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">new_rand_var</span> <span class="o">=</span> <span class="n">rand_var</span> <span class="o">*</span> <span class="n">increment_factor</span>
+            <span class="n">new_interarrival_time_dist</span><span class="p">[</span><span class="n">new_rand_var</span><span class="p">]</span> <span class="o">=</span> <span class="n">prob</span>
+
+        <span class="c1"># update interarrival time dist</span>
+        <span class="n">interarrival_time_dist</span> <span class="o">=</span> <span class="n">new_interarrival_time_dist</span>
+
+        <span class="n">demand_data</span> <span class="o">=</span> <span class="n">create_flow_centric_demand_data</span><span class="p">(</span><span class="n">num_demands</span><span class="o">=</span><span class="n">num_demands</span><span class="p">,</span>
+                                                                  <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
+                                                                  <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span>
+                                                                  <span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span>
+                                                                  <span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">,</span>
+                                                                  <span class="n">print_data</span><span class="o">=</span><span class="n">print_data</span><span class="p">)</span>
+        <span class="c1"># load_rate = get_flow_centric_demand_data_load_rate(demand_data, method=&#39;mean_per_ep&#39;, eps=eps)</span>
+        <span class="c1"># load_fraction = load_rate / network_load_config[&#39;network_rate_capacity&#39;]</span>
+        <span class="n">load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_overall_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">load_fraction</span> <span class="o">=</span> <span class="n">load_rate</span> <span class="o">/</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;network_rate_capacity&#39;</span><span class="p">]</span>
+        <span class="n">num_loops</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reached load of </span><span class="si">{}</span><span class="s1"> (target load </span><span class="si">{}</span><span class="s1">) after </span><span class="si">{}</span><span class="s1"> loops.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_fraction</span><span class="p">,</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;target_load_fraction&#39;</span><span class="p">],</span> <span class="n">num_loops</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;disable_timeouts&#39;</span><span class="p">]:</span>
+            <span class="c1"># keep running loop to infinity</span>
+            <span class="k">if</span> <span class="n">num_loops</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning: Have disabled timeouts. Ran </span><span class="si">{}</span><span class="s1"> loops to try to reach </span><span class="si">{}</span><span class="s1"> network load (reached </span><span class="si">{}</span><span class="s1"> load so far). Set network_load_config[</span><span class="se">\&#39;</span><span class="s1">disable_timeouts</span><span class="se">\&#39;</span><span class="s1">]=True if desired. Disable this warning by setting print_data=False when calling create_demand_data.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_loops</span><span class="p">,</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;target_load_fraction&#39;</span><span class="p">],</span> <span class="n">load_fraction</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">num_loops</span> <span class="o">&gt;</span> <span class="mi">15</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Time out trying to reach requested network load fraction (reached </span><span class="si">{}</span><span class="s1"> but requested </span><span class="si">{}</span><span class="s1">). Consider adjusting demand data parameters (e.g. increase flow size, decrease interarrival time, etc.), decreasing target_load_fraction, or decreasing network_rate_capacity. Alternatively, to disable timeouts, set network_load_config[</span><span class="se">\&#39;</span><span class="s1">disable_timeouts</span><span class="se">\&#39;</span><span class="s1">] = True.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_fraction</span><span class="p">,</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;target_load_fraction&#39;</span><span class="p">]))</span>
+
+    <span class="k">return</span> <span class="n">demand_data</span><span class="p">,</span> <span class="n">interarrival_time_dist</span><span class="p">,</span> <span class="n">num_demands</span></div>
+
+
+
+<div class="viewcode-block" id="decrease_demand_load_to_target"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.decrease_demand_load_to_target">[docs]</a><span class="k">def</span> <span class="nf">decrease_demand_load_to_target</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> 
+                                   <span class="n">num_demands</span><span class="p">,</span> 
+                                   <span class="n">interarrival_time_dist</span><span class="p">,</span> 
+                                   <span class="n">eps</span><span class="p">,</span> 
+                                   <span class="n">node_dist</span><span class="p">,</span> 
+                                   <span class="n">flow_size_dist</span><span class="p">,</span> 
+                                   <span class="n">network_load_config</span><span class="p">,</span> 
+                                   <span class="n">increment_factor</span><span class="o">=</span><span class="mf">1.001</span><span class="p">,</span>
+                                   <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="c1"># load_rate = get_flow_centric_demand_data_load_rate(demand_data, method=&#39;mean_per_ep&#39;, eps=eps)</span>
+    <span class="n">load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_overall_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">load_fraction</span> <span class="o">=</span> <span class="n">load_rate</span> <span class="o">/</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;network_rate_capacity&#39;</span><span class="p">]</span>
+    <span class="n">target_load_fraction</span> <span class="o">=</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;target_load_fraction&#39;</span><span class="p">]</span>
+    <span class="n">network_rate_capacity</span> <span class="o">=</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;network_rate_capacity&#39;</span><span class="p">]</span>
+    
+    <span class="k">assert</span> <span class="n">target_load_fraction</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> \
+        <span class="s1">&#39;Must have target load fraction &lt;= 1 for compatability with network rate capacity.&#39;</span>
+    
+    <span class="n">target_load_rate</span> <span class="o">=</span> <span class="n">network_rate_capacity</span><span class="o">*</span><span class="n">target_load_fraction</span>
+    <span class="n">init_load_rate</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">load_rate</span><span class="p">)</span>
+    <span class="n">init_load_fraction</span> <span class="o">=</span> <span class="n">init_load_rate</span> <span class="o">/</span> <span class="n">network_rate_capacity</span>
+
+    <span class="k">if</span> <span class="n">load_rate</span> <span class="o">&gt;</span> <span class="n">target_load_rate</span><span class="p">:</span>
+        <span class="c1"># increase interarrival time dist until get target load rate</span>
+        <span class="n">num_loops</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">load_rate</span> <span class="o">&gt;</span> <span class="n">target_load_rate</span><span class="p">:</span>
+            <span class="c1"># adjust interarrival dist by adjusting event times</span>
+            <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="n">increment_factor</span>
+            <span class="n">new_interarrival_time_dist</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="c1"># for rand_var, prob in interarrival_time_dist.items():</span>
+                <span class="c1"># new_rand_var = rand_var * increment_factor</span>
+                <span class="c1"># new_interarrival_time_dist[new_rand_var] = prob</span>
+
+            <span class="c1"># # update interarrival time dist</span>
+            <span class="c1"># interarrival_time_dist = new_interarrival_time_dist</span>
+
+            <span class="c1"># # re-create</span>
+            <span class="c1"># demand_data = create_flow_centric_demand_data(num_demands=num_demands,</span>
+                                                                      <span class="c1"># eps=eps,</span>
+                                                                      <span class="c1"># node_dist=node_dist,</span>
+                                                                      <span class="c1"># flow_size_dist=flow_size_dist,</span>
+                                                                      <span class="c1"># interarrival_time_dist=interarrival_time_dist,</span>
+                                                                      <span class="c1"># print_data=print_data)</span>
+
+            <span class="c1"># load_rate = get_flow_centric_demand_data_load_rate(demand_data, method=&#39;mean_per_ep&#39;, eps=eps)</span>
+            <span class="n">load_rate</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_overall_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">num_loops</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;disable_timeouts&#39;</span><span class="p">]:</span>
+                <span class="c1"># keep running loop to infinity</span>
+                <span class="k">if</span> <span class="n">num_loops</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning: Have disabled timeouts. Ran </span><span class="si">{}</span><span class="s1"> loops to try to reach </span><span class="si">{}</span><span class="s1"> network load (reached </span><span class="si">{}</span><span class="s1"> load so far). Set network_load_config[</span><span class="se">\&#39;</span><span class="s1">disable_timeouts</span><span class="se">\&#39;</span><span class="s1">]=True if desired. Disable this warning by setting print_data=False when calling create_demand_data.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_loops</span><span class="p">,</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;target_load_fraction&#39;</span><span class="p">],</span> <span class="n">load_fraction</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">num_loops</span> <span class="o">&gt;</span> <span class="mi">15</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Time out trying to reach requested network load fraction (reached </span><span class="si">{}</span><span class="s1"> but requested </span><span class="si">{}</span><span class="s1">). Consider adjusting demand data parameters (e.g. increase flow size, decrease interarrival time, etc.), decreasing target_load_fraction, or decreasing network_rate_capacity. Alternatively, to disable timeouts, set network_load_config[</span><span class="se">\&#39;</span><span class="s1">disable_timeouts</span><span class="se">\&#39;</span><span class="s1">] = True.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_fraction</span><span class="p">,</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;target_load_fraction&#39;</span><span class="p">]))</span>
+
+    <span class="k">elif</span> <span class="n">load_rate</span> <span class="o">&lt;</span> <span class="n">target_load_rate</span><span class="p">:</span>
+        <span class="n">load_fraction</span> <span class="o">=</span> <span class="n">load_rate</span> <span class="o">/</span> <span class="n">network_rate_capacity</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Load is </span><span class="si">{}</span><span class="s1">, but requested target load is </span><span class="si">{}</span><span class="s1">. Either decrease target load or increase load in demand_data. To increase load in demand_data, increase number of demands generated or adjust e.g. event size, interarrival time, etc., then re-construct demand_data and pass back into this function.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_fraction</span><span class="p">,</span> <span class="n">target_load_fraction</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+    
+    <span class="n">load_fraction</span> <span class="o">=</span> <span class="n">load_rate</span> <span class="o">/</span> <span class="n">network_rate_capacity</span>
+    
+    <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Network rate capacity: </span><span class="si">{}</span><span class="s1"> Gbps&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">network_rate_capacity</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initial load rate: </span><span class="si">{}</span><span class="s1"> Gbps&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">init_load_rate</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initial load fraction: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">init_load_fraction</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Target load rate: </span><span class="si">{}</span><span class="s1"> Gbps&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target_load_rate</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Target load fraction: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target_load_fraction</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Final load rate: </span><span class="si">{}</span><span class="s1"> Gbps&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_rate</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Final load fraction: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load_fraction</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Final number of demands: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])))</span>
+    
+    <span class="k">return</span> <span class="n">demand_data</span><span class="p">,</span> <span class="n">new_interarrival_time_dist</span></div>
+
+<div class="viewcode-block" id="drop_random_flow_from_demand_data"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.drop_random_flow_from_demand_data">[docs]</a><span class="k">def</span> <span class="nf">drop_random_flow_from_demand_data</span><span class="p">(</span><span class="n">demand_data</span><span class="p">):</span>
+    <span class="n">event_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]))]</span>
+    <span class="n">flow_idx_to_drop</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">event_indices</span><span class="p">)</span>
+    
+    <span class="n">num_loops</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">flow_idx_to_drop</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">flow_idx_to_drop</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">flow_idx_to_drop</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">flow_idx_to_drop</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_indices</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># start from beginning</span>
+            <span class="n">flow_idx_to_drop</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">num_loops</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">num_loops</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_indices</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Cannot find event in demand_data to drop.&#39;</span><span class="p">)</span>
+            
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">demand_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>        
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">del</span> <span class="n">new_data</span><span class="p">[</span><span class="n">flow_idx_to_drop</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># is numpy array</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">demand_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">flow_idx_to_drop</span><span class="p">)</span>
+        <span class="n">demand_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_data</span>
+            
+    <span class="k">return</span> <span class="n">demand_data</span></div>
+
+<div class="viewcode-block" id="get_flow_centric_demand_data_ep_load_rate"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.get_flow_centric_demand_data_ep_load_rate">[docs]</a><span class="k">def</span> <span class="nf">get_flow_centric_demand_data_ep_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">ep</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;all_eps&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    If method==&#39;all_eps&#39;, duration is time_last_flow_arrived-time_first_flow_arrived</span>
+<span class="sd">    across all endpoints. If method==&#39;per_ep&#39;, duration is time_last_flow_arrived-time_first_flow_arrived</span>
+<span class="sd">    for this specific ep.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">ep_info</span> <span class="o">=</span> <span class="n">group_demand_data_into_ep_info</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+    <span class="n">total_info</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;flow_size&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;per_ep&#39;</span><span class="p">:</span>
+        <span class="n">time_first_flow_arrived</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+        <span class="n">time_last_flow_arrived</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ep_info</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;all_eps&#39;</span><span class="p">:</span>
+        <span class="n">time_first_flow_arrived</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+        <span class="n">time_last_flow_arrived</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">time_last_flow_arrived</span> <span class="o">-</span> <span class="n">time_first_flow_arrived</span>
+    <span class="n">load_rate</span> <span class="o">=</span> <span class="n">total_info</span> <span class="o">/</span> <span class="n">duration</span>
+    
+    <span class="k">return</span> <span class="n">load_rate</span></div>
+
+<div class="viewcode-block" id="get_flow_centric_demand_data_overall_load_rate"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.get_flow_centric_demand_data_overall_load_rate">[docs]</a><span class="k">def</span> <span class="nf">get_flow_centric_demand_data_overall_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    If flow connections are bidirectional_links, 1 flow takes up 2 endpoint links (the</span>
+<span class="sd">    source link and the destination link), therefore effecitvely takes up load rate</span>
+<span class="sd">    2*flow_size*duration bandwidth. If not bidriectional, only takes up</span>
+<span class="sd">    1*flow_size*duration since only occupies bandwidth for 1 of these links.</span>
+
+<span class="sd">    If method == &#39;mean_per_ep&#39;, will calculate the total network load as being the mean</span>
+<span class="sd">    average load on each endpoint link (i.e. sum info requests for each link -&gt;</span>
+<span class="sd">    find load of each link -&gt; find mean of ep link loads)</span>
+
+<span class="sd">    If method == &#39;mean_all_eps&#39;, will calculate the total network load as being</span>
+<span class="sd">    the average load over all endpoint links (i.e. sum info requests for all links</span>
+<span class="sd">    -&gt; find overall load of network)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">info_arrived</span> <span class="o">=</span> <span class="n">get_flow_centric_demand_data_total_info_arrived</span><span class="p">(</span><span class="n">demand_data</span><span class="p">)</span>
+    <span class="n">first_event_time</span><span class="p">,</span> <span class="n">last_event_time</span> <span class="o">=</span> <span class="n">get_first_last_flow_arrival_times</span><span class="p">(</span><span class="n">demand_data</span><span class="p">)</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">last_event_time</span> <span class="o">-</span> <span class="n">first_event_time</span>
+
+    <span class="k">if</span> <span class="n">bidirectional_links</span><span class="p">:</span>
+        <span class="c1"># 1 flow occupies 2 endpoint links therefore has 2*flow_size load</span>
+        <span class="n">load_rate</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">info_arrived</span><span class="o">/</span><span class="n">duration</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">load_rate</span> <span class="o">=</span> <span class="n">info_arrived</span><span class="o">/</span><span class="n">duration</span>
+
+    <span class="k">return</span> <span class="n">load_rate</span></div>
+
+
+<span class="c1"># def get_flow_centric_demand_data_load_rate(demand_data, method=&#39;mean_all_eps&#39;, bidirectional_links=True, **kwargs):</span>
+    <span class="c1"># &#39;&#39;&#39;</span>
+    <span class="c1"># If flow connections are bidirectional_links, 1 flow takes up 2 endpoint links (the</span>
+    <span class="c1"># source link and the destination link), therefore effecitvely takes up load rate</span>
+    <span class="c1"># 2*flow_size*duration bandwidth. If not bidriectional, only takes up</span>
+    <span class="c1"># 1*flow_size*duration since only occupies bandwidth for 1 of these links.</span>
+
+    <span class="c1"># If method == &#39;mean_per_ep&#39;, will calculate the total network load as being the mean</span>
+    <span class="c1"># average load on each endpoint link (i.e. sum info requests for each link -&gt;</span>
+    <span class="c1"># find load of each link -&gt; find mean of ep link loads)</span>
+
+    <span class="c1"># If method == &#39;mean_all_eps&#39;, will calculate the total network load as being</span>
+    <span class="c1"># the average load over all endpoint links (i.e. sum info requests for all links</span>
+    <span class="c1"># -&gt; find overall load of network)</span>
+    <span class="c1"># &#39;&#39;&#39;</span>
+    <span class="c1"># info_arrived = get_flow_centric_demand_data_total_info_arrived(demand_data)</span>
+    <span class="c1"># first_event_time, last_event_time = get_first_last_flow_arrival_times(demand_data)</span>
+    <span class="c1"># duration = last_event_time - first_event_time</span>
+
+    <span class="c1"># if method == &#39;mean_per_ep&#39;:</span>
+        <span class="c1"># ep_loads = {ep: 0 for ep in kwargs[&#39;eps&#39;]}</span>
+        <span class="c1"># ep_info = group_demand_data_into_ep_info(demand_data, kwargs[&#39;eps&#39;])</span>
+        <span class="c1"># for ep in kwargs[&#39;eps&#39;]:</span>
+            <span class="c1"># total_info = sum(ep_info[ep][&#39;flow_size&#39;])</span>
+            <span class="c1"># # time_first_flow_arrived = min(ep_info[ep][&#39;event_time&#39;])</span>
+            <span class="c1"># # time_last_flow_arrived = max(ep_info[ep][&#39;event_time&#39;])</span>
+            <span class="c1"># # duration = time_last_flow_arrived - time_first_flow_arrived</span>
+            <span class="c1"># ep_loads[ep] = total_info / duration</span>
+        <span class="c1"># load_rate = np.mean(list(ep_loads.values())) * len(kwargs[&#39;eps&#39;])</span>
+
+    <span class="c1"># elif method == &#39;mean_all_eps&#39;:</span>
+        <span class="c1"># if bidirectional_links:</span>
+            <span class="c1"># # 1 flow occupies 2 endpoint links therefore has 2*flow_size load</span>
+            <span class="c1"># load_rate = 2*info_arrived/duration</span>
+        <span class="c1"># else:</span>
+            <span class="c1"># load_rate = info_arrived/duration</span>
+
+    <span class="c1"># else:</span>
+        <span class="c1"># raise Exception(&#39;Unrecognised load rate calculation method {}&#39;.format(method))</span>
+    
+    <span class="c1"># return load_rate</span>
+
+
+
+<div class="viewcode-block" id="get_flow_centric_demand_data_total_info_arrived"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.get_flow_centric_demand_data_total_info_arrived">[docs]</a><span class="k">def</span> <span class="nf">get_flow_centric_demand_data_total_info_arrived</span><span class="p">(</span><span class="n">demand_data</span><span class="p">):</span> 
+    <span class="n">info_arrived</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1"># print(&#39;flow size {} {}&#39;.format(type(demand_data[&#39;flow_size&#39;]), type(demand_data[&#39;flow_size&#39;][0])))</span>
+    <span class="k">for</span> <span class="n">flow_size</span> <span class="ow">in</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">flow_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">info_arrived</span> <span class="o">+=</span> <span class="n">flow_size</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+    
+    <span class="k">return</span> <span class="n">info_arrived</span></div>
+            
+<div class="viewcode-block" id="get_first_last_flow_arrival_times"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.get_first_last_flow_arrival_times">[docs]</a><span class="k">def</span> <span class="nf">get_first_last_flow_arrival_times</span><span class="p">(</span><span class="n">demand_data</span><span class="p">):</span>
+    <span class="n">arrival_times</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">])):</span>
+        <span class="k">if</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;sn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;dn&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]:</span>
+            <span class="n">arrival_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arrival_times</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Could not find first event establish request with size &gt; 0.. This occurs because either demand_data given does not contain any events, or because all events have had to be dropped to try get below your specified target load. Try increasing the target load or increasing the granularity of load per demand (by e.g. decreasing demand sizes, increasing total number of demands, etc.) when you generate your demand data so that this function can more easily hit your desired load target.&#39;</span><span class="p">)</span>
+
+    <span class="n">time_first_flow_arrived</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">arrival_times</span><span class="p">)</span>
+    <span class="n">time_last_flow_arrived</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">arrival_times</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">time_first_flow_arrived</span><span class="p">,</span> <span class="n">time_last_flow_arrived</span></div>
+
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

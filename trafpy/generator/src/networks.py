@@ -157,7 +157,7 @@ def gen_nsfnet_network(ep_label='server',
 
 def gen_simple_network(ep_label='server', 
                        num_channels=2, 
-                       channel_capacity=10,
+                       server_to_rack_channel_capacity=500,
                        show_fig=False):
     '''Generates very simple 5-node topology.
 
@@ -187,11 +187,11 @@ def gen_simple_network(ep_label='server',
 
     channel_names = gen_channel_names(num_channels)
     edges = [edge for edge in network.edges]
-    add_edges_capacity_attrs(network, edges, channel_names, channel_capacity)
+    add_edges_capacity_attrs(network, edges, channel_names, server_to_rack_channel_capacity)
 
     # set gloabl network attrs
     network.graph['endpoints'] = get_endpoints(network, ep_label)
-    max_nw_capacity = len(network.edges) * num_channels * channel_capacity
+    max_nw_capacity = len(network.edges) * num_channels * server_to_rack_channel_capacity 
     init_global_network_attrs(network, 
                             max_nw_capacity, 
                             num_channels, 

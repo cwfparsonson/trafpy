@@ -39,8 +39,14 @@ extensions = [
         'nb2plots',
         'sphinx.ext.napoleon',
         'sphinx.ext.viewcode',
-        'texext'
+        'texext',
+        'rst2pdf.pdfbuilder'
 ]
+pdf_documents = [('index', u'trafpy_documentation', u'TafPy Documentation', u'C W F Parsonson'),]
+# index - master document
+# rst2pdf - name of the generated pdf
+# Sample rst2pdf doc - title of the pdf
+# Your Name - author name in the pdf
 
 #napoleon_google_docstring = True
 napoleon_numpy_docstring = False
@@ -64,7 +70,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ['config.rst', 'modules.rst']
 
 # -- Options for HTML output -------------------------------------------------
 

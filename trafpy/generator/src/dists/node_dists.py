@@ -63,7 +63,8 @@ def gen_uniform_node_dist(eps,
                           plot_fig=False, 
                           show_fig=False,
                           print_data=False):
-    '''Generates a uniform node distribution.
+    '''
+    Generates a uniform node distribution.
 
     Args:
         eps (list): List of network node endpoints that can act as sources
@@ -148,7 +149,8 @@ def gen_uniform_multinomial_exp_node_dist(eps,
                                           plot_fig=False,
                                           show_fig=False,
                                           print_data=False):
-    '''Runs multinomial exp with uniform initial probability to generate slight skew.
+    '''
+    Runs multinomial exp with uniform initial probability to generate slight skew.
 
     Runs a multinomial experiment where each node pair has same (uniform)
     probability of being chosen. Will generate a node demand distribution
@@ -823,7 +825,8 @@ def adjust_node_dist_from_multinomial_exp_for_rack_prob_config(rack_prob_config,
                                               node_dist,
                                               num_exps_factor=2,
                                               print_data=False):
-    '''Unlike the other adjust_node_dist_for_rack_prob_config function,
+    '''
+    Unlike the other adjust_node_dist_for_rack_prob_config function,
     this function adjusts the node dist by running multinomial experiments 
     on the initial node distribution to sample from it. It therefore takes
     much much longer than the other function, especially for networks with >1,000 nodes.
@@ -1025,7 +1028,8 @@ def gen_multimodal_node_pair_dist(eps,
                                   plot_fig=False,
                                   show_fig=False,
                                   print_data=False):
-    '''Generates a multimodal node pair distribution.
+    '''
+    Generates a multimodal node pair distribution.
 
     Generates a multimodal node pair demand distribution i.e. certain node
     pairs have a certain specified probability of being chosen. If no
