@@ -19,8 +19,8 @@ NUM_DEMANDS_FACTOR = 50
 MIN_LAST_DEMAND_ARRIVAL_TIME = 2e6 # units of us 3e6 6e7 6e8 None 3000.0 2e6 2.4e5pulse
 
 # define network load fractions
-LOADS = np.arange(0.1, 0.9, 0.1).tolist()
-# LOADS = np.array([0.4])
+# LOADS = np.arange(0.1, 0.8, 0.1).tolist()
+LOADS = np.array([0.8])
 LOADS = [round(load, 3) for load in LOADS] # ensure no python floating point arithmetic errors
 
 # define number of repetitions to perform for each benchmark for each load

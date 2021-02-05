@@ -3,6 +3,7 @@ from trafpy.generator.src.dists import node_dists
 from trafpy.generator.src.dists import val_dists
 from trafpy.generator.src.dists import plot_dists
 from trafpy.generator.src import flowcentric
+from trafpy.generator.src import tools
 
 import inspect
 import sys
@@ -13,6 +14,7 @@ from statistics import mean
 from itertools import chain
 from collections import defaultdict # use for initialising arbitrary length nested dict
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Demand:
     def __init__(self,
@@ -240,7 +242,80 @@ class DemandPlotter:
         interarrival_times = [self.demand.demand_data['event_time'][i+1]-self.demand.demand_data['event_time'][i] for i in range(self.demand.num_demands-1)]
         return plot_dists.plot_val_dist(interarrival_times, show_fig=False, logscale=logscale, num_bins=num_bins, rand_var_name='Interarrival Time')
 
-    def plot_node_dist(self, eps, logscale=True, num_bins=20):
+    def plot_node_load_dists(self, eps, ep_link_bandwidth=None):
+        '''
+        1. Returns bar chart of end point links on x-axis and corresponding load on
+        y-axis. If ep_link_bandwidth not given, y-axis will be absolute info units
+        per unit time (load rate). If given, y-axis will be load (fraction).
+
+        2. Returns same bar chart but y-axis is fraction of overall network load
+        being requested by each end point link.
+
+        3. (if ep_link_bandwidth not None) Returns same bar chart by y-axis is 
+        fraction of overall network capacity being requested by each end point link
+        '''
+        index_to_pair, pair_to_index = node_dists.get_network_pair_mapper(eps)
+        _, _, node_to_index, index_to_node = tools.get_network_params(eps)
+        ep_loads = {node_to_index[ep]: None for ep in eps}
+        figs = []
+        
+        fig1 = plt.figure()
+        for ep in ep_loads.keys():
+            ep_loads[ep] = flowcentric.get_flow_centric_demand_data_ep_load_rate(self.demand.demand_data, index_to_node[ep], eps)
+            if ep_link_bandwidth is not None:
+                ep_loads[ep] /= ep_link_bandwidth
+
+        if ep_link_bandwidth is None:
+            ylabel = 'End Point Load (Absolute)'
+            ylim = None
+        else:
+            ylabel = 'End Point Load (Fraction)'
+            ylim = [0, 1]
+        xlabel = 'End Point Link'
+        plot_dists.plot_val_bar(ep_loads.keys(), ep_loads.values(), ylabel, ylim, xlabel, show_fig=False)
+        figs.append(fig1)
+
+        fig2 = plt.figure()
+        overall_load_rate = flowcentric.get_flow_centric_demand_data_overall_load_rate(self.demand.demand_data, bidirectional_links=True)
+        ep_loads_as_frac_of_overall_load = {}
+        for ep in ep_loads.keys():
+            ep_loads_as_frac_of_overall_load[ep] = flowcentric.get_flow_centric_demand_data_ep_load_rate(self.demand.demand_data, index_to_node[ep], eps)
+            ep_loads_as_frac_of_overall_load[ep] /= overall_load_rate
+        ylabel = 'Fraction of Overall Load Requested'
+        plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_load.keys(), ep_loads_as_frac_of_overall_load.values(), ylabel, ylim, xlabel, show_fig=False)
+        figs.append(fig2)
+
+        if ep_link_bandwidth is not None:
+            fig3 = plt.figure()
+            overall_network_capacity = len(eps) * ep_link_bandwidth
+            ep_loads_as_frac_of_overall_capacity = {}
+            for ep in ep_loads.keys():
+                ep_loads_as_frac_of_overall_capacity[ep] = flowcentric.get_flow_centric_demand_data_ep_load_rate(self.demand.demand_data, index_to_node[ep], eps)
+                ep_loads_as_frac_of_overall_capacity[ep] /=overall_network_capacity 
+            ylabel = 'Fraction of Overall Capacity Requested'
+            plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_capacity.keys(), ep_loads_as_frac_of_overall_capacity.values(), ylabel, ylim, xlabel, show_fig=False)
+            figs.append(fig3)
+
+
+        return figs
+        
+
+
+
+
+
+
+    def plot_node_load_fraction_of_overall_load_dist(self, eps, network_rate_capacity):
+        '''
+        Returns bar chart of end point links on x-axis and corresponding fraction
+        of the overall network capacity
+
+        '''
+
+
+
+    def plot_node_dist(self, eps):
+
         sampled_pairs = {}
         sources = self.demand.demand_data['sn']
         destinations = self.demand.demand_data['dn']

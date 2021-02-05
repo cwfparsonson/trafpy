@@ -297,7 +297,9 @@ def adjust_demand_load_to_ep_link_margin(demand_data,
     Decrease ep link loads of each ep link until <= ep link margin load (e.g. 0.95).
     If after this decrease the overall load is below target load, increase lowest
     ep link loads until get to target load. Therefore as target load tends to 1,
-    node distribution tends towards uniform distribution.
+    node load distribution tends towards uniform distribution (since load on all
+    eps will tend to 1) (however, flow size and node pair probability distributions
+    remain unchanged).
     '''
     # load_rate = get_flow_centric_demand_data_load_rate(demand_data, method='mean_per_ep', eps=eps)
     load_rate = get_flow_centric_demand_data_overall_load_rate(demand_data, bidirectional_links=True)
@@ -344,7 +346,7 @@ def adjust_demand_load_to_ep_link_margin(demand_data,
     load_frac = load_rate / network_rate_capacity
     while load_frac < 0.99 * target_load_fraction:
         if len(adjusted_eps) == len(eps):
-            raise Exception('All eps have been adjusted to be <= {} load margin, but load frac is still {} (target {})'.format(ep_link_margin, load_frac, target_load_fraction))
+            raise Exception('All eps have been adjusted to be <= {} load margin, but load frac is still {} (target {}). Change target load, or change distributions and/or topology to be valid for your desired target load (e.g. node distribution might be too heavily skewed).'.format(ep_link_margin, load_frac, target_load_fraction))
 
         # DEBUG
         ep_loads = {ep: None for ep in eps}
@@ -393,6 +395,12 @@ def adjust_demand_load_to_ep_link_margin(demand_data,
                         sn, dn = ep_info[ep]['sn'][i], ep_info[ep]['dn'][i]
                         if sn not in adjusted_eps and dn not in adjusted_eps:
                             found_flow_to_adjust = True
+
+                            # # New
+                            # demand_data['event_time'][ep_info[ep]['demand_data_idx'][i]] *= (1-(increment_factor-1))
+                            # ep_info[ep]['event_time'][i] = demand_data['event_time'][ep_info[ep]['demand_data_idx'][i]]
+
+                            # Old
                             if ep_with_last_event in adjusted_eps:
                                 # cannot change overall load by adjusting total duration since load-limiting ep already at max load, must instead change total info
                                 demand_data['flow_size'][ep_info[ep]['demand_data_idx'][i]] *= increment_factor
@@ -404,7 +412,7 @@ def adjust_demand_load_to_ep_link_margin(demand_data,
                                 demand_data['event_time'][ep_info[ep]['demand_data_idx'][i]] *= (1-(increment_factor-1))
                                 ep_info[ep]['event_time'][i] = demand_data['event_time'][ep_info[ep]['demand_data_idx'][i]]
                     if not found_flow_to_adjust:
-                        raise Exception('Adjusted ep loads as much as possible, but could only reach overall load {} (target {}). Either increase ep link margin (currently {}), or decrease target load.'.format(load_frac, target_load_fraction, ep_link_margin))
+                        raise Exception('Adjusted ep loads as much as possible, but could only reach overall load {} (target {}). Either increase ep link margin (currently {}), decrease target load, or change distributions and/or topology to be valid for your requested overall load (e.g. node distributions might be too heavily skewed).'.format(load_frac, target_load_fraction, ep_link_margin))
         # load_rate = get_flow_centric_demand_data_load_rate(demand_data, method='mean_per_ep', eps=eps)
         # load_frac = load_rate / network_rate_capacity
         load_rate = get_flow_centric_demand_data_overall_load_rate(demand_data, bidirectional_links=True)
@@ -698,6 +706,43 @@ def get_first_last_flow_arrival_times(demand_data):
     time_last_flow_arrived = max(arrival_times)
     
     return time_first_flow_arrived, time_last_flow_arrived
+
+
+
+
+
+
+
+
+
+
+
+
+class FlowPacker:
+    def __init__(self):
+        pass
+
+    def pack_the_flows(self):
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
