@@ -1,6 +1,6 @@
 '''Module for building demand data dictionaries (flow- and job-centric).'''
 
-from trafpy.generator.src import jobcentric, flowcentric, new_flowcentric
+from trafpy.generator.src import jobcentric, flowcentric, flowcentric
 from trafpy.generator.src import tools
 
 import numpy as np
@@ -14,14 +14,12 @@ def create_demand_data(eps,
                        node_dist,
                        flow_size_dist,
                        interarrival_time_dist,
-                       num_demands=None,
                        network_load_config=None,
-                       duration_time_dist=None,
+                       num_demands_factor=500,
+                       min_last_demand_arrival_time=None,
                        num_ops_dist=None,
                        c=None,
                        use_multiprocessing=True,
-                       num_demands_factor=500,
-                       min_last_demand_arrival_time=None,
                        print_data=False,
                        path_to_save=None):
     """Create demand data dictionary using given distributions.
@@ -37,8 +35,6 @@ def create_demand_data(eps,
             flow size value-probability pairs. 
         interarrival_time_dist (dict): Probability distribution whose key-value pairs are 
             interarrival time value-probability pairs. 
-        num_demands (int): Number of demands to generate. If None, must specify
-            network_load_config
         network_load_config (dict): Dict of form {'network_rate_capacity': <int/float>, 'target_load_fraction': <float>, 'disable_timeouts': <bool>, 'return_new_interarrival_time_dist': <bool>},
             where network_rate_capacity is the maximum rate (in e.g. Gbps) at which
             information can be reliably transmitted over the communication network
@@ -51,11 +47,6 @@ def create_demand_data(eps,
             defines whether or not to return the new interarrival time dist which
             was adjusted to meet the network node requested.
             If network_load_config is None, must specify num_demands
-        duration_time_dist (dict): Probability distribution whose key-value pairs are 
-            duration time value-probability pairs. If specified, half events
-            returned will be 'take-down' events (establish==0). If left as None,
-            all returned events will be 'connection establishment' events
-            (establish==1).
         num_ops_dist (dict): Probability distribution whose key-value pairs are 
             number of operations (in a job) value-probability pairs. 
         c (int/float): Coefficient which determines job graph connectivity and
@@ -68,8 +59,8 @@ def create_demand_data(eps,
         use_multiprocessing (bool): Whether or not to use multiprocessing when
             generating data. For generating large numbers of big job computation
             graphs, it is recommended to use multiprocessing.
-        num_demands_factor (int): Factor by which to multipl number of 
-            network endpoint pairs by to get the number of demands.
+        num_demands_factor (int): Factor by which to multiply number of 
+            network endpoint pairs by to get the initial number of demands.
         min_last_demand_arrival_time (int, float): Minimum last time of arrival
             for final demand (helps user specify a minimum simulation time). Will
             keep doubling number of demands until get >= min_last_demand_arrival_time.
@@ -89,15 +80,19 @@ def create_demand_data(eps,
 
     """
 
-    generator = new_flowcentric.FlowGenerator(eps,
-                                              node_dist,
-                                              flow_size_dist,
-                                              interarrival_time_dist,
-                                              num_demands_factor,
-                                              network_load_config,
-                                              min_last_demand_arrival_time,
-                                              auto_node_dist_correction=True,
-                                              print_data=print_data) 
+    generator = flowcentric.FlowGenerator(eps,
+                                          node_dist,
+                                          flow_size_dist,
+                                          interarrival_time_dist,
+                                          num_demands_factor,
+                                          network_load_config,
+                                          min_last_demand_arrival_time,
+                                          auto_node_dist_correction=True,
+                                          print_data=print_data) 
+
+    # TODO: Put jobcentric generator here
+
+
     return generator.create_flow_centric_demand_data()
 
 
