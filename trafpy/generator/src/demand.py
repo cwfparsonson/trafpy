@@ -270,7 +270,7 @@ class DemandPlotter:
             ylim = None
         else:
             ylabel = 'End Point Load (Fraction)'
-            ylim = [0, 1]
+            ylim = None
         xlabel = 'End Point Link'
         plot_dists.plot_val_bar(ep_loads.keys(), ep_loads.values(), ylabel, ylim, xlabel, show_fig=False)
         figs.append(fig1)
