@@ -168,7 +168,7 @@ if __name__ == '__main__':
 
         # dcn
         MAX_TIME = None # None
-        MAX_FLOWS = 100 # 10 50 500
+        MAX_FLOWS = 50 # 10 50 100 500
 
         # networks
         NUM_CHANNELS = 1
@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
         # schedulers
         # SLOT_SIZE = 1e6
-        SLOT_SIZE = 1.0 #1e4 1e5 1e2 0.1  1e3
+        SLOT_SIZE = 50.0 #1e4 1e5 1e2 0.1  1e3
         PACKET_SIZE = 1 # 300 0.01 1e1 1e2
         #schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
         schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),

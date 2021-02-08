@@ -1639,8 +1639,12 @@ def adjust_probability_dict_sum(probs, target_sum=1, print_data=False):
     return adjusted_probs
 
 
-def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps):
-    '''Gets prob dict of each pair being chosen given node dist of probabilities.'''
+def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps, bidirectional=False):
+    '''Gets prob dict of each pair being chosen given node dist of probabilities.
+
+    If bidirectional, will multiply probabilities by 2 as pair can be src-dst or dst-src.
+    If bidirectional=True -> values sum to 1, if bidirectional=False -> values sum to 0.5.
+    '''
     index_to_pair, pair_to_index = get_network_pair_mapper(eps)
     num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
 
@@ -1658,11 +1662,15 @@ def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps):
                 pair = json.dumps([src, dst])
                 try:
                     pair_prob_dict[pair] = node_dist[src_idx, dst_idx]
+                    if bidirectional:
+                        pair_prob_dict[pair] += node_dist[dst_idx, src_idx]
                 except KeyError:
                     pair = json.loads(pair)
                     pair = [pair[1],pair[0]]
                     pair = json.dumps(pair)
                     pair_prob_dict[pair] = node_dist[src_idx, dst_idx]
+                    if bidirectional:
+                        pair_prob_dict[pair] += node_dist[dst_idx, src_idx]
 
 
 

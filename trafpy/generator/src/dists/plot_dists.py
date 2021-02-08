@@ -24,6 +24,7 @@ def plot_node_dist(node_dist,
                    node_to_index_dict=None,
                    add_labels=False, 
                    add_ticks=False,
+                   cbar_label='Fraction',
                    show_fig=False):
     '''Plots network node demand probability distribution as a 2D matrix.
 
@@ -35,6 +36,7 @@ def plot_node_dist(node_dist,
         node_to_index_dict (dict): Maps node labels (keys) to integer indices (values).
         add_labels (bool): Whether or not to node labels to plot.
         add_ticks (bool): Whether or not to add ticks to x- and y-axis.
+        cbar_label (str): Label for colour bar.
         show_fig (bool): Whether or not to plot and show fig. If True, will
             return and display fig.
 
@@ -66,7 +68,7 @@ def plot_node_dist(node_dist,
                      edgecolor='0.3'))
     plt.xlabel('Destination (Node #)')
     plt.ylabel('Source (Node #)')
-    cbar.ax.set_ylabel('Probability', rotation=270, x=0.5)
+    cbar.ax.set_ylabel(cbar_label, rotation=270, x=0.5)
     if add_ticks:
         plt.xticks([node_to_index_dict[node] for node in eps])
         plt.yticks([node_to_index_dict[node] for node in eps])

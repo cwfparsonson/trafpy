@@ -17,6 +17,7 @@ def create_demand_data(eps,
                        network_load_config=None,
                        num_demands_factor=500,
                        min_last_demand_arrival_time=None,
+                       auto_node_dist_correction=False,
                        num_ops_dist=None,
                        c=None,
                        use_multiprocessing=True,
@@ -64,6 +65,12 @@ def create_demand_data(eps,
         min_last_demand_arrival_time (int, float): Minimum last time of arrival
             for final demand (helps user specify a minimum simulation time). Will
             keep doubling number of demands until get >= min_last_demand_arrival_time.
+        auto_node_dist_correction (bool): If True, if a node dist and overall load
+            is specified which is not valid since would lead to at least one endpoint
+            link's load exceeding 1.0, TrafPy will automatically adjust the node 
+            dist by distributing the excess load uniformally across all other valid
+            end points. As such, as the network load tends to 1.0, the node dist
+            will approach uniform with 1.0 load being requested on all end point links.
         print_data (bool): whether or not to print extra information about the
             generated data (such as time to generate).
         path_to_save (str): Path to directory (with file name included) in which
@@ -87,7 +94,7 @@ def create_demand_data(eps,
                                           num_demands_factor,
                                           network_load_config,
                                           min_last_demand_arrival_time,
-                                          auto_node_dist_correction=True,
+                                          auto_node_dist_correction=auto_node_dist_correction,
                                           print_data=print_data) 
 
     # TODO: Put jobcentric generator here

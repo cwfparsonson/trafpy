@@ -8,7 +8,7 @@ import json
 import copy
 import random
 from progress.bar import ShadyBar
-# from progress.spinner import Spinner
+import math
 
 
 
@@ -120,10 +120,12 @@ class FlowGenerator:
 
         if self.min_last_demand_arrival_time is not None:
             # duplicate flows until get duration >= user-specified duration
-            # duplication_spinner = Spinner('Duplicating flows ')
-            while max(demand_data['event_time']) < self.min_last_demand_arrival_time:
-                demand_data = duplicate_demands_in_demand_data_dict(demand_data, method='all_eps', eps=self.eps)
-                # duplication_spinner.next()
+            adjustment_factor = self.min_last_demand_arrival_time / max(demand_data['event_time'])
+            num_duplications = math.ceil(math.log(adjustment_factor, 2))
+            demand_data = duplicate_demands_in_demand_data_dict(demand_data, num_duplications=num_duplications, eps=self.eps)
+
+            # while max(demand_data['event_time']) < self.min_last_demand_arrival_time:
+                # demand_data = duplicate_demands_in_demand_data_dict(demand_data, method='all_eps', eps=self.eps)
 
         return demand_data
 
@@ -164,57 +166,25 @@ class FlowGenerator:
         self.interarrival_time_dist = new_interarrival_time_dist
 
         # gen new interarrival times
-        interarrival_times = val_dists.gen_rand_vars_from_discretised_dist(unique_vars=list(self.interarrival_time_dist.keys()),
-                                                                           probabilities=list(self.interarrival_time_dist.values()),
-                                                                           num_demands=self.num_demands)
+        # NEW METHOD: Just scale interarrival times as you have scaled interarrival time dist
+        interarrival_times *= factor
+
+        # OLD METHOD: Re-generates by sampling from new dist. CON: Leads to different data -> get different loads.
+        # interarrival_times = val_dists.gen_rand_vars_from_discretised_dist(unique_vars=list(self.interarrival_time_dist.keys()),
+                                                                           # probabilities=list(self.interarrival_time_dist.values()),
+                                                                           # num_demands=self.num_demands)
 
         return interarrival_times
-
-    def _increase_demand_load_to_target(self, flow_sizes, interarrival_times, increment_factor=0.5):
-        '''
-        Updates self.interarrival_time_dist and returns new interarrival times
-        such that overall load > target load.
-        '''
-        load_rate = self._calc_overall_load_rate(flow_sizes, interarrival_times)
-        load_fraction = load_rate / self.network_load_config['network_rate_capacity']
-
-        while load_fraction < self.network_load_config['target_load_fraction']:
-            # decrease interarrival times to increase load
-            interarrival_times = self._change_interarrival_times_by_factor(interarrival_times, increment_factor)
-
-            # calc new load rate
-            load_rate = self._calc_overall_load_rate(flow_sizes, interarrival_times)
-            load_fraction = load_rate / self.network_load_config['network_rate_capacity']
-
-        return interarrival_times
-
-    def _decrease_demand_load_to_target(self, flow_sizes, interarrival_times, increment_factor=1.001):
-        '''
-        Updates self.interarrival_time_dist and returns new interarrival times
-        such that overall load <= target load.
-        '''
-        load_rate = self._calc_overall_load_rate(flow_sizes, interarrival_times)
-        load_fraction = load_rate / self.network_load_config['network_rate_capacity']
-
-        while load_fraction > self.network_load_config['target_load_fraction']:
-            # increase interarrival times to decrease load
-            interarrival_times = self._change_interarrival_times_by_factor(interarrival_times, increment_factor)
-
-            # calc new load rate
-            load_rate = self._calc_overall_load_rate(flow_sizes, interarrival_times)
-            load_fraction = load_rate / self.network_load_config['network_rate_capacity']
-
-        return interarrival_times
-
 
     def _adjust_demand_load(self,
                             flow_sizes,
                             interarrival_times):
-        # adjust to get load fraction > target load fraction (using big factor to decrease search time)
-        interarrival_times = self._increase_demand_load_to_target(flow_sizes, interarrival_times)
-
-        # adjust back down to get load fraction <= target load fraction (using small factor to get high search resolution)
-        interarrival_times = self._decrease_demand_load_to_target(flow_sizes, interarrival_times)
+        # total info arriving (sum of flow sizes) is fixed
+        # therefore to adjust load, must adjust duration by adjusting interarrival time dist
+        load_rate = self._calc_overall_load_rate(flow_sizes, interarrival_times)
+        load_fraction = load_rate / self.network_load_config['network_rate_capacity']
+        adjustment_factor = load_fraction / self.network_load_config['target_load_fraction'] 
+        interarrival_times = self._change_interarrival_times_by_factor(interarrival_times, adjustment_factor)
 
         return interarrival_times
 
@@ -264,8 +234,14 @@ class FlowPacker:
 
         # calc target load rate of each src-dst pair
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
-        self.pair_prob_dict = node_dists.get_pair_prob_dict_of_node_dist_matrix(self.node_dist, self.eps)
+        self.pair_prob_dict = node_dists.get_pair_prob_dict_of_node_dist_matrix(self.node_dist, self.eps) # N.B. These values sum to 0.5 -> need to allocate twice (src-dst and dst-src)
         self.pair_target_load_rate_dict = {pair: frac*self.load_rate for pair, frac in self.pair_prob_dict.items()}
+
+        # # calc target load rate for each ep
+        # self.ep_target_load_rate_dict = {ep: 0 for ep in self.eps}
+        # for pair in self.pair_target_load_rate_dict.keys():
+            # self.ep_target_load_rate_dict[json.loads(pair)[0]] += self.pair_target_load_rate_dict[pair]
+            # self.ep_target_load_rate_dict[json.loads(pair)[1]] += self.pair_target_load_rate_dict[pair]
 
         # calc target total info to pack into each src-dst pair
         flow_event_times = tools.gen_event_times(self.flow_interarrival_times)
@@ -281,8 +257,13 @@ class FlowPacker:
         self.ep_total_infos = {ep: 0 for ep in self.eps}
 
 
+
     def pack_the_flows(self):
-        packer_bar = ShadyBar('Packing flows ', max=len(self.packed_flows.keys()))
+        # packer_bar = ShadyBar('Packing flows ', max=len(self.packed_flows.keys()))
+        packer_bar = ShadyBar('Packing flows ', max=100)
+        printed_progress = {percent: False for percent in np.arange(0, 100, 1)}
+        final_flow_count = len(self.flow_ids)
+        counter = 0
         for flow in self.packed_flows.keys():
             chosen_pair = None
 
@@ -291,9 +272,10 @@ class FlowPacker:
             sorted_pairs = sorted(self.pair_current_distance_from_target_info_dict.items(), key = lambda x: x[1], reverse=True) # sorts into descending order
             for p in sorted_pairs:
                 pair = p[0]
-                if self.pair_current_distance_from_target_info_dict[pair] - self.packed_flows[flow]['size'] < 0:
-                    # would exceed pair's target load by allocating to this pair, try next pair
-                    continue
+                ep1, ep2 = json.loads(pair)[0], json.loads(pair)[1]
+                if self.pair_current_distance_from_target_info_dict[pair] - (self.packed_flows[flow]['size']) < 0 or self.ep_total_infos[ep1] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[ep2] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
+                    # would exceed pair's target load by allocating to this pair, try next pair (or would exceed at least one of the pair's ep's max loads)
+                    pass
                 else:
                     chosen_pair = pair
                     break
@@ -306,18 +288,18 @@ class FlowPacker:
                     ep1, ep2 = json.loads(pair)[0], json.loads(pair)[1]
                     if self.ep_total_infos[ep1] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[ep2] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
                         # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
-                        continue
+                        pass 
                     else:
                         chosen_pair = pair
                         break
 
             if chosen_pair is None:
                 # could not find end point pair with enough capacity to take flow
-                raise Exception('Unable to find valid pair to assign flow {}: {} without exceeding ep total information load limit {} information units for this session. Decrease required load, change node_dist, or decrease flow sizes to help with packing. Current end point total information loads (information units):\n{}'.format(flow, self.packed_flows[flow], self.max_total_ep_info, self.ep_total_infos))
+                raise Exception('Unable to find valid pair to assign flow {}: {} without exceeding ep total information load limit {} information units for this session. Decrease flow sizes to help with packing (recommended), and/or decrease your required target load to increase the time duration the flow packer has to pack flows into, and/or change your node dist to be less heavily skewed. Alternatively, try re-running dist and flow generator since may have chance of creating valid dists and flows which can be packed (also recommended). Current end point total information loads (information units):\n{}'.format(flow, self.packed_flows[flow], self.max_total_ep_info, self.ep_total_infos))
 
             # pack flow into this pair
-            self.pair_current_total_info_dict[chosen_pair] = int(self.pair_current_total_info_dict[chosen_pair] + self.packed_flows[flow]['size'])
-            self.pair_current_distance_from_target_info_dict[chosen_pair] = int(self.pair_current_distance_from_target_info_dict[chosen_pair] - self.packed_flows[flow]['size'])
+            self.pair_current_total_info_dict[chosen_pair] = int(self.pair_current_total_info_dict[chosen_pair] + (self.packed_flows[flow]['size']))
+            self.pair_current_distance_from_target_info_dict[chosen_pair] = int(self.pair_current_distance_from_target_info_dict[chosen_pair] - (self.packed_flows[flow]['size']))
 
             # updated packed flows dict
             pair = json.loads(chosen_pair)
@@ -330,7 +312,13 @@ class FlowPacker:
             self.packed_flows[flow]['src'], self.packed_flows[flow]['dst'] = src, dst 
             self.ep_total_infos[src] += self.packed_flows[flow]['size']
             self.ep_total_infos[dst] += self.packed_flows[flow]['size']
-            packer_bar.next()
+
+            counter += 1
+            percent = round((counter/final_flow_count)*100, 1)
+            if percent != 100:
+                if percent % 1 == 0 and not printed_progress[percent]:
+                    packer_bar.next()
+                    printed_progress[percent] = True
 
         # shuffle flow order to maintain randomness
         shuffled_packed_flows = {}
@@ -340,6 +328,11 @@ class FlowPacker:
             shuffled_packed_flows[shuffled_key] = self.packed_flows[shuffled_key]
 
         packer_bar.finish()
+
+        if self.print_data:
+            print('Final total infos at each ep:\n{}'.format(self.ep_total_infos))
+            ep_load_rates = {ep: self.ep_total_infos[ep]/self.duration for ep in self.ep_total_infos.keys()}
+            print('Corresponding final load rates at each ep:\n{}'.format(ep_load_rates))
 
         return shuffled_packed_flows
             
@@ -356,7 +349,6 @@ class FlowPacker:
                     print('auto_node_dist_correction set to True. Adjusting node distribution to make it valid...')
                     if self.print_data:
                         print('init node dist before correction:\n{}'.format(self.node_dist))
-                    # self.auto_correction_spinner = Spinner('Adjusting node_dist ')
                     self.eps_at_capacity = {ep: False for ep in self.ep_total_infos.keys()}
                     invalid_ep_found = True
                     while invalid_ep_found:
@@ -369,7 +361,7 @@ class FlowPacker:
         invalid_ep_found = False 
         for idx in self.index_to_node.keys():
             endpoint_target_load_fraction_of_overall_load = sum(self.node_dist[idx, :])
-            endpoint_target_load_rate = round(endpoint_target_load_fraction_of_overall_load * self.load_rate, 3)
+            endpoint_target_load_rate = round(endpoint_target_load_fraction_of_overall_load * self.load_rate, 6)
             if self.print_data:
                 print('ep {} target load rate: {}'.format(idx, endpoint_target_load_rate))
             if endpoint_target_load_rate > self.network_load_config['ep_link_capacity']:
@@ -380,8 +372,8 @@ class FlowPacker:
                 # make ep loads equal on all this ep's pairs such that max ep bandwidth requested
                 for pair_idx in self.index_to_node.keys():
                     if pair_idx != idx:
-                        self.node_dist[idx, pair_idx] = (max_ep_load_frac / (self.num_nodes-1))
-                        self.node_dist[pair_idx, idx] = (max_ep_load_frac / (self.num_nodes-1))
+                        self.node_dist[idx, pair_idx] = (max_ep_load_frac / ((self.num_nodes-1)))
+                        self.node_dist[pair_idx, idx] = (max_ep_load_frac / ((self.num_nodes-1)))
                 # spread excess load evenly across other eps not already at capacity
                 free_eps = []
                 for ep in excess_ep_load_rates.keys():
@@ -395,15 +387,17 @@ class FlowPacker:
                 for ep in free_eps:
                     for i in self.index_to_node.keys():
                         if i != self.node_to_index[ep] and not self.eps_at_capacity[self.index_to_node[i]]:
-                            self.node_dist[self.node_to_index[ep], i] += frac_load_rate_to_spread_per_ep_pair
-                            self.node_dist[i, self.node_to_index[ep]] += frac_load_rate_to_spread_per_ep_pair
+                            self.node_dist[self.node_to_index[ep], i] += (frac_load_rate_to_spread_per_ep_pair)
+                            self.node_dist[i, self.node_to_index[ep]] += (frac_load_rate_to_spread_per_ep_pair)
+
                 endpoint_target_load_fraction_of_overall_load = sum(self.node_dist[idx, :])
                 endpoint_target_load_rate = endpoint_target_load_fraction_of_overall_load * self.load_rate
                 self.reset() # update params
                 if self.print_data:
                     print('updated node dist:\n{}'.format(self.node_dist))
-            # self.auto_correction_spinner.next() 
+
         return invalid_ep_found
+
 
 
 
@@ -553,94 +547,98 @@ def get_first_last_flow_arrival_times(demand_data):
 
 
 
-def duplicate_demands_in_demand_data_dict(demand_data, method='all_eps', **kwargs):
-    '''
-    If method == 'all_eps', will duplicate all demands by adding final event time
-    over all endpoints to each event time
-
-    if method == 'per_ep', will duplicate all demands by adding final even time
-    for each endpoint's final event time
-
-    '''
-    copy_demand_data = copy.deepcopy(demand_data) 
+def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwargs):
+    '''Duplicates set of flows by the specified number of times.'''
+    demand_data = copy.deepcopy(demand_data)
 
     # ensure values of dict are lists
-    for key, value in copy_demand_data.items():
-        copy_demand_data[key] = list(value)
+    for key, value in demand_data.items():
+        demand_data[key] = list(value)
 
-    if method == 'all_eps':
+    duplication_bar = ShadyBar('Duplicating flows ', max=int(100))
+    printed_progress = {percent: False for percent in np.arange(0, 100, 1)}
+    final_flow_count = (2**num_duplications)*len(demand_data['flow_id'])
+    counter = 0
+    for _ in range(num_duplications):
         # final_event_time = max(demand_data['event_time'])
         num_demands = len(demand_data['flow_id'])
         final_event_time = max(demand_data['event_time'])
         first_event_time = min(demand_data['event_time'])
         duration = final_event_time - first_event_time
         for idx in range(len(demand_data['flow_id'])):
-            copy_demand_data['flow_id'].append('flow_{}'.format(int(idx+num_demands)))
-            copy_demand_data['sn'].append(demand_data['sn'][idx])
-            copy_demand_data['dn'].append(demand_data['dn'][idx])
-            copy_demand_data['flow_size'].append(demand_data['flow_size'][idx])
-            # copy_demand_data['event_time'].append(final_event_time + demand_data['event_time'][idx])
-            copy_demand_data['event_time'].append(duration + demand_data['event_time'][idx])
-            copy_demand_data['establish'].append(demand_data['establish'][idx])
-            copy_demand_data['index'].append(demand_data['index'][idx] + idx)
+            demand_data['flow_id'].append('flow_{}'.format(int(idx+num_demands)))
+            demand_data['sn'].append(demand_data['sn'][idx])
+            demand_data['dn'].append(demand_data['dn'][idx])
+            demand_data['flow_size'].append(demand_data['flow_size'][idx])
+            # demand_data['event_time'].append(final_event_time + demand_data['event_time'][idx])
+            demand_data['event_time'].append(duration + demand_data['event_time'][idx])
+            demand_data['establish'].append(demand_data['establish'][idx])
+            demand_data['index'].append(demand_data['index'][idx] + idx)
+            counter += 1
+            percent = round((counter/final_flow_count)*100, 1)
+            if percent % 1 == 0 and not printed_progress[percent]:
+                duplication_bar.next()
+                printed_progress[percent] = True
 
-    elif method == 'per_ep':
-        original_ep_info = group_demand_data_into_ep_info(copy_demand_data, eps=kwargs['eps'])
-        # idx_iterator = iter(range(num_demands))
-        duplicated_flows = {flow_id: False for flow_id in copy_demand_data['flow_id']}
-        print('Flows before duplication: {}'.format(len(copy_demand_data['flow_id'])))
-        idx_iterator = iter(range(len(copy_demand_data['flow_id'])))
-        for ep in kwargs['eps']:
-            # ep_info = group_demand_data_into_ep_info(copy_demand_data, eps=kwargs['eps'])
-            num_demands = len(original_ep_info[ep]['flow_id'])
+    # elif method == 'per_ep':
+        # original_ep_info = group_demand_data_into_ep_info(copy_demand_data, eps=kwargs['eps'])
+        # # idx_iterator = iter(range(num_demands))
+        # duplicated_flows = {flow_id: False for flow_id in copy_demand_data['flow_id']}
+        # print('Flows before duplication: {}'.format(len(copy_demand_data['flow_id'])))
+        # idx_iterator = iter(range(len(copy_demand_data['flow_id'])))
+        # for ep in kwargs['eps']:
+            # # ep_info = group_demand_data_into_ep_info(copy_demand_data, eps=kwargs['eps'])
+            # num_demands = len(original_ep_info[ep]['flow_id'])
 
-            first_event_time = min(original_ep_info[ep]['event_time'])
-            final_event_time = max(original_ep_info[ep]['event_time'])
-            duration = final_event_time - first_event_time
+            # first_event_time = min(original_ep_info[ep]['event_time'])
+            # final_event_time = max(original_ep_info[ep]['event_time'])
+            # duration = final_event_time - first_event_time
 
-            # DEBUG 
-            total_info = sum(original_ep_info[ep]['flow_size'])
-            num_flows = len(original_ep_info[ep]['flow_id'])
-            load = total_info / (final_event_time - first_event_time)
-            print('Init {} duration: {} total info: {} | load: {} | flows: {}'.format(ep, duration, total_info, load, num_flows))
+            # # DEBUG 
+            # total_info = sum(original_ep_info[ep]['flow_size'])
+            # num_flows = len(original_ep_info[ep]['flow_id'])
+            # load = total_info / (final_event_time - first_event_time)
+            # print('Init {} duration: {} total info: {} | load: {} | flows: {}'.format(ep, duration, total_info, load, num_flows))
 
-            for ep_flow_idx in range(len(original_ep_info[ep]['flow_id'])):
-                flow_id = original_ep_info[ep]['flow_id'][ep_flow_idx]
-                if not duplicated_flows[flow_id]:
-                    duplicated_flows[flow_id] = True
-                    # not yet duplicated this flow
-                    # i = find_index_of_int_in_str(flow_id)
-                    # idx = int(flow_id[i:])
-                    idx = next(idx_iterator)
+            # for ep_flow_idx in range(len(original_ep_info[ep]['flow_id'])):
+                # flow_id = original_ep_info[ep]['flow_id'][ep_flow_idx]
+                # if not duplicated_flows[flow_id]:
+                    # duplicated_flows[flow_id] = True
+                    # # not yet duplicated this flow
+                    # # i = find_index_of_int_in_str(flow_id)
+                    # # idx = int(flow_id[i:])
+                    # idx = next(idx_iterator)
 
-                    # copy_demand_data['flow_id'].append('flow_{}'.format(int(idx+num_demands)))
-                    copy_demand_data['flow_id'].append('flow_{}'.format(int(idx+len(demand_data['flow_id']))))
-                    copy_demand_data['sn'].append(original_ep_info[ep]['sn'][ep_flow_idx])
-                    copy_demand_data['dn'].append(original_ep_info[ep]['dn'][ep_flow_idx])
-                    copy_demand_data['flow_size'].append(original_ep_info[ep]['flow_size'][ep_flow_idx])
-                    copy_demand_data['event_time'].append(duration + original_ep_info[ep]['event_time'][ep_flow_idx])
-                    copy_demand_data['establish'].append(original_ep_info[ep]['establish'][ep_flow_idx])
-                    copy_demand_data['index'].append(original_ep_info[ep]['index'][ep_flow_idx] + idx)
-                else:
-                    # already duplicated this flow in copy_demand_data
-                    pass
-            # DEBUG
-            _ep_info = group_demand_data_into_ep_info(copy_demand_data, eps=kwargs['eps'])
-            final_event_time = max(_ep_info[ep]['event_time'])
-            first_event_time = min(_ep_info[ep]['event_time'])
-            total_info = sum(_ep_info[ep]['flow_size'])
-            load = total_info / (final_event_time - first_event_time)
-            num_flows = len(_ep_info[ep]['flow_id'])
-            print('Adjusted {} duration: {} total info: {} | load: {} | flows: {}'.format(ep, duration, total_info, load, num_flows))
-        print('Flows after duplication: {}'.format(len(copy_demand_data['flow_id'])))
+                    # # copy_demand_data['flow_id'].append('flow_{}'.format(int(idx+num_demands)))
+                    # copy_demand_data['flow_id'].append('flow_{}'.format(int(idx+len(demand_data['flow_id']))))
+                    # copy_demand_data['sn'].append(original_ep_info[ep]['sn'][ep_flow_idx])
+                    # copy_demand_data['dn'].append(original_ep_info[ep]['dn'][ep_flow_idx])
+                    # copy_demand_data['flow_size'].append(original_ep_info[ep]['flow_size'][ep_flow_idx])
+                    # copy_demand_data['event_time'].append(duration + original_ep_info[ep]['event_time'][ep_flow_idx])
+                    # copy_demand_data['establish'].append(original_ep_info[ep]['establish'][ep_flow_idx])
+                    # copy_demand_data['index'].append(original_ep_info[ep]['index'][ep_flow_idx] + idx)
+                # else:
+                    # # already duplicated this flow in copy_demand_data
+                    # pass
+            # # DEBUG
+            # _ep_info = group_demand_data_into_ep_info(copy_demand_data, eps=kwargs['eps'])
+            # final_event_time = max(_ep_info[ep]['event_time'])
+            # first_event_time = min(_ep_info[ep]['event_time'])
+            # total_info = sum(_ep_info[ep]['flow_size'])
+            # load = total_info / (final_event_time - first_event_time)
+            # num_flows = len(_ep_info[ep]['flow_id'])
+            # print('Adjusted {} duration: {} total info: {} | load: {} | flows: {}'.format(ep, duration, total_info, load, num_flows))
+        # print('Flows after duplication: {}'.format(len(copy_demand_data['flow_id'])))
 
     # ensure values of dict are lists
-    for key, value in copy_demand_data.items():
-        copy_demand_data[key] = list(value)
+    for key, value in demand_data.items():
+        demand_data[key] = list(value)
+
+    duplication_bar.finish()
 
 
 
-    return copy_demand_data
+    return demand_data 
 
 
 
