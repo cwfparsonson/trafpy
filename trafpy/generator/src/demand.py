@@ -44,19 +44,7 @@ class Demand:
                                                    print_info=print_info)
 
     def get_num_demands(self, demand_data):
-        if 0 in demand_data['establish']:
-            takedowns_present = True
-        else:
-            takedowns_present = False
-
-        if takedowns_present:
-            # half events are takedowns for demand establishments
-            num_demands = int(len(demand_data['establish'])/2)
-        else:
-            # all events are new demands
-            num_demands = int(len(demand_data['establish']))
-
-        return num_demands
+        return len(demand_data['flow_id']) 
 
     def get_num_deps(self, demand_data):
         num_control_deps,num_data_deps,num_flows = 0, 0, 0

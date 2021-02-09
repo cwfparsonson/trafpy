@@ -1461,8 +1461,8 @@ class DCN(gym.Env):
 
 
         # # DEBUG:
-        # print('\n\nTime: {} Step: {} | Sim flows: {} | Flows arrived: {} | Flows completed: {} | Flows dropped: {}'.format(self.curr_time, self.curr_step, self.demand.num_flows, len(self.arrived_flow_dicts), len(self.completed_flows), len(self.dropped_flows)))
-        # queues = self.get_current_queue_states()
+        # print('\n\nTime: {} Step: {} | Sim flows: {} | Flows arrived: {} | Flows completed: {} | Flows dropped: {}'.format(self.curr_time, self.curr_step, self.demand.num_flows, len(self.arrived_flow_dicts), len(self.completed_flows), len(self.dropped_flows))) 
+        # queues = self.get_current_queue_states() 
         # print('Queues being given to scheduler:')
         # i = 0
         # for q in queues:

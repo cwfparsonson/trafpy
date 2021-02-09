@@ -72,8 +72,7 @@ class FlowGenerator:
     def create_flow_centric_demand_data(self):
         # flow ids
         flow_ids = ['flow_'+str(i) for i in range(self.num_demands)]
-        establish = np.concatenate((np.ones((int(len(flow_ids)))), 
-                                    np.zeros((int(len(flow_ids)))))).astype(int)
+        establish = [1 for _ in range(self.num_demands)]
 
         # flow sizes
         flow_sizes = val_dists.gen_rand_vars_from_discretised_dist(unique_vars=list(self.flow_size_dist.keys()),
@@ -557,7 +556,7 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
 
     duplication_bar = ShadyBar('Duplicating flows ', max=int(100))
     printed_progress = {percent: False for percent in np.arange(0, 100, 1)}
-    final_flow_count = (2**num_duplications)*len(demand_data['flow_id'])
+    flows_to_add = (2**num_duplications)*len(demand_data['flow_id']) - len(demand_data['flow_id'])
     counter = 0
     for _ in range(num_duplications):
         # final_event_time = max(demand_data['event_time'])
@@ -575,10 +574,11 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
             demand_data['establish'].append(demand_data['establish'][idx])
             demand_data['index'].append(demand_data['index'][idx] + idx)
             counter += 1
-            percent = round((counter/final_flow_count)*100, 1)
-            if percent % 1 == 0 and not printed_progress[percent]:
-                duplication_bar.next()
-                printed_progress[percent] = True
+            percent = round((counter/flows_to_add)*100, 1)
+            if percent != 100:
+                if percent % 1 == 0 and not printed_progress[percent]:
+                    duplication_bar.next()
+                    printed_progress[percent] = True
 
     # elif method == 'per_ep':
         # original_ep_info = group_demand_data_into_ep_info(copy_demand_data, eps=kwargs['eps'])
