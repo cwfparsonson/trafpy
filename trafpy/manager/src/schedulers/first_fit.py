@@ -31,7 +31,6 @@ class FirstFit:
         for ep in self.scheduler.SchedulerNetwork.graph['endpoints']:
             queues = self.scheduler.SchedulerNetwork.nodes[ep]
             for queue in queues.keys():
-                queued_flows = queues[queue]['queued_flows']
                 if len(queues[queue]['queued_flows']) == 0:
                     # no flows queued, move to next queue
                     continue

@@ -8,6 +8,7 @@ from collections import defaultdict
 import time
 import itertools
 import json
+import random
 
 
 class SchedulerToolbox:
@@ -491,11 +492,13 @@ class SchedulerToolbox:
         
         return queues
 
-    def look_for_available_lightpath(self, chosen_flow, chosen_flows, search_k_shortest=True):
+    def look_for_available_lightpath(self, chosen_flow, chosen_flows, search_k_shortest=True, random_shuffle=False):
         '''
         If search_k_shortest, will look at all k shortest paths available
         in flow['k_shortest_paths']. If False, will only consider flow['path'] 
         already assigned.
+
+        If random_shuffle, will randomly shuffle paths and channels before searching through them.
 
         '''
         # check for link contentions
@@ -504,6 +507,10 @@ class SchedulerToolbox:
         else:
             paths = [chosen_flow['path']]
         channels = self.RWA.channel_names
+        if random_shuffle:
+            random.shuffle(paths)
+            random.shuffle(channels)
+
         taken_paths = [flow['path'] for flow in chosen_flows]
         taken_edges = [self.get_path_edges(taken_path) for taken_path in taken_paths]
         taken_channels = [flow['channel'] for flow in chosen_flows]
