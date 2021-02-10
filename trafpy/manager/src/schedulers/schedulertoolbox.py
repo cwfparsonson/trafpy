@@ -554,7 +554,7 @@ class SchedulerToolbox:
 
         return cost
 
-    def find_all_contending_flows(self, chosen_flow, chosen_flows, cost_metric, **kwargs):
+    def find_all_contending_flows(self, chosen_flow, chosen_flows, cost_metric=None, **kwargs):
         # check cost metric given is valid
         if cost_metric == 'basrpt_cost':
             required_kwargs = ['V', 'N']
@@ -562,9 +562,6 @@ class SchedulerToolbox:
         for kwarg in kwargs.keys():
             if kwarg not in required_kwargs:
                 raise Exception('{} metric requires kwargs {} but have only given {}'.format(cost_metric, required_kwargs, kwargs))
-        
-        
-
 
         contending_flows = {}
 
@@ -608,7 +605,9 @@ class SchedulerToolbox:
                             contending_flows[channel]['chosen_p'] = [path]
                             contending_flows[channel]['chosen_c'] = [channel]
                             contending_flows[channel]['chosen_num_packets'] = [chosen_flows[idx]['packets_this_slot']]
-                            if cost_metric == 'basrpt_cost':
+                            if cost_metric is None:
+                                cost = None
+                            elif cost_metric == 'basrpt_cost':
                                 cost = self.calc_basrpt_cost(chosen_flows[idx], kwargs['V'], kwargs['N'])
                             elif cost_metric == 'fct':
                                 cost, _ = self.estimate_time_to_completion(chosen_flows[idx])
@@ -620,7 +619,9 @@ class SchedulerToolbox:
                             contending_flows[channel]['chosen_p'].append(path)
                             contending_flows[channel]['chosen_c'].append(channel)
                             contending_flows[channel]['chosen_num_packets'].append(chosen_flows[idx]['packets_this_slot'])
-                            if cost_metric == 'basrpt_cost':
+                            if cost_metric is None:
+                                cost = None
+                            elif cost_metric == 'basrpt_cost':
                                 cost = self.calc_basrpt_cost(chosen_flows[idx], kwargs['V'], kwargs['N'])
                             elif cost_metric == 'fct':
                                 cost, _ = self.estimate_time_to_completion(chosen_flows[idx])
