@@ -38,8 +38,10 @@ trafpy/manager/src/routers/rwa.py
 trafpy/manager/src/schedulers/__init__.py
 trafpy/manager/src/schedulers/agent.py
 trafpy/manager/src/schedulers/basrpt.py
+trafpy/manager/src/schedulers/fair_share.py
+trafpy/manager/src/schedulers/first_fit.py
 trafpy/manager/src/schedulers/parametric_agent.py
-trafpy/manager/src/schedulers/random.py
+trafpy/manager/src/schedulers/random_agent.py
 trafpy/manager/src/schedulers/schedulers.py
 trafpy/manager/src/schedulers/schedulertoolbox.py
 trafpy/manager/src/schedulers/srpt.py
