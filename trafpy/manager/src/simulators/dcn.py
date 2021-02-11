@@ -1461,20 +1461,20 @@ class DCN(gym.Env):
 
 
         # # DEBUG:
-        # print('\n\nTime: {} Step: {} | Sim flows: {} | Flows arrived: {} | Flows completed: {} | Flows dropped: {}'.format(self.curr_time, self.curr_step, self.demand.num_flows, len(self.arrived_flow_dicts), len(self.completed_flows), len(self.dropped_flows))) 
         # queues = self.get_current_queue_states() 
         # print('Queues being given to scheduler:')
         # i = 0
         # for q in queues:
            # print('queue {}:\n{}'.format(i, q))
            # i+=1
-        # print('Chosen action:\n{}'.format(action))
+        # print('Chosen action received by environment:\n{}'.format(action))
         # print('Incomplete control deps:')
         # # for c in self.arrived_control_deps:
            # # if c['time_completed'] is None or c['time_parent_op_started'] is None:
                # # print(c)
            # # else:
                # # pass
+        # print('Time: {} Step: {} | Sim flows: {} | Flows arrived: {} | Flows completed: {} | Flows dropped: {}'.format(self.curr_time, self.curr_step, self.demand.num_flows, len(self.arrived_flow_dicts), len(self.completed_flows), len(self.dropped_flows))) 
 
         return obs, reward, done, info
   
@@ -1737,6 +1737,11 @@ class DCN(gym.Env):
         num_edges = len(edges)
         for edge in range(num_edges):
             node_pair = edges[edge]
+
+            # check that establishing this flow is valid given edge capacity constraints
+            if self.network[node_pair[0]][node_pair[1]]['channels'][channel] - capacity_used_this_slot < 0:
+                raise Exception('Tried to set up flow {} on edge {} channel {}, but this results in a negative channel capacity on this edge i.e. this edge\'s channel is full, cannot have more flow packets scheduled! Scheduler should not be giving invalid chosen flow sets to the environment.'.format(flow, node_pair, channel)) 
+
             # update edge capacity remaining after establish this flow
             self.network[node_pair[0]][node_pair[1]]['channels'][channel] -= capacity_used_this_slot
             self.network[node_pair[0]][node_pair[1]]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['channels'][channel], num_decimals)
@@ -1748,9 +1753,6 @@ class DCN(gym.Env):
                     self.update_link_concurrent_demands_evolution(node_pair[::-1], num_concurrent_demands_to_add=1)
 
 
-            # check that establishing this flow is valid given edge capacity constraints
-            if self.network[node_pair[0]][node_pair[1]]['channels'][channel] < 0:
-                raise Exception('Tried to set up flow {} on edge {} channel {}, but this results in a negative channel capacity on this edge i.e. this edge\'s channel is full, cannot have more flow packets scheduled! Scheduler should not be giving invalid chosen flow sets to the environment.'.format(flow, edge, channel)) 
 
 
             # update global graph property

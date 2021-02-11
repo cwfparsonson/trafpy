@@ -186,6 +186,47 @@ class SchedulerToolbox:
 
         return flow_queue
 
+    def check_edge_valid(self, flow, edge, num_decimals=6):
+        info_to_transfer_this_slot = flow['packets_this_slot'] * flow['packet_size']
+        capacity_used_this_slot = round(info_to_transfer_this_slot / self.slot_size, num_decimals) # info units of this flow transferred this time slot == capacity used on each channel in flow's path this time slot
+        if self.SchedulerNetwork[edge[0]][edge[1]]['channels'][flow['channel']] - capacity_used_this_slot < 0:
+            return False
+        else:
+            return True
+
+
+    def check_connection_valid(self, flow, num_decimals=6):
+        '''
+        Returns False if setting up connection would result in -ve 
+        bandwidth on at least one link in network.
+        '''
+        # path = flow['path']
+        # channel = flow['channel']
+        # packet_size = flow['packet_size']
+        # packets_this_slot = flow['packets_this_slot']
+
+        # info_to_transfer_this_slot = packets_this_slot * packet_size
+        # capacity_used_this_slot = round(info_to_transfer_this_slot / self.slot_size, num_decimals) # info units of this flow transferred this time slot == capacity used on each channel in flow's path this time slot
+
+        edges = self.get_path_edges(flow['path'])
+
+        num_edges = len(edges)
+        for edge in range(num_edges):
+            node_pair = edges[edge]
+
+            # check that establishing this flow is valid given edge capacity constraints
+            # if self.SchedulerNetwork[node_pair[0]][node_pair[1]]['channels'][channel] - capacity_used_this_slot < 0:
+            if not self.check_edge_valid(flow, node_pair, num_decimals):
+                # # DEBUG
+                # for edge in self.SchedulerNetwork.edges:
+                    # for channel in self.RWA.channel_names:
+                        # bw = self.get_channel_bandwidth(edge, channel)
+                        # print('edge: {} | channel: {} | bandwidth remaining: {}'.format(edge, channel, bw))
+
+                return False
+
+        return True
+
     def set_up_connection(self, flow, num_decimals=6):
         '''
         Sets up connection between src-dst node pair by removing capacity from
@@ -195,13 +236,16 @@ class SchedulerToolbox:
         Args:
         - flow (dict): flow dict containing flow info to set up
         '''
+
         if self.debug_mode:
             print('Setting up connection for flow {}'.format(flow))
+
+        if not self.check_connection_valid(flow):
+            raise Exception('Tried to set up connection for flow {} but would result in -ve bandwidth on at least one edge in network.'.format(flow))
+
         path = flow['path']
         channel = flow['channel']
-        flow_size = flow['size']
         packet_size = flow['packet_size']
-        packets = flow['packets']
         packets_this_slot = flow['packets_this_slot']
 
         info_to_transfer_this_slot = packets_this_slot * packet_size
@@ -212,6 +256,7 @@ class SchedulerToolbox:
         num_edges = len(edges)
         for edge in range(num_edges):
             node_pair = edges[edge]
+
             # update edge capacity remaining after establish this flow
             init_bw = self.get_channel_bandwidth(node_pair, channel)
             self.SchedulerNetwork[node_pair[0]][node_pair[1]]['channels'][channel] -= capacity_used_this_slot
@@ -219,9 +264,6 @@ class SchedulerToolbox:
             if self.debug_mode:
                 print('Updated {} capacity for {}: {} -> {}'.format(channel, node_pair, init_bw, self.get_channel_bandwidth(node_pair, channel)))
 
-            # check that establishing this flow is valid given edge capacity constraints
-            if self.SchedulerNetwork[node_pair[0]][node_pair[1]]['channels'][channel] < 0:
-                raise Exception('Tried to set up flow {} on edge {} channel {}, but this results in a negative channel capacity on this edge i.e. this edge\'s channel is full, cannot have more flow packets scheduled!'.format(flow, edge, channel)) 
 
             # update global graph property
             self.SchedulerNetwork.graph['curr_nw_capacity_used'] += capacity_used_this_slot

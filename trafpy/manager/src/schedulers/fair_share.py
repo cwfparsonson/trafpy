@@ -159,6 +159,8 @@ class FairShare:
             flow['packets_this_slot'] = min(flow_id_to_packets_to_schedule_per_edge[flow_id])
             chosen_flows.append(flow)
 
+            self.scheduler.set_up_connection(flow)
+
         return chosen_flows
 
 

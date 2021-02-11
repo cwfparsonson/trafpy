@@ -43,14 +43,15 @@ class TestBed:
 
         jobs = []
         start_time = time.time()
-        _loads = [0.1, 0.2, 0.3, 0.4, 0.5] # DEBUG
+        # _loads = [0.1, 0.2, 0.3, 0.4, 0.5] # DEBUG
         for benchmark in self.benchmarks:
             # for load in self.benchmark_data[benchmark]:
             for load in list(self.benchmark_data[benchmark].keys()):
                 for repeat in self.benchmark_data[benchmark][load]:
                     for scheduler in config['schedulers']:
-                        # if json.loads(load) == 0.1 and scheduler.scheduler_name == 'fair_share': # DEBUG 
-                        if json.loads(load) in _loads: # DEBUG
+                        # if json.loads(load) == 0.4 and scheduler.scheduler_name == 'srpt_v2': # DEBUG 
+                        # if json.loads(load) in _loads: # DEBUG
+                        if json.loads(load) == 0.4: # DEBUG
                             demand_data = self.benchmark_data[benchmark][load][repeat]
                             demand = Demand(demand_data, config['networks'][0].graph['endpoints'])
                             
@@ -154,7 +155,7 @@ if __name__ == '__main__':
     import trafpy
     from trafpy.generator.src.networks import gen_fat_tree, gen_channel_names
     from trafpy.manager.src.routers.routers import RWA
-    from trafpy.manager.src.schedulers.schedulers import SRPT, BASRPT, RandomAgent, FirstFit, FairShare
+    from trafpy.manager.src.schedulers.schedulers import SRPT, SRPT_v2, BASRPT, RandomAgent, FirstFit, FairShare
 
 
 
@@ -186,13 +187,17 @@ if __name__ == '__main__':
         # SLOT_SIZE = 1e6
         SLOT_SIZE = 50.0 #1e4 1e5 1e2 0.1  1e3
         PACKET_SIZE = 1 # 300 0.01 1e1 1e2
+        # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                      # BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
+                      # FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                      # FirstFit(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                      # RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
+        # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                      # SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                      # BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
+                      # FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
         schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
-                      FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      FirstFit(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
-        schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
+                      SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
                       FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
         # schedulers = []
         # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]
