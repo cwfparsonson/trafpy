@@ -194,25 +194,11 @@ class SRPT_v2:
 
     def get_action(self, observation, print_processing_time=False):
         chosen_flows = self.get_scheduler_action(observation)
-        action = {'chosen_flows': chosen_flows}
-
-        return action
+        return {'chosen_flows': chosen_flows}
 
     def cost_function(self, flow):
-        path_links = self.toolbox.get_path_edges(flow['path'])
-        link_bws = []
-        for link in path_links:
-            link_bws.append(self.toolbox.network[link[0]][link[1]]['max_channel_capacity'])
-        lowest_bw = min(link_bws)
-        
-        size_per_slot = lowest_bw/(1/self.toolbox.slot_size)
-        packets_per_slot = int(size_per_slot / flow['packet_size']) # round down 
-        if packets_per_slot == 0:
-            raise Exception('Encountered 0 packets that can be transferred per time slot. Either decrease packet size or increase time slot size.')
-        slots_to_completion = math.ceil(flow['packets']/packets_per_slot) # round up
-        completion_time = slots_to_completion * self.toolbox.slot_size
-
-        return completion_time
+        '''SRPT cost function.'''
+        return self.toolbox.estimate_time_to_completion(flow)
 
     def get_scheduler_action(self, observation):
         # update network state
@@ -249,19 +235,6 @@ class SRPT_v2:
                 else:
                     # flow must have been allocated bandwidth on at least one end point link, check for contentions and try to establish flow 
                     chosen_flows = self.toolbox.resolve_contentions_and_set_up_flow(flow, chosen_flows, requested_edges, flow_id_to_cost, edge_to_sorted_costs, edge_to_sorted_flow_ids, flow_id_to_packets_to_schedule_per_edge)
-
-                
-
-
-
-
-
-
-
-
-
-
-
         # DEBUG 
         # print('\n----')
         # edge_to_chosen_flows = {edge: [] for edge in requested_edges.keys()}
@@ -276,9 +249,6 @@ class SRPT_v2:
                     # print('edge: {} | channel: {} | chosen flows: {} | bandwidth remaining: {}'.format(edge, channel, edge_to_chosen_flows[json.dumps(sorted(edge))], bw))
                 # except KeyError:
                     # print('edge: {} | channel: {} | chosen flows: None | bandwidth remaining: {}'.format(edge, channel, bw))
-
-
-
 
         return chosen_flows
 

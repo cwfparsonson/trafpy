@@ -1272,6 +1272,7 @@ class SchedulerToolbox_v2:
                                     for f in removed_flows:
                                         self.set_up_connection(f)
                                         chosen_flows.append(f)
+                                        chosen_flow_ids[f['flow_id']] = None
                                     return chosen_flows 
                                 else:
                                     # print('cost of prospective flow less than established flow, try to establish')
@@ -1287,6 +1288,7 @@ class SchedulerToolbox_v2:
                                                 flow['packets_this_slot'] = min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']])
                                             self.take_down_connection(f)
                                             chosen_flows.remove(f)
+                                            del chosen_flow_ids[f['flow_id']]
                                             removed_flows.append(f)
                                             found_f = True
                                             # print('moving to next while loop iter to try set up flow again...')
@@ -1314,8 +1316,8 @@ class SchedulerToolbox_v2:
             # check that establishing this flow is valid given edge capacity constraints
             if not self.check_edge_valid(flow, node_pair, num_decimals):
                 # # DEBUG
-                # for edge in self.SchedulerNetwork.edges:
-                    # for channel in self.RWA.channel_names:
+                # for edge in self.network.edges:
+                    # for channel in self.rwa.channel_names:
                         # bw = self.get_channel_bandwidth(edge, channel)
                         # print('edge: {} | channel: {} | bandwidth remaining: {}'.format(edge, channel, bw))
 
@@ -1432,7 +1434,31 @@ class SchedulerToolbox_v2:
         except KeyError:
             return self.network[edge[1]][edge[0]]['channels'][channel]
 
+    def find_flow_queue(self, flow):
+        '''
+        Finds queue of flow in network
+        '''
+        sn = flow['src']
+        dn = flow['dst']
+        flow_queue = self.network.nodes[sn][dn]['queued_flows']
 
+        return flow_queue
+
+    def estimate_time_to_completion(self, flow):
+        path_links = self.get_path_edges(flow['path'])
+        link_bws = []
+        for link in path_links:
+            link_bws.append(self.network[link[0]][link[1]]['max_channel_capacity'])
+        lowest_bw = min(link_bws)
+        
+        size_per_slot = lowest_bw/(1/self.slot_size)
+        packets_per_slot = int(size_per_slot / flow['packet_size']) # round down 
+        if packets_per_slot == 0:
+            raise Exception('Encountered 0 packets that can be transferred per time slot. Either decrease packet size or increase time slot size.')
+        slots_to_completion = math.ceil(flow['packets']/packets_per_slot) # round up
+        completion_time = slots_to_completion * self.slot_size
+
+        return completion_time
 
 
 

@@ -1,4 +1,4 @@
-from trafpy.manager.src.schedulers.schedulertoolbox import SchedulerToolbox
+from trafpy.manager.src.schedulers.schedulertoolbox import SchedulerToolbox, SchedulerToolbox_v2
 
 import numpy as np
 import networkx as nx
@@ -176,3 +176,102 @@ class BASRPT(SchedulerToolbox):
         return chosen_flows
         
 
+
+
+
+
+class BASRPT_v2:
+    def __init__(self,
+                 Graph,
+                 RWA,
+                 slot_size,
+                 V,
+                 packet_size=300,
+                 time_multiplexing=True,
+                 debug_mode=False,
+                 scheduler_name='basrpt_v2'):
+        self.toolbox = SchedulerToolbox_v2(Graph, RWA, slot_size, time_multiplexing, debug_mode)
+        self.scheduler_name = scheduler_name
+
+        self.V = V # BASRPT V parameter
+        self.N = int(len(Graph.graph['endpoints'])) # number of servers
+
+    def get_action(self, observation, print_processing_time=False):
+        chosen_flows = self.get_scheduler_action(observation)
+        return {'chosen_flows': chosen_flows}
+
+    def cost_function(self, flow):
+        '''BASRPT cost function.'''
+
+        flow_queue = self.toolbox.find_flow_queue(flow)
+        num_queued_flows = len(flow_queue)
+
+        # calc size of flow's queue
+        queue_length = 0
+        for flow_idx in range(num_queued_flows):
+            flow_dict = flow_queue[flow_idx]
+            if flow_dict['packets'] is None:
+                queued_flow_bytes = flow_dict['size']
+            else:
+                queued_flow_bytes = flow_dict['packets'] * flow_dict['packet_size']
+            queue_length += queued_flow_bytes
+
+        # calc flow fct
+        fct = self.toolbox.estimate_time_to_completion(flow)
+
+        # calc cost
+        cost = ((self.V/self.N)*fct) - queue_length
+
+        return cost
+
+    def get_scheduler_action(self, observation):
+        # update network state
+        self.toolbox.update_network_state(observation, hide_child_dependency_flows=True)
+
+        # collect useful flow info dicts for making scheduling decisions
+        queued_flows, requested_edges, edge_to_flow_ids, flow_id_to_cost = self.toolbox.collect_flow_info_dicts(random_assignment=True, cost_function=self.cost_function)
+
+        # init bandwidth capacity on each edge in network
+        edge_to_bandwidth = self.toolbox.get_edge_to_maximum_bandwidth_dict(requested_edges)
+
+        # allocate flows by order of cost (lowest cost flows prioritised first)
+        edge_to_flow_id_to_packets_to_schedule, flow_id_to_packets_to_schedule_per_edge, edge_to_sorted_costs, edge_to_sorted_flow_ids = self.toolbox.allocate_available_bandwidth(queued_flows, requested_edges, edge_to_flow_ids, edge_to_bandwidth, flow_id_to_cost=flow_id_to_cost)
+
+        # collect chosen flows and corresponding packets to schedule for the chosen flows
+        chosen_flows = []
+        for flow_id in queued_flows.keys():
+            if flow_id not in flow_id_to_packets_to_schedule_per_edge or len(flow_id_to_packets_to_schedule_per_edge[flow_id]) == 0:
+                # flow was not chosen to be scheduled on any edge
+                pass
+            else:
+                # flow was chosen to be scheduled on an edge
+                flow = queued_flows[flow_id]
+
+                # packets to schedule for each flow limited by the edge in their path with lowest number of schedulable packets
+                flow['packets_this_slot'] = min(flow_id_to_packets_to_schedule_per_edge[flow_id])
+
+                # check that flow was also selected to be scheduled on a bandwidth-limited end point link (if it wasn't, cannot schedule this flow)
+                info_to_transfer_this_slot = flow['packets_this_slot'] * flow['packet_size']
+                bandwidth_requested = info_to_transfer_this_slot / self.toolbox.slot_size # info units of this flow transferred this time slot == capacity used on each channel in flow's path this time slot
+                if bandwidth_requested > self.toolbox.network.graph['ep_link_capacity']:
+                    # flow must only have been selected for high capacity non-endpoint links and not been given any end point link capacity, do not schedule flow
+                    pass
+                else:
+                    # flow must have been allocated bandwidth on at least one end point link, check for contentions and try to establish flow 
+                    chosen_flows = self.toolbox.resolve_contentions_and_set_up_flow(flow, chosen_flows, requested_edges, flow_id_to_cost, edge_to_sorted_costs, edge_to_sorted_flow_ids, flow_id_to_packets_to_schedule_per_edge)
+        # DEBUG 
+        # print('\n----')
+        # edge_to_chosen_flows = {edge: [] for edge in requested_edges.keys()}
+        # for flow in chosen_flows:
+            # edges = self.scheduler.get_path_edges(flow['path'])
+            # for edge in edges:
+                # edge_to_chosen_flows[json.dumps(sorted(edge))].append(flow['flow_id'])
+        # for edge in self.scheduler.SchedulerNetwork.edges:
+            # for channel in self.scheduler.RWA.channel_names:
+                # bw = self.scheduler.get_channel_bandwidth(edge, channel)
+                # try:
+                    # print('edge: {} | channel: {} | chosen flows: {} | bandwidth remaining: {}'.format(edge, channel, edge_to_chosen_flows[json.dumps(sorted(edge))], bw))
+                # except KeyError:
+                    # print('edge: {} | channel: {} | chosen flows: None | bandwidth remaining: {}'.format(edge, channel, bw))
+
+        return chosen_flows
