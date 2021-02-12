@@ -43,15 +43,15 @@ class TestBed:
 
         jobs = []
         start_time = time.time()
-        # _loads = [0.1, 0.2, 0.3, 0.4, 0.5] # DEBUG
+        _loads = [0.1, 0.2, 0.3, 0.4, 0.5] # DEBUG
         for benchmark in self.benchmarks:
             # for load in self.benchmark_data[benchmark]:
             for load in list(self.benchmark_data[benchmark].keys()):
                 for repeat in self.benchmark_data[benchmark][load]:
                     for scheduler in config['schedulers']:
                         # if json.loads(load) == 0.1 and scheduler.scheduler_name == 'basrpt_v2': # DEBUG 
-                        # if json.loads(load) in _loads: # DEBUG
-                        if json.loads(load) == 0.1: # DEBUG
+                        if json.loads(load) in _loads: # DEBUG
+                        # if json.loads(load) == 0.2: # DEBUG
                             demand_data = self.benchmark_data[benchmark][load][repeat]
                             demand = Demand(demand_data, config['networks'][0].graph['endpoints'])
                             
@@ -209,9 +209,7 @@ if __name__ == '__main__':
                       # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=3200, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(3200)),
                       # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10000, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(10000))]
         schedulers = [FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='fair_share'),
-                      SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='srpt_v2'),
-                      BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10000, packet_size=PACKET_SIZE, scheduler_name='basrpt_v2'),
-                      RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='random')]
+                      SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='srpt_v2')]
         # schedulers = []
         # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]
         # for V in Vs:

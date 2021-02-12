@@ -1052,7 +1052,7 @@ class SchedulerToolbox_v2:
 
                     # assign a cost to this flow
                     if cost_function is None:
-                        flow_id_to_cost[flow['flow_id']] = None
+                        pass
                     else:
                         flow_id_to_cost[flow['flow_id']] = cost_function(flow)
 
@@ -1069,7 +1069,15 @@ class SchedulerToolbox_v2:
 
         edge_to_flow_ids = {edge: [flow_id for flow_id in requested_edges[edge]] for edge in requested_edges.keys()}
 
-        return queued_flows, requested_edges, edge_to_flow_ids, flow_id_to_cost
+        edge_to_bandwidth = self.get_edge_to_maximum_bandwidth_dict(requested_edges)
+
+        flow_info = {'queued_flows': queued_flows,
+                       'requested_edges': requested_edges,
+                       'edge_to_flow_ids': edge_to_flow_ids,
+                       'edge_to_bandwidth': edge_to_bandwidth,
+                       'flow_id_to_cost': flow_id_to_cost}
+
+        return flow_info
 
     def get_edge_to_maximum_bandwidth_dict(self, requested_edges):
         '''Goes through network and maps each edge to its maximum bandwidth.'''
@@ -1083,12 +1091,8 @@ class SchedulerToolbox_v2:
         return edge_to_bandwidth
 
     def allocate_available_bandwidth(self, 
-                                     queued_flows,
-                                     requested_edges,
-                                     edge_to_flow_ids, 
-                                     edge_to_bandwidth,
-                                     flow_id_to_cost=None, 
-                                     allocation_strategy=None):
+                                     flow_info,
+                                     resolution_strategy):
         '''
         Goes through each edge and allocates bandwidth available on that edge
         to requesting flows until either no bandwidth left to allocate or all
@@ -1096,53 +1100,50 @@ class SchedulerToolbox_v2:
 
         If flow_id_to_cost is not None, will allocate bandwidth to flows in order of
         cost (prioritising low cost flows first). If flow_id_to_cost is None,
-        must specify a valid allocation_strategy (e.g. 'random', 'fair_share', etc.).
+        must specify a valid resolution_strategy (e.g. 'random', 'fair_share', etc.).
 
         Args:
             flow_id_to_cost (dict): Dict mapping flow_id to corresponding flow cost.
-            allocation_strategy (str): Which allocation strategy to use if flow_id_to_cost is None.
+            resolution_strategy (str): Which resolution strategy to use if flow_id_to_cost is None
+                to allocate available bandwidht and resolve conflicts
 
         Returns:
 
         '''
-        if flow_id_to_cost is None and allocation_strategy is None or flow_id_to_cost is not None and allocation_strategy is not None:
-            raise Exception('Must either specify flow_id_to_cost dict or a valid allocation_strategy.')
+        valid_resolution_strategies = ['cost', 'fair_share', 'random']
+        if resolution_strategy not in valid_resolution_strategies:
+            raise Exception('resolution_strategy {} must be one of {}'.format(resolution_strategy, valid_resolution_strategies))
 
-        valid_allocation_strategies = ['fair_share']
-        if allocation_strategy is not None:
-            if allocation_strategy not in valid_allocation_strategies:
-                raise Exception('allocation_strategy {} must be one of {}'.format(allocation_strategy, valid_allocation_strategies))
-
-        if flow_id_to_cost is not None:
+        edge_to_sorted_costs = {}
+        edge_to_sorted_flow_ids = {}
+        if resolution_strategy == 'cost':
             # sort requesting flow ids on each edge by order of cost (lowest to highest) -> is scheduling priority
-            edge_to_sorted_costs = {}
-            edge_to_sorted_flow_ids = {}
-            for edge in edge_to_flow_ids.keys():
-                flow_ids = np.asarray([flow_id for flow_id in edge_to_flow_ids[edge]])
-                costs = np.asarray([flow_id_to_cost[flow_id] for flow_id in edge_to_flow_ids[edge]])
+            for edge in flow_info['edge_to_flow_ids'].keys():
+                flow_ids = np.asarray([flow_id for flow_id in flow_info['edge_to_flow_ids'][edge]])
+                costs = np.asarray([flow_info['flow_id_to_cost'][flow_id] for flow_id in flow_info['edge_to_flow_ids'][edge]])
                 sorted_cost_index = np.argsort(costs)
                 edge_to_sorted_costs[edge] = costs[sorted_cost_index]
                 edge_to_sorted_flow_ids[edge] = flow_ids[sorted_cost_index]
 
         # init packets to schedule on each edge for each requesting flow
         edge_to_flow_id_to_packets_to_schedule = {edge:
-                                                    {flow_id: 0 for flow_id in edge_to_flow_ids[edge]}
-                                                  for edge in edge_to_flow_ids.keys()}
+                                                    {flow_id: 0 for flow_id in flow_info['edge_to_flow_ids'][edge]}
+                                                  for edge in flow_info['edge_to_flow_ids'].keys()}
 
         # go through each edge and allocate available bandwidth
-        for edge in requested_edges.keys():
-            init_num_requests = len(requested_edges[edge])
-            num_requests_left = len(requested_edges[edge])
+        for edge in flow_info['requested_edges'].keys():
+            init_num_requests = len(flow_info['requested_edges'][edge])
+            num_requests_left = len(flow_info['requested_edges'][edge])
             packets_scheduled_this_slot = 0
 
             # find max total packets can schedule this slot on this link
-            max_info_per_slot = edge_to_bandwidth[edge] * self.slot_size # info transferred per slot == info transferred per unit time * number of time units (i.e. slot size)
+            max_info_per_slot = flow_info['edge_to_bandwidth'][edge] * self.slot_size # info transferred per slot == info transferred per unit time * number of time units (i.e. slot size)
             max_packets_per_slot = int(max_info_per_slot / self.packet_size) # round down
 
             # init packets left for flows requesting this edge
-            flow_packets_left = {flow_id: queued_flows[flow_id]['packets'] for flow_id in edge_to_flow_ids[edge]}
+            flow_packets_left = {flow_id: flow_info['queued_flows'][flow_id]['packets'] for flow_id in flow_info['edge_to_flow_ids'][edge]}
 
-            if flow_id_to_cost is not None:
+            if resolution_strategy == 'cost':
                 # iterate through flows requesting this edge in order of cost, prioritising lowest cost flows first
                 sorted_flow_ids = iter(edge_to_sorted_flow_ids[edge])
 
@@ -1153,17 +1154,17 @@ class SchedulerToolbox_v2:
                 # new sub-slot of time <= time slot
 
                 # find max packets can schedule for rest of time slot
-                if allocation_strategy == 'fair_share':
+                if resolution_strategy == 'fair_share':
                     max_packets_per_request = int((max_packets_per_slot-packets_scheduled_this_slot) / num_requests_left) # round down
                 else:
                     max_packets_rest_of_time_slot = int(max_packets_per_slot-packets_scheduled_this_slot)
 
                 
                 ####################### COST-BASED SCHEDULING ######################
-                if flow_id_to_cost is not None:
+                if resolution_strategy == 'cost':
                     # select next highest priority flow
                     flow_id = next(sorted_flow_ids)
-                    flow = queued_flows[flow_id]
+                    flow = flow_info['queued_flows'][flow_id]
 
                     # find number of packets to schedule for this highest priority flow
                     packets_to_schedule = min(flow['packets'], max_packets_rest_of_time_slot)
@@ -1184,7 +1185,11 @@ class SchedulerToolbox_v2:
 
                 else:
                     ############################# FAIR SHARE SCHEDULING ###########################
-                    if allocation_strategy == 'fair_share':
+                    if resolution_strategy == 'fair_share':
+                        # find smallest packets left of remaining requests on this edge
+                        non_zero_packets = [packet for packet in flow_packets_left.values() if packet != 0]
+                        smallest_packets_left = min(non_zero_packets)
+
                         # find packets to schedule per request for this sub slot
                         packets_per_request = min(smallest_packets_left, max_packets_per_request)
 
@@ -1205,29 +1210,65 @@ class SchedulerToolbox_v2:
                             # move to next sub-slot for this edge
                             pass
 
+                    ############################# RANDOM SCHEDULING ###########################
+                    elif resolution_strategy == 'random':
+                        # randomly select a flow to schedule
+                        flow_id = np.random.choice(list(flow_packets_left.keys()))
+                        flow = flow_info['queued_flows'][flow_id]
+                        
+                        # find number of packets to schedule for this flow
+                        packets_to_schedule = min(flow['packets'], max_packets_rest_of_time_slot)
+
+                        # update trackers to indicate this flow has been scheduled by corresponding number of packets
+                        edge_to_flow_id_to_packets_to_schedule[edge][flow_id] += packets_to_schedule
+                        flow_packets_left[flow_id] -= packets_to_schedule
+                        packets_scheduled_this_slot += packets_to_schedule
+                        if flow_packets_left[flow_id] == 0:
+                            num_requests_left -= 1
+
+                        if packets_scheduled_this_slot == max_packets_per_slot or num_requests_left == 0:
+                            # finished scheduling time slot for this edge, move to next edge
+                            break
+                        else:
+                            # move to next sub-slot of overall time slot for this edge
+                            pass
+
+
+
+
         # find which flows were chosen on each edge, and collect how many packets were scheduled for each chosen flow
-        flow_id_to_packets_to_schedule_per_edge = {flow_id: [] for flow_id in queued_flows.keys()}
+        flow_id_to_packets_to_schedule_per_edge = {flow_id: [] for flow_id in flow_info['queued_flows'].keys()}
         for edge in edge_to_flow_id_to_packets_to_schedule.keys():
             for flow_id in edge_to_flow_id_to_packets_to_schedule[edge].keys():
                 if edge_to_flow_id_to_packets_to_schedule[edge][flow_id] != 0:
                     flow_id_to_packets_to_schedule_per_edge[flow_id].append(edge_to_flow_id_to_packets_to_schedule[edge][flow_id])
 
-        if flow_id_to_cost is None:
-            # no need to return sorted cost dicts
-            return edge_to_flow_id_to_packets_to_schedule, flow_id_to_packets_to_schedule_per_edge
-        else:
-            # return sorted cost dicts
-            return edge_to_flow_id_to_packets_to_schedule, flow_id_to_packets_to_schedule_per_edge, edge_to_sorted_costs, edge_to_sorted_flow_ids
+        scheduling_info = {'edge_to_flow_id_to_packets_to_schedule': edge_to_flow_id_to_packets_to_schedule,
+                           'flow_id_to_packets_to_schedule_per_edge': flow_id_to_packets_to_schedule_per_edge}
+        cost_info = {'flow_id_to_cost': flow_info['flow_id_to_cost'],
+                     'edge_to_sorted_costs': edge_to_sorted_costs,
+                     'edge_to_sorted_flow_ids': edge_to_sorted_flow_ids}
+
+        return scheduling_info, cost_info
 
 
     def resolve_contentions_and_set_up_flow(self,
                                             flow, 
                                             chosen_flows, 
-                                            requested_edges, 
-                                            flow_id_to_cost,
-                                            edge_to_sorted_costs, 
-                                            edge_to_sorted_flow_ids,
-                                            flow_id_to_packets_to_schedule_per_edge):
+                                            flow_info,
+                                            scheduling_info,
+                                            cost_info,
+                                            resolution_strategy='cost'):
+        '''
+        If contention found, will resolve contention using resolution strategy.
+
+        Cost resolution strategy -> choose flow with lowest cost.
+        Random resolution strategy -> choose random flow.
+        '''
+        valid_resolution_strategies = ['cost', 'random', 'fair_share']
+        if resolution_strategy not in valid_resolution_strategies:
+            raise Exception('resolution_strategy {} must be one of {}'.format(resolution_strategy, valid_resolution_strategies))
+
         chosen_flow_ids = {f['flow_id']: None for f in chosen_flows}
         # print('\n-----')
         # print('considering flow: {}'.format(flow))
@@ -1235,7 +1276,7 @@ class SchedulerToolbox_v2:
         removed_flows = []
         loops = 0
         while True:
-            if loops >= 5:
+            if loops >= 5: # temporary to stop infinite loop bugs -> may need to remove if have v large no. flows and therefore require many loops
                 raise Exception()
             loops += 1
             # print('flows removed:\n{}'.format(removed_flows))
@@ -1247,54 +1288,106 @@ class SchedulerToolbox_v2:
             else:
                 # print('conflict detected')
                 # there's a conflict with an already chosen flow
-                # find contending flow -> if has higher cost, remove it and try to establish flow again
+                # find contending flow -> see which flow to establish
                 flow_edges = self.get_path_edges(flow['path'])
                 bandwidth_requested = (flow['packets_this_slot'] * flow['packet_size'])/self.slot_size
                 # print('flow {} bandwidth requested: {}'.format(flow['flow_id'], bandwidth_requested))
                 for edge in flow_edges:
                     # print(edge)
                     if not self.check_edge_valid(flow, edge):
-                        # print('found contention on edge {}'.format(edge))
                         # contention is on this edge
-                        # if flow has lower cost than one of the contentions, remove highest cost (least contentious) flow and try to set up connection again
-                        costs = edge_to_sorted_costs[json.dumps(sorted(edge))]
-                        flow_ids = edge_to_sorted_flow_ids[json.dumps(sorted(edge))]
-                        # print('flow ids requesting this edge: {}'.format(flow_ids))
-                        # print('costs: {}'.format(costs))
-                        for idx in reversed(range(len(flow_ids))):
-                            _id = flow_ids[idx]
-                            _cost = costs[idx]
-                            if _id in chosen_flow_ids:
-                                # this flow has previously ben chosen, check if should keep or discard
-                                if _cost < flow_id_to_cost[flow['flow_id']]:
-                                    # print('cost of prospective flow greater than already established flow, do not set up')
-                                    # already established flow has lower cost -> do not establish flow, re-establish any flows that were taken down
-                                    for f in removed_flows:
-                                        self.set_up_connection(f)
-                                        chosen_flows.append(f)
-                                        chosen_flow_ids[f['flow_id']] = None
-                                    return chosen_flows 
-                                else:
-                                    # print('cost of prospective flow less than established flow, try to establish')
-                                    # remove higher cost flow -> move to next while loop to try again to re-establish flow
-                                    found_f = False
-                                    i = 0
-                                    while not found_f:
-                                        f = chosen_flows[i]
-                                        if f['flow_id'] == _id:
-                                            # print('found high cost established flow, take down')
-                                            flow['packets_this_slot'] = f['packets_this_slot'] # replace packets
-                                            if flow['packets_this_slot'] > min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']]):
-                                                flow['packets_this_slot'] = min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']])
-                                            self.take_down_connection(f)
-                                            chosen_flows.remove(f)
-                                            del chosen_flow_ids[f['flow_id']]
-                                            removed_flows.append(f)
-                                            found_f = True
-                                            # print('moving to next while loop iter to try set up flow again...')
-                                        else:
-                                            i += 1
-                                    break
+                        # print('found contention on edge {}'.format(edge))
+
+
+
+
+                        ######################### RANDOM RESOLUTION #########################
+                        if resolution_strategy == 'random':
+                            # randomly decide if will establish flow
+                            establish = np.random.choice([True, False])
+                            if not establish:
+                                # do not establish flow, re-establish any flows that were taken down
+                                for f in removed_flows:
+                                    self.set_up_connection(f)
+                                    chosen_flows.append(f)
+                                    chosen_flow_ids[f['flow_id']] = None
+                                return chosen_flows
+                            else:
+                                # remove conflicting flow -> move to next while loop to try again to re-establish flow
+                                flow_ids = list(scheduling_info['edge_to_flow_id_to_packets_to_schedule'][json.dumps(sorted(edge))].keys())
+                                for _id in flow_ids:
+                                    if _id in chosen_flow_ids:
+                                        # discard
+                                        found_f = False
+                                        i = 0
+                                        while not found_f:
+                                            f = chosen_flows[i]
+                                            if f['flow_id'] == _id:
+                                                # print('found established flow, take down')
+                                                # flow['packets_this_slot'] = f['packets_this_slot'] # replace packets
+                                                # if flow['packets_this_slot'] > min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']]):
+                                                    # flow['packets_this_slot'] = min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']])
+                                                self.take_down_connection(f)
+                                                chosen_flows.remove(f)
+                                                del chosen_flow_ids[f['flow_id']]
+                                                removed_flows.append(f)
+                                                found_f = True
+                                                # print('moving to next while loop iter to try set up flow again...')
+                                            else:
+                                                i += 1
+                                        # found flow in chosen flows, iterating through chosen flow ids
+                                        break
+
+
+                        ######################### COST RESOLUTION #########################
+                        elif resolution_strategy == 'cost':
+                            # if flow has lower cost than one of the contentions, remove highest cost (least contentious) flow and try to set up connection again
+                            costs = cost_info['edge_to_sorted_costs'][json.dumps(sorted(edge))]
+                            flow_ids = cost_info['edge_to_sorted_flow_ids'][json.dumps(sorted(edge))]
+                            # print('flow ids requesting this edge: {}'.format(flow_ids))
+                            # print('costs: {}'.format(costs))
+                            for idx in reversed(range(len(flow_ids))):
+                                _id = flow_ids[idx]
+                                _cost = costs[idx]
+                                if _id in chosen_flow_ids:
+                                    # this flow has previously been chosen, check if should keep or discard
+                                    if _cost < cost_info['flow_id_to_cost'][flow['flow_id']]:
+                                        # print('cost of prospective flow greater than already established flow, do not set up')
+                                        # already established flow has lower cost -> do not establish flow, re-establish any flows that were taken down
+                                        for f in removed_flows:
+                                            self.set_up_connection(f)
+                                            chosen_flows.append(f)
+                                            chosen_flow_ids[f['flow_id']] = None
+                                        return chosen_flows 
+                                    else:
+                                        # print('cost of prospective flow less than established flow, try to establish')
+                                        # remove higher cost flow -> move to next while loop to try again to re-establish flow
+                                        found_f = False
+                                        i = 0
+                                        while not found_f:
+                                            f = chosen_flows[i]
+                                            if f['flow_id'] == _id:
+                                                # print('found high cost established flow, take down')
+                                                # flow['packets_this_slot'] = f['packets_this_slot'] # replace packets
+                                                # if flow['packets_this_slot'] > min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']]):
+                                                    # flow['packets_this_slot'] = min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']])
+                                                self.take_down_connection(f)
+                                                chosen_flows.remove(f)
+                                                del chosen_flow_ids[f['flow_id']]
+                                                removed_flows.append(f)
+                                                found_f = True
+                                                # print('moving to next while loop iter to try set up flow again...')
+                                            else:
+                                                i += 1
+                                        # found flow in chosen flows, iterating through chosen flow ids
+                                        break
+
+
+
+
+
+
+
                             else:
                                 continue 
                     else:

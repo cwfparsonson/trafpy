@@ -191,6 +191,7 @@ class SRPT_v2:
                  scheduler_name='srpt_v2'):
         self.toolbox = SchedulerToolbox_v2(Graph, RWA, slot_size, time_multiplexing, debug_mode)
         self.scheduler_name = scheduler_name
+        self.resolution_strategy = 'cost'
 
     def get_action(self, observation, print_processing_time=False):
         chosen_flows = self.get_scheduler_action(observation)
@@ -205,26 +206,23 @@ class SRPT_v2:
         self.toolbox.update_network_state(observation, hide_child_dependency_flows=True)
 
         # collect useful flow info dicts for making scheduling decisions
-        queued_flows, requested_edges, edge_to_flow_ids, flow_id_to_cost = self.toolbox.collect_flow_info_dicts(random_assignment=True, cost_function=self.cost_function)
-
-        # init bandwidth capacity on each edge in network
-        edge_to_bandwidth = self.toolbox.get_edge_to_maximum_bandwidth_dict(requested_edges)
+        flow_info = self.toolbox.collect_flow_info_dicts(random_assignment=True, cost_function=self.cost_function)
 
         # allocate flows by order of cost (lowest cost flows prioritised first)
-        edge_to_flow_id_to_packets_to_schedule, flow_id_to_packets_to_schedule_per_edge, edge_to_sorted_costs, edge_to_sorted_flow_ids = self.toolbox.allocate_available_bandwidth(queued_flows, requested_edges, edge_to_flow_ids, edge_to_bandwidth, flow_id_to_cost=flow_id_to_cost)
+        scheduling_info, cost_info = self.toolbox.allocate_available_bandwidth(flow_info, resolution_strategy=self.resolution_strategy)
 
         # collect chosen flows and corresponding packets to schedule for the chosen flows
         chosen_flows = []
-        for flow_id in queued_flows.keys():
-            if flow_id not in flow_id_to_packets_to_schedule_per_edge or len(flow_id_to_packets_to_schedule_per_edge[flow_id]) == 0:
+        for flow_id in flow_info['queued_flows'].keys():
+            if flow_id not in scheduling_info['flow_id_to_packets_to_schedule_per_edge'] or len(scheduling_info['flow_id_to_packets_to_schedule_per_edge'][flow_id]) == 0:
                 # flow was not chosen to be scheduled on any edge
                 pass
             else:
                 # flow was chosen to be scheduled on an edge
-                flow = queued_flows[flow_id]
+                flow = flow_info['queued_flows'][flow_id]
 
                 # packets to schedule for each flow limited by the edge in their path with lowest number of schedulable packets
-                flow['packets_this_slot'] = min(flow_id_to_packets_to_schedule_per_edge[flow_id])
+                flow['packets_this_slot'] = min(scheduling_info['flow_id_to_packets_to_schedule_per_edge'][flow_id])
 
                 # check that flow was also selected to be scheduled on a bandwidth-limited end point link (if it wasn't, cannot schedule this flow)
                 info_to_transfer_this_slot = flow['packets_this_slot'] * flow['packet_size']
@@ -234,7 +232,7 @@ class SRPT_v2:
                     pass
                 else:
                     # flow must have been allocated bandwidth on at least one end point link, check for contentions and try to establish flow 
-                    chosen_flows = self.toolbox.resolve_contentions_and_set_up_flow(flow, chosen_flows, requested_edges, flow_id_to_cost, edge_to_sorted_costs, edge_to_sorted_flow_ids, flow_id_to_packets_to_schedule_per_edge)
+                    chosen_flows = self.toolbox.resolve_contentions_and_set_up_flow(flow, chosen_flows, flow_info, scheduling_info, cost_info, resolution_strategy=self.resolution_strategy)
         # DEBUG 
         # print('\n----')
         # edge_to_chosen_flows = {edge: [] for edge in requested_edges.keys()}
