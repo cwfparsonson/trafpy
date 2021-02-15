@@ -226,6 +226,8 @@ class BASRPT_v2:
         return cost
 
     def get_scheduler_action(self, observation):
+        # print('\n\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> New scheduler action <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+
         # update network state
         self.toolbox.update_network_state(observation, hide_child_dependency_flows=True)
 

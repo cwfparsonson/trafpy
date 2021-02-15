@@ -1110,7 +1110,7 @@ class SchedulerToolbox_v2:
         Returns:
 
         '''
-        valid_resolution_strategies = ['cost', 'fair_share', 'random']
+        valid_resolution_strategies = ['cost', 'fair_share', 'random', 'first_fit']
         if resolution_strategy not in valid_resolution_strategies:
             raise Exception('resolution_strategy {} must be one of {}'.format(resolution_strategy, valid_resolution_strategies))
 
@@ -1183,56 +1183,58 @@ class SchedulerToolbox_v2:
                         # move to next sub-slot of overall time slot for this edge
                         pass
 
+
+                ############################# FAIR SHARE SCHEDULING ###########################
+                elif resolution_strategy == 'fair_share':
+                    # find smallest packets left of remaining requests on this edge
+                    non_zero_packets = [packet for packet in flow_packets_left.values() if packet != 0]
+                    smallest_packets_left = min(non_zero_packets)
+
+                    # find packets to schedule per request for this sub slot
+                    packets_per_request = min(smallest_packets_left, max_packets_per_request)
+
+                    # fair share by scheduling packets per request equally for each request for this sub-slot
+                    for flow_id in flow_packets_left.keys():
+                        if flow_packets_left[flow_id] != 0:
+                            edge_to_flow_id_to_packets_to_schedule[edge][flow_id] += packets_per_request
+                            flow_packets_left[flow_id] -= packets_per_request
+                            packets_scheduled_this_slot += packets_per_request
+                            if flow_packets_left[flow_id] == 0:
+                                # all packets of this flow have now been scheduled
+                                num_requests_left -= 1
+                    
+                    if packets_scheduled_this_slot >= max_packets_per_slot-init_num_requests or num_requests_left == 0:
+                        # finished fair sharing this slot for this edge
+                        break
+                    else:
+                        # move to next sub-slot for this edge
+                        pass
+
+                ############################# RANDOM & FIRST FIT SCHEDULING ###########################
+                elif resolution_strategy == 'random' or resolution_strategy == 'first_fit':
+                    # randomly select a flow to schedule
+                    flow_id = np.random.choice(list(flow_packets_left.keys()))
+                    flow = flow_info['queued_flows'][flow_id]
+                    
+                    # find number of packets to schedule for this flow
+                    packets_to_schedule = min(flow['packets'], max_packets_rest_of_time_slot)
+
+                    # update trackers to indicate this flow has been scheduled by corresponding number of packets
+                    edge_to_flow_id_to_packets_to_schedule[edge][flow_id] += packets_to_schedule
+                    flow_packets_left[flow_id] -= packets_to_schedule
+                    packets_scheduled_this_slot += packets_to_schedule
+                    if flow_packets_left[flow_id] == 0:
+                        num_requests_left -= 1
+
+                    if packets_scheduled_this_slot == max_packets_per_slot or num_requests_left == 0:
+                        # finished scheduling time slot for this edge, move to next edge
+                        break
+                    else:
+                        # move to next sub-slot of overall time slot for this edge
+                        pass
+
                 else:
-                    ############################# FAIR SHARE SCHEDULING ###########################
-                    if resolution_strategy == 'fair_share':
-                        # find smallest packets left of remaining requests on this edge
-                        non_zero_packets = [packet for packet in flow_packets_left.values() if packet != 0]
-                        smallest_packets_left = min(non_zero_packets)
-
-                        # find packets to schedule per request for this sub slot
-                        packets_per_request = min(smallest_packets_left, max_packets_per_request)
-
-                        # fair share by scheduling packets per request equally for each request for this sub-slot
-                        for flow_id in flow_packets_left.keys():
-                            if flow_packets_left[flow_id] != 0:
-                                edge_to_flow_id_to_packets_to_schedule[edge][flow_id] += packets_per_request
-                                flow_packets_left[flow_id] -= packets_per_request
-                                packets_scheduled_this_slot += packets_per_request
-                                if flow_packets_left[flow_id] == 0:
-                                    # all packets of this flow have now been scheduled
-                                    num_requests_left -= 1
-                        
-                        if packets_scheduled_this_slot >= max_packets_per_slot-init_num_requests or num_requests_left == 0:
-                            # finished fair sharing this slot for this edge
-                            break
-                        else:
-                            # move to next sub-slot for this edge
-                            pass
-
-                    ############################# RANDOM SCHEDULING ###########################
-                    elif resolution_strategy == 'random':
-                        # randomly select a flow to schedule
-                        flow_id = np.random.choice(list(flow_packets_left.keys()))
-                        flow = flow_info['queued_flows'][flow_id]
-                        
-                        # find number of packets to schedule for this flow
-                        packets_to_schedule = min(flow['packets'], max_packets_rest_of_time_slot)
-
-                        # update trackers to indicate this flow has been scheduled by corresponding number of packets
-                        edge_to_flow_id_to_packets_to_schedule[edge][flow_id] += packets_to_schedule
-                        flow_packets_left[flow_id] -= packets_to_schedule
-                        packets_scheduled_this_slot += packets_to_schedule
-                        if flow_packets_left[flow_id] == 0:
-                            num_requests_left -= 1
-
-                        if packets_scheduled_this_slot == max_packets_per_slot or num_requests_left == 0:
-                            # finished scheduling time slot for this edge, move to next edge
-                            break
-                        else:
-                            # move to next sub-slot of overall time slot for this edge
-                            pass
-
+                    raise Exception('resolution_strategy {} does not seem to be implemented.'.format(resolution_strategy))
 
 
 
@@ -1258,14 +1260,14 @@ class SchedulerToolbox_v2:
                                             flow_info,
                                             scheduling_info,
                                             cost_info,
-                                            resolution_strategy='cost'):
+                                            resolution_strategy):
         '''
         If contention found, will resolve contention using resolution strategy.
 
         Cost resolution strategy -> choose flow with lowest cost.
         Random resolution strategy -> choose random flow.
         '''
-        valid_resolution_strategies = ['cost', 'random', 'fair_share']
+        valid_resolution_strategies = ['cost', 'random', 'fair_share', 'first_fit']
         if resolution_strategy not in valid_resolution_strategies:
             raise Exception('resolution_strategy {} must be one of {}'.format(resolution_strategy, valid_resolution_strategies))
 
@@ -1276,8 +1278,8 @@ class SchedulerToolbox_v2:
         removed_flows = []
         loops = 0
         while True:
-            if loops >= 5: # temporary to stop infinite loop bugs -> may need to remove if have v large no. flows and therefore require many loops
-                raise Exception()
+            if loops >= 100: # temporary to stop infinite loop bugs -> may need to remove if have v large no. flows and therefore require many loops
+                raise Exception('Auto exited while loop. Delete line if confident no bugs.')
             loops += 1
             # print('flows removed:\n{}'.format(removed_flows))
             if self.check_connection_valid(flow):
@@ -1299,10 +1301,13 @@ class SchedulerToolbox_v2:
                         # print('found contention on edge {}'.format(edge))
 
 
-
+                        ######################### FIRST FIT RESOLUTION #########################
+                        if resolution_strategy == 'first_fit':
+                            # schedule first flow which fits bandwidth, therefore do not attempt to resolve any conflicts which arise after a flow has already been schedueld
+                            return chosen_flows
 
                         ######################### RANDOM RESOLUTION #########################
-                        if resolution_strategy == 'random':
+                        elif resolution_strategy == 'random':
                             # randomly decide if will establish flow
                             establish = np.random.choice([True, False])
                             if not establish:
@@ -1310,14 +1315,13 @@ class SchedulerToolbox_v2:
                                 for f in removed_flows:
                                     self.set_up_connection(f)
                                     chosen_flows.append(f)
-                                    chosen_flow_ids[f['flow_id']] = None
                                 return chosen_flows
                             else:
                                 # remove conflicting flow -> move to next while loop to try again to re-establish flow
                                 flow_ids = list(scheduling_info['edge_to_flow_id_to_packets_to_schedule'][json.dumps(sorted(edge))].keys())
                                 for _id in flow_ids:
                                     if _id in chosen_flow_ids:
-                                        # discard
+                                        # found flow to discard
                                         found_f = False
                                         i = 0
                                         while not found_f:
@@ -1357,7 +1361,6 @@ class SchedulerToolbox_v2:
                                         for f in removed_flows:
                                             self.set_up_connection(f)
                                             chosen_flows.append(f)
-                                            chosen_flow_ids[f['flow_id']] = None
                                         return chosen_flows 
                                     else:
                                         # print('cost of prospective flow less than established flow, try to establish')
@@ -1367,7 +1370,7 @@ class SchedulerToolbox_v2:
                                         while not found_f:
                                             f = chosen_flows[i]
                                             if f['flow_id'] == _id:
-                                                # print('found high cost established flow, take down')
+                                                # print('found high cost established flow {}, take down'.format(_id))
                                                 # flow['packets_this_slot'] = f['packets_this_slot'] # replace packets
                                                 # if flow['packets_this_slot'] > min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']]):
                                                     # flow['packets_this_slot'] = min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']])
