@@ -1278,8 +1278,8 @@ class SchedulerToolbox_v2:
         removed_flows = []
         loops = 0
         while True:
-            if loops >= 100: # temporary to stop infinite loop bugs -> may need to remove if have v large no. flows and therefore require many loops
-                raise Exception('Auto exited while loop. Delete line if confident no bugs.')
+            # if loops >= 100: # temporary to stop infinite loop bugs -> may need to remove if have v large no. flows and therefore require many loops
+                # raise Exception('Auto exited while loop. Delete line if confident no bugs.')
             loops += 1
             # print('flows removed:\n{}'.format(removed_flows))
             if self.check_connection_valid(flow):

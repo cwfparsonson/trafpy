@@ -61,6 +61,7 @@ class EnvAnalyser:
         print('Load (frac): {} fraction of network capacity requested (from first to last flow arriving)'.format(self.load_frac))
         print('Throughput (abs): {} info units transported per unit time'.format(self.throughput_abs))
         print('Throughput (frac): {} fraction of arrived info successfully transported'.format(self.throughput_frac))
+        print('T-Score: {}'.format(self.t_score))
 
     def _compute_general_summary(self):
         self.total_info_arrived = self._calc_total_info_arrived()
@@ -69,6 +70,7 @@ class EnvAnalyser:
         self.load_frac = self._calc_network_load_frac()
         self.throughput_abs = self._calc_throughput_abs()
         self.throughput_frac = self._calc_throughput_frac()
+        self.t_score = self._compute_t_score()
 
     def _calc_total_info_arrived(self):
         return sum([self.arrived_flow_dicts[i]['size'] for i in range(len(self.arrived_flow_dicts))])
@@ -109,6 +111,49 @@ class EnvAnalyser:
         print('Total number of flows that were left in queue at end of measurement period: {}'.format(len(self.queued_flow_dicts)))
         print('Average flow completion time (FCT): {}'.format(self.average_fct))
         print('99th percentile FCT: {}'.format(self.nn_fct))
+
+    def _compute_t_score(self):
+        '''Returns TrafPy overall T-score.'''
+        if not self.computed_metrics:
+            raise Exception('Must first run computer_metrics() method.')
+
+        # FCT COMPONENT
+        # collect flow sizes of arrived flows
+        self.flow_sizes = [flow['size'] for flow in self.arrived_flow_dicts]
+
+        mean_fct = np.mean(self.fcts)
+        std_fct = np.std(self.fcts)
+
+        mean_fct_factor = np.mean(self.flow_sizes) / self.env.network.graph['ep_link_capacity']
+        std_fct_factor = np.std(self.flow_sizes) / self.env.network.graph['ep_link_capacity']
+
+        mean_fct_component = mean_fct_factor / mean_fct
+        std_fct_component = std_fct_factor / std_fct
+
+        fct_component = mean_fct_factor + std_fct_component
+
+
+        # DROPPED FLOWS COMPONENT
+        num_eps = len(self.env.network.graph['endpoints'])
+        num_queues = num_eps * (num_eps - 1)
+        max_num_flows_in_network = self.env.max_flows * num_queues
+        dropped_component = 1 - (self.dropped_flow_frac * max_num_flows_in_network)
+
+        # THROUGHPUT COMPONENT
+        throughput_component = self.throughput_abs / self.env.network.graph['max_nw_capacity']
+
+        # T-SCORE
+        # print('fct component: {} | dropped component: {} | throughput_component: {}'.format(fct_component, dropped_component, throughput_component))
+        t_score = fct_component + dropped_component + throughput_component
+
+        return t_score
+
+
+
+
+
+
+
 
     def _compute_flow_summary(self):
         self._compute_flow_arrival_metrics()

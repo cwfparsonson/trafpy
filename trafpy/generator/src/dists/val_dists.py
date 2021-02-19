@@ -616,6 +616,8 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
         numpy array: Random variable values sampled from dist.
 
     '''
+    # if np.sum(probabilities) != 1:
+        # raise Exception('Probabilities must sum to 1, but sum to {}'.format(np.sum(probabilities)))
     sampled_vars = np.random.choice(a=unique_vars, 
                                     size=num_demands,
                                     p=probabilities)

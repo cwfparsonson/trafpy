@@ -188,12 +188,13 @@ class DistributionGenerator:
                                                                  print_data=False)
 
             elif benchmark == 'artificial_light':
-                flow_size_dist = val_dists.gen_named_val_dist(dist='normal',
-                                                              params={'_loc': 3, '_scale': 0.5},
-                                                              min_val=1,
-                                                              round_to_nearest=1,
-                                                              show_fig=False,
-                                                              print_data=False)
+                # flow_size_dist = val_dists.gen_named_val_dist(dist='normal',
+                                                              # params={'_loc': 3, '_scale': 0.5},
+                                                              # min_val=1,
+                                                              # round_to_nearest=1,
+                                                              # show_fig=False,
+                                                              # print_data=False)
+                flow_size_dist = {10: 0.33333333, 20: 0.33333333, 30: 0.33333333}
 
 
             else:
@@ -264,10 +265,11 @@ class DistributionGenerator:
                                                                  show_fig=False,
                                                                  print_data=False)
             elif benchmark == 'artificial_light':
-                interarrival_time_dist = val_dists.gen_named_val_dist(dist='normal',
-                                                                      params={'_loc': 3, '_scale': 0.5},
-                                                                      show_fig=False,
-                                                                      print_data=False)
+                # interarrival_time_dist = val_dists.gen_named_val_dist(dist='normal',
+                                                                      # params={'_loc': 3, '_scale': 0.5},
+                                                                      # show_fig=False,
+                                                                      # print_data=False)
+                interarrival_time_dist = {1.0: 1.0}
 
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))

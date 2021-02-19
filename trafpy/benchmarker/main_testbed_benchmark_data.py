@@ -43,31 +43,31 @@ class TestBed:
 
         jobs = []
         start_time = time.time()
-        _loads = [0.1, 0.2, 0.3, 0.4, 0.5] # DEBUG
+        # _loads = [0.1, 0.2, 0.3, 0.4, 0.5] # DEBUG
         for benchmark in self.benchmarks:
             # for load in self.benchmark_data[benchmark]:
             for load in list(self.benchmark_data[benchmark].keys()):
                 for repeat in self.benchmark_data[benchmark][load]:
                     for scheduler in config['schedulers']:
                         # if json.loads(load) == 0.5 and scheduler.scheduler_name == 'basrpt_v2': # DEBUG 
-                        if json.loads(load) in _loads: # DEBUG
+                        # if json.loads(load) in _loads: # DEBUG
                         # if json.loads(load) == 0.1: # DEBUG
-                            demand_data = self.benchmark_data[benchmark][load][repeat]
-                            demand = Demand(demand_data, config['networks'][0].graph['endpoints'])
-                            
-                            env = DCN(config['networks'][0], 
-                                      demand, 
-                                      scheduler,
-                                      num_k_paths=config['num_k_paths'],
-                                      slot_size=config['slot_size'],
-                                      sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
-                                      max_flows=config['max_flows'], 
-                                      max_time=config['max_time'])
+                        demand_data = self.benchmark_data[benchmark][load][repeat]
+                        demand = Demand(demand_data, config['networks'][0].graph['endpoints'])
+                        
+                        env = DCN(config['networks'][0], 
+                                  demand, 
+                                  scheduler,
+                                  num_k_paths=config['num_k_paths'],
+                                  slot_size=config['slot_size'],
+                                  sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
+                                  max_flows=config['max_flows'], 
+                                  max_time=config['max_time'])
 
-                            p = multiprocessing.Process(target=self.run_test,
-                                                        args=(scheduler, env, self.envs, path_to_save,))
-                            jobs.append(p)
-                            p.start()
+                        p = multiprocessing.Process(target=self.run_test,
+                                                    args=(scheduler, env, self.envs, path_to_save,))
+                        jobs.append(p)
+                        p.start()
         for job in jobs:
             job.join() # only execute below code when all jobs finished
         end_time = time.time()
@@ -166,7 +166,8 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # DATA_NAME = 'university_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'private_enterprise_chancap500_numchans1_mldat2e6_bidirectional'
-        DATA_NAME = 'social_media_cloud_chancap500_numchans1_mldat2e6_bidirectional'
+        # DATA_NAME = 'social_media_cloud_chancap500_numchans1_mldat2e6_bidirectional'
+        DATA_NAME = 'artificial_light_chancap10_numchans1_mldatNone_bidirectional'
 
         # benchmark data
         path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/{}_benchmark_data.json'.format(DATA_NAME)

@@ -22,8 +22,8 @@ class FlowGenerator:
                  node_dist,
                  flow_size_dist,
                  interarrival_time_dist,
-                 num_demands_factor=500,
-                 network_load_config=None,
+                 network_load_config,
+                 num_demands_factor=50,
                  min_last_demand_arrival_time=None,
                  auto_node_dist_correction=False,
                  print_data=False):
@@ -36,10 +36,7 @@ class FlowGenerator:
                 is the fraction of the network rate capacity being requested by the demands
                 (e.g. target_load_fraction=0.75 would generate demands which request
                 a load that is 75% of the network rate capacity from the first to 
-                the last demand arriving). disable_timeouts defines whether or not 
-                to stop looping when trying to meet specified network load. return_new_interarrival_time_dist
-                defines whether or not to return the new interarrival time dist which
-                was adjusted to meet the network node requested. If None, won't adjust
+                the last demand arriving). If 'target_load_fraction' is None, won't adjust
                 inter arrival time dist at all to meet network load.
             auto_node_dist_correction (bool): Set to True if you want TrafPy to
                 automatically make invalid node distributions valid. If True, invalid
@@ -65,7 +62,7 @@ class FlowGenerator:
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
         self.num_demands = int(self.num_pairs * num_demands_factor)
 
-        if self.network_load_config is not None:
+        if self.network_load_config['target_load_fraction'] is not None:
             if self.network_load_config['target_load_fraction'] > 0.95:
                 raise Exception('Target load fraction {} is invalid. Must be <= 0.95.'.format(self.network_load_config['target_load_fraction']))
 
@@ -83,7 +80,7 @@ class FlowGenerator:
         interarrival_times = val_dists.gen_rand_vars_from_discretised_dist(unique_vars=list(self.interarrival_time_dist.keys()),
                                                                            probabilities=list(self.interarrival_time_dist.values()),
                                                                            num_demands=self.num_demands)
-        if self.network_load_config is not None:
+        if self.network_load_config['target_load_fraction'] is not None:
             # adjust overall interarrival time dist until overall load <= user-specified load
             interarrival_times = self._adjust_demand_load(flow_sizes,
                                                           interarrival_times)
@@ -200,7 +197,7 @@ class FlowPacker:
                  flow_ids,
                  flow_sizes,
                  flow_interarrival_times,
-                 network_load_config=None,
+                 network_load_config,
                  auto_node_dist_correction=False,
                  print_data=False):
         self.generator = generator
@@ -212,9 +209,11 @@ class FlowPacker:
         self.network_load_config = network_load_config
         self.auto_node_dist_correction = auto_node_dist_correction
         self.print_data = print_data
+        # self.print_data = True # DEBUG
 
         self.reset()
-        self._check_node_dist_valid_for_this_load()
+        if self.network_load_config['target_load_fraction'] is not None:
+            self._check_node_dist_valid_for_this_load()
 
     def reset(self):
         # init dict in which flows will be packed into src-dst pairs
@@ -229,12 +228,20 @@ class FlowPacker:
                                                      'dst': None}
 
         # calc overall load rate
-        self.load_rate = self.generator._calc_overall_load_rate(self.flow_sizes, self.flow_interarrival_times)
+        if self.network_load_config['target_load_fraction'] is not None:
+            self.load_rate = self.generator._calc_overall_load_rate(self.flow_sizes, self.flow_interarrival_times)
+        else:
+            # no particular target load specified, just assume max
+            self.load_rate = self.network_load_config['network_rate_capacity']
 
         # calc target load rate of each src-dst pair
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
         self.pair_prob_dict = node_dists.get_pair_prob_dict_of_node_dist_matrix(self.node_dist, self.eps) # N.B. These values sum to 0.5 -> need to allocate twice (src-dst and dst-src)
         self.pair_target_load_rate_dict = {pair: frac*self.load_rate for pair, frac in self.pair_prob_dict.items()}
+
+        if self.print_data:
+            print('pair target load rate dict:\n{}'.format(self.pair_target_load_rate_dict))
+
 
         # # calc target load rate for each ep
         # self.ep_target_load_rate_dict = {ep: 0 for ep in self.eps}
@@ -245,7 +252,12 @@ class FlowPacker:
         # calc target total info to pack into each src-dst pair
         flow_event_times = tools.gen_event_times(self.flow_interarrival_times)
         self.duration = max(flow_event_times) - min(flow_event_times)
+        if self.duration == 0:
+            # set to some number to prevent infinities
+            self.duration = 1e6
         self.pair_target_total_info_dict = {pair: load_rate*self.duration for pair, load_rate in self.pair_target_load_rate_dict.items()}
+        if self.print_data:
+            print('pair target total info dict:\n{}'.format(self.pair_target_load_rate_dict))
 
         # init current total info packed into each src-dst pair and current distance from target info
         self.pair_current_total_info_dict = {pair: 0 for pair in self.pair_prob_dict.keys()}
@@ -264,11 +276,16 @@ class FlowPacker:
         final_flow_count = len(self.flow_ids)
         counter = 0
         for flow in self.packed_flows.keys():
+            if self.print_data:
+                print('\nPacking flow {}'.format(flow))
+                print('Current distance from target info:\n{}'.format(self.pair_current_distance_from_target_info_dict))
             chosen_pair = None
 
             # first 
             # try to allocate flow to pair which is currently furthest away from its target load
             sorted_pairs = sorted(self.pair_current_distance_from_target_info_dict.items(), key = lambda x: x[1], reverse=True) # sorts into descending order
+            if self.print_data:
+                print('Looking for pair furthest from target info...')
             for p in sorted_pairs:
                 pair = p[0]
                 ep1, ep2 = json.loads(pair)[0], json.loads(pair)[1]
@@ -280,8 +297,14 @@ class FlowPacker:
                     break
             # second
             if chosen_pair is None:
+                if self.print_data:
+                    print('Cannot find pair without exceeding target load. Attempting to allocate to most hot node...')
+                # OLD
                 # cannot allocate flow to any pair without exceeding its target load. Try to allocate to most 'hot' pairs without exceedeing maximum end point bandwidths
-                sorted_pairs = sorted(self.pair_target_total_info_dict.items(), key = lambda x: x[1], reverse=True) # sorts into descending order
+                # sorted_pairs = sorted(self.pair_target_total_info_dict.items(), key = lambda x: x[1], reverse=True) # sorts into descending order
+                # NEW
+                # cannot allocate flow to any pair without exceeding its target load. Try to allocate to pair furthest (or least negative) from target total info without exceedeing maximum end point bandwidths
+                sorted_pairs = sorted(self.pair_current_distance_from_target_info_dict.items(), key = lambda x: x[1], reverse=True) # sorts into descending order
                 for p in sorted_pairs:
                     pair = p[0]
                     ep1, ep2 = json.loads(pair)[0], json.loads(pair)[1]
@@ -295,6 +318,9 @@ class FlowPacker:
             if chosen_pair is None:
                 # could not find end point pair with enough capacity to take flow
                 raise Exception('Unable to find valid pair to assign flow {}: {} without exceeding ep total information load limit {} information units for this session. Decrease flow sizes to help with packing (recommended), and/or increase end point link capacity (recommended), and/or decrease your required target load to increase the time duration the flow packer has to pack flows into, and/or change your node dist to be less heavily skewed. Alternatively, try re-running dist and flow generator since may have chance of creating valid dists and flows which can be packed (also recommended). Current end point total information loads (information units):\n{}'.format(flow, self.packed_flows[flow], self.max_total_ep_info, self.ep_total_infos))
+            
+            if self.print_data:
+                print('Assigning flow to pair {}'.format(chosen_pair))
 
             # pack flow into this pair
             self.pair_current_total_info_dict[chosen_pair] = int(self.pair_current_total_info_dict[chosen_pair] + (self.packed_flows[flow]['size']))
@@ -329,6 +355,7 @@ class FlowPacker:
         packer_bar.finish()
 
         if self.print_data:
+            print('\nFinal total infos at each pair:\n{}'.format(self.pair_current_total_info_dict))
             print('Final total infos at each ep:\n{}'.format(self.ep_total_infos))
             ep_load_rates = {ep: self.ep_total_infos[ep]/self.duration for ep in self.ep_total_infos.keys()}
             print('Corresponding final load rates at each ep:\n{}'.format(ep_load_rates))
@@ -444,7 +471,10 @@ def get_flow_centric_demand_data_ep_load_rate(demand_data, ep, eps, method='all_
         time_first_flow_arrived = min(demand_data['event_time'])
         time_last_flow_arrived = max(demand_data['event_time'])
     duration = time_last_flow_arrived - time_first_flow_arrived
-    load_rate = total_info / duration
+    if duration != 0:
+        load_rate = total_info / duration
+    else:
+        load_rate = float('inf')
     
     return load_rate
 
@@ -467,11 +497,14 @@ def get_flow_centric_demand_data_overall_load_rate(demand_data, bidirectional_li
     first_event_time, last_event_time = get_first_last_flow_arrival_times(demand_data)
     duration = last_event_time - first_event_time
 
-    if bidirectional_links:
-        # 1 flow occupies 2 endpoint links therefore has 2*flow_size load
-        load_rate = 2*info_arrived/duration
+    if duration != 0:
+        if bidirectional_links:
+            # 1 flow occupies 2 endpoint links therefore has 2*flow_size load
+            load_rate = 2*info_arrived/duration
+        else:
+            load_rate = info_arrived/duration
     else:
-        load_rate = info_arrived/duration
+        load_rate = float('inf')
 
     return load_rate
 

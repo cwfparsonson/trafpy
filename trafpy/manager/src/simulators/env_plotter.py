@@ -5,6 +5,9 @@ from collections import defaultdict # use for initialising arbitrary length nest
 import json
 from statistics import mean
 from itertools import chain
+from tabulate import tabulate
+import pandas as pd
+import numpy as np
 
 
 class EnvPlotter:
@@ -43,6 +46,27 @@ class EnvsPlotter:
 
 
     ############################### GENERIC #################################
+    def display_t_score_table(self, *analysers):
+        _summary_dict = {'Load': [],
+                        'Subject': [],
+                        'T-Score': []}
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            _summary_dict['Load'].append(round(analyser.load_frac, 2))
+            _summary_dict['Subject'].append(analyser.subject_class_name)
+            _summary_dict['T-Score'].append(analyser.t_score)
+
+        # sort by order of load
+        index = np.argsort(_summary_dict['Load'])
+        summary_dict = {}
+        for key in _summary_dict.keys():
+            summary_dict[key] = np.asarray(_summary_dict[key])[index]
+        
+        dataframe = pd.DataFrame(summary_dict)
+        print(tabulate(dataframe, headers='keys', tablefmt='psql'))
+
+
+        
 
     def plot_average_fct_vs_load(self, *analysers):
         '''
