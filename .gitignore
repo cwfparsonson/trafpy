@@ -23,6 +23,7 @@
 *.obj
 *.mp4
 *.csv
+*.mat
 
 # Logs and databases #
 ######################
