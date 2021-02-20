@@ -16,6 +16,7 @@ def create_demand_data(eps,
                        interarrival_time_dist,
                        network_load_config=None,
                        num_demands_factor=50,
+                       jensen_shannon_distance_threshold=0.1,
                        min_last_demand_arrival_time=None,
                        auto_node_dist_correction=False,
                        num_ops_dist=None,
@@ -62,6 +63,12 @@ def create_demand_data(eps,
             graphs, it is recommended to use multiprocessing.
         num_demands_factor (int): Factor by which to multiply number of 
             network endpoint pairs by to get the initial number of demands.
+        jensen_shannon_distance_threshold (float): Maximum jensen shannon distance
+            required of generated random variables w.r.t. discretised dist they're generated from.
+            Must be between 0 and 1. Distance of 0 -> distributions are exactly the same.
+            Distance of 1 -> distributions are not at all similar.
+            https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15
+            N.B. To meet threshold, this function will keep doubling num_demands
         min_last_demand_arrival_time (int, float): Minimum last time of arrival
             for final demand (helps user specify a minimum simulation time). Will
             keep doubling number of demands until get >= min_last_demand_arrival_time.
@@ -88,12 +95,13 @@ def create_demand_data(eps,
     """
 
     generator = flowcentric.FlowGenerator(eps,
-                                          node_dist,
-                                          flow_size_dist,
-                                          interarrival_time_dist,
-                                          network_load_config,
-                                          num_demands_factor,
-                                          min_last_demand_arrival_time,
+                                          node_dist=node_dist,
+                                          flow_size_dist=flow_size_dist,
+                                          interarrival_time_dist=interarrival_time_dist,
+                                          network_load_config=network_load_config,
+                                          num_demands_factor=num_demands_factor,
+                                          jensen_shannon_distance_threshold=jensen_shannon_distance_threshold,
+                                          min_last_demand_arrival_time=min_last_demand_arrival_time,
                                           auto_node_dist_correction=auto_node_dist_correction,
                                           print_data=print_data) 
 

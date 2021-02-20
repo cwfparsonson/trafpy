@@ -601,6 +601,11 @@ def gen_skewnorm_data(a, loc, scale, min_val, max_val, num_samples):
 def gen_rand_vars_from_discretised_dist(unique_vars, 
                                         probabilities, 
                                         num_demands,
+                                        jensen_shannon_distance_threshold=None,
+                                        show_fig=False,
+                                        xlabel='Random Variable',
+                                        marker_size=15,
+                                        logscale=False,
                                         path_to_save=None):
     '''Generates random variable values by sampling from a discretised distribution.
 
@@ -609,6 +614,14 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
         probabilities (list): Corresponding probabilities of each random variable
             value being chosen.
         num_demands (int): Number of random variables to sample.
+        jensen_shannon_distance_threshold (float): Maximum jensen shannon distance
+            required of generated random variables w.r.t. discretised dist they're generated from.
+            Must be between 0 and 1. Distance of 0 -> distributions are exactly the same.
+            Distance of 1 -> distributions are not at all similar.
+            https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15
+            N.B. To meet threshold, this function will keep doubling num_demands
+        show_fig (bool): Whether or not to generated sampled var dist plotted
+            with the original distribution. 
         path_to_save (str): Path to directory (with file name included) in which
             to save generated data. E.g. path_to_save='data/my_data'
 
@@ -618,9 +631,57 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
     '''
     # if np.sum(probabilities) != 1:
         # raise Exception('Probabilities must sum to 1, but sum to {}'.format(np.sum(probabilities)))
-    sampled_vars = np.random.choice(a=unique_vars, 
-                                    size=num_demands,
-                                    p=probabilities)
+    if jensen_shannon_distance_threshold is not None:
+        if jensen_shannon_distance_threshold <= 0 or jensen_shannon_distance_threshold > 1:
+            raise Exception('jensen_shannon_distance_threshold must be >0 and <1, but is {}. See https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15'.format(jensen_shannon_distance_threshold))
+
+        distance = 1
+        num_demands_list = []
+        distance_list = []
+        while distance > jensen_shannon_distance_threshold:
+            num_demands_list.append(num_demands)
+            sampled_vars = np.random.choice(a=unique_vars, 
+                                            size=num_demands,
+                                            p=probabilities)
+            # check similarity
+            sampled_unique_vars, pmf = gen_discrete_prob_dist(sampled_vars, unique_vars=unique_vars)
+            p, q = list(probabilities), list(pmf)
+            distance = tools.compute_jensen_shannon_distance(p, q)
+            distance_list.append(distance)
+            num_demands = int(num_demands * 1.1)
+    else:
+        # no similarity threshold defined
+        sampled_vars = np.random.choice(a=unique_vars, 
+                                        size=num_demands,
+                                        p=probabilities)
+        sampled_unique_vars, pmf = gen_discrete_prob_dist(sampled_vars, unique_vars=unique_vars)
+
+    if show_fig:
+        # TODO IMPLEMENT
+        # if distance threshold specified, consider making second plot of
+        # e.g. distance vs. num demands. For both cases, plot (final) sampled vars
+        # dist & original dist on same graph. Use plotting functions from plot_dists
+
+        # dist comparison
+        plot_dict = {'original': {'x_values': unique_vars, 'y_values': probabilities},
+                     'sampled': {'x_values': sampled_unique_vars, 'y_values': pmf}}
+        _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
+                                       xlabel=xlabel,
+                                       ylabel='Probability',
+                                       logscale=logscale,
+                                       marker_style='+',
+                                       alpha=1,
+                                       marker_size=marker_size,
+                                       show_fig=True)
+
+        # distance vs. num demands
+        if jensen_shannon_distance_threshold is not None:
+            _ = plt.figure()
+            plt.scatter(num_demands_list,
+                        distance_list)
+            plt.xlabel('Number of Demands')
+            plt.ylabel('Jensen-Shannon Distance')
+            plt.show()
     
     if path_to_save is not None:
         tools.pickle_data(path_to_save, sampled_vars)
@@ -663,6 +724,7 @@ def gen_val_dist_data(val_dist,
 
 
 def gen_discrete_prob_dist(rand_vars, 
+                           unique_vars=None,
                            round_to_nearest=None, 
                            num_decimal_places=2,
                            path_to_save=None):
@@ -674,6 +736,10 @@ def gen_discrete_prob_dist(rand_vars,
 
     Args:
         rand_vars (list): Random variable values
+        unique_vars (list): List of unique random variables that can occur.
+            If given, will init each as having occurred 0 times and count number
+            of times each occurred. If left as None, will only record probabilities
+            of random variables that actually occurred in rand_vars.
         round_to_nearest(int/float): Value to round rand vars to nearest when
             discretising rand var values. E.g. is round_to_nearest=0.2, will round each
             rand var to nearest 0.2
@@ -697,7 +763,12 @@ def gen_discrete_prob_dist(rand_vars,
         discretised_rand_vars = rand_vars
 
     # count number of times each var occurs in data
-    counter_dict = {}
+    if unique_vars is None:
+        # not given what unique rand vars are, init empty dict
+        counter_dict = {}
+    else:
+        # given unique rand vars, init each one as having occurred 0 times
+        counter_dict = {unique_var: 0 for unique_var in unique_vars}
     for var in discretised_rand_vars:
         try:
             counter_dict[var] += 1

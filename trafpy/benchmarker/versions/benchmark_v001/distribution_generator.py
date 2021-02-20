@@ -232,6 +232,8 @@ class DistributionGenerator:
             if benchmark == 'university':
                 interarrival_time_dist = val_dists.gen_named_val_dist(dist='weibull',
                                                                       params={'_alpha': 0.9, '_lambda': 6000},
+                                                                      min_val=1,
+                                                                      round_to_nearest=1,
                                                                       show_fig=False,
                                                                       print_data=False)
 
@@ -242,6 +244,7 @@ class DistributionGenerator:
                                                                            skews=[-1,4],
                                                                            scales=[60,1000],
                                                                            num_skew_samples=[10000,10000],
+                                                                           round_to_nearest=1,
                                                                            bg_factor=0.05)
 
             elif benchmark == 'commercial_cloud':
@@ -251,19 +254,23 @@ class DistributionGenerator:
                                                                            skews=[0,0,0,100],
                                                                            scales=[1,3,4,50],
                                                                            num_skew_samples=[10000,7000,5000,20000],
+                                                                           round_to_nearest=1,
                                                                            bg_factor=0.01)
 
             elif benchmark == 'social_media_cloud':
                 interarrival_time_dist = val_dists.gen_named_val_dist(dist='lognormal',
                                                                       params={'_mu': 6, '_sigma': 2.3},
+                                                                      min_val=1,
+                                                                      round_to_nearest=1,
                                                                       show_fig=False,
                                                                       print_data=False)
 
             elif benchmark == 'uniform':
                 interarrival_time_dist = val_dists.gen_uniform_val_dist(min_val=10,
-                                                                 max_val=10000,
-                                                                 show_fig=False,
-                                                                 print_data=False)
+                                                                        max_val=10000,
+                                                                        round_to_nearest=1,
+                                                                        show_fig=False,
+                                                                        print_data=False)
             elif benchmark == 'artificial_light':
                 # interarrival_time_dist = val_dists.gen_named_val_dist(dist='normal',
                                                                       # params={'_loc': 3, '_scale': 0.5},

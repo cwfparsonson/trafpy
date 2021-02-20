@@ -295,6 +295,8 @@ def plot_val_scatter(plot_dict={},
                      xlabel='Random Variable',
                      ylabel='Random Variable Value',
                      alpha=1,
+                     marker_size=20,
+                     marker_style='.',
                      logscale=False,
                      show_fig=False):
     '''Plots scatter plot.
@@ -314,7 +316,7 @@ def plot_val_scatter(plot_dict={},
 
     class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
     for _class in sorted(plot_dict.keys()):
-        plt.scatter(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], c=next(class_colours), alpha=alpha, label=str(_class))
+        plt.scatter(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], c=next(class_colours), s=marker_size, alpha=alpha, marker=marker_style, label=str(_class))
 
     if logscale:
         ax = plt.gca()
