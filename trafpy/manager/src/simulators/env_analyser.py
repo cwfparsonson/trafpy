@@ -20,20 +20,17 @@ class EnvAnalyser:
         self.computed_metrics = False
 
 
-    def compute_metrics(self, measurement_start_time=None, measurement_end_time=None, bidirectional_links=True, print_summary=False):
+    def compute_metrics(self, measurement_start_time=None, measurement_end_time=None, print_summary=False):
         '''
         measurement_start_time (int, float): Simulation time at which to begin recording
             metrics etc.; is the warm-up time
         measurement_end_time (int, float): Simulation time at which to stop recording
             metrics etc.; is the cool-down time
-        bidirectional_links (bool): If True, 1 flow occupies bandwidth of 2 endpoint
-            links therefore is requesting load of 2*flow_size
 
         '''
         self.computed_metrics = True
         self.measurement_start_time = measurement_start_time 
         self.measurement_end_time = measurement_end_time 
-        self.bidirectional_links = bidirectional_links
 
         self._compute_flow_summary()
         self._compute_general_summary()
@@ -80,11 +77,7 @@ class EnvAnalyser:
     
     def _calc_network_load_abs(self):
         '''Calc absolute network load (i.e. is load rate during measurement period).'''
-        if self.bidirectional_links:
-            # 1 flow occupies 2 links therefore has double load
-            return 2*self.total_info_arrived / self.measurement_duration
-        else:
-            return self.total_info_arrived / self.measurement_duration
+        return self.total_info_arrived / self.measurement_duration
 
     def _calc_network_load_frac(self):
         '''Calc fraction network load (i.e. is fraction of network capacity requested during measurement period).'''

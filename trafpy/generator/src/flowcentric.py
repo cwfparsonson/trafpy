@@ -126,7 +126,7 @@ class FlowGenerator:
         return demand_data
 
 
-    def _calc_overall_load_rate(self, flow_sizes, interarrival_times, bidirectional_links=True):
+    def _calc_overall_load_rate(self, flow_sizes, interarrival_times):
         '''
         If flow connections are bidirectional_links, 1 flow takes up 2 endpoint links (the
         source link and the destination link), therefore effecitvely takes up load rate
@@ -138,11 +138,7 @@ class FlowGenerator:
         info_arrived = self._calc_total_info_arrived(flow_sizes)
         first_flow_arrival_time, last_flow_arrival_time = self._get_first_last_flow_arrival_times(interarrival_times)
         duration = last_flow_arrival_time - first_flow_arrival_time
-        if bidirectional_links:
-            # 1 flow occupies 2 endpoint links therefore has 2*flow_size load
-            return 2*info_arrived/duration
-        else:
-            return info_arrived/duration
+        return info_arrived/duration
 
     def _calc_total_info_arrived(self, flow_sizes):
         return np.sum(flow_sizes)
@@ -482,7 +478,7 @@ def get_flow_centric_demand_data_ep_load_rate(demand_data, ep, eps, method='all_
     
     return load_rate
 
-def get_flow_centric_demand_data_overall_load_rate(demand_data, bidirectional_links=True):
+def get_flow_centric_demand_data_overall_load_rate(demand_data):
     '''
     If flow connections are bidirectional_links, 1 flow takes up 2 endpoint links (the
     source link and the destination link), therefore effecitvely takes up load rate
@@ -502,11 +498,7 @@ def get_flow_centric_demand_data_overall_load_rate(demand_data, bidirectional_li
     duration = last_event_time - first_event_time
 
     if duration != 0:
-        if bidirectional_links:
-            # 1 flow occupies 2 endpoint links therefore has 2*flow_size load
-            load_rate = 2*info_arrived/duration
-        else:
-            load_rate = info_arrived/duration
+        load_rate = info_arrived/duration
     else:
         load_rate = float('inf')
 

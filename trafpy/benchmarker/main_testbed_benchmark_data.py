@@ -164,10 +164,10 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        # DATA_NAME = 'university_chancap500_numchans1_mldat2e6_bidirectional'
+        DATA_NAME = 'university_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'private_enterprise_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'social_media_cloud_chancap500_numchans1_mldat2e6_bidirectional'
-        DATA_NAME = 'artificial_light_chancap10_numchans1_mldatNone_bidirectional'
+        # DATA_NAME = 'artificial_light_chancap10_numchans1_mldatNone_bidirectional'
 
         # benchmark data
         path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/../data/benchmark_data/{}_benchmark_data.json'.format(DATA_NAME)
@@ -179,7 +179,7 @@ if __name__ == '__main__':
 
         # networks
         NUM_CHANNELS = 1
-        networks = [gen_fat_tree(k=3, N=2, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000)]
+        networks = [gen_fat_tree(k=3, N=2, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000, bidirectional_links=True)]
 
         # rwas
         NUM_K_PATHS = 2

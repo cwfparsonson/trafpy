@@ -10,7 +10,8 @@ import json
 def gen_arbitrary_network(ep_label=None, 
                           server_to_rack_channel_capacity=12500, 
                           num_channels=1, 
-                          num_eps=10):
+                          num_eps=10,
+                          bidirectional_links=False):
     '''Generates an arbitrary network with num_eps nodes labelled as ep_label.
 
     Note that no edges are formed in this network; it is purely for ep name 
@@ -47,6 +48,8 @@ def gen_arbitrary_network(ep_label=None,
     network.graph['endpoints'] = eps
 
     max_nw_capacity = (num_eps * server_to_rack_channel_capacity * num_channels) 
+    if bidirectional_links:
+        max_nw_capacity /= 2
 
     init_global_network_attrs(network,
                               max_nw_capacity,
@@ -241,6 +244,7 @@ def gen_fat_tree(k=4,
                  rack_to_edge_channel_capacity=10000000000,
                  edge_to_agg_channel_capacity=40000000000,
                  agg_to_core_channel_capacity=40000000000,
+                 bidirectional_links=True,
                  show_fig=False):
     '''Generates a data centre network with a 3-layer fat tree topology.
     
@@ -387,6 +391,8 @@ def gen_fat_tree(k=4,
     # max_nw_capacity = server_rack_capacity + rack_edge_capacity + edge_agg_capacity + agg_core_capacity
     server_rack_capacity = num_server_rack_links * server_to_rack_channel_capacity * num_channels
     max_nw_capacity = server_rack_capacity 
+    if bidirectional_links:
+        max_nw_capacity /= 2
 
     # init global network attrs
     init_global_network_attrs(fat_tree_network, 
