@@ -657,14 +657,29 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
         sampled_unique_vars, pmf = gen_discrete_prob_dist(sampled_vars, unique_vars=unique_vars)
 
     if show_fig:
-        # TODO IMPLEMENT
-        # if distance threshold specified, consider making second plot of
-        # e.g. distance vs. num demands. For both cases, plot (final) sampled vars
-        # dist & original dist on same graph. Use plotting functions from plot_dists
-
         # dist comparison
         plot_dict = {'original': {'x_values': unique_vars, 'y_values': probabilities},
                      'sampled': {'x_values': sampled_unique_vars, 'y_values': pmf}}
+        _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
+                                       xlabel=xlabel,
+                                       ylabel='Probability',
+                                       logscale=logscale,
+                                       marker_style='+',
+                                       alpha=1,
+                                       marker_size=marker_size,
+                                       show_fig=True)
+
+        plot_dict = {'original': {'x_values': unique_vars, 'y_values': probabilities}}
+        _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
+                                       xlabel=xlabel,
+                                       ylabel='Probability',
+                                       logscale=logscale,
+                                       marker_style='+',
+                                       alpha=1,
+                                       marker_size=marker_size,
+                                       show_fig=True)
+
+        plot_dict = {'sampled': {'x_values': sampled_unique_vars, 'y_values': pmf}}
         _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
                                        xlabel=xlabel,
                                        ylabel='Probability',
