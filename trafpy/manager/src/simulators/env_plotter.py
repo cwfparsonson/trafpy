@@ -65,6 +65,30 @@ class EnvsPlotter:
         dataframe = pd.DataFrame(summary_dict)
         print(tabulate(dataframe, headers='keys', tablefmt='psql'))
 
+    def plot_t_score_scatter(self, *analysers):
+        '''Plots performance indicators for T-scores.
+
+        TODO:
+            Currently plots FCT component vs. throughput component, but should add
+            colour bar so can include dropped flow component (similar to final
+            scatter in JLT plot).
+
+
+        '''
+        nested_dict = lambda: defaultdict(nested_dict)
+        plot_dict = nested_dict()
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = analyser.throughput_component 
+            plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = analyser.fct_component 
+
+
+        figs = []
+        for load in plot_dict.keys():
+            fig = plot_dists.plot_val_scatter(plot_dict=plot_dict[load], xlabel='Load {} Throughput Component'.format(str(round(load,2))), ylabel='Load {} FCT Component'.format(str(round(load,2))), alpha=1.0, marker_size=60, logscale=True, show_fig=False)
+            figs.append(fig)
+
+        return figs
 
         
 

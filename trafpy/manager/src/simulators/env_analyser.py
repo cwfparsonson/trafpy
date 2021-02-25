@@ -123,21 +123,21 @@ class EnvAnalyser:
         mean_fct_component = mean_fct_factor / mean_fct
         std_fct_component = std_fct_factor / std_fct
 
-        fct_component = mean_fct_factor + std_fct_component
+        self.fct_component = mean_fct_factor + std_fct_component
 
 
         # DROPPED FLOWS COMPONENT
         num_eps = len(self.env.network.graph['endpoints'])
         num_queues = num_eps * (num_eps - 1)
         max_num_flows_in_network = self.env.max_flows * num_queues
-        dropped_component = 1 - (self.dropped_flow_frac * max_num_flows_in_network)
+        self.dropped_component = 1 - (self.dropped_flow_frac * max_num_flows_in_network)
 
         # THROUGHPUT COMPONENT
-        throughput_component = self.throughput_abs / self.env.network.graph['max_nw_capacity']
+        self.throughput_component = self.throughput_abs / self.env.network.graph['max_nw_capacity']
 
         # T-SCORE
         # print('fct component: {} | dropped component: {} | throughput_component: {}'.format(fct_component, dropped_component, throughput_component))
-        t_score = fct_component + dropped_component + throughput_component
+        t_score = self.fct_component + self.dropped_component + self.throughput_component
 
         return t_score
 

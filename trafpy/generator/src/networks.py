@@ -231,37 +231,46 @@ def get_endpoints(network, ep_label):
 
     return eps
 
-
 def gen_fat_tree(k=4,
-                 N=4,
-                 ep_label='server',
-                 rack_label='rack',
-                 edge_label='edge',
-                 aggregate_label='agg',
-                 core_label='core',
-                 num_channels = 2,
-                 server_to_rack_channel_capacity=1,
-                 rack_to_edge_channel_capacity=10000000000,
-                 edge_to_agg_channel_capacity=40000000000,
-                 agg_to_core_channel_capacity=40000000000,
-                 bidirectional_links=True,
-                 show_fig=False):
-    '''Generates a data centre network with a 3-layer fat tree topology.
-    
-    Resource for building: https://blogchinmaya.blogspot.com/2017/04/what-is-fat-tree
-    
+                  L=2,
+                  n=4,
+                  ep_label='server',
+                  rack_label='rack',
+                  edge_label='edge',
+                  aggregate_label='agg',
+                  core_label='core',
+                  num_channels = 2,
+                  server_to_rack_channel_capacity=500,
+                  rack_to_edge_channel_capacity=1000,
+                  edge_to_agg_channel_capacity=1000,
+                  agg_to_core_channel_capacity=2000,
+                  bidirectional_links=True,
+                  show_fig=False):
+    '''Generates a perfect fat tree (i.e. all layers have switches with same radix/number of ports).
+
+    Top layer is always core (spine) switch layer, bottom layer is always
+    ToR (leaf) layer.
+
+    L must be either 2 (core, ToR) or 3 (core, pod (agg & edge), ToR)
+
+    Resource for building (scroll down to summary table with equations):
+
+    https://packetpushers.net/demystifying-dcn-topologies-clos-fat-trees-part2/
+
     Parameters of network:
 
-    - number of core switches = (k/2)^2
-    - number of pods = k
-    - number of aggregate switches = (k^2)/2
-    - number of edge switches = (k^2)/2
-    - number of racks = (k^3)/4
-    - number of servers = N*(k^3)/4
+    - number of core (spine) switches = (k/2)^(L/2) (top layer)
+    - number of edge switches (if L=4) = (k^2)/2
+    - number of agg switches (if L=4) = (k^2)/2
+    - number of pods (if L=4) (pod is a group of agg and/or edge switches) = 2*(k/2)^(L-2)
+    - number of ToR (leaf) switches (racks) = 2*(k/2)^(L-1) (bottom layer)
+    - number of server-facing ToR 'host' ports = 2*(k/2)^2 (can have multiple servers connected to same host port, & can oversubscribe)
+    - number of servers = number ToR switches * n
 
     Args:
-        k (int): Number of ports/links on each switch
-        N (int): Number of servers per rack
+        k (int): Number of ports (links) on each switch (both up and down).
+        L (int): Number of layers in the fat tree.
+        n (int): Number of server per rack.
         ep_label (str,int,float): Endpoint label (e.g. 'server'). All endpoints will have
             ep_label appended to the start of their label (e.g. 'server_0', 'server_1', ...).
         edge_label (str,int): Label to assign to edge switch nodes
@@ -276,93 +285,123 @@ def gen_fat_tree(k=4,
         networkx graph: network object
 
     '''
+    if L != 2 and L != 4:
+        raise Exception('L must be 2 (ToR layer, core layer) or 4 (ToR layer, edge layer, agg layer, core layer), but is {}.'.format(L))
+    if k % 2 != 0:
+        raise Exception('k must be even since have equal number of up and down ports on each switch, but is {}.'.format(k))
+
     channel_names = gen_channel_names(num_channels)
 
     # initialise network nodes
-    num_cores = int((k/2)**2)
+    if L == 2:
+        node_labels = [ep_label, rack_label, core_label]
+    else:
+        node_labels = [ep_label, rack_label, edge_label, aggregate_label, core_label]
+
+    #num_cores = int((k/2)**(L-1))
+    #num_cores = int((k/2)**2)
+    num_cores = int((k/2)**(L/2))
     num_aggs = int((k**2)/2)
     num_edges = int((k**2)/2)
-    num_racks = int((k**3)/4)
-    num_servers = int(N * num_racks)
+    num_pods = int(2*(k/2)**(L-2))
+    num_racks = int(2*(k/2)**(L-1))
+    num_servers = int(num_racks * n)
 
     cores = [core_label+'_'+str(i) for i in range(num_cores)]
     aggs = [aggregate_label+'_'+str(i) for i in range(num_aggs)]
     edges = [edge_label+'_'+str(i) for i in range(num_edges)]
     racks = [rack_label+'_'+str(i) for i in range(num_racks)]
     servers = [ep_label+'_'+str(i) for i in range(num_servers)]
-   
+
     # create core and rack layer networks
     core_layer = nx.Graph()
     rack_layer = nx.Graph()
     core_layer.add_nodes_from(cores)
     rack_layer.add_nodes_from(racks)
-    
-    # group edges and aggregates into pods
-    num_pods = int(k)
-    pods = [[] for i in range(num_pods)]
-    prev_iter = 0
-    for pod_iter in range(len(pods)):
-        curr_iter = int(prev_iter + (k/2))
-        pods[pod_iter].append(edges[prev_iter:curr_iter])
-        pods[pod_iter].append(aggs[prev_iter:curr_iter])
-        prev_iter = curr_iter
 
-    # create dict of pod networks
-    pod_labels = ['pod_'+str(i) for i in range(num_pods)]
-    pods_dict = {tuple([pod]): nx.Graph() for pod in pod_labels}
-    for pod_iter in range(num_pods):
-        key = ('pod_'+str(pod_iter),)
-        pod_edges = pods[pod_iter][0]
-        pod_aggs = pods[pod_iter][1]
-        pods_dict[key].add_nodes_from(pod_edges)
-        pods_dict[key].add_nodes_from(pod_aggs)
-        # connect edge and aggregate switches within pod, add link attributes
-        for pod_edge in pod_edges:
-            for pod_agg in pod_aggs:
-                pods_dict[key].add_edge(pod_agg, pod_edge)
-                add_edge_capacity_attrs(pods_dict[key], 
-                                 (pod_agg,pod_edge), 
-                                 channel_names, 
-                                 edge_to_agg_channel_capacity) 
-
-    # combine cores, pods and racks into single network
-    pod_networks = list(pods_dict.values())
+    # combine cores and racks into single network
     fat_tree_network = nx.compose(core_layer, rack_layer)
-    for pod_iter in range(num_pods):
-        fat_tree_network = nx.compose(fat_tree_network, pod_networks[pod_iter])
-
-    # link aggregate switches in pods to core switches, add link attributes
-    for pod_iter in range(num_pods):
-        pod_aggs = pods[pod_iter][1]
-        core_iterator = iter(cores)
-        for pod_agg in pod_aggs:
-            while fat_tree_network.degree[pod_agg] < k:
-                core = next(core_iterator)
-                fat_tree_network.add_edge(core, pod_agg)
-                add_edge_capacity_attrs(fat_tree_network,
-                                 (core,pod_agg),
-                                 channel_names,
-                                 agg_to_core_channel_capacity)
-
-    # link edge switches in pods to racks, add link attributes
-    rack_iterator = iter(racks)
-    for pod_iter in range(num_pods):
-        pod_edges = pods[pod_iter][0]
-        for pod_edge in pod_edges:
-            while fat_tree_network.degree[pod_edge] < k:
-                rack = next(rack_iterator)
-                fat_tree_network.add_edge(pod_edge, rack)
-                add_edge_capacity_attrs(fat_tree_network,
-                                 (pod_edge,rack),
-                                 channel_names,
-                                 rack_to_edge_channel_capacity)
     
+    if L == 2:
+        # link racks to cores, add link attributes
+        rack_iterator = iter(racks)
+        for rack in racks:
+            core_iterator = iter(cores)
+            # have k/2 up-ports on each switch
+            for up_port in range(int(k/2)):
+                core = next(core_iterator)
+                fat_tree_network.add_edge(rack, core)
+                add_edge_capacity_attrs(fat_tree_network,
+                                        (rack, core),
+                                        channel_names,
+                                        agg_to_core_channel_capacity)
+    else:
+        # group edges and aggregates into pods
+        num_pods = int(k)
+        pods = [[] for i in range(num_pods)]
+        prev_iter = 0
+        for pod_iter in range(len(pods)):
+            curr_iter = int(prev_iter + (k/2))
+            pods[pod_iter].append(edges[prev_iter:curr_iter])
+            pods[pod_iter].append(aggs[prev_iter:curr_iter])
+            prev_iter = curr_iter
+
+        # create dict of pod networks
+        pod_labels = ['pod_'+str(i) for i in range(num_pods)]
+        pods_dict = {tuple([pod]): nx.Graph() for pod in pod_labels}
+        for pod_iter in range(num_pods):
+            key = ('pod_'+str(pod_iter),)
+            pod_edges = pods[pod_iter][0]
+
+            pod_aggs = pods[pod_iter][1]
+            pods_dict[key].add_nodes_from(pod_edges)
+            pods_dict[key].add_nodes_from(pod_aggs)
+
+            # connect edge and aggregate switches within pod, add link attributes
+            for pod_edge in pod_edges:
+                for pod_agg in pod_aggs:
+                    pods_dict[key].add_edge(pod_agg, pod_edge)
+                    add_edge_capacity_attrs(pods_dict[key], 
+                                     (pod_agg,pod_edge), 
+                                     channel_names, 
+                                     edge_to_agg_channel_capacity) 
+
+        # add pods (agg + edge) layer to fat-tree
+        pod_networks = list(pods_dict.values())
+        for pod_iter in range(num_pods):
+            fat_tree_network = nx.compose(fat_tree_network, pod_networks[pod_iter])
+
+        # link aggregate switches in pods to core switches, add link attributes
+        for pod_iter in range(num_pods):
+            pod_aggs = pods[pod_iter][1]
+            core_iterator = iter(cores)
+            for pod_agg in pod_aggs:
+                while fat_tree_network.degree[pod_agg] < k:
+                    core = next(core_iterator)
+                    fat_tree_network.add_edge(core, pod_agg)
+                    add_edge_capacity_attrs(fat_tree_network,
+                                     (core,pod_agg),
+                                     channel_names,
+                                     agg_to_core_channel_capacity)
+
+        # link edge switches in pods to racks, add link attributes
+        rack_iterator = iter(racks)
+        for pod_iter in range(num_pods):
+            pod_edges = pods[pod_iter][0]
+            for pod_edge in pod_edges:
+                while fat_tree_network.degree[pod_edge] < k:
+                    rack = next(rack_iterator)
+                    fat_tree_network.add_edge(pod_edge, rack)
+                    add_edge_capacity_attrs(fat_tree_network,
+                                     (pod_edge,rack),
+                                     channel_names,
+                                     rack_to_edge_channel_capacity)
+
     # link servers to racks, add link attributes
     racks_dict = {rack: [] for rack in racks} # track which endpoints in which rack
     server_iterator = iter(servers)
     for rack in racks:
-        servers_added = 0
-        while servers_added < N:
+        for _ in range(n):
             server = next(server_iterator)
             fat_tree_network.add_edge(rack, server)
             add_edge_capacity_attrs(fat_tree_network,
@@ -370,29 +409,10 @@ def gen_fat_tree(k=4,
                                     channel_names,
                                     server_to_rack_channel_capacity)
             racks_dict[rack].append(server)
-            servers_added += 1
 
-    # add end points as global network property
-    fat_tree_network.graph['endpoints'] = get_endpoints(fat_tree_network, ep_label)
-
-    # calc total network byte capacity
-    num_agg_core_links = num_cores * k
-    if k > 3:
-        num_edge_agg_links = num_pods * k
-    else:
-        # not high enough k to have inter pod links
-        num_edge_agg_links = num_pods
-    num_rack_edge_links = num_edges * (k/2)
-    num_server_rack_links = num_racks * N
-    # agg_core_capacity = num_agg_core_links * agg_to_core_channel_capacity * num_channels
-    # edge_agg_capacity = num_edge_agg_links * edge_to_agg_channel_capacity * num_channels
-    # rack_edge_capacity = num_rack_edge_links * rack_to_edge_channel_capacity * num_channels
-    # server_rack_capacity = num_server_rack_links * server_to_rack_channel_capacity * num_channels
-    # max_nw_capacity = server_rack_capacity + rack_edge_capacity + edge_agg_capacity + agg_core_capacity
-    server_rack_capacity = num_server_rack_links * server_to_rack_channel_capacity * num_channels
-    max_nw_capacity = server_rack_capacity 
-    if bidirectional_links:
-        max_nw_capacity /= 2
+    # calc total network capacity
+    num_server_rack_links = int(num_racks * (k/2))
+    max_nw_capacity = num_server_rack_links * num_channels * server_to_rack_channel_capacity
 
     # init global network attrs
     init_global_network_attrs(fat_tree_network, 
@@ -400,11 +420,7 @@ def gen_fat_tree(k=4,
                               num_channels, 
                               ep_link_capacity=server_to_rack_channel_capacity*num_channels,
                               endpoint_label=ep_label,
-                              node_labels=[ep_label,
-                                           rack_label,
-                                           edge_label,
-                                           aggregate_label,
-                                           core_label],
+                              node_labels=node_labels,
                               topology_type='fat_tree',
                               racks_dict=racks_dict)
 
@@ -412,6 +428,8 @@ def gen_fat_tree(k=4,
         plot_network(fat_tree_network, show_fig=True)
 
     return fat_tree_network
+
+    
 
 
 def init_global_network_attrs(network, 
