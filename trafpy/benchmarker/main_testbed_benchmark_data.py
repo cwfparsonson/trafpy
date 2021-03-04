@@ -49,7 +49,7 @@ class TestBed:
             for load in list(self.benchmark_data[benchmark].keys()):
                 for repeat in self.benchmark_data[benchmark][load]:
                     for scheduler in config['schedulers']:
-                        # if json.loads(load) == 0.5 and scheduler.scheduler_name == 'basrpt_v2': # DEBUG 
+                        # if json.loads(load) == 0.5 and scheduler.scheduler_name == 'srpt_v2': # DEBUG 
                         # if json.loads(load) in _loads: # DEBUG
                         # if json.loads(load) == 0.1: # DEBUG
                         demand_data = self.benchmark_data[benchmark][load][repeat]
@@ -74,6 +74,7 @@ class TestBed:
         total_time = round(end_time-start_time, 2)
         print('\n{} tests completed in {} seconds.'.format(num_jobs, total_time))
 
+        # DEBUG: Don't save if just debugging
         self.save(path=path_to_save, overwrite=False) # save final testbed state
 
 
@@ -112,6 +113,7 @@ class TestBed:
                 break
 
     def save(self, path, overwrite=False, conv_back_to_mp_manager_list=False):
+        start = time.time()
         self.envs = list(self.envs) # conv to list so is picklable
         filename = path + '/' + self.config['test_name'] + '.obj'
 
@@ -128,6 +130,8 @@ class TestBed:
         filehandler = open(filename, 'wb')
         pickle.dump(dict(self.__dict__), filehandler)
         filehandler.close()
+        end = time.time()
+        print('Saved test bench data to {} in {} s'.format(filename, end-start))
 
 
 
@@ -163,7 +167,7 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        DATA_NAME = 'commercial_cloud_k_4_N_2_chancap500_numchans1_mldat2e6_bidirectional'
+        DATA_NAME = 'university_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'private_enterprise_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'social_media_cloud_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'artificial_light_chancap10_numchans1_mldatNone_bidirectional'
@@ -179,9 +183,8 @@ if __name__ == '__main__':
 
         # networks
         NUM_CHANNELS = 1
-        # networks = [gen_fat_tree(k=3, N=2, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000, bidirectional_links=True)]
-        # networks = [gen_fat_tree(k=4, N=2, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)]
-        networks = [gen_fat_tree(k=4, N=2, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=500, edge_to_agg_channel_capacity=250, agg_to_core_channel_capacity=250, bidirectional_links=True)]
+        # networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)]
+        networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_core_channel_capacity=250, bidirectional_links=True)]
 
         # rwas
         NUM_K_PATHS = 2

@@ -235,9 +235,11 @@ class DCN(gym.Env):
     def get_channel_bandwidth(self, edge, channel):
         '''Gets current channel bandwidth left on a given edge in the network.'''
         try:
-            return self.network[edge[0]][edge[1]]['channels'][channel]
+            # return self.network[edge[0]][edge[1]]['channels'][channel]
+            return self.network[edge[0]][edge[1]]['{}_to_{}_port'.format(edge[0], edge[1])]['channels'][channel]
         except KeyError:
-            return self.network[edge[1]][edge[0]]['channels'][channel]
+            # return self.network[edge[1]][edge[0]]['channels'][channel]
+            return self.network[edge[1]][edge[0]]['{}_to_{}_port'.format(edge[0], edge[1])]['channels'][channel]
 
     def init_grid_slot_evolution(self, Graph):
         grid_slot_dict = {ep:
@@ -314,7 +316,7 @@ class DCN(gym.Env):
             max_link_bw = 0
             for channel in self.channel_names:
                 available_link_bw += self.get_channel_bandwidth(link, channel)
-                max_link_bw += self.network[link[0]][link[1]]['max_channel_capacity']
+                max_link_bw += self.network[link[0]][link[1]]['{}_to_{}_port'.format(link[0], link[1])]['max_channel_capacity']
             link_util = 1-(available_link_bw / max_link_bw)
             self.link_utilisation_dict[json.dumps(link)]['time_slots'].append(self.curr_step)
             self.link_utilisation_dict[json.dumps(link)]['util'].append(link_util)
@@ -729,8 +731,8 @@ class DCN(gym.Env):
         channel = flow_dict['channel']
         link_bws = []
         for link in path_links:
-            # link_bws.append(self.network[link[0]][link[1]]['max_channel_capacity'])
-            link_bws.append(self.network[link[0]][link[1]]['channels'][channel])
+            # link_bws.append(self.network[link[0]][link[1]]['channels'][channel])
+            link_bws.append(self.network[link[0]][link[1]]['{}_to_{}_port'.format(link[0], link[1])]['channels'][channel])
         capacity = min(link_bws) # channel capacity == info transferred per unit time
         info_per_slot = capacity  * self.slot_size # info transferred per slot == info transferred per unit time * number of time units (i.e. slot size)
         packets_per_slot = int(info_per_slot / packet_size) # round down 
@@ -906,7 +908,7 @@ class DCN(gym.Env):
         queue_links = []
         op_links = []
         for edge in network.edges:
-            if 'channels' in network[edge[0]][edge[1]].keys():
+            if 'channels' in network[edge[0]][edge[1]]['{}_to_{}_port'.format(edge[0], edge[1])].keys():
                 # edge is a fibre link
                 fibre_links.append(edge)
             elif network[edge[0]][edge[1]]['type'] == 'queue_link':
@@ -1245,9 +1247,11 @@ class DCN(gym.Env):
     def reset_channel_capacities_of_edges(self, edges):
         '''Takes edges and resets their available capacities back to their maximum capacities.'''
         for edge in edges:
-            for channel in self.network[edge[0]][edge[1]]['channels']:
-                # reset channel capacity
-                self.network[edge[0]][edge[1]]['channels'][channel] = self.network[edge[0]][edge[1]]['max_channel_capacity']
+            # for channel in self.network[edge[0]][edge[1]]['channels']:
+            for channel in self.network[edge[0]][edge[1]]['{}_to_{}_port'.format(edge[0], edge[1])]['channels']:
+                # reset channel capacity of both ports
+                self.network[edge[0]][edge[1]]['{}_to_{}_port'.format(edge[0], edge[1])]['channels'][channel] = self.network[edge[0]][edge[1]]['{}_to_{}_port'.format(edge[0], edge[1])]['max_channel_capacity']
+                self.network[edge[1]][edge[0]]['{}_to_{}_port'.format(edge[1], edge[0])]['channels'][channel] = self.network[edge[0]][edge[1]]['{}_to_{}_port'.format(edge[0], edge[1])]['max_channel_capacity']
         # update global graph property
         self.network.graph['curr_nw_capacity_used'] = 0
 
@@ -1704,8 +1708,9 @@ class DCN(gym.Env):
         num_edges = len(edges)
         for edge in range(num_edges):
             node_pair = edges[edge]
-            capacity = graph[node_pair[0]][node_pair[1]]['channels'][channel]
-            if round(capacity,0) != round(graph[node_pair[0]][node_pair[1]]['max_channel_capacity'],0):
+            # capacity = graph[node_pair[0]][node_pair[1]]['channels'][channel]
+            capacity = graph[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['channels'][channel]
+            if round(capacity,0) != round(graph[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['max_channel_capacity'],0):
                 channel_used = True
                 break
             else:
@@ -1739,12 +1744,15 @@ class DCN(gym.Env):
             node_pair = edges[edge]
 
             # check that establishing this flow is valid given edge capacity constraints
-            if self.network[node_pair[0]][node_pair[1]]['channels'][channel] - capacity_used_this_slot < 0:
+            # if self.network[node_pair[0]][node_pair[1]]['channels'][channel] - capacity_used_this_slot < 0:
+            if self.network[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['channels'][channel] - capacity_used_this_slot < 0:
                 raise Exception('Tried to set up flow {} on edge {} channel {}, but this results in a negative channel capacity on this edge i.e. this edge\'s channel is full, cannot have more flow packets scheduled! Scheduler should not be giving invalid chosen flow sets to the environment.'.format(flow, node_pair, channel)) 
 
             # update edge capacity remaining after establish this flow
-            self.network[node_pair[0]][node_pair[1]]['channels'][channel] -= capacity_used_this_slot
-            self.network[node_pair[0]][node_pair[1]]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['channels'][channel], num_decimals)
+            # self.network[node_pair[0]][node_pair[1]]['channels'][channel] -= capacity_used_this_slot
+            # self.network[node_pair[0]][node_pair[1]]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['channels'][channel], num_decimals)
+            self.network[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['channels'][channel] -= capacity_used_this_slot
+            self.network[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['channels'][channel], num_decimals)
 
             if self.track_link_concurrent_demands_evolution:
                 try:
@@ -1789,8 +1797,10 @@ class DCN(gym.Env):
         for edge in range(num_edges):
             node_pair = edges[edge]
             # update edge property
-            self.network[node_pair[0]][node_pair[1]]['channels'][channel] += capacity_used_this_slot
-            self.network[node_pair[0]][node_pair[1]]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['channels'][channel], num_decimals)
+            # self.network[node_pair[0]][node_pair[1]]['channels'][channel] += capacity_used_this_slot
+            # self.network[node_pair[0]][node_pair[1]]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['channels'][channel], num_decimals)
+            self.network[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['channels'][channel] += capacity_used_this_slot
+            self.network[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['channels'][channel], num_decimals)
 
             # update global graph property
             self.network.graph['curr_nw_capacity_used'] -= capacity_used_this_slot

@@ -292,37 +292,31 @@ class DemandPlotter:
 
 
 
-    def plot_node_load_fraction_of_overall_load_dist(self, eps, network_rate_capacity):
-        '''
-        Returns bar chart of end point links on x-axis and corresponding fraction
-        of the overall network capacity
-
-        '''
 
 
 
     def plot_node_dist(self, eps):
-
-        sampled_pairs = {}
+        pair_total_infos_requested = {}
         sources = self.demand.demand_data['sn']
         destinations = self.demand.demand_data['dn']
+        flow_sizes = self.demand.demand_data['flow_size']
+        total_info = np.sum(flow_sizes)
         for i in range(self.demand.num_demands):
             sn = sources[i]
             dn = destinations[i]
             pair = json.dumps([sn, dn])
-            if pair not in sampled_pairs:
+            flow_size = flow_sizes[i]
+            if pair not in pair_total_infos_requested:
                 # check if switched src-dst pair that already occurred
-                pair_switched = json.dumps([dn, sn])
-                if pair_switched not in sampled_pairs:
-                    sampled_pairs[pair] = 1 # init first occurrence of pair
-                else:
-                    # pair already seen before
-                    sampled_pairs[pair_switched] += 1
+                pair_total_infos_requested[pair] = flow_size
             else:
                 # pair already seen before
-                sampled_pairs[pair] += 1
+                pair_total_infos_requested[pair] += flow_size
+        
+        pair_frac_requested_of_overall_load = {pair: pair_total_infos_requested[pair]/total_info for pair in pair_total_infos_requested.keys()}
 
-        node_dist = node_dists.convert_sampled_pairs_into_node_dist(sampled_pairs, eps)
+        node_dist = node_dists.assign_probs_to_matrix(eps=eps,
+                                                      probs=pair_frac_requested_of_overall_load)
 
         return plot_dists.plot_node_dist(node_dist)
 
@@ -413,10 +407,6 @@ class DemandPlotter:
 
 
 
-# TODO
-# flow_size_dist
-# interarrival_time_dist
-# node_dist
 
 
 class DemandsPlotter:

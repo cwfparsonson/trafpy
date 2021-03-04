@@ -54,6 +54,7 @@ def assign_probs_to_matrix(eps, probs, matrix=None):
                     matrix[src_idx,dst_idx] = prob
                     matrix[dst_idx,src_idx] = prob
 
+
     return matrix
 
 
@@ -783,23 +784,7 @@ def convert_sampled_pairs_into_node_dist(sampled_pairs, eps):
                 sampled_pair_prob_dist[json.dumps(index_to_pair[index])] = 0
     
     # convert prob dist into dict whose keys are node dist matrix indices
-    index_to_pair, pair_to_index = get_network_pair_mapper(eps)
-    matrix_pair_prob_dist = {}
-    for key in sampled_pair_prob_dist.keys():
-        try:
-            matrix_index = pair_to_index[key]
-        except KeyError:
-            # switch src and dst
-            pair = json.loads(key)
-            key = json.dumps([pair[1], pair[0]])
-            matrix_index = pair_to_index[key]
-        try:
-            matrix_pair_prob_dist[matrix_index] = sampled_pair_prob_dist[key]
-        except KeyError:
-            # switch src and dst back for sampled pair prob dist
-            pair = json.loads(key)
-            key = json.dumps([pair[1], pair[0]])
-            matrix_pair_prob_dist[matrix_index] = sampled_pair_prob_dist[key]
+    matrix_pair_prob_dist = convert_pair_prob_dist_dict_to_matrix_pair_prob_dist_dict(sampled_pair_prob_dist, eps)
 
     # sort so that get correct ordering of pair probs when assign to node matrix
     sorted_matrix_pair_prob_dist_keys = sorted((matrix_pair_prob_dist.keys()))
@@ -815,6 +800,38 @@ def convert_sampled_pairs_into_node_dist(sampled_pairs, eps):
                                        probs=prob_pair_chosen)
 
     return node_dist
+
+def convert_pair_prob_dist_dict_to_matrix_pair_prob_dist_dict(pair_prob_dist, eps):
+    '''
+    Args:
+        pair_prob_dist (dict): Dict whose keys are node pairs and whose values are 
+            probabilities or fractions.
+
+    Returns:
+        matrix_pair_prob_dist (dict): Dict whose keys are matrix indices of the node
+            pairs and whose values are the pairs' corresponding probabilities or fractions.
+
+    '''
+    # convert prob dist into dict whose keys are node dist matrix indices
+    index_to_pair, pair_to_index = get_network_pair_mapper(eps)
+    matrix_pair_prob_dist = {}
+    for key in pair_prob_dist.keys():
+        try:
+            matrix_index = pair_to_index[key]
+        except KeyError:
+            # switch src and dst
+            pair = json.loads(key)
+            key = json.dumps([pair[1], pair[0]])
+            matrix_index = pair_to_index[key]
+        try:
+            matrix_pair_prob_dist[matrix_index] = pair_prob_dist[key]
+        except KeyError:
+            # switch src and dst back for pair prob dist
+            pair = json.loads(key)
+            key = json.dumps([pair[1], pair[0]])
+            matrix_pair_prob_dist[matrix_index] = pair_prob_dist[key]
+
+    return matrix_pair_prob_dist
 
 
 
@@ -1639,14 +1656,17 @@ def adjust_probability_dict_sum(probs, target_sum=1, print_data=False):
     return adjusted_probs
 
 
-def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps, bidirectional=False):
+def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps, all_combinations=False, bidirectional=False):
     '''Gets prob dict of each pair being chosen given node dist of probabilities.
+
+    If all_combinations, will record pair probabilities for all possible pair combinations
+    i.e. src-dst and dst-src. If False, assumes src-dst==dst-src.
 
     If bidirectional, will multiply probabilities by 2 as pair can be src-dst or dst-src.
     If bidirectional=True -> values sum to 1, if bidirectional=False -> values sum to 0.5.
     '''
     index_to_pair, pair_to_index = get_network_pair_mapper(eps)
-    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps, all_combinations=all_combinations)
 
     pair_prob_dict = {pair: 0 for pair in list(pair_to_index.keys())}
     for src in eps:
@@ -1655,10 +1675,25 @@ def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps, bidirectional=False):
             dst_idx = node_to_index[dst]
             if src_idx == dst_idx:
                 continue
-            elif src_idx > dst_idx:
-                # making symmetric so skip this side of diagonal
-                continue
+            if not all_combinations:
+                if src_idx > dst_idx:
+                    # making symmetric so skip this side of diagonal
+                    continue
+                else:
+                    pair = json.dumps([src, dst])
+                    try:
+                        pair_prob_dict[pair] = node_dist[src_idx, dst_idx]
+                        if bidirectional:
+                            pair_prob_dict[pair] += node_dist[dst_idx, src_idx]
+                    except KeyError:
+                        pair = json.loads(pair)
+                        pair = [pair[1],pair[0]]
+                        pair = json.dumps(pair)
+                        pair_prob_dict[pair] = node_dist[src_idx, dst_idx]
+                        if bidirectional:
+                            pair_prob_dict[pair] += node_dist[dst_idx, src_idx]
             else:
+                # not making symmetric since src-dst != dst-src, do not skip any side of diagonal
                 pair = json.dumps([src, dst])
                 try:
                     pair_prob_dict[pair] = node_dist[src_idx, dst_idx]
@@ -1671,6 +1706,7 @@ def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps, bidirectional=False):
                     pair_prob_dict[pair] = node_dist[src_idx, dst_idx]
                     if bidirectional:
                         pair_prob_dict[pair] += node_dist[dst_idx, src_idx]
+
 
 
 

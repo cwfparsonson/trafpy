@@ -189,9 +189,21 @@ class SRPT_v2:
                  time_multiplexing=True,
                  debug_mode=False,
                  scheduler_name='srpt_v2'):
-        self.toolbox = SchedulerToolbox_v2(Graph, RWA, slot_size, time_multiplexing, debug_mode)
+        # DEBUG
+        # debug_mode = True
+
+        self.debug_mode = debug_mode
+        self.toolbox = SchedulerToolbox_v2(Graph=Graph, 
+                                           RWA=RWA, 
+                                           slot_size=slot_size, 
+                                           packet_size=packet_size,
+                                           time_multiplexing=time_multiplexing, 
+                                           debug_mode=debug_mode)
         self.scheduler_name = scheduler_name
         self.resolution_strategy = 'cost'
+
+        # find bandwidth of bandwidth-limiting edge -> flows must win contention on this edge
+        self.lowest_edge_bandwidth = self.toolbox.get_lowest_edge_bandwidth()
 
     def get_action(self, observation, print_processing_time=False):
         chosen_flows = self.get_scheduler_action(observation)
@@ -202,6 +214,9 @@ class SRPT_v2:
         return self.toolbox.estimate_time_to_completion(flow)
 
     def get_scheduler_action(self, observation):
+        if self.debug_mode:
+            print('\n\n\n---------------- GET SCHEDULER ACTION -------------------')
+
         # update network state
         self.toolbox.update_network_state(observation, hide_child_dependency_flows=True)
 
@@ -227,26 +242,39 @@ class SRPT_v2:
                 # check that flow was also selected to be scheduled on a bandwidth-limited end point link (if it wasn't, cannot schedule this flow)
                 info_to_transfer_this_slot = flow['packets_this_slot'] * flow['packet_size']
                 bandwidth_requested = info_to_transfer_this_slot / self.toolbox.slot_size # info units of this flow transferred this time slot == capacity used on each channel in flow's path this time slot
-                if bandwidth_requested > self.toolbox.network.graph['ep_link_capacity']:
-                    # flow must only have been selected for high capacity non-endpoint links and not been given any end point link capacity, do not schedule flow
+                if bandwidth_requested > self.lowest_edge_bandwidth:
+                    # flow must only have been selected for bandwidth-limiting links and not been given any bandwidth-limited capacity, do not schedule flow
                     pass
                 else:
                     # flow must have been allocated bandwidth on at least one end point link, check for contentions and try to establish flow 
                     chosen_flows = self.toolbox.resolve_contentions_and_set_up_flow(flow, chosen_flows, flow_info, scheduling_info, cost_info, resolution_strategy=self.resolution_strategy)
         # DEBUG 
-        # print('\n----')
-        # edge_to_chosen_flows = {edge: [] for edge in requested_edges.keys()}
-        # for flow in chosen_flows:
-            # edges = self.scheduler.get_path_edges(flow['path'])
-            # for edge in edges:
-                # edge_to_chosen_flows[json.dumps(sorted(edge))].append(flow['flow_id'])
-        # for edge in self.scheduler.SchedulerNetwork.edges:
-            # for channel in self.scheduler.RWA.channel_names:
-                # bw = self.scheduler.get_channel_bandwidth(edge, channel)
-                # try:
-                    # print('edge: {} | channel: {} | chosen flows: {} | bandwidth remaining: {}'.format(edge, channel, edge_to_chosen_flows[json.dumps(sorted(edge))], bw))
-                # except KeyError:
-                    # print('edge: {} | channel: {} | chosen flows: None | bandwidth remaining: {}'.format(edge, channel, bw))
+        if self.debug_mode:
+            print('~~~ Final Choices ~~~')
+            print('chosen flows:\n{}'.format(chosen_flows))
+            edge_to_chosen_flows = {edge: [] for edge in flow_info['requested_edges'].keys()}
+            for flow in chosen_flows:
+                edges = self.toolbox.get_path_edges(flow['path'])
+                for edge in edges:
+                    edge_to_chosen_flows[json.dumps(edge)].append(flow['flow_id'])
+            for edge in self.toolbox.network.edges:
+                for channel in self.toolbox.rwa.channel_names:
+                    # src-dst
+                    bw = self.toolbox.get_channel_bandwidth(edge, channel)
+                    try:
+                        print('edge: {} | channel: {} | chosen flows: {} | bandwidth remaining: {}'.format(edge, channel, edge_to_chosen_flows[json.dumps(edge)], bw))
+                    except KeyError:
+                        # no flows chosen on this edge
+                        print('edge: {} | channel: {} | bandwidth remaining: {}'.format(edge, channel, bw))
+
+                    # dst-src
+                    edge = edge[::-1]
+                    bw = self.toolbox.get_channel_bandwidth(edge, channel)
+                    try:
+                        print('edge: {} | channel: {} | chosen flows: {} | bandwidth remaining: {}'.format(edge, channel, edge_to_chosen_flows[json.dumps(edge)], bw))
+                    except KeyError:
+                        # no flows chosen on this edge
+                        print('edge: {} | channel: {} | bandwidth remaining: {}'.format(edge, channel, bw))
 
         return chosen_flows
 

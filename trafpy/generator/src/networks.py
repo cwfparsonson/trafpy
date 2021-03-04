@@ -69,6 +69,7 @@ def gen_nsfnet_network(ep_label='server',
                        num_channels=2, 
                        server_to_rack_channel_capacity=1,
                        rack_to_rack_channel_capacity=10,
+                       bidirectional_links=True,
                        show_fig=False):
     '''Generates the standard 14-node NSFNET topology (a U.S. core network).
     
@@ -143,7 +144,7 @@ def gen_nsfnet_network(ep_label='server',
     
     channel_names = gen_channel_names(num_channels)
     edges = [edge for edge in network.edges]
-    add_edges_capacity_attrs(network, edges, channel_names, rack_to_rack_channel_capacity)
+    add_edges_capacity_attrs(network, edges, channel_names, rack_to_rack_channel_capacity, bidirectional_links)
 
     # set gloabl network attrs
     network.graph['endpoints'] = get_endpoints(network, ep_label)
@@ -164,6 +165,7 @@ def gen_nsfnet_network(ep_label='server',
 def gen_simple_network(ep_label='server', 
                        num_channels=2, 
                        server_to_rack_channel_capacity=500,
+                       bidirectional_links=True,
                        show_fig=False):
     '''Generates very simple 5-node topology.
 
@@ -193,7 +195,7 @@ def gen_simple_network(ep_label='server',
 
     channel_names = gen_channel_names(num_channels)
     edges = [edge for edge in network.edges]
-    add_edges_capacity_attrs(network, edges, channel_names, server_to_rack_channel_capacity)
+    add_edges_capacity_attrs(network, edges, channel_names, server_to_rack_channel_capacity, bidirectional_links)
 
     # set gloabl network attrs
     network.graph['endpoints'] = get_endpoints(network, ep_label)
@@ -244,6 +246,7 @@ def gen_fat_tree(k=4,
                   rack_to_edge_channel_capacity=1000,
                   edge_to_agg_channel_capacity=1000,
                   agg_to_core_channel_capacity=2000,
+                  rack_to_core_channel_capacity=2000,
                   bidirectional_links=True,
                   show_fig=False):
     '''Generates a perfect fat tree (i.e. all layers have switches with same radix/number of ports).
@@ -278,8 +281,9 @@ def gen_fat_tree(k=4,
         core_label (str,int): Label to assign to core switch nodes
         num_channels (int, float): Number of channels on each link in network
         server_to_edge_channel_capacity (int,float): Byte capacity per channel
-        edge_to_agg_channel_capacity (int,float): Byte capacity per channel
-        agg_to_core_channel_capacity (int,float): Byte capacity per channel
+        edge_to_agg_channel_capacity (int,float): (if L==4) Byte capacity per channel
+        agg_to_core_channel_capacity (int,float): (if L==4) Byte capacity per channel
+        rack_to_core_channel_capacity (int,float): (if L==2) Byte capacity per channel
 
     Returns:
         networkx graph: network object
@@ -323,6 +327,7 @@ def gen_fat_tree(k=4,
     fat_tree_network = nx.compose(core_layer, rack_layer)
     
     if L == 2:
+        # 2 layers: Core, ToR
         # link racks to cores, add link attributes
         rack_iterator = iter(racks)
         for rack in racks:
@@ -334,8 +339,10 @@ def gen_fat_tree(k=4,
                 add_edge_capacity_attrs(fat_tree_network,
                                         (rack, core),
                                         channel_names,
-                                        agg_to_core_channel_capacity)
+                                        rack_to_core_channel_capacity,
+                                        bidirectional_links)
     else:
+        # 4 layers: Core, Agg, Edge, ToR. Agg and Edge switches grouped into pods.
         # group edges and aggregates into pods
         num_pods = int(k)
         pods = [[] for i in range(num_pods)]
@@ -364,7 +371,8 @@ def gen_fat_tree(k=4,
                     add_edge_capacity_attrs(pods_dict[key], 
                                      (pod_agg,pod_edge), 
                                      channel_names, 
-                                     edge_to_agg_channel_capacity) 
+                                     edge_to_agg_channel_capacity,
+                                     bidirectional_links) 
 
         # add pods (agg + edge) layer to fat-tree
         pod_networks = list(pods_dict.values())
@@ -382,7 +390,8 @@ def gen_fat_tree(k=4,
                     add_edge_capacity_attrs(fat_tree_network,
                                      (core,pod_agg),
                                      channel_names,
-                                     agg_to_core_channel_capacity)
+                                     agg_to_core_channel_capacity,
+                                     bidirectional_links)
 
         # link edge switches in pods to racks, add link attributes
         rack_iterator = iter(racks)
@@ -395,7 +404,8 @@ def gen_fat_tree(k=4,
                     add_edge_capacity_attrs(fat_tree_network,
                                      (pod_edge,rack),
                                      channel_names,
-                                     rack_to_edge_channel_capacity)
+                                     rack_to_edge_channel_capacity,
+                                     bidirectional_links)
 
     # link servers to racks, add link attributes
     racks_dict = {rack: [] for rack in racks} # track which endpoints in which rack
@@ -407,14 +417,16 @@ def gen_fat_tree(k=4,
             add_edge_capacity_attrs(fat_tree_network,
                                     (rack, server),
                                     channel_names,
-                                    server_to_rack_channel_capacity)
+                                    server_to_rack_channel_capacity,
+                                    bidirectional_links)
             racks_dict[rack].append(server)
 
     # calc total network capacity
-    num_server_rack_links = int(num_racks * (k/2))
-    max_nw_capacity = num_server_rack_links * num_channels * server_to_rack_channel_capacity
+    # /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)
+    max_nw_capacity = (num_servers * num_channels * server_to_rack_channel_capacity) / 2
 
     # init global network attrs
+    fat_tree_network.graph['endpoints'] = servers
     init_global_network_attrs(fat_tree_network, 
                               max_nw_capacity, 
                               num_channels, 
@@ -486,7 +498,11 @@ def gen_channel_names(num_channels):
     
     return channel_names
 
-def add_edge_capacity_attrs(network, edge, channel_names, channel_capacity):
+def add_edge_capacity_attrs(network, 
+                            edge, 
+                            channel_names, 
+                            channel_capacity, 
+                            bidirectional_links=True):
     '''Adds channels and corresponding max channel bytes to single edge in network.
     
     Args:
@@ -495,11 +511,31 @@ def add_edge_capacity_attrs(network, edge, channel_names, channel_capacity):
         edge (tuple): Node-node edge pair.
         channel_names (list): List of channel names to add to edge.
         channel_capacity (int,float): Capacity to allocate to each channel.
+        bidirectional_links (bool): If True, each link has capacity split equally
+            between src and dst port. I.e. all links have a src and dst port
+            which are treated separately to incoming and outgoing traffic to and
+            from given node (switch or server).
 
     '''
-    attrs = {edge:
-                {'channels': {channel: channel_capacity for channel in channel_names},
-                 'max_channel_capacity': channel_capacity}}
+    if bidirectional_links:
+        attrs = {edge:
+                    {'{}_to_{}_port'.format(edge[0], edge[1]):
+                        {'channels':
+                            {channel: channel_capacity/2 for channel in channel_names},
+                         'max_channel_capacity': channel_capacity/2
+                         },
+                     '{}_to_{}_port'.format(edge[1], edge[0]):
+                        {'channels':
+                            {channel: channel_capacity/2 for channel in channel_names},
+                         'max_channel_capacity': channel_capacity/2
+                         }
+                        }
+                    }
+                    
+    else:
+        attrs = {edge:
+                    {'channels': {channel: channel_capacity for channel in channel_names},
+                     'max_channel_capacity': channel_capacity}}
     
     nx.set_edge_attributes(network, attrs)
 
@@ -509,7 +545,8 @@ def add_edge_capacity_attrs(network, edge, channel_names, channel_capacity):
 def add_edges_capacity_attrs(network, 
                              edges,
                              channel_names,
-                             channel_capacity):
+                             channel_capacity,
+                             bidirectional_links=True):
     '''Adds channels & max channel capacitys to single edge in network.
     
     To access e.g. the edge going from node 0 to node 1 (edge (0, 1)), you
@@ -517,6 +554,10 @@ def add_edges_capacity_attrs(network,
 
     To access e.g. the channel_1 attribute of this particular (0, 1) edge, you
     would do network[0][1]['channels']['channel_1']
+    OR
+    if bidirectional_links, you do network[0][1]['0_to_1_port']['channels']['channel_1']
+    or network[0][1]['1_to_0_port']['channels']['channel_1] depending on which direction
+    of the link you want to access.
     
     Args:
         network (networkx graph): Network containing edges to which attrs will
@@ -524,14 +565,33 @@ def add_edges_capacity_attrs(network,
         edges (list): List of node pairs in tuples.
         channel_names (list of str): List of channel names to add to edge.
         channel_capacity (int, float): Capacity to allocate to each channel.
+        bidirectional_links (bool): If True, each link has capacity split equally
+            between src and dst port. I.e. all links have a src and dst port
+            which are treated separately to incoming and outgoing traffic to and
+            from given node (switch or server).
 
     '''
-    attrs = {edge: 
-                {'channels': 
-                    {channel: channel_capacity for channel in channel_names},
-                 'max_channel_capacity': 
-                    channel_capacity
-                 } for edge in edges}
+    if bidirectional_links:
+        attrs = {edge:
+                    {'{}_to_{}_port'.format(edge[0], edge[1]):
+                        {'channels':
+                            {channel: channel_capacity/2 for channel in channel_names},
+                         'max_channel_capacity': channel_capacity/2
+                         },
+                     '{}_to_{}_port'.format(edge[1], edge[0]):
+                        {'channels':
+                            {channel: channel_capacity/2 for channel in channel_names},
+                         'max_channel_capacity': channel_capacity/2
+                         }
+                        }
+                    for edge in edges}
+    else:
+        attrs = {edge: 
+                    {'channels': 
+                        {channel: channel_capacity for channel in channel_names},
+                     'max_channel_capacity': 
+                        channel_capacity
+                     } for edge in edges}
 
     nx.set_edge_attributes(network, attrs)
   

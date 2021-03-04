@@ -34,10 +34,20 @@ def compute_jensen_shannon_distance(p, q):
 
 
 
-def get_network_params(eps):
-    '''Returns basic params of network.'''
+def get_network_params(eps, all_combinations=False):
+    '''Returns basic params of network.
+
+    If all_combinations, will consider all possible pair combinations (i.e. src-dst and dst-src).
+    If False, will consider src-dst==dst-src -> get half number of node pairs returned.
+
+    '''
     num_nodes = len(eps)
-    num_pairs = np.int(((num_nodes**2) - num_nodes)/2)
+    if all_combinations:
+        # assuming src-dst not equivalent to dst-src
+        num_pairs = np.int(((num_nodes**2) - num_nodes))
+    else:
+        # assuming src-dst==dst-src
+        num_pairs = np.int(((num_nodes**2) - num_nodes)/2)
     node_indices = [index for index in range(num_nodes)]
     iterables = zip(eps, node_indices)
     node_to_index = {node: index for node, index in iterables}

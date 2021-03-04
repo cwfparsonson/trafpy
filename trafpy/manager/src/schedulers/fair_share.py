@@ -16,7 +16,16 @@ class FairShare:
                  time_multiplexing=True,
                  debug_mode=False,
                  scheduler_name='fair_share'):
-        self.toolbox = SchedulerToolbox_v2(Graph, RWA, slot_size, time_multiplexing, debug_mode)
+        # DEBUG
+        # debug_mode = True
+        self.debug_mode = debug_mode
+
+        self.toolbox = SchedulerToolbox_v2(Graph=Graph, 
+                                           RWA=RWA, 
+                                           slot_size=slot_size, 
+                                           packet_size=packet_size,
+                                           time_multiplexing=time_multiplexing, 
+                                           debug_mode=debug_mode)
         self.scheduler_name = scheduler_name
         self.resolution_strategy='fair_share'
 
@@ -25,6 +34,9 @@ class FairShare:
         return {'chosen_flows': chosen_flows}
 
     def get_scheduler_action(self, observation):
+        if self.debug_mode:
+            print('\n\n\n---------------- GET SCHEDULER ACTION -------------------')
+
         # update network state
         self.toolbox.update_network_state(observation, hide_child_dependency_flows=True)
 
@@ -52,19 +64,32 @@ class FairShare:
                 self.toolbox.set_up_connection(flow)
 
         # DEBUG 
-        # print('\n----')
-        # edge_to_chosen_flows = {edge: [] for edge in requested_edges.keys()}
-        # for flow in chosen_flows:
-            # edges = self.scheduler.get_path_edges(flow['path'])
-            # for edge in edges:
-                # edge_to_chosen_flows[json.dumps(sorted(edge))].append(flow['flow_id'])
-        # for edge in self.scheduler.SchedulerNetwork.edges:
-            # for channel in self.scheduler.RWA.channel_names:
-                # bw = self.scheduler.get_channel_bandwidth(edge, channel)
-                # try:
-                    # print('edge: {} | channel: {} | chosen flows: {} | bandwidth remaining: {}'.format(edge, channel, edge_to_chosen_flows[json.dumps(sorted(edge))], bw))
-                # except KeyError:
-                    # print('edge: {} | channel: {} | chosen flows: None | bandwidth remaining: {}'.format(edge, channel, bw))
+        if self.debug_mode:
+            print('~~~ Final Choices ~~~')
+            print('chosen flows:\n{}'.format(chosen_flows))
+            edge_to_chosen_flows = {edge: [] for edge in flow_info['requested_edges'].keys()}
+            for flow in chosen_flows:
+                edges = self.toolbox.get_path_edges(flow['path'])
+                for edge in edges:
+                    edge_to_chosen_flows[json.dumps(edge)].append(flow['flow_id'])
+            for edge in self.toolbox.network.edges:
+                for channel in self.toolbox.rwa.channel_names:
+                    # src-dst
+                    bw = self.toolbox.get_channel_bandwidth(edge, channel)
+                    try:
+                        print('edge: {} | channel: {} | chosen flows: {} | bandwidth remaining: {}'.format(edge, channel, edge_to_chosen_flows[json.dumps(edge)], bw))
+                    except KeyError:
+                        # no flows chosen on this edge
+                        print('edge: {} | channel: {} | bandwidth remaining: {}'.format(edge, channel, bw))
+
+                    # dst-src
+                    edge = edge[::-1]
+                    bw = self.toolbox.get_channel_bandwidth(edge, channel)
+                    try:
+                        print('edge: {} | channel: {} | chosen flows: {} | bandwidth remaining: {}'.format(edge, channel, edge_to_chosen_flows[json.dumps(edge)], bw))
+                    except KeyError:
+                        # no flows chosen on this edge
+                        print('edge: {} | channel: {} | bandwidth remaining: {}'.format(edge, channel, bw))
 
         return chosen_flows
 

@@ -250,13 +250,18 @@ class FlowPacker:
         else:
             # no particular target load specified, just assume max
             self.load_rate = self.network_load_config['network_rate_capacity']
+        if self.print_data:
+            print('Overall network load rate: {}'.format(self.load_rate))
 
         # calc target load rate of each src-dst pair
-        self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
-        self.pair_prob_dict = node_dists.get_pair_prob_dict_of_node_dist_matrix(self.node_dist, self.eps) # N.B. These values sum to 0.5 -> need to allocate twice (src-dst and dst-src)
+        self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps, all_combinations=True)
+        self.pair_prob_dict = node_dists.get_pair_prob_dict_of_node_dist_matrix(self.node_dist, self.eps, all_combinations=True) # N.B. These values sum to 0.5 -> need to allocate twice (src-dst and dst-src)
         self.pair_target_load_rate_dict = {pair: frac*self.load_rate for pair, frac in self.pair_prob_dict.items()}
 
         if self.print_data:
+            print('pair prob dict sum: {}'.format(np.sum(list(self.pair_prob_dict.values()))))
+            print('pair prob dict:\n{}'.format(self.pair_prob_dict))
+            print('pair target load rate sum: {}'.format(np.sum(list(self.pair_target_load_rate_dict.values()))))
             print('pair target load rate dict:\n{}'.format(self.pair_target_load_rate_dict))
 
 
@@ -274,7 +279,8 @@ class FlowPacker:
             self.duration = 1e6
         self.pair_target_total_info_dict = {pair: load_rate*self.duration for pair, load_rate in self.pair_target_load_rate_dict.items()}
         if self.print_data:
-            print('pair target total info dict:\n{}'.format(self.pair_target_load_rate_dict))
+            print('pair target total info sum: {}'.format(np.sum(list(self.pair_target_total_info_dict.values()))))
+            print('pair target total info dict:\n{}'.format(self.pair_target_total_info_dict))
 
         # init current total info packed into each src-dst pair and current distance from target info
         self.pair_current_total_info_dict = {pair: 0 for pair in self.pair_prob_dict.keys()}
@@ -286,7 +292,17 @@ class FlowPacker:
 
 
 
+
     def pack_the_flows(self):
+        '''
+        If you find that your achieved node distribution does not look like
+        your original node distribution before packing (e.g. achieved is more
+        uniform), is probably because your flow sizes are very large for
+        the end point bandwidth you have specified. Either decrease
+        your flow sizes or increase the endpoint link capacity
+        to make packing easier.
+
+        '''
         # packer_bar = ShadyBar('Packing flows ', max=len(self.packed_flows.keys()))
         packer_bar = ShadyBar('Packing flows ', max=100)
         printed_progress = {percent: False for percent in np.arange(0, 100, 1)}
@@ -294,47 +310,23 @@ class FlowPacker:
         counter = 0
         for flow in self.packed_flows.keys():
             if self.print_data:
-                print('\nPacking flow {}'.format(flow))
-                print('Current distance from target info:\n{}'.format(self.pair_current_distance_from_target_info_dict))
+                print('\nPacking flow {} of size {}'.format(flow, self.packed_flows[flow]['size']))
             chosen_pair = None
 
-            # first 
             # try to allocate flow to pair which is currently furthest away from its target load
             sorted_pairs = sorted(self.pair_current_distance_from_target_info_dict.items(), key = lambda x: x[1], reverse=True) # sorts into descending order
             if self.print_data:
+                print('Current distance from target info:\n{}'.format(sorted_pairs))
                 print('Looking for pair furthest from target info...')
             for p in sorted_pairs:
                 pair = p[0]
                 ep1, ep2 = json.loads(pair)[0], json.loads(pair)[1]
-                # OLD
-                # if self.pair_current_distance_from_target_info_dict[pair] - (self.packed_flows[flow]['size']) < 0 or self.ep_total_infos[ep1] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[ep2] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
-                # would exceed pair's target load by allocating to this pair, try next pair (or would exceed at least one of the pair's ep's max loads)
-                # NEW
                 if self.ep_total_infos[ep1] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[ep2] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
                     # # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
                     pass
                 else:
                     chosen_pair = pair
                     break
-            # # second
-            # if chosen_pair is None:
-                # if self.print_data:
-                    # print('Cannot find pair without exceeding target load. Attempting to allocate to most hot node...')
-                # # OLD
-                # # cannot allocate flow to any pair without exceeding its target load. Try to allocate to most 'hot' pairs without exceedeing maximum end point bandwidths
-                # # sorted_pairs = sorted(self.pair_target_total_info_dict.items(), key = lambda x: x[1], reverse=True) # sorts into descending order
-                # # NEW
-                # # cannot allocate flow to any pair without exceeding its target load. Try to allocate to pair furthest (or least negative) from target total info without exceedeing maximum end point bandwidths
-                # sorted_pairs = sorted(self.pair_current_distance_from_target_info_dict.items(), key = lambda x: x[1], reverse=True) # sorts into descending order
-                # for p in sorted_pairs:
-                    # pair = p[0]
-                    # ep1, ep2 = json.loads(pair)[0], json.loads(pair)[1]
-                    # if self.ep_total_infos[ep1] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[ep2] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
-                        # # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
-                        # pass 
-                    # else:
-                        # chosen_pair = pair
-                        # break
 
             if chosen_pair is None:
                 # could not find end point pair with enough capacity to take flow
@@ -347,14 +339,13 @@ class FlowPacker:
             self.pair_current_total_info_dict[chosen_pair] = int(self.pair_current_total_info_dict[chosen_pair] + (self.packed_flows[flow]['size']))
             self.pair_current_distance_from_target_info_dict[chosen_pair] = int(self.pair_current_distance_from_target_info_dict[chosen_pair] - (self.packed_flows[flow]['size']))
 
+            # # DEBUG
+            # if self.pair_current_distance_from_target_info_dict[chosen_pair] < 0:
+                # raise Exception()
+
             # updated packed flows dict
             pair = json.loads(chosen_pair)
-            i = np.random.choice([0, 1]) # sampling since src-dst pair order should be even across all pairs
-            src = pair[i]
-            if i == 0:
-                dst = pair[1]
-            else:
-                dst = pair[0]
+            src, dst = pair[0], pair[1]
             self.packed_flows[flow]['src'], self.packed_flows[flow]['dst'] = src, dst 
             self.ep_total_infos[src] += self.packed_flows[flow]['size']
             self.ep_total_infos[dst] += self.packed_flows[flow]['size']
