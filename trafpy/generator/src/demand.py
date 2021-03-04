@@ -294,8 +294,12 @@ class DemandPlotter:
 
 
 
+    def plot_node_dist(self, 
+                       eps,
+                       chord_edge_width_range=[1, 25],
+                       chord_edge_display_threshold=0.3):
 
-    def plot_node_dist(self, eps):
+        # PLOT MATRIX & CHORD DIAGRAM
         pair_total_infos_requested = {}
         sources = self.demand.demand_data['sn']
         destinations = self.demand.demand_data['dn']
@@ -318,7 +322,13 @@ class DemandPlotter:
         node_dist = node_dists.assign_probs_to_matrix(eps=eps,
                                                       probs=pair_frac_requested_of_overall_load)
 
-        return plot_dists.plot_node_dist(node_dist)
+        figs = plot_dists.plot_node_dist(node_dist)
+
+        return figs
+
+
+
+
 
     def find_index_of_int_in_str(self, string):
         idx = 0

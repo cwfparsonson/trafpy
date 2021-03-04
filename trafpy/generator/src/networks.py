@@ -47,9 +47,8 @@ def gen_arbitrary_network(ep_label=None,
             eps.append(node)
     network.graph['endpoints'] = eps
 
-    max_nw_capacity = (num_eps * server_to_rack_channel_capacity * num_channels) 
-    if bidirectional_links:
-        max_nw_capacity /= 2
+    # /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)
+    max_nw_capacity = (num_eps * server_to_rack_channel_capacity * num_channels) / 2
 
     init_global_network_attrs(network,
                               max_nw_capacity,
@@ -148,7 +147,10 @@ def gen_nsfnet_network(ep_label='server',
 
     # set gloabl network attrs
     network.graph['endpoints'] = get_endpoints(network, ep_label)
-    max_nw_capacity = len(network.edges) * num_channels * rack_to_rack_channel_capacity
+
+    # /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)
+    max_nw_capacity = (len(network.edges) * num_channels * rack_to_rack_channel_capacity) / 2
+
     init_global_network_attrs(network, 
                             max_nw_capacity, 
                             num_channels, 
@@ -199,7 +201,10 @@ def gen_simple_network(ep_label='server',
 
     # set gloabl network attrs
     network.graph['endpoints'] = get_endpoints(network, ep_label)
-    max_nw_capacity = len(network.edges) * num_channels * server_to_rack_channel_capacity 
+
+    # /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)
+    max_nw_capacity = (len(network.edges) * num_channels * server_to_rack_channel_capacity) / 2
+
     init_global_network_attrs(network, 
                             max_nw_capacity, 
                             num_channels, 
@@ -254,7 +259,7 @@ def gen_fat_tree(k=4,
     Top layer is always core (spine) switch layer, bottom layer is always
     ToR (leaf) layer.
 
-    L must be either 2 (core, ToR) or 3 (core, pod (agg & edge), ToR)
+    L must be either 2 (core, ToR) or 4 (core, agg, edge, ToR)
 
     Resource for building (scroll down to summary table with equations):
 
@@ -292,7 +297,7 @@ def gen_fat_tree(k=4,
     if L != 2 and L != 4:
         raise Exception('L must be 2 (ToR layer, core layer) or 4 (ToR layer, edge layer, agg layer, core layer), but is {}.'.format(L))
     if k % 2 != 0:
-        raise Exception('k must be even since have equal number of up and down ports on each switch, but is {}.'.format(k))
+        raise Exception('k must be even since, in perfect fat tree, have equal number of up and down ports on each switch, but is {}.'.format(k))
 
     channel_names = gen_channel_names(num_channels)
 
@@ -470,6 +475,7 @@ def init_global_network_attrs(network,
     network.graph['endpoint_label'] = endpoint_label
     network.graph['num_channels_per_link'] = num_channels
     network.graph['ep_link_capacity'] = ep_link_capacity
+    network.graph['ep_link_port_capacity'] = ep_link_capacity / 2 # all eps have a src & a dst port
     network.graph['max_nw_capacity'] = max_nw_capacity
     network.graph['curr_nw_capacity_used'] = 0
     network.graph['num_active_connections'] = 0

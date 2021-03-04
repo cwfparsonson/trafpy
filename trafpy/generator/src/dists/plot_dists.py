@@ -13,6 +13,9 @@ from matplotlib import colors
 import seaborn as sns
 from statsmodels.distributions.empirical_distribution import ECDF
 from scipy import stats
+import networkx as nx
+from nxviz.plots import CircosPlot
+import json
 
 # import warnings # for catching warnings rather than just exceptions
 # warnings.filterwarnings('error')
@@ -25,8 +28,10 @@ def plot_node_dist(node_dist,
                    add_labels=False, 
                    add_ticks=False,
                    cbar_label='Fraction',
+                   chord_edge_width_range=[1, 25],
+                   chord_edge_display_threshold=0.3,
                    show_fig=False):
-    '''Plots network node demand probability distribution as a 2D matrix.
+    '''Plots network node demand distribution as (1) 2d matrix and (2) chord diagram.
 
     Args:
         node_dist (list or 2d numpy array): Source-destination pair probabilities 
@@ -37,6 +42,11 @@ def plot_node_dist(node_dist,
         add_labels (bool): Whether or not to node labels to plot.
         add_ticks (bool): Whether or not to add ticks to x- and y-axis.
         cbar_label (str): Label for colour bar.
+        chord_edge_width_range (list): Range [min, max] of edge widths for chord diagram.
+        chord_edge_display_threshold (float): Float between 0 and 1 of fraction/probability
+            of end point pair above which to draw an edge on the chord diagram. E.g. if 
+            0.3, will draw all edges which have a load pair higher than 0.3*max_pair_load.
+            Higher threshold -> fewer edges plotted -> can increase clarity.
         show_fig (bool): Whether or not to plot and show fig. If True, will
             return and display fig.
 
@@ -53,8 +63,12 @@ def plot_node_dist(node_dist,
 
     if node_to_index_dict is None:
         _,_,node_to_index_dict,_=tools.get_network_params(eps) 
-    # fig = plt.figure()
+
+    figs = []
+
+    # 1. PLOT NODE DIST
     fig = plt.matshow(node_dist, cmap='YlOrBr')
+    plt.style.use('default')
     cbar = plt.colorbar()
     if add_labels == True:
         for (i, j), z in np.ndenumerate(node_dist):
@@ -72,13 +86,69 @@ def plot_node_dist(node_dist,
     if add_ticks:
         plt.xticks([node_to_index_dict[node] for node in eps])
         plt.yticks([node_to_index_dict[node] for node in eps])
+    figs.append(fig)
+
+    if show_fig:
+        plt.show()
+
+
+    # 2. PLOT CHORD DIAGRAM
+    probs = node_dists.assign_matrix_to_probs(eps, node_dist)
+    graph = nx.Graph()
+    node_to_load = {}
+    _, _, node_to_index, index_to_node = tools.get_network_params(eps)
+    max_pair_load = max(list(probs.values()))
+    for pair in probs.keys():
+        pair_load = probs[pair]
+        p = json.loads(pair)
+        src, dst = str(p[0]), str(p[1])
+        if src not in node_to_load:
+            node_to_load[src] = pair_load
+        else:
+            node_to_load[src] += pair_load
+        if dst not in node_to_load:
+            node_to_load[dst] = pair_load
+        else:
+            node_to_load[dst] += pair_load
+        if pair_load > 0.3*max_pair_load:
+            graph.add_weighted_edges_from([(src, dst, pair_load)])
+        else:
+            graph.add_nodes_from([src, dst])
+
+    nodelist = [n for n in graph.nodes]
+    ws = _rescale([float(graph[u][v]['weight']) for u, v in graph.edges], newmin=chord_edge_width_range[0], newmax=chord_edge_width_range[1])
+    edgelist = [(str(u),str(v),{"weight":ws.pop(0)}) for u,v in graph.edges]
+
+    graph2 = nx.Graph()
+    graph2.add_nodes_from(nodelist)
+    graph2.add_edges_from(edgelist)
+
+    for v in graph2:
+        graph2.nodes[v]['load'] = node_to_load[v]
+
+    fig2 = plt.figure()
+    plt.style.use('default')
+    chord_diagram = CircosPlot(graph2, 
+                               node_labels=True,
+                               edge_width='weight',
+                               node_grouping='load',
+                               node_color='load')
+    chord_diagram.draw()
+    figs.append(fig2)
     
     if show_fig:
         plt.show()
 
-    return fig
 
 
+
+    return figs
+
+
+def _rescale(l, newmin, newmax):
+    '''Rescales list l values to range between newmin and newmax.'''
+    arr = list(l)
+    return [round((x-min(arr))/(max(arr)-min(arr))*(newmax-newmin)+newmin,2) for x in arr]
 
 def plot_val_dist(rand_vars, 
                   dist_fit_line=None, 

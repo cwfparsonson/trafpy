@@ -57,6 +57,21 @@ def assign_probs_to_matrix(eps, probs, matrix=None):
 
     return matrix
 
+def assign_matrix_to_probs(eps, node_dist):
+    '''Assigns probabilities in 2D matrix to a src-dst pair prob dist dict.'''
+    num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
+    pair_prob_dict = {}
+    for src in eps:
+        for dst in eps:
+            if src == dst:
+                continue
+            else:
+                src_idx, dst_idx = node_to_index[src], node_to_index[dst]
+                pair = json.dumps([src_idx, dst_idx])
+                pair_prob_dict[pair] = node_dist[src_idx, dst_idx]
+    return pair_prob_dict
+                
+
 
 def gen_uniform_node_dist(eps, 
                           rack_prob_config=None,
