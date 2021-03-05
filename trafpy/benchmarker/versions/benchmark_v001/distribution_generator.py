@@ -155,6 +155,8 @@ class DistributionGenerator:
                                                               round_to_nearest=1,
                                                               show_fig=False,
                                                               print_data=False)
+                # # DEBUG
+                # flow_size_dist = {1e3: 1} 
 
             elif benchmark == 'private_enterprise':
                 flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
@@ -343,7 +345,9 @@ class DistributionGenerator:
                         plots[benchmark][dist_name] = fig
 
                 elif dist_name == 'node_dist':
-                    fig = plot_dists.plot_node_dist(dists[benchmark][dist_name]) 
+                    fig = plot_dists.plot_node_dist(dists[benchmark][dist_name],
+                                                    chord_edge_width_range=[1,25],
+                                                    chord_edge_display_threshold=0.525) # 0.475
                     plots[benchmark][dist_name] = fig
 
                 else:

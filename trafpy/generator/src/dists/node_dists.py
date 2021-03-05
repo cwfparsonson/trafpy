@@ -60,6 +60,7 @@ def assign_probs_to_matrix(eps, probs, matrix=None):
 def assign_matrix_to_probs(eps, node_dist):
     '''Assigns probabilities in 2D matrix to a src-dst pair prob dist dict.'''
     num_nodes, num_pairs, node_to_index, index_to_node = tools.get_network_params(eps)
+    node_dist = np.asarray(node_dist)
     pair_prob_dict = {}
     for src in eps:
         for dst in eps:

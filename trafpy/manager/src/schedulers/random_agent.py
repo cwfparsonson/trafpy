@@ -23,8 +23,6 @@ class RandomAgent:
         self.scheduler_name = scheduler_name
         self.resolution_strategy = 'random'
 
-        # find bandwidth of bandwidth-limiting edge -> flows must win contention on this edge
-        self.lowest_edge_bandwidth = self.toolbox.get_lowest_edge_bandwidth()
 
     def get_action(self, observation, print_processing_time=False):
         chosen_flows = self.get_scheduler_action(observation)
@@ -55,8 +53,9 @@ class RandomAgent:
 
                 # check that flow was also selected to be scheduled on a bandwidth-limited end point link (if it wasn't, cannot schedule this flow)
                 info_to_transfer_this_slot = flow['packets_this_slot'] * flow['packet_size']
+                lowest_edge_bandwidth = self.toolbox.get_lowest_edge_bandwidth(flow['path'])
                 bandwidth_requested = info_to_transfer_this_slot / self.toolbox.slot_size # info units of this flow transferred this time slot == capacity used on each channel in flow's path this time slot
-                if bandwidth_requested > self.lowest_edge_bandwidth:
+                if bandwidth_requested > lowest_edge_bandwidth:
                     # flow must only have been selected for bandwidth-limiting links and not been given any bandwidth-limited capacity, do not schedule flow
                     pass
                 else:

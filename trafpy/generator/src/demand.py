@@ -318,11 +318,14 @@ class DemandPlotter:
                 pair_total_infos_requested[pair] += flow_size
         
         pair_frac_requested_of_overall_load = {pair: pair_total_infos_requested[pair]/total_info for pair in pair_total_infos_requested.keys()}
+        # print(pair_frac_requested_of_overall_load)
 
         node_dist = node_dists.assign_probs_to_matrix(eps=eps,
                                                       probs=pair_frac_requested_of_overall_load)
 
-        figs = plot_dists.plot_node_dist(node_dist)
+        figs = plot_dists.plot_node_dist(node_dist,
+                                         chord_edge_width_range=chord_edge_width_range,
+                                         chord_edge_display_threshold=chord_edge_display_threshold)
 
         return figs
 

@@ -167,7 +167,7 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        DATA_NAME = 'university_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
+        DATA_NAME = 'university_k_6_L_2_n_10_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'private_enterprise_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'social_media_cloud_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'artificial_light_chancap10_numchans1_mldatNone_bidirectional'
@@ -184,7 +184,7 @@ if __name__ == '__main__':
         # networks
         NUM_CHANNELS = 1
         # networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)]
-        networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_core_channel_capacity=250, bidirectional_links=True)]
+        networks = [gen_fat_tree(k=6, L=2, n=10, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_core_channel_capacity=833, bidirectional_links=True)]
 
         # rwas
         NUM_K_PATHS = 2

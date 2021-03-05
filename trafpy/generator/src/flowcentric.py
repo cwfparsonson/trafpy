@@ -148,14 +148,7 @@ class FlowGenerator:
 
 
     def _calc_overall_load_rate(self, flow_sizes, interarrival_times):
-        '''
-        If flow connections are bidirectional_links, 1 flow takes up 2 endpoint links (the
-        source link and the destination link), therefore effecitvely takes up load rate
-        2*flow_size*duration bandwidth. If not bidriectional, only takes up
-        1*flow_size*duration since only occupies bandwidth for 1 of these links.
-
-        Returns load rate (info units per unit time).
-        '''
+        '''Returns load rate (info units per unit time).'''
         info_arrived = self._calc_total_info_arrived(flow_sizes)
         first_flow_arrival_time, last_flow_arrival_time = self._get_first_last_flow_arrival_times(interarrival_times)
         duration = last_flow_arrival_time - first_flow_arrival_time

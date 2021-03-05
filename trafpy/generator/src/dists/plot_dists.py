@@ -54,6 +54,7 @@ def plot_node_dist(node_dist,
         matplotlib.figure.Figure: node distribution plotted as a 2d matrix. 
 
     '''
+    # print(node_dist)
     if type(node_dist[0]) == str and eps is None:
         eps = list(set(node_dist))
     # else:
@@ -110,7 +111,7 @@ def plot_node_dist(node_dist,
             node_to_load[dst] = pair_load
         else:
             node_to_load[dst] += pair_load
-        if pair_load > 0.3*max_pair_load:
+        if pair_load > chord_edge_display_threshold*max_pair_load:
             graph.add_weighted_edges_from([(src, dst, pair_load)])
         else:
             graph.add_nodes_from([src, dst])
@@ -127,10 +128,13 @@ def plot_node_dist(node_dist,
         graph2.nodes[v]['load'] = node_to_load[v]
 
     fig2 = plt.figure()
+    plt.set_cmap('YlOrBr')
     plt.style.use('default')
     chord_diagram = CircosPlot(graph2, 
                                node_labels=True,
                                edge_width='weight',
+                               # edge_color='weight',
+                               # node_size='load',
                                node_grouping='load',
                                node_color='load')
     chord_diagram.draw()
