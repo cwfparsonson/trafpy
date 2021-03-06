@@ -117,7 +117,10 @@ def plot_node_dist(node_dist,
             graph.add_nodes_from([src, dst])
 
     nodelist = [n for n in graph.nodes]
-    ws = _rescale([float(graph[u][v]['weight']) for u, v in graph.edges], newmin=chord_edge_width_range[0], newmax=chord_edge_width_range[1])
+    try:
+        ws = _rescale([float(graph[u][v]['weight']) for u, v in graph.edges], newmin=chord_edge_width_range[0], newmax=chord_edge_width_range[1])
+    except ZeroDivisionError:
+        raise Exception('Src-dst edge weights in chord diagram are all the same, leading to 0 rescaled values. Decrease chord_edge_display_threshold to ensure a range of edge values are included in the chord diagram.')
     edgelist = [(str(u),str(v),{"weight":ws.pop(0)}) for u,v in graph.edges]
 
     graph2 = nx.Graph()
@@ -153,6 +156,44 @@ def _rescale(l, newmin, newmax):
     '''Rescales list l values to range between newmin and newmax.'''
     arr = list(l)
     return [round((x-min(arr))/(max(arr)-min(arr))*(newmax-newmin)+newmin,2) for x in arr]
+
+def plot_dict_scatter(_dict,
+                      logscale=False,
+                      rand_var_name='Random Variable',
+                      ylabel='Probability',
+                      xlim=None,
+                      marker_size=30,
+                      font_size=20,
+                      show_fig=False):
+    '''
+    Plots scatter of dict with keys (x-axis random variables) values (corresponding
+    y-axis values) pairs.
+
+    This is useful for plotting discrete probability distributions i.e. _dict keys are
+    random variable values, _dict values are their respective probabilities of
+    occurring.
+    '''
+    fig = plt.figure()
+    plt.style.use('ggplot')
+    if logscale:
+        ax = plt.gca()
+        ax.set_xscale('log')
+
+    plt.scatter(list(_dict.keys()), list(_dict.values()), s=marker_size)
+    plt.xlabel(rand_var_name, fontsize=font_size)
+    plt.ylabel(ylabel, fontsize=font_size)
+
+    if xlim is not None:
+        plt.xlim(xlim)
+
+    if show_fig:
+        plt.show()
+
+    return fig
+
+
+
+
 
 def plot_val_dist(rand_vars, 
                   dist_fit_line=None, 
@@ -369,7 +410,7 @@ def plot_val_scatter(plot_dict={},
                      xlabel='Random Variable',
                      ylabel='Random Variable Value',
                      alpha=1,
-                     marker_size=20,
+                     marker_size=30,
                      marker_style='.',
                      logscale=False,
                      show_fig=False):
