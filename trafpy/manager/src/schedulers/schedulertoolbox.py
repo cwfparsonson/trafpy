@@ -441,16 +441,39 @@ class SchedulerToolbox_v2:
             if self.debug_mode:
                 print('flows removed:\n{}'.format(removed_flows))
             if self.check_connection_valid(flow):
+                # no contention(s) -> can set up flow
+                if self.debug_mode:
+                    print('no contention, can set up flow.')
                 self.set_up_connection(flow)
                 chosen_flows.append(flow)
-                if self.debug_mode:
-                    print('no contention, set up correctly')
+
+                # if any left over bandwidth, try re-establish any removed flows but now with fewer packets
+                # try establish in reverse order (since this will go from lowest cost flows to highest cost)
+                for f in reversed(removed_flows):
+                    # 1. check lowest bandwidth remaining in flow path
+                    lowest_edge_bandwidth = self.get_lowest_edge_bandwidth(path=f['path'], max_bw=False, channel=f['channel'])
+                    max_info = lowest_edge_bandwidth * self.slot_size 
+                    max_packets = int(max_info / self.packet_size) # round down
+
+                    # 2. if lowest bw != 0, set removed flow packets with min(flow packets, max poss packets with bw)
+                    if lowest_edge_bandwidth != 0:
+                        packets_to_schedule = min(f['packets'], max_packets)
+
+                        # update flow packets, set up connection, and append flow to chosen_flows
+                        f['packets_this_slot'] = packets_to_schedule
+                        self.set_up_connection(f)
+                        chosen_flows.append(f)
+
+                    else:
+                        # no bandwidth left, cannot establish this removed flow
+                        pass
                 return chosen_flows
+
             else:
-                if self.debug_mode:
-                    print('conflict detected')
                 # there's a conflict with an already chosen flow
                 # find contending flow -> see which flow to establish
+                if self.debug_mode:
+                    print('conflict detected')
                 flow_edges = self.get_path_edges(flow['path'])
                 bandwidth_requested = (flow['packets_this_slot'] * flow['packet_size'])/self.slot_size
                 if self.debug_mode:
@@ -568,14 +591,29 @@ class SchedulerToolbox_v2:
                         continue
 
 
-    def get_lowest_edge_bandwidth(self, path):
-        '''Goes through path edges and finds bandwidth of lowest bandwidth edge port.'''
+    def get_lowest_edge_bandwidth(self, path, max_bw=True, channel=None):
+        '''Goes through path edges and finds bandwidth of lowest bandwidth edge port.
+
+        If max_bw, will return maximum possible bandwith of lowest max bandwidth edge.
+        If not, will return available bandwidth of lowest available bandwidth edge.
+
+        N.B. if not max_bw, MUST given channel (since checking bandwidth available on
+        edge)
+        '''
+        if not max_bw and channel is None:
+            raise Exception('If not max_bw, must specify channel to check available bandwidth on channel for each edge in path.')
+
         lowest_edge_bw = float('inf')
         edges = self.get_path_edges(path)
         for edge in edges:
-            max_capacity = self.network[edge[0]][edge[1]]['{}_to_{}_port'.format(edge[0], edge[1])]['max_channel_capacity']
-            if max_capacity < lowest_edge_bw:
-                lowest_edge_bw = max_capacity
+            if max_bw:
+                # find maximum bandwidth of edge with lowest maximum bandwidth
+                bw = self.network[edge[0]][edge[1]]['{}_to_{}_port'.format(edge[0], edge[1])]['max_channel_capacity']
+            else:
+                # find maximum bandwidth of edge with lowest maximum bandwidth
+                bw = self.network[edge[0]][edge[1]]['{}_to_{}_port'.format(edge[0], edge[1])]['channels'][channel]
+            if bw < lowest_edge_bw:
+                lowest_edge_bw = bw 
 
         return lowest_edge_bw
             

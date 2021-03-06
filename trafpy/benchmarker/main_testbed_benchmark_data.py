@@ -49,25 +49,26 @@ class TestBed:
             for load in list(self.benchmark_data[benchmark].keys()):
                 for repeat in self.benchmark_data[benchmark][load]:
                     for scheduler in config['schedulers']:
+                        if (json.loads(load) == 0.2 and scheduler.scheduler_name == 'srpt_v2') or (json.loads(load) == 0.2 and scheduler.scheduler_name == 'first_fit'): # DEBUG 
                         # if json.loads(load) == 0.5 and scheduler.scheduler_name == 'srpt_v2': # DEBUG 
                         # if json.loads(load) in _loads: # DEBUG
                         # if json.loads(load) == 0.1: # DEBUG
-                        demand_data = self.benchmark_data[benchmark][load][repeat]
-                        demand = Demand(demand_data, config['networks'][0].graph['endpoints'])
-                        
-                        env = DCN(config['networks'][0], 
-                                  demand, 
-                                  scheduler,
-                                  num_k_paths=config['num_k_paths'],
-                                  slot_size=config['slot_size'],
-                                  sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
-                                  max_flows=config['max_flows'], 
-                                  max_time=config['max_time'])
+                            demand_data = self.benchmark_data[benchmark][load][repeat]
+                            demand = Demand(demand_data, config['networks'][0].graph['endpoints'])
+                            
+                            env = DCN(config['networks'][0], 
+                                      demand, 
+                                      scheduler,
+                                      num_k_paths=config['num_k_paths'],
+                                      slot_size=config['slot_size'],
+                                      sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
+                                      max_flows=config['max_flows'], 
+                                      max_time=config['max_time'])
 
-                        p = multiprocessing.Process(target=self.run_test,
-                                                    args=(scheduler, env, self.envs, path_to_save,))
-                        jobs.append(p)
-                        p.start()
+                            p = multiprocessing.Process(target=self.run_test,
+                                                        args=(scheduler, env, self.envs, path_to_save,))
+                            jobs.append(p)
+                            p.start()
         for job in jobs:
             job.join() # only execute below code when all jobs finished
         end_time = time.time()
