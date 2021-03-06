@@ -184,7 +184,7 @@ if __name__ == '__main__':
         # networks
         NUM_CHANNELS = 1
         # networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)]
-        networks = [gen_fat_tree(k=6, L=2, n=10, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_core_channel_capacity=833, bidirectional_links=True)]
+        networks = [gen_fat_tree(k=6, L=2, n=10, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_core_channel_capacity=1666, bidirectional_links=True)]
 
         # rwas
         NUM_K_PATHS = 2
