@@ -15,7 +15,7 @@ def create_demand_data(eps,
                        flow_size_dist,
                        interarrival_time_dist,
                        network_load_config=None,
-                       num_demands_factor=50,
+                       min_num_demands=6000,
                        jensen_shannon_distance_threshold=0.1,
                        min_last_demand_arrival_time=None,
                        auto_node_dist_correction=False,
@@ -61,8 +61,9 @@ def create_demand_data(eps,
         use_multiprocessing (bool): Whether or not to use multiprocessing when
             generating data. For generating large numbers of big job computation
             graphs, it is recommended to use multiprocessing.
-        num_demands_factor (int): Factor by which to multiply number of 
-            network endpoint pairs by to get the initial number of demands.
+        min_num_demands (int): Minimum number of demands to generate (will increase
+            beyond this if need to meet min_last_demand_arrival_time and/or to
+            meet specified jensen_shannon_distance_threshold).
         jensen_shannon_distance_threshold (float): Maximum jensen shannon distance
             required of generated random variables w.r.t. discretised dist they're generated from.
             Must be between 0 and 1. Distance of 0 -> distributions are exactly the same.
@@ -99,7 +100,7 @@ def create_demand_data(eps,
                                           flow_size_dist=flow_size_dist,
                                           interarrival_time_dist=interarrival_time_dist,
                                           network_load_config=network_load_config,
-                                          num_demands_factor=num_demands_factor,
+                                          min_num_demands=min_num_demands,
                                           jensen_shannon_distance_threshold=jensen_shannon_distance_threshold,
                                           min_last_demand_arrival_time=min_last_demand_arrival_time,
                                           auto_node_dist_correction=auto_node_dist_correction,
