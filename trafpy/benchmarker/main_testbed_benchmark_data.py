@@ -14,8 +14,7 @@ import tensorflow as tf
 tf.keras.backend.clear_session()
 
 
-class TestBed:
-
+class TestBed: 
     def __init__(self, path_to_benchmark_data):
         self.benchmark_data = self.load_benchmark_data(path_to_benchmark_data)
         self.benchmarks = list(self.benchmark_data.keys())
@@ -49,10 +48,11 @@ class TestBed:
             for load in list(self.benchmark_data[benchmark].keys()):
                 for repeat in self.benchmark_data[benchmark][load]:
                     for scheduler in config['schedulers']:
-                        if (json.loads(load) == 0.2 and scheduler.scheduler_name == 'srpt_v2') or (json.loads(load) == 0.2 and scheduler.scheduler_name == 'first_fit'): # DEBUG 
+                        # if (json.loads(load) == 0.2 and scheduler.scheduler_name == 'srpt_v2') or (json.loads(load) == 0.2 and scheduler.scheduler_name == 'first_fit'): # DEBUG 
                         # if json.loads(load) == 0.5 and scheduler.scheduler_name == 'srpt_v2': # DEBUG 
                         # if json.loads(load) in _loads: # DEBUG
                         # if json.loads(load) == 0.1: # DEBUG
+                        if scheduler.scheduler_name != 'random' and scheduler.scheduler_name != 'first_fit' and json.loads(load) == 0.4:
                             demand_data = self.benchmark_data[benchmark][load][repeat]
                             demand = Demand(demand_data, config['networks'][0].graph['endpoints'])
                             
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     import trafpy
     from trafpy.generator.src.networks import gen_fat_tree, gen_channel_names
     from trafpy.manager.src.routers.routers import RWA
-    from trafpy.manager.src.schedulers.schedulers import SRPT, SRPT_v2, BASRPT, BASRPT_v2, RandomAgent, FirstFit, FairShare
+    from trafpy.manager.src.schedulers.schedulers import SRPT, SRPT_v2, BASRPT, BASRPT_v2, RandomAgent, FirstFit, FairShare, LambdaShare
 
 
 
@@ -168,7 +168,7 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        DATA_NAME = 'university_k_6_L_2_n_10_chancap500_numchans1_mldat2e6_bidirectional'
+        DATA_NAME = 'university_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'private_enterprise_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'social_media_cloud_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'artificial_light_chancap10_numchans1_mldatNone_bidirectional'
@@ -179,16 +179,18 @@ if __name__ == '__main__':
         tb = TestBed(path_to_benchmark_data)
 
         # dcn
-        MAX_TIME = None # None
+        # MAX_TIME = None # None
+        MAX_TIME = 'last_demand_arrival_time'
         MAX_FLOWS = 50 # 10 50 100 500
 
         # networks
         NUM_CHANNELS = 1
         # networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)]
-        networks = [gen_fat_tree(k=6, L=2, n=10, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_core_channel_capacity=1666, bidirectional_links=True)]
+        networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_core_channel_capacity=1000, bidirectional_links=True)]
 
         # rwas
         NUM_K_PATHS = 2
+        # NUM_K_PATHS = 1
         rwas = [RWA(gen_channel_names(NUM_CHANNELS), NUM_K_PATHS)]
 
         # schedulers
@@ -219,6 +221,8 @@ if __name__ == '__main__':
         schedulers = [FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='fair_share'),
                       FirstFit(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='first_fit'),
                       SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='srpt_v2'),
+                      LambdaShare(networks[0], rwas[0], slot_size=SLOT_SIZE, _lambda=0.5, packet_size=PACKET_SIZE, scheduler_name='lambda{}_share'.format(0.5)),
+                      LambdaShare(networks[0], rwas[0], slot_size=SLOT_SIZE, _lambda=0.75, packet_size=PACKET_SIZE, scheduler_name='lambda{}_share'.format(0.75)),
                       RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='random')]
         # schedulers = []
         # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]

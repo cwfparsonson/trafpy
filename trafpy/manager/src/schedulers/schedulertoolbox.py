@@ -23,7 +23,7 @@ class SchedulerToolbox_v2:
                  packet_size=300, 
                  time_multiplexing=True, 
                  debug_mode=False):
-        self.graph = Graph 
+        self.network = Graph 
         self.rwa = RWA
         self.slot_size = slot_size
         self.packet_size = packet_size
@@ -33,9 +33,12 @@ class SchedulerToolbox_v2:
         self.reset()
 
     def reset(self):
-        self.network = copy.deepcopy(self.graph)
+        self.network = copy.deepcopy(self.network)
 
-    def update_network_state(self, observation, hide_child_dependency_flows=True, reset_channel_capacities=True):
+    def update_network_state(self, 
+                             observation, 
+                             hide_child_dependency_flows=True, 
+                             reset_channel_capacities=True):
         '''
         If hide_child_dependency_flows is True, will only update scheduler network
         to see flows that are ready to be scheduled i.e. all parent flow dependencies
@@ -46,7 +49,12 @@ class SchedulerToolbox_v2:
         If False, will just update network with all flows (even those that cannot yet
         be scheduled). This is used for 'job- & network- aware' scheduling systems.
         '''
-        self.network = copy.deepcopy(observation['network'])
+        if type(observation) is dict:
+            # network contained within observation dictionary
+            self.network = copy.deepcopy(observation['network'])
+        else:
+            # assume observation has been given as network object
+            self.network = copy.deepcopy(observation)
 
         if reset_channel_capacities:
             self.reset_channel_capacities_of_edges()
@@ -450,7 +458,9 @@ class SchedulerToolbox_v2:
                 # if any left over bandwidth, try re-establish any removed flows but now with fewer packets
                 # try establish in reverse order (since this will go from lowest cost flows to highest cost)
                 for f in reversed(removed_flows):
-                    # 1. check lowest bandwidth remaining in flow path
+                    if self.debug_mode:
+                        print('checking if any leftover bandwidth for previously removed flow {}'.format(f))
+                    # 1. check lowest available bandwidth remaining in flow path
                     lowest_edge_bandwidth = self.get_lowest_edge_bandwidth(path=f['path'], max_bw=False, channel=f['channel'])
                     max_info = lowest_edge_bandwidth * self.slot_size 
                     max_packets = int(max_info / self.packet_size) # round down
@@ -458,6 +468,8 @@ class SchedulerToolbox_v2:
                     # 2. if lowest bw != 0, set removed flow packets with min(flow packets, max poss packets with bw)
                     if lowest_edge_bandwidth != 0:
                         packets_to_schedule = min(f['packets'], max_packets)
+                        if self.debug_mode:
+                            print('bandwidth available on flow\'s path and channel. Setting up removed flow to schedule {} of its packets.'.format(packets_to_schedule))
 
                         # update flow packets, set up connection, and append flow to chosen_flows
                         f['packets_this_slot'] = packets_to_schedule
@@ -466,7 +478,10 @@ class SchedulerToolbox_v2:
 
                     else:
                         # no bandwidth left, cannot establish this removed flow
+                        if self.debug_mode:
+                            print('no bandwidth available on flow\' path and channel. Cannot set up again.')
                         pass
+
                 return chosen_flows
 
             else:
@@ -488,6 +503,44 @@ class SchedulerToolbox_v2:
                         ######################### FIRST FIT RESOLUTION #########################
                         if resolution_strategy == 'first_fit':
                             # schedule first flow which fits bandwidth, therefore do not attempt to resolve any conflicts which arise after a flow has already been schedueld
+
+                            # if any bandwidth available, try fill with this flow
+                            # 1. check lowest available bandwidth remaining in flow path
+                            lowest_edge_bandwidth = self.get_lowest_edge_bandwidth(path=flow['path'], max_bw=False, channel=flow['channel'])
+                            max_info = lowest_edge_bandwidth * self.slot_size
+                            max_packets = int(max_info / self.packet_size) # round down
+                            # 2. if lowest bw != 0, set removed flow packets with min(flow packets, max poss packets with bw)
+                            if lowest_edge_bandwidth != 0:
+                                packets_to_schedule = min(flow['packets'], max_packets)
+                                flow['packets_this_slot'] = packets_to_schedule
+                                self.set_up_connection(flow)
+                                chosen_flows.append(flow)
+                            else:
+                                # no bandwidth left, cannot establish this flow
+                                pass
+
+                            # # if any extra bandwidth available for any chosen flows, fill
+                            # for f in chosen_flows:
+                                # # 1. check lowest available bandwidth remaining in flow path
+                                # lowest_edge_bandwidth = self.get_lowest_edge_bandwidth(path=f['path'], max_bw=False, channel=f['channel'])
+                                # max_info = lowest_edge_bandwidth * self.slot_size 
+                                # max_packets = int(max_info / self.packet_size) # round down
+
+                                # # 2. if lowest bw != 0, set removed flow packets with min(flow packets, max poss packets with bw)
+                                # if lowest_edge_bandwidth != 0:
+                                    # # temporarily remove so can update flow packets this slot
+                                    # self.take_down_connection(f)
+                                    # chosen_flows.remove(f)
+                                    # packets_to_schedule = min(f['packets'], max_packets)
+
+                                    # # update flow packets, set up connection, and re-append flow to chosen_flows
+                                    # f['packets_this_slot'] = packets_to_schedule
+                                    # self.set_up_connection(f)
+                                    # chosen_flows.append(f)
+                                # else:
+                                    # # no bandwidth left, cannot establish this removed flow
+                                    # pass
+
                             return chosen_flows
 
                         ######################### RANDOM RESOLUTION #########################
@@ -502,7 +555,6 @@ class SchedulerToolbox_v2:
                                 return chosen_flows
                             else:
                                 # remove conflicting flow -> move to next while loop to try again to re-establish flow
-                                # flow_ids = list(scheduling_info['edge_to_flow_id_to_packets_to_schedule'][json.dumps(sorted(edge))].keys())
                                 flow_ids = list(scheduling_info['edge_to_flow_id_to_packets_to_schedule'][json.dumps(edge)].keys())
                                 for _id in flow_ids:
                                     if _id in chosen_flow_ids:
@@ -514,9 +566,6 @@ class SchedulerToolbox_v2:
                                             if f['flow_id'] == _id:
                                                 if self.debug_mode:
                                                     print('found established flow, take down')
-                                                # flow['packets_this_slot'] = f['packets_this_slot'] # replace packets
-                                                # if flow['packets_this_slot'] > min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']]):
-                                                    # flow['packets_this_slot'] = min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']])
                                                 self.take_down_connection(f)
                                                 chosen_flows.remove(f)
                                                 del chosen_flow_ids[f['flow_id']]
@@ -533,8 +582,6 @@ class SchedulerToolbox_v2:
                         ######################### COST RESOLUTION #########################
                         elif resolution_strategy == 'cost':
                             # if flow has lower cost than one of the contentions, remove highest cost (least contentious) flow and try to set up connection again
-                            # costs = cost_info['edge_to_sorted_costs'][json.dumps(sorted(edge))]
-                            # flow_ids = cost_info['edge_to_sorted_flow_ids'][json.dumps(sorted(edge))]
                             costs = cost_info['edge_to_sorted_costs'][json.dumps(edge)]
                             flow_ids = cost_info['edge_to_sorted_flow_ids'][json.dumps(edge)]
                             if self.debug_mode:
@@ -564,9 +611,6 @@ class SchedulerToolbox_v2:
                                             if f['flow_id'] == _id:
                                                 if self.debug_mode:
                                                     print('found high cost established flow {}, take down'.format(_id))
-                                                # flow['packets_this_slot'] = f['packets_this_slot'] # replace packets
-                                                # if flow['packets_this_slot'] > min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']]):
-                                                    # flow['packets_this_slot'] = min(flow_id_to_packets_to_schedule_per_edge[flow['flow_id']])
                                                 self.take_down_connection(f)
                                                 chosen_flows.remove(f)
                                                 del chosen_flow_ids[f['flow_id']]

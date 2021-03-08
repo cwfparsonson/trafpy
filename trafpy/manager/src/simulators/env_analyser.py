@@ -99,9 +99,9 @@ class EnvAnalyser:
         print('Time first flow arrived: {}'.format(min(self.flow_times_arrived)))
         print('Time last flow arrived: {}'.format(max(self.flow_times_arrived)))
         print('Total number of flows that were completed: {}'.format(len(self.completed_flow_dicts)))
-        print('Total number of flows that were dropped: {}'.format(len(self.dropped_flow_dicts)))
-        print('Fraction of arrived flows dropped: {}'.format(self.dropped_flow_frac))
         print('Total number of flows that were left in queue at end of measurement period: {}'.format(len(self.queued_flow_dicts)))
+        print('Total number of flows that were dropped (dropped + left in queue at end of measurement period): {}'.format(len(self.dropped_flow_dicts)))
+        print('Fraction of arrived flows dropped: {}'.format(self.dropped_flow_frac))
         print('Average flow completion time (FCT): {}'.format(self.average_fct))
         print('99th percentile FCT: {}'.format(self.nn_fct))
 
@@ -151,8 +151,8 @@ class EnvAnalyser:
     def _compute_flow_summary(self):
         self._compute_flow_arrival_metrics()
         self._compute_flow_completion_metrics()
-        self._compute_flow_dropped_metrics()
         self._compute_flow_queued_metrics()
+        self._compute_flow_dropped_metrics()
         if self.env.track_grid_slot_evolution:
             self._generate_grid_demands_numpy_array()
 
@@ -229,7 +229,7 @@ class EnvAnalyser:
         elif self.measurement_start_time == 'auto' and self.measurement_end_time == 'auto':
             # both start and end must be assigned simultaneously
             self.measurement_start_time = 0.1 * max(self.flow_times_arrived)
-            self.measurement_end_time = 0.9 * max(self.flow_times_arrived)
+            self.measurement_end_time = max(self.flow_times_arrived)
             # update arrived flows to be within measurement duration
             self.arrived_flow_dicts = self._get_flows_arrived_in_measurement_period() 
             self.flow_times_arrived = [self.arrived_flow_dicts[i]['time_arrived'] for i in range(len(self.arrived_flow_dicts))]
@@ -246,7 +246,7 @@ class EnvAnalyser:
         if self.measurement_end_time is None:
             measurement_end_time = max(self.flow_times_arrived)
         elif self.measurement_end_time == 'auto' and self.measurement_start_time != 'auto':
-            self.measurement_start_time = 0.9 * max(self.flow_times_arrived)
+            self.measurement_start_time = max(self.flow_times_arrived)
             self.arrived_flow_dicts = self._get_flows_arrived_in_measurement_period()
             self.flow_times_arrived = [self.arrived_flow_dicts[i]['time_arrived'] for i in range(len(self.arrived_flow_dicts))]
             measurement_start_time = self.measurement_start_time
@@ -259,9 +259,12 @@ class EnvAnalyser:
     def _get_flows_remaining_in_queue_at_end_of_measurement_period(self):
         queued_flow_dicts = []
 
+        # get flows that were dropped during measurement period -> these won't be in queue
+        dropped_flow_dicts = self._get_flows_dropped_in_measurement_period(count_flows_left_in_queue=False)
+
         # create dicts to enable efficient hash searching
         completed_flow_ids = {self.completed_flow_dicts[i]['flow_id']: i for i in range(len(self.completed_flow_dicts))}
-        dropped_flow_ids = {self.dropped_flow_dicts[i]['flow_id']: i for i in range(len(self.dropped_flow_dicts))}
+        dropped_flow_ids = {dropped_flow_dicts[i]['flow_id']: i for i in range(len(dropped_flow_dicts))}
 
         for i in range(len(self.arrived_flow_dicts)):
             flow_id = self.arrived_flow_dicts[i]['flow_id']
@@ -270,8 +273,12 @@ class EnvAnalyser:
 
         return queued_flow_dicts
 
-    def _get_flows_dropped_in_measurement_period(self):
-        '''Find all flows which arrived during measurement period and were dropped.'''
+    def _get_flows_dropped_in_measurement_period(self, count_flows_left_in_queue=True):
+        '''Find all flows which arrived during measurement period and were dropped.
+
+        If count_flows_left_in_queue, will count flows left in queue at end of
+        measurement period as having been dropped.
+        '''
         dropped_flow_dicts = []
 
         if self.measurement_start_time is None and self.measurement_end_time is None:
@@ -308,6 +315,9 @@ class EnvAnalyser:
                     # cooling down
                     pass
 
+        if count_flows_left_in_queue:
+            dropped_flow_dicts.extend(self.queued_flow_dicts)
+            
         return dropped_flow_dicts 
 
     def _get_flows_completed_in_measurement_period(self):
@@ -319,8 +329,8 @@ class EnvAnalyser:
 
         elif self.measurement_start_time is None and self.measurement_end_time is not None:
             for idx in range(len(self.env.completed_flows)):
-                arr_time = self.env.completed_flows[idx]['time_arrived']
-                if arr_time < self.measurement_end_time:
+                comp_time = self.env.completed_flows[idx]['time_completed']
+                if comp_time < self.measurement_end_time:
                     completed_flow_dicts.append(self.env.completed_flows[idx])
                 else:
                     # cooling down
@@ -328,8 +338,8 @@ class EnvAnalyser:
 
         elif self.measurement_start_time is not None and self.measurement_end_time is None:
             for idx in range(len(self.env.completed_flows)):
-                arr_time = self.env.completed_flows[idx]['time_arrived']
-                if arr_time > self.measurement_start_time:
+                comp_time = self.env.completed_flows[idx]['time_completed']
+                if comp_time > self.measurement_start_time:
                     completed_flow_dicts.append(self.env.completed_flows[idx])
                 else:
                     # warming up
@@ -337,14 +347,14 @@ class EnvAnalyser:
 
         else:
             for idx in range(len(self.env.completed_flows)):
-                arr_time = self.env.completed_flows[idx]['time_arrived']
-                if arr_time < self.measurement_start_time:
+                comp_time = self.env.completed_flows[idx]['time_completed']
+                if comp_time < self.measurement_start_time:
                     # warming up
                     pass
-                elif arr_time > self.measurement_start_time and arr_time < self.measurement_end_time:
+                elif comp_time > self.measurement_start_time and comp_time < self.measurement_end_time:
                     # measure
                     completed_flow_dicts.append(self.env.completed_flows[idx])
-                elif arr_time > self.measurement_start_time and arr_time > self.measurement_end_time:
+                elif comp_time > self.measurement_end_time:
                     # cooling down
                     pass
 
@@ -388,7 +398,7 @@ class EnvAnalyser:
                 elif arr_time > self.measurement_start_time and arr_time < self.measurement_end_time:
                     # measure
                     flows_arrived.append(self.env.arrived_flow_dicts[idx])
-                elif arr_time > self.measurement_start_time and arr_time > self.measurement_end_time:
+                elif arr_time > self.measurement_end_time:
                     # cooling down
                     pass
 

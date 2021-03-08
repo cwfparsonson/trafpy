@@ -48,7 +48,10 @@ def gen_arbitrary_network(ep_label=None,
     network.graph['endpoints'] = eps
 
     # /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)
-    max_nw_capacity = (num_eps * server_to_rack_channel_capacity * num_channels) / 2
+    if bidirectional_links:
+        max_nw_capacity = (num_eps * server_to_rack_channel_capacity * num_channels) / 2
+    else:
+        max_nw_capacity = num_eps * server_to_rack_channel_capacity * num_channels
 
     init_global_network_attrs(network,
                               max_nw_capacity,
@@ -261,9 +264,15 @@ def gen_fat_tree(k=4,
 
     L must be either 2 (core, ToR) or 4 (core, agg, edge, ToR)
 
+    N.B. L=2 is commonly referred to as '2-layer Clos' or 'Clos' or 'spine-leaf' topology
+
     Resource for building (scroll down to summary table with equations):
 
     https://packetpushers.net/demystifying-dcn-topologies-clos-fat-trees-part2/
+
+    Another good resource for data centre topologies etc. in general:
+
+    https://www.oreilly.com/library/view/bgp-in-the/9781491983416/ch01.html#:~:text=The%20most%20common%20routing%20protocol,single%20data%20center%2C%20as%20well.
 
     Parameters of network:
 

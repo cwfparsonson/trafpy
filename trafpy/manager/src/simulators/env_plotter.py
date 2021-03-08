@@ -212,6 +212,26 @@ class EnvsPlotter:
 
         return [fig1, fig2]
 
+    def plot_total_info_dropped_vs_load(self, *analysers):
+        classes = self._group_analyser_classes(*analysers)
+        plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
+
+        for analyser in analysers:
+            info_dropped = 0
+            for flow in analyser.dropped_flow_dicts:
+                info_dropped += flow['size']
+            self._check_analyser_valid(analyser)
+            plot_dict[analyser.subject_class_name]['x_values'].append(analyser.load_frac)
+            plot_dict[analyser.subject_class_name]['y_values'].append(info_dropped)
+            plot_dict[analyser.subject_class_name]['rand_vars'].append(info_dropped)
+
+        # scatter 
+        fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='Load', ylabel='Info Dropped', show_fig=False)
+
+        # complementary cdf
+        fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Info Dropped', ylabel='Complementary CDF', complementary_cdf=True, show_fig=False)
+
+        return [fig1, fig2]
 
 
     def plot_src_dst_queue_evolution_for_different_loads(self, src, dst, length_type='queue_lengths_num_flows', *analysers):

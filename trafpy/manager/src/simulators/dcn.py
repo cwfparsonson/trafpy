@@ -53,6 +53,11 @@ class DCN(gym.Env):
         of current network state at each step and return it in the obs
         dict. N.B. This process takes a long time (on the order of seconds) and
         will therefore greatly increase simulation time.
+
+        If max_time == 'last_demand_arrival_time', will terminate simulation when
+        last flow in demand arrives. Otherwise, leave as None to only terminate
+        simulation after all flows compeleted, or set as int or float to specify
+        specific simulation termination time.
         '''
 
         # initialise DCN environment characteristics
@@ -66,6 +71,8 @@ class DCN(gym.Env):
         self.sim_name = sim_name 
         self.max_flows = max_flows # max number of flows per queue
         self.max_time = max_time
+        if self.max_time == 'last_demand_arrival_time':
+            self.max_time = max(self.demand.demand_data['event_time'])
         
         self.time_multiplexing = time_multiplexing
         self.track_grid_slot_evolution = track_grid_slot_evolution

@@ -195,9 +195,6 @@ class BASRPT_v2:
         self.scheduler_name = scheduler_name
         self.resolution_strategy = 'cost'
 
-        # find bandwidth of bandwidth-limiting edge -> flows must win contention on this edge
-        self.lowest_edge_bandwidth = self.toolbox.get_lowest_edge_bandwidth()
-
         self.V = V # BASRPT V parameter
         self.N = int(len(Graph.graph['endpoints'])) # number of servers
 
@@ -230,7 +227,8 @@ class BASRPT_v2:
         return cost
 
     def get_scheduler_action(self, observation):
-        # print('\n\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> New scheduler action <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+        if self.debug_mode:
+            print('\n\n\n---------------- GET SCHEDULER ACTION -------------------')
 
         # update network state
         self.toolbox.update_network_state(observation, hide_child_dependency_flows=True)
@@ -255,9 +253,10 @@ class BASRPT_v2:
                 flow['packets_this_slot'] = min(scheduling_info['flow_id_to_packets_to_schedule_per_edge'][flow_id])
 
                 # check that flow was also selected to be scheduled on a bandwidth-limited end point link (if it wasn't, cannot schedule this flow)
+                lowest_edge_bandwidth = self.toolbox.get_lowest_edge_bandwidth(flow['path'])
                 info_to_transfer_this_slot = flow['packets_this_slot'] * flow['packet_size']
                 bandwidth_requested = info_to_transfer_this_slot / self.toolbox.slot_size # info units of this flow transferred this time slot == capacity used on each channel in flow's path this time slot
-                if bandwidth_requested > self.lowest_edge_bandwidth:
+                if bandwidth_requested > lowest_edge_bandwidth:
                     # flow must only have been selected for bandwidth-limiting links and not been given any bandwidth-limited capacity, do not schedule flow
                     pass
                 else:
