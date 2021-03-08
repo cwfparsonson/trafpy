@@ -233,7 +233,8 @@ class SchedulerToolbox_v2:
 
         edge_to_flow_ids = {edge: [flow_id for flow_id in requested_edges[edge]] for edge in requested_edges.keys()}
 
-        edge_to_bandwidth = self.get_edge_to_maximum_bandwidth_dict(requested_edges)
+        # edge_to_bandwidth = self.get_edge_to_maximum_bandwidth_dict(requested_edges)
+        edge_to_bandwidth = self.get_edge_to_bandwidth_dict(requested_edges, max_bw=False)
 
         flow_info = {'queued_flows': queued_flows,
                        'requested_edges': requested_edges,
@@ -243,15 +244,22 @@ class SchedulerToolbox_v2:
 
         return flow_info
 
-    def get_edge_to_maximum_bandwidth_dict(self, requested_edges):
-        '''Goes through network and maps each edge to its maximum bandwidth.'''
+    def get_edge_to_bandwidth_dict(self, requested_edges, max_bw=True):
+        '''Goes through network and maps each edge to its maximum bandwidth.
+
+        If max_bw, gets maximum possible bandwidth on each edge.
+        If not max_bw, gets available bandwidth on each edge ASSUMES ONE CHANNEL.
+        '''
         edge_to_bandwidth = {}
         for edge in requested_edges.keys():
-            try:
+            if max_bw:
                 bandwidth = self.network[json.loads(edge)[0]][json.loads(edge)[1]]['{}_to_{}_port'.format(json.loads(edge)[0], json.loads(edge)[1])]['max_channel_capacity']
-            except KeyError:
-                bandwidth = self.network[json.loads(edge)[1]][json.loads(edge)[0]]['{}_to_{}_port'.format(json.loads(edge)[0], json.loads(edge)[1])]['max_channel_capacity']
+            else:
+                # assume only one channel
+                channel = self.rwa.channel_names[0]
+                bandwidth = self.network[json.loads(edge)[0]][json.loads(edge)[1]]['{}_to_{}_port'.format(json.loads(edge)[0], json.loads(edge)[1])]['channels'][channel]
             edge_to_bandwidth[edge] = bandwidth
+
         return edge_to_bandwidth
 
     def allocate_available_bandwidth(self, 
