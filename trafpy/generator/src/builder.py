@@ -17,6 +17,7 @@ def create_demand_data(eps,
                        network_load_config=None,
                        min_num_demands=6000,
                        jensen_shannon_distance_threshold=0.1,
+                       check_dont_exceed_one_ep_load=True,
                        min_last_demand_arrival_time=None,
                        auto_node_dist_correction=False,
                        num_ops_dist=None,
@@ -70,6 +71,12 @@ def create_demand_data(eps,
             Distance of 1 -> distributions are not at all similar.
             https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15
             N.B. To meet threshold, this function will keep doubling num_demands
+        check_dont_exceed_one_ep_load (bool): If True, when packing flows (assigning
+            src-dst node pairs according to specified node distribution), will ensure
+            that don't exceed 1.0 load on any end points. If this is not possible,
+            will raise an Exception. If False, no exception will be raised, but run
+            risk of exceeding 1.0 end point load, which for some users might be
+            detrimental to their system.
         min_last_demand_arrival_time (int, float): Minimum last time of arrival
             for final demand (helps user specify a minimum simulation time). Will
             keep doubling number of demands until get >= min_last_demand_arrival_time.

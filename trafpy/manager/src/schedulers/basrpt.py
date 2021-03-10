@@ -234,7 +234,7 @@ class BASRPT_v2:
         self.toolbox.update_network_state(observation, hide_child_dependency_flows=True)
 
         # collect useful flow info dicts for making scheduling decisions
-        flow_info = self.toolbox.collect_flow_info_dicts(random_assignment=True, cost_function=self.cost_function)
+        flow_info = self.toolbox.collect_flow_info_dicts(path_channel_assignment_strategy='fair_share_num_flows', cost_function=self.cost_function)
 
         # allocate flows by order of cost (lowest cost flows prioritised first)
         scheduling_info, cost_info = self.toolbox.allocate_available_bandwidth(flow_info, resolution_strategy=self.resolution_strategy)

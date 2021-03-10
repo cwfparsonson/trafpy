@@ -33,7 +33,7 @@ class FairShare:
         chosen_flows = self.get_scheduler_action(observation)
         return {'chosen_flows': chosen_flows}
 
-    def get_scheduler_action(self, observation):
+    def get_scheduler_action(self, observation, path_channel_assignment_strategy='fair_share_num_flows'):
         if self.debug_mode:
             print('\n\n\n---------------- GET SCHEDULER ACTION -------------------')
 
@@ -41,7 +41,7 @@ class FairShare:
         self.toolbox.update_network_state(observation, hide_child_dependency_flows=True)
 
         # collect useful flow info dicts for making scheduling decisions
-        flow_info = self.toolbox.collect_flow_info_dicts(random_assignment=True, cost_function=None)
+        flow_info = self.toolbox.collect_flow_info_dicts(path_channel_assignment_strategy=path_channel_assignment_strategy, cost_function=None)
 
         # allocate flows by sharing bandwidth equallty across all flows
         scheduling_info, cost_info = self.toolbox.allocate_available_bandwidth(flow_info, resolution_strategy=self.resolution_strategy)

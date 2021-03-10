@@ -27,6 +27,7 @@ class FlowGenerator:
                  jensen_shannon_distance_threshold=0.1,
                  min_last_demand_arrival_time=None,
                  auto_node_dist_correction=False,
+                 check_dont_exceed_one_ep_load=True,
                  print_data=False):
         '''
         Args:
@@ -52,6 +53,12 @@ class FlowGenerator:
                 Distance of 1 -> distributions are not at all similar.
                 https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15
                 N.B. To meet threshold, this function will keep doubling num_demands
+            check_dont_exceed_one_ep_load (bool): If True, when packing flows (assigning
+                src-dst node pairs according to specified node distribution), will ensure
+                that don't exceed 1.0 load on any end points. If this is not possible,
+                will raise an Exception. If False, no exception will be raised, but run
+                risk of exceeding 1.0 end point load, which for some users might be
+                detrimental to their system.
 
 
         '''
@@ -66,6 +73,7 @@ class FlowGenerator:
         self.min_last_demand_arrival_time = min_last_demand_arrival_time
         self.auto_node_dist_correction = auto_node_dist_correction
         self.jensen_shannon_distance_threshold = jensen_shannon_distance_threshold
+        self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
         self.print_data = print_data
 
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
@@ -73,6 +81,9 @@ class FlowGenerator:
         if self.network_load_config['target_load_fraction'] is not None:
             if self.network_load_config['target_load_fraction'] > 0.95:
                 raise Exception('Target load fraction {} is invalid. Must be <= 0.95.'.format(self.network_load_config['target_load_fraction']))
+
+        if not self.check_dont_exceed_one_ep_load:
+            print('WARNING: check_dont_exceed_one_ep_load is set to False. This may result in end point loads going above 1.0, which for some users might be detrimental to the systems they want to test.')
 
     def create_flow_centric_demand_data(self):
         # flow sizes
@@ -117,7 +128,8 @@ class FlowGenerator:
                             flow_sizes,
                             interarrival_times,
                             network_load_config=self.network_load_config,
-                            auto_node_dist_correction=self.auto_node_dist_correction)
+                            auto_node_dist_correction=self.auto_node_dist_correction,
+                            check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load)
         packed_flows = packer.pack_the_flows()
 
         # compile packed flows into demand_data dict ordered in terms of arrival time
@@ -208,6 +220,7 @@ class FlowPacker:
                  flow_interarrival_times,
                  network_load_config,
                  auto_node_dist_correction=False,
+                 check_dont_exceed_one_ep_load=True,
                  print_data=False):
         self.generator = generator
         self.eps = eps
@@ -217,6 +230,7 @@ class FlowPacker:
         self.flow_interarrival_times = flow_interarrival_times
         self.network_load_config = network_load_config
         self.auto_node_dist_correction = auto_node_dist_correction
+        self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
         self.print_data = print_data
         # self.print_data = True # DEBUG
 
@@ -313,16 +327,22 @@ class FlowPacker:
             for p in sorted_pairs:
                 pair = p[0]
                 ep1, ep2 = json.loads(pair)[0], json.loads(pair)[1]
-                if self.ep_total_infos[ep1] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[ep2] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
-                    # # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
-                    pass
+                if self.check_dont_exceed_one_ep_load:
+                    # ensure wont exceed 1.0 end point load by allocating this flow to pair
+                    if self.ep_total_infos[ep1] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[ep2] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
+                        # # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
+                        pass
+                    else:
+                        chosen_pair = pair
+                        break
                 else:
+                    # don't worry about exceeding 1.0 end point load, just allocate to pair furthest from target load
                     chosen_pair = pair
                     break
 
             if chosen_pair is None:
                 # could not find end point pair with enough capacity to take flow
-                raise Exception('Unable to find valid pair to assign flow {}: {} without exceeding ep total information load limit {} information units for this session. Decrease flow sizes to help with packing (recommended), and/or increase end point link capacity (recommended), and/or decrease your required target load to increase the time duration the flow packer has to pack flows into, and/or change your node dist to be less heavily skewed. Alternatively, try re-running dist and flow generator since may have chance of creating valid dists and flows which can be packed (also recommended). Current end point total information loads (information units):\n{}'.format(flow, self.packed_flows[flow], self.max_total_ep_info, self.ep_total_infos))
+                raise Exception('Unable to find valid pair to assign flow {}: {} without exceeding ep total information load limit {} information units for this session. Decrease flow sizes to help with packing (recommended), and/or increase end point link capacity (recommended), and/or decrease your required target load to increase the time duration the flow packer has to pack flows into, and/or change your node dist to be less heavily skewed. Alternatively, try re-running dist and flow generator since may have chance of creating valid dists and flows which can be packed (also recommended). You can also disable this validity checker by setting check_dont_exceed_one_ep_load to False. Doing so will allow end point loads to go above 1.0 when packing the flows and disable this exception being raised. Current end point total information loads (information units):\n{}'.format(flow, self.packed_flows[flow], self.max_total_ep_info, self.ep_total_infos))
             
             if self.print_data:
                 print('Assigning flow to pair {}'.format(chosen_pair))

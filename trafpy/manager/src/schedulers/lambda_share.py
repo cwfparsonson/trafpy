@@ -125,22 +125,20 @@ class LambdaShare:
 
         # ATTEMPT 3
         # choose fair share flows
-        fair_share_chosen_flows = self.fair_share.get_scheduler_action(observation=fair_share_network)
+        fair_share_chosen_flows = self.fair_share.get_scheduler_action(observation=fair_share_network, path_channel_assignment_strategy='fair_share_num_flows')
 
         # update srpt queued flows with chosen path and channel from fair share
         self.srpt.toolbox.update_network_state(srpt_network)
         for ep in self.fair_share.toolbox.network.graph['endpoints']:
-            ep_queues = self.fair_share.toolbox.network.nodes[ep]
+            ep_queues = copy.deepcopy(self.fair_share.toolbox.network.nodes[ep])
             for _ep in ep_queues.keys():
+                # update packets in queued flows w/ fair share choice so srpt doesn't choose flows which would otherwise be completed by fair share portion of network
+                for idx in range(len(ep_queues[_ep]['queued_flows'])):
+                    ep_queues[_ep]['queued_flows'][idx]['packets'] -= ep_queues[_ep]['queued_flows'][idx]['packets_this_slot']
                 self.srpt.toolbox.network.nodes[ep][_ep] = ep_queues[_ep]
 
-        # choose srpt flows, do not use random assignment (i.e. use same path and channel as allocated by fair share)
-        srpt_chosen_flows = self.srpt.get_scheduler_action(observation=self.srpt.toolbox.network, reset_channel_capacities=False, random_assignment=False)
-
-        # # update lambda srpt network state, keeping channel capacities as they are from fair share flows being set up
-        # srpt_network, _ = self._update_lambda_networks(network=self.toolbox.network, update_channel_capacities=False)
-        # # choose srpt flows, do not use random assignment (i.e. use same path and channel as allocated by fair share)
-        # srpt_chosen_flows = self.srpt.get_scheduler_action(observation=srpt_network, reset_channel_capacities=False, random_assignment=False)
+        # choose srpt flows, do not do any path or channel assignment (i.e. use same path and channel as allocated by fair share)
+        srpt_chosen_flows = self.srpt.get_scheduler_action(observation=self.srpt.toolbox.network, reset_channel_capacities=False, path_channel_assignment_strategy=None)
 
         # merge fair share and srpt flows
         chosen_flows = []

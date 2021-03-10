@@ -174,14 +174,21 @@ class SchedulerToolbox_v2:
 
         return self.packet_size, num_packets
 
-    def collect_flow_info_dicts(self, random_assignment=True, cost_function=None):
+    def collect_flow_info_dicts(self, 
+                                path_channel_assignment_strategy='random', 
+                                cost_function=None):
         '''
         Goes through network and collects useful dictionaries for making scheduling
         decisions.
 
         Args:
-            random_assignment (bool): If True, allocates flows a randomly chosen
-                path and channel. If False, does not allocate any path or channel.
+            path_channel_assignment_strategy (str): If 'random', allocates flows a randomly chosen
+                path and channel. If None, does not allocate any path or channel; just
+                uses whichever path and channel has already been assigned (if nothing
+                assigned, will get an error later). If 'fair_share_num_flows', 
+                distributes number of flows across channels and paths equally. If
+                'fair_share_num_packets', distributes number of flow packets
+                across channels and paths equally.
             cost_function (function): If not None, uses cost_function to assign a
                 cost to each flow and stores this in a dictionary. cost_function
                 must take a single flow dictionary argument.
@@ -198,17 +205,85 @@ class SchedulerToolbox_v2:
         queued_flows = {} 
         requested_edges = {}
         flow_id_to_cost = {} 
+
+        if path_channel_assignment_strategy == 'fair_share_num_flows':
+            channel_to_num_flows = {channel: 0 for channel in self.rwa.channel_names}
+            edge_to_num_flows = {}
+            for edge in self.network.edges:
+                edge_to_num_flows[json.dumps(edge)] = 0
+                edge_to_num_flows[json.dumps(edge[::-1])] = 0
+        elif path_channel_assignment_strategy == 'fair_share_num_packets':
+            channel_to_num_packets = {channel: 0 for channel in self.rwa.channel_names}
+            edge_to_num_packets = {}
+            for edge in self.network.edges:
+                edge_to_num_packets[json.dumps(edge)] = 0
+                edge_to_num_packets[json.dumps(edge[::-1])] = 0
+
+
         for ep in self.network.graph['endpoints']:
             queues = self.network.nodes[ep]
             for queue in queues.keys():
                 for flow in queues[queue]['queued_flows']:
                     flow = self.init_paths_and_packets(flow)
 
-                    if random_assignment:
+                    if path_channel_assignment_strategy is None:
+                        # do not assign any path or channel, use default
+                        pass
+
+                    elif path_channel_assignment_strategy == 'random':
                         # randomly choose a path and a channel
                         path_idx = np.random.choice(range(len(flow['k_shortest_paths'])))
                         flow['path'] = flow['k_shortest_paths'][path_idx]
                         flow['channel'] = np.random.choice(self.rwa.channel_names)
+
+                    elif path_channel_assignment_strategy == 'fair_share_num_flows':
+                        # distribute number of flows equally across paths and channels
+
+                        # path
+                        paths_num_flows = {idx: 0 for idx in range(len(flow['k_shortest_paths']))}
+                        idx = 0
+                        for path in flow['k_shortest_paths']:
+                            for edge in self.get_path_edges(path):
+                                paths_num_flows[idx] += edge_to_num_flows[json.dumps(edge)]
+                            idx += 1
+                        # choose path with lowest total number of flows on each edge
+                        idx = min(paths_num_flows, key=paths_num_flows.get)
+                        flow['path'] = flow['k_shortest_paths'][idx]
+                        # register each edge in path as having another flow assigned
+                        for edge in self.get_path_edges(flow['path']):
+                            edge_to_num_flows[json.dumps(edge)] += 1
+
+                        # channel
+                        # choose channel with lowest total number of flows
+                        flow['channel'] = min(channel_to_num_flows, key=channel_to_num_flows.get)
+                        # register channel as having another flow assigned
+                        channel_to_num_flows[flow['channel']] += 1
+
+                    elif path_channel_assignment_strategy == 'fair_share_num_packets':
+                        # distribute number of requesting packets equally across paths and channels
+
+                        # path
+                        paths_num_packets = {idx: 0 for idx in range(len(flow['k_shortest_paths']))}
+                        idx = 0
+                        for path in flow['k_shortest_paths']:
+                            for edge in self.get_path_edges(path):
+                                paths_num_packets[idx] += edge_to_num_packets[json.dumps(edge)]
+                            idx += 1
+                        # choose path with lowest total number of flows on each edge
+                        idx = min(paths_num_packets, key=paths_num_packets.get)
+                        flow['path'] = flow['k_shortest_paths'][idx]
+                        # register each edge in path as having another flow assigned
+                        for edge in self.get_path_edges(flow['path']):
+                            edge_to_num_packets[json.dumps(edge)] += flow['packets']
+
+                        # channel
+                        # choose channel with lowest total number of flows
+                        flow['channel'] = min(channel_to_num_packets, key=channel_to_num_packets.get)
+                        # register channel as having another flow assigned
+                        channel_to_num_packets[flow['channel']] += flow['packets']
+
+                    else:
+                        raise Exception('Unrecognised path_channel_assignment_strategy {}'.format(path_channel_assignment_strategy))
 
                     # assign a cost to this flow
                     if cost_function is None:

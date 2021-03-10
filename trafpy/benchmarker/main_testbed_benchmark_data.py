@@ -51,24 +51,24 @@ class TestBed:
                         # if (json.loads(load) == 0.2 and scheduler.scheduler_name == 'srpt_v2') or (json.loads(load) == 0.2 and scheduler.scheduler_name == 'first_fit'): # DEBUG 
                         # if json.loads(load) == 0.5 and scheduler.scheduler_name == 'srpt_v2': # DEBUG 
                         # if json.loads(load) in _loads: # DEBUG
-                        # if json.loads(load) == 0.1: # DEBUG
-                        if scheduler.scheduler_name != 'random' and scheduler.scheduler_name != 'first_fit' and json.loads(load) == 0.4:
-                            demand_data = self.benchmark_data[benchmark][load][repeat]
-                            demand = Demand(demand_data, config['networks'][0].graph['endpoints'])
-                            
-                            env = DCN(config['networks'][0], 
-                                      demand, 
-                                      scheduler,
-                                      num_k_paths=config['num_k_paths'],
-                                      slot_size=config['slot_size'],
-                                      sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
-                                      max_flows=config['max_flows'], 
-                                      max_time=config['max_time'])
+                        # if json.loads(load) == 0.4: # DEBUG
+                        # if scheduler.scheduler_name != 'random' and scheduler.scheduler_name != 'first_fit' and json.loads(load) == 0.4:
+                        demand_data = self.benchmark_data[benchmark][load][repeat]
+                        demand = Demand(demand_data, config['networks'][0].graph['endpoints'])
+                        
+                        env = DCN(config['networks'][0], 
+                                  demand, 
+                                  scheduler,
+                                  num_k_paths=config['num_k_paths'],
+                                  slot_size=config['slot_size'],
+                                  sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
+                                  max_flows=config['max_flows'], 
+                                  max_time=config['max_time'])
 
-                            p = multiprocessing.Process(target=self.run_test,
-                                                        args=(scheduler, env, self.envs, path_to_save,))
-                            jobs.append(p)
-                            p.start()
+                        p = multiprocessing.Process(target=self.run_test,
+                                                    args=(scheduler, env, self.envs, path_to_save,))
+                        jobs.append(p)
+                        p.start()
         for job in jobs:
             job.join() # only execute below code when all jobs finished
         end_time = time.time()
@@ -104,7 +104,9 @@ class TestBed:
                 # env.get_scheduling_session_summary(print_summary=True)
                 print('Completed simulation \'{}\''.format(env.sim_name))
                 analyser = EnvAnalyser(env)
-                analyser.compute_metrics(print_summary=True)
+                analyser.compute_metrics(print_summary=True, 
+                                         measurement_start_time='auto',
+                                         measurement_end_time='auto')
                 try:
                     envs.append(env) # store env
                 except EOFError:
@@ -168,7 +170,7 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        DATA_NAME = 'university_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
+        DATA_NAME = 'university_k_6_L_2_n_10_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'private_enterprise_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'social_media_cloud_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'artificial_light_chancap10_numchans1_mldatNone_bidirectional'
@@ -186,7 +188,7 @@ if __name__ == '__main__':
         # networks
         NUM_CHANNELS = 1
         # networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)]
-        networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_core_channel_capacity=1000, bidirectional_links=True)]
+        networks = [gen_fat_tree(k=6, L=2, n=10, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_core_channel_capacity=1666, bidirectional_links=True)]
 
         # rwas
         NUM_K_PATHS = 2
@@ -219,11 +221,13 @@ if __name__ == '__main__':
                       # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=3200, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(3200)),
                       # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10000, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(10000))]
         schedulers = [FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='fair_share'),
-                      FirstFit(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='first_fit'),
-                      SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='srpt_v2'),
-                      LambdaShare(networks[0], rwas[0], slot_size=SLOT_SIZE, _lambda=0.5, packet_size=PACKET_SIZE, scheduler_name='lambda{}_share'.format(0.5)),
-                      LambdaShare(networks[0], rwas[0], slot_size=SLOT_SIZE, _lambda=0.75, packet_size=PACKET_SIZE, scheduler_name='lambda{}_share'.format(0.75)),
-                      RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='random')]
+                      SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='srpt_v2')]
+        # _lambdas = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
+        _lambdas = [0.1, 0.5, 0.9]
+        # _lambdas = [0.1, 0.3, 0.5, 0.7, 0.9]
+        # _lambdas = [0.1]
+        for _lambda in _lambdas:
+            schedulers.append(LambdaShare(networks[0], rwas[0], slot_size=SLOT_SIZE, _lambda=_lambda, packet_size=PACKET_SIZE, scheduler_name='lambda{}_share'.format(_lambda)))
         # schedulers = []
         # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]
         # for V in Vs:

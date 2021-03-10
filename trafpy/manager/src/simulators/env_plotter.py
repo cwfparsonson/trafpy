@@ -66,11 +66,12 @@ class EnvsPlotter:
         sorted_summary_dict = {'Load': [],
                                'Subject': [],
                                'T-Score': []}
-        num_loads = len(np.unique(list(summary_dict.keys()))) + 1
+        num_loads = len(np.unique(list(summary_dict['Load'])))
+        num_subjects = len(np.unique(list(summary_dict['Subject'])))
         i = 0
         for _ in range(num_loads+1):
             # sort t-scores for this load in descending order
-            load_t_scores = summary_dict['T-Score'][i:i+num_loads]
+            load_t_scores = summary_dict['T-Score'][i:i+num_subjects]
             load_t_score_indices = list(reversed(np.argsort(load_t_scores)))
             load_t_score_indices = [i+_i for _i in load_t_score_indices]
 
@@ -79,7 +80,7 @@ class EnvsPlotter:
             sorted_summary_dict['Subject'].extend(summary_dict['Subject'][load_t_score_indices])
             sorted_summary_dict['T-Score'].extend(summary_dict['T-Score'][load_t_score_indices])
 
-            i += num_loads
+            i += num_subjects 
              
         dataframe = pd.DataFrame(sorted_summary_dict)
         print(tabulate(dataframe, headers='keys', tablefmt='psql'))

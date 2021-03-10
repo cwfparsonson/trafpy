@@ -211,7 +211,7 @@ class SRPT_v2:
         '''SRPT cost function.'''
         return self.toolbox.estimate_time_to_completion(flow)
 
-    def get_scheduler_action(self, observation, reset_channel_capacities=True, random_assignment=True):
+    def get_scheduler_action(self, observation, reset_channel_capacities=True, path_channel_assignment_strategy='fair_share_num_flows'):
         if self.debug_mode:
             print('\n\n\n---------------- GET SCHEDULER ACTION -------------------')
 
@@ -219,7 +219,7 @@ class SRPT_v2:
         self.toolbox.update_network_state(observation, reset_channel_capacities=reset_channel_capacities, hide_child_dependency_flows=True)
 
         # collect useful flow info dicts for making scheduling decisions
-        flow_info = self.toolbox.collect_flow_info_dicts(random_assignment=random_assignment, cost_function=self.cost_function)
+        flow_info = self.toolbox.collect_flow_info_dicts(path_channel_assignment_strategy=path_channel_assignment_strategy, cost_function=self.cost_function)
 
         # allocate flows by order of cost (lowest cost flows prioritised first)
         scheduling_info, cost_info = self.toolbox.allocate_available_bandwidth(flow_info, resolution_strategy=self.resolution_strategy)
