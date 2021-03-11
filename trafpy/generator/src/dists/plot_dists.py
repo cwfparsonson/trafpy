@@ -217,7 +217,7 @@ def plot_val_dist(rand_vars,
                   fig_scale=1,
                   font_size=20,
                   gridlines=True,
-                  figsize=(6.4, 4.8),
+                  figsize=(12.4, 2),
                   aspect='auto',
                   plot_style='default',
                   show_fig=False):
