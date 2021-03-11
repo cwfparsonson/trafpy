@@ -14,7 +14,7 @@ class FirstFit:
                  packet_size=300, 
                  time_multiplexing=True, 
                  debug_mode=False, 
-                 scheduler_name='first_fit'):
+                 scheduler_name='FF'):
         self.debug_mode = debug_mode
         self.toolbox = SchedulerToolbox_v2(Graph=Graph, 
                                            RWA=RWA, 

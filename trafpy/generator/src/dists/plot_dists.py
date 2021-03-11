@@ -164,6 +164,10 @@ def plot_dict_scatter(_dict,
                       xlim=None,
                       marker_size=30,
                       font_size=20,
+                      plot_style='default',
+                      gridlines=True,
+                      figsize=(6.4, 4.8),
+                      aspect='auto',
                       show_fig=False):
     '''
     Plots scatter of dict with keys (x-axis random variables) values (corresponding
@@ -173,8 +177,8 @@ def plot_dict_scatter(_dict,
     random variable values, _dict values are their respective probabilities of
     occurring.
     '''
-    fig = plt.figure()
-    plt.style.use('ggplot')
+    fig = plt.figure(figsize=figsize)
+    plt.style.use(plot_style)
     if logscale:
         ax = plt.gca()
         ax.set_xscale('log')
@@ -182,6 +186,11 @@ def plot_dict_scatter(_dict,
     plt.scatter(list(_dict.keys()), list(_dict.values()), s=marker_size)
     plt.xlabel(rand_var_name, fontsize=font_size)
     plt.ylabel(ylabel, fontsize=font_size)
+
+    if gridlines:
+        plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
+    if aspect is not 'auto':
+        plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
 
     if xlim is not None:
         plt.xlim(xlim)
@@ -207,6 +216,10 @@ def plot_val_dist(rand_vars,
                   plot_horizontally=True,
                   fig_scale=1,
                   font_size=20,
+                  gridlines=True,
+                  figsize=(6.4, 4.8),
+                  aspect='auto',
+                  plot_style='default',
                   show_fig=False):
     '''Plots (1) probability distribution and (2) cumulative distribution function.
     
@@ -245,12 +258,14 @@ def plot_val_dist(rand_vars,
         alpha=1.0
     # HISTOGRAM
     if plot_horizontally:
-        fig = plt.figure(figsize=(15*fig_scale,5*fig_scale))
+        # fig = plt.figure(figsize=(15*fig_scale,5*fig_scale))
+        fig = plt.figure(figsize=figsize)
         plt.subplot(1,2,1)
     else:
-        fig = plt.figure(figsize=(10*fig_scale,15*fig_scale))
+        # fig = plt.figure(figsize=(10*fig_scale,15*fig_scale))
+        fig = plt.figure(figsize=figsize)
         plt.subplot(2,1,1)
-    plt.style.use('ggplot')
+    plt.style.use(plot_style)
     if logscale:
         ax = plt.gca()
         ax.set_xscale('log')
@@ -269,6 +284,11 @@ def plot_val_dist(rand_vars,
              color='tab:red',
              edgecolor='tab:red',
              alpha=alpha)
+
+    if gridlines:
+        plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
+    if aspect is not 'auto':
+        plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
     
     if dist_fit_line is None:
         pass
@@ -322,6 +342,11 @@ def plot_val_dist(rand_vars,
         except NameError:
             pass
         plt.ylim(top=1)
+
+        if gridlines:
+            plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
+        if aspect is not 'auto':
+            plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
     
     # PRINT ANY EXTRA ANALYSIS OF DISTRIBUTION
     if prob_rand_var_less_than is None:
@@ -343,12 +368,16 @@ def plot_val_bar(x_values,
                  xlabel=None,
                  plot_x_ticks=True,
                  bar_width=0.35,
+                 gridlines=True,
+                 aspect='auto',
+                 figsize=(6.4, 4.8),
+                 plot_style='default',
                  show_fig=False):
     '''Plots standard bar chart.'''
     x_pos = [x for x in range(len(x_values))]
 
-    fig = plt.figure()
-    plt.style.use('ggplot')
+    fig = plt.figure(figsize=figsize)
+    plt.style.use(plot_style)
 
     plt.bar(x_pos, y_values, bar_width)
 
@@ -363,6 +392,11 @@ def plot_val_bar(x_values,
     except NameError:
         pass
 
+    if gridlines:
+        plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
+    if aspect is not 'auto':
+        plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
+
     if show_fig:
         plt.show()
 
@@ -376,6 +410,12 @@ def plot_val_line(plot_dict={},
                      linewidth=1,
                      alpha=1,
                      vertical_lines=[],
+                     gridlines=True,
+                     aspect='auto',
+                     plot_style='default',
+                     figsize=(6.4, 4.8),
+                     plot_legend=True,
+                     legend_ncol=1,
                      show_fig=False):
     '''Plots line plot.
 
@@ -385,8 +425,8 @@ def plot_val_line(plot_dict={},
     '''
     keys = list(plot_dict.keys())
 
-    fig = plt.figure()
-    plt.style.use('ggplot')
+    fig = plt.figure(figsize=figsize)
+    plt.style.use(plot_style)
 
     class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
     for _class in sorted(plot_dict.keys()):
@@ -398,7 +438,13 @@ def plot_val_line(plot_dict={},
     plt.ylabel(ylabel)
     if ylim is not None:
         plt.ylim(bottom=ylim[0], top=ylim[1])
-    plt.legend()
+    if plot_legend:
+        plt.legend(ncol=legend_ncol)
+
+    if gridlines:
+        plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
+    if aspect is not 'auto':
+        plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
 
     if show_fig:
         plt.show()
@@ -413,6 +459,11 @@ def plot_val_scatter(plot_dict={},
                      marker_size=30,
                      marker_style='.',
                      logscale=False,
+                     gridlines=True,
+                     figsize=(6.4, 4.8),
+                     aspect='auto',
+                     plot_style='default',
+                     legend_ncol=1,
                      show_fig=False):
     '''Plots scatter plot.
 
@@ -426,8 +477,8 @@ def plot_val_scatter(plot_dict={},
         # if len(plot_dict[key]['x_values']) != num_vals or len(plot_dict[key]['y_values']) != num_vals:
             # raise Exception('Must have equal number of x and y values to plot.')
 
-    fig = plt.figure()
-    plt.style.use('ggplot')
+    fig = plt.figure(figsize=figsize)
+    plt.style.use(plot_style)
 
     class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
     for _class in sorted(plot_dict.keys()):
@@ -439,7 +490,12 @@ def plot_val_scatter(plot_dict={},
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.legend()
+    plt.legend(ncol=legend_ncol)
+
+    if gridlines:
+        plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
+    if aspect is not 'auto':
+        plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
 
     if show_fig:
         plt.show()
@@ -452,9 +508,14 @@ def plot_multiple_kdes(plot_dict={},
                        xlabel='Random Variable',
                        ylabel='Density',
                        logscale=False,
+                       plot_style='default',
+                       gridlines=True,
+                       aspect='auto',
+                       figsize=(6.4, 4.8),
+                       legend_ncol=1,
                        show_fig=False):
-    fig = plt.figure()
-    plt.style.use('ggplot')
+    fig = plt.figure(figsize=figsize)
+    plt.style.use(plot_style)
     if logscale:
         ax = plt.gca()
         ax.set_xscale('log')
@@ -467,7 +528,12 @@ def plot_multiple_kdes(plot_dict={},
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.legend()
+    plt.legend(ncol=legend_ncol)
+
+    if gridlines:
+        plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
+    if aspect is not 'auto':
+        plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
 
     if show_fig:
         plt.show()
@@ -481,6 +547,11 @@ def plot_val_cdf(plot_dict={},
                  logscale=False,
                  plot_points=True,
                  complementary_cdf=False,
+                 gridlines=True,
+                 plot_style='default',
+                 figsize=(6.4, 4.8),
+                 aspect='auto',
+                 legend_ncol=1,
                  show_fig=False):
     '''Plots CDF plot.
 
@@ -488,8 +559,8 @@ def plot_val_cdf(plot_dict={},
                 'class_2': {'rand_vars': [0.2, 0.2, 0.3]}}
 
     '''
-    fig = plt.figure()
-    plt.style.use('ggplot')
+    fig = plt.figure(figsize=figsize)
+    plt.style.use(plot_style)
 
     if logscale:
         ax = plt.gca()
@@ -513,7 +584,12 @@ def plot_val_cdf(plot_dict={},
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.legend()
+    plt.legend(ncol=legend_ncol)
+
+    if gridlines:
+        plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
+    if aspect is not 'auto':
+        plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
 
     if show_fig:
         plt.show()
@@ -521,10 +597,27 @@ def plot_val_cdf(plot_dict={},
     return fig
 
 
+
+def _get_matplotlib_aspect_ratio(fig, aspect_ratio=1):
+    fig = fig
+    ax = plt.gca()
+    x_left, x_right = ax.get_xlim()
+    y_low, y_high = ax.get_ylim()
+    return abs((x_right-x_left)/(y_low-y_high))*aspect_ratio
+
+
+
+
+
 def plot_val_stacked_bar(plot_dict={},
                          ylabel='Random Variable',
                          ylim=None,
                          bar_width=0.35,
+                         plot_style='default',
+                         gridlines=True,
+                         aspect='auto',
+                         figsize=(6.4, 4.8),
+                         legend_ncol=1,
                          show_fig=False):
     '''Plots stacked bar chart.
 
@@ -546,8 +639,8 @@ def plot_val_stacked_bar(plot_dict={},
     x_pos = [x for x in range(num_vals)]
 
 
-    fig = plt.figure()
-    plt.style.use('ggplot')
+    fig = plt.figure(figsize=figsize)
+    plt.style.use(plot_style)
 
     plots = {}
     curr_bottom = None # init bottom y coords of bar to plot
@@ -558,7 +651,12 @@ def plot_val_stacked_bar(plot_dict={},
 
     plt.ylabel(ylabel)
     plt.xticks(x_pos, (x_val for x_val in plot_dict[_class]['x_values']))
-    plt.legend((plots[key][0] for key in list(plots.keys())), (_class for _class in (plot_dict.keys())))
+    plt.legend((plots[key][0] for key in list(plots.keys())), (_class for _class in (plot_dict.keys())), ncol=legend_ncol)
+
+    if gridlines:
+        plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
+    if aspect is not 'auto':
+        plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
 
     try:
         plt.ylim(ylim)
@@ -572,7 +670,10 @@ def plot_val_stacked_bar(plot_dict={},
 
 
 
-def plot_demand_slot_colour_grid(grid_demands, title=None, xlim=None, show_fig=False):
+def plot_demand_slot_colour_grid(grid_demands, 
+                                 title=None, 
+                                 xlim=None, 
+                                 show_fig=False):
     # set colours
     # class_colours = sns.color_palette(palette='hls', n_colors=None, desat=None)
     # cmap = colors.ListedColormap(class_colours

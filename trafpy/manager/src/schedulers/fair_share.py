@@ -15,7 +15,7 @@ class FairShare:
                  packet_size=300,
                  time_multiplexing=True,
                  debug_mode=False,
-                 scheduler_name='fair_share'):
+                 scheduler_name='FS'):
         # DEBUG
         # debug_mode = True
         self.debug_mode = debug_mode

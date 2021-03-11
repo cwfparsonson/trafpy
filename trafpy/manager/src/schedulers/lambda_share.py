@@ -17,7 +17,7 @@ class LambdaShare:
                  packet_size=300,
                  time_multiplexing=True,
                  debug_mode=False,
-                 scheduler_name='lambda_share'):
+                 scheduler_name='\u03BBS'):
         '''
         _lambda is the share of the network bandwidth dedicated to priority
         shortest flows (i.e. this bandwidth will be given to srpt). The remaining

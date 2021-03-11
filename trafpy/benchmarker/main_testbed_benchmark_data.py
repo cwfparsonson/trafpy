@@ -170,7 +170,7 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        DATA_NAME = 'university_k_6_L_2_n_10_chancap500_numchans1_mldat2e6_bidirectional'
+        DATA_NAME = 'university_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'private_enterprise_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'social_media_cloud_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'artificial_light_chancap10_numchans1_mldatNone_bidirectional'
@@ -188,7 +188,7 @@ if __name__ == '__main__':
         # networks
         NUM_CHANNELS = 1
         # networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)]
-        networks = [gen_fat_tree(k=6, L=2, n=10, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_core_channel_capacity=1666, bidirectional_links=True)]
+        networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_core_channel_capacity=1000, bidirectional_links=True)]
 
         # rwas
         NUM_K_PATHS = 2
@@ -220,14 +220,14 @@ if __name__ == '__main__':
                       # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=1600, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(1600)),
                       # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=3200, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(3200)),
                       # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10000, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(10000))]
-        schedulers = [FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='fair_share'),
-                      SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE, scheduler_name='srpt_v2')]
+        schedulers = [FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
         # _lambdas = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
-        _lambdas = [0.1, 0.5, 0.9]
+        _lambdas = [0.05, 0.1, 0.3, 0.5, 0.7, 0.9, 0.95]
         # _lambdas = [0.1, 0.3, 0.5, 0.7, 0.9]
         # _lambdas = [0.1]
         for _lambda in _lambdas:
-            schedulers.append(LambdaShare(networks[0], rwas[0], slot_size=SLOT_SIZE, _lambda=_lambda, packet_size=PACKET_SIZE, scheduler_name='lambda{}_share'.format(_lambda)))
+            schedulers.append(LambdaShare(networks[0], rwas[0], slot_size=SLOT_SIZE, _lambda=_lambda, packet_size=PACKET_SIZE, scheduler_name='\u03BB{}S'.format(_lambda)))
         # schedulers = []
         # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]
         # for V in Vs:
