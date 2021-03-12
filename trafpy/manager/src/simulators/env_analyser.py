@@ -3,9 +3,11 @@ import numpy as np
 
 class EnvAnalyser:
 
-    def __init__(self, env, subject_class_name=None):
+    def __init__(self, env, time_units='', info_units='', subject_class_name=None):
         '''
         envs (obj): Environment/simulation object to analyse.
+        time_units (str): Units of time in env simulation (e.g. us).
+        info_units (str): Units of information in simulation (e.g. B). 
         subject_class_name (str): Name of test subject class. Is useful for when come
             to e.g. plotting multiple envs using EnvsPlotter and want to group
             analysers into classes/subject names being tested (e.g. test subject 
@@ -18,6 +20,8 @@ class EnvAnalyser:
         else:
             self.subject_class_name = subject_class_name
         self.computed_metrics = False
+        self.time_units = time_units
+        self.info_units = info_units
 
 
     def compute_metrics(self, measurement_start_time=None, measurement_end_time=None, print_summary=False):
@@ -49,15 +53,15 @@ class EnvAnalyser:
     def _print_general_summary(self):
         print('\n ~* General Information *~')
         print('Simulation name: \'{}\''.format(self.env.sim_name))
-        print('Measurement duration: {} (Start time : {} | End time: {})'.format(self.measurement_duration, self.measurement_start_time, self.measurement_end_time))
+        print('Measurement duration: {} (Start time : {} {} | End time: {} {})'.format(self.measurement_duration, self.measurement_start_time, self.time_units, self.measurement_end_time, self.time_units))
         print('Total number of generated demands (jobs or flows) passed to env: {}'.format(self.env.demand.num_demands)) 
         print('Total number of these demands which arrived during measurement period: {}'.format(len(self.arrived_flow_dicts)))
-        print('Total info arrived: {} info unit demands arrived'.format(self.total_info_arrived))
-        print('Total info transported: {} info unit demands transported'.format(self.total_info_transported))
-        print('Load (abs): {} info unit demands arrived per unit time (from first to last flow arriving)'.format(self.load_abs))
-        print('Load (frac): {} fraction of network capacity requested (from first to last flow arriving)'.format(self.load_frac))
-        print('Throughput (abs): {} info units transported per unit time'.format(self.throughput_abs))
-        print('Throughput (frac): {} fraction of arrived info successfully transported'.format(self.throughput_frac))
+        print('Total info arrived: {} {}'.format(self.total_info_arrived, self.info_units))
+        print('Total info transported: {} {}'.format(self.total_info_transported, self.info_units))
+        print('Load (abs): {} {}/{}'.format(self.load_abs, self.info_units, self.time_units))
+        print('Load (frac): {} fraction of network capacity requested.'.format(self.load_frac))
+        print('Throughput (abs): {} {}/{}'.format(self.throughput_abs, self.info_units, self.time_units))
+        print('Throughput (frac): {} fraction of arrived info successfully transported.'.format(self.throughput_frac))
         print('T-Score: {}'.format(self.t_score))
 
     def _compute_general_summary(self):
@@ -96,14 +100,14 @@ class EnvAnalyser:
         print('\n ~* Flow Information *~')
         print('Total number of generated flows passed to env (src != dst, dependency_type == \'data_dep\'): {}'.format(self.env.demand.num_flows))
         print('Total number of these flows which arrived during measurement period: {}'.format(len(self.arrived_flow_dicts)))
-        print('Time first flow arrived: {}'.format(min(self.flow_times_arrived)))
-        print('Time last flow arrived: {}'.format(max(self.flow_times_arrived)))
+        print('Time first flow arrived: {} {}'.format(min(self.flow_times_arrived), self.time_units))
+        print('Time last flow arrived: {} {}'.format(max(self.flow_times_arrived), self.time_units))
         print('Total number of flows that were completed: {}'.format(len(self.completed_flow_dicts)))
         print('Total number of flows that were left in queue at end of measurement period: {}'.format(len(self.queued_flow_dicts)))
         print('Total number of flows that were dropped (dropped + left in queue at end of measurement period): {}'.format(len(self.dropped_flow_dicts)))
         print('Fraction of arrived flows dropped: {}'.format(self.dropped_flow_frac))
-        print('Mean flow completion time (FCT): {}'.format(self.mean_fct))
-        print('99th percentile FCT: {}'.format(self.nn_fct))
+        print('Mean flow completion time (FCT): {} {}'.format(self.mean_fct, self.time_units))
+        print('99th percentile FCT: {} {}'.format(self.nn_fct, self.time_units))
 
     def _compute_t_score(self):
         '''Returns TrafPy overall T-score.'''

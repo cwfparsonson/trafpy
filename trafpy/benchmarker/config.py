@@ -90,7 +90,7 @@ BENCHMARKS = ['university']
 
 # NETS = {'university': gen_fat_tree(k=4, L=2, n=4, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 # NETS = {'university': gen_fat_tree(k=4, L=2, n=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
-NETS = {'university': gen_fat_tree(k=6, L=2, n=10, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
+NETS = {'university': gen_fat_tree(k=4, L=2, n=4, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 
 # define network capacity for each benchmark
 NETWORK_CAPACITIES = {'university': NETS['university'].graph['max_nw_capacity']}

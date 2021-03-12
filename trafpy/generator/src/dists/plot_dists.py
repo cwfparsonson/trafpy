@@ -30,6 +30,8 @@ def plot_node_dist(node_dist,
                    cbar_label='Fraction',
                    chord_edge_width_range=[1, 25],
                    chord_edge_display_threshold=0.3,
+                   font_size=10,
+                   figsize=(4,4),
                    show_fig=False):
     '''Plots network node demand distribution as (1) 2d matrix and (2) chord diagram.
 
@@ -68,7 +70,8 @@ def plot_node_dist(node_dist,
     figs = []
 
     # 1. PLOT NODE DIST
-    fig = plt.matshow(node_dist, cmap='YlOrBr')
+    matfig = plt.figure(figsize=figsize)
+    fig = plt.matshow(node_dist, cmap='YlOrBr', fignum=matfig.number)
     plt.style.use('default')
     cbar = plt.colorbar()
     if add_labels == True:
@@ -81,8 +84,8 @@ def plot_node_dist(node_dist,
                      bbox = dict(boxstyle='round', 
                      facecolor='white', 
                      edgecolor='0.3'))
-    plt.xlabel('Destination (Node #)')
-    plt.ylabel('Source (Node #)')
+    plt.xlabel('Destination (Node #)', fontsize=font_size)
+    plt.ylabel('Source (Node #)', fontsize=font_size)
     cbar.ax.set_ylabel(cbar_label, rotation=270, x=0.5)
     if add_ticks:
         plt.xticks([node_to_index_dict[node] for node in eps])
@@ -130,18 +133,18 @@ def plot_node_dist(node_dist,
     for v in graph2:
         graph2.nodes[v]['load'] = node_to_load[v]
 
-    fig2 = plt.figure()
     plt.set_cmap('YlOrBr')
     plt.style.use('default')
     chord_diagram = CircosPlot(graph2, 
                                node_labels=True,
                                edge_width='weight',
+                               figsize=figsize,
                                # edge_color='weight',
                                # node_size='load',
                                node_grouping='load',
                                node_color='load')
     chord_diagram.draw()
-    figs.append(fig2)
+    figs.append(chord_diagram)
     
     if show_fig:
         plt.show()
@@ -163,7 +166,7 @@ def plot_dict_scatter(_dict,
                       ylabel='Probability',
                       xlim=None,
                       marker_size=30,
-                      font_size=20,
+                      font_size=10,
                       plot_style='default',
                       gridlines=True,
                       figsize=(6.4, 4.8),
@@ -215,7 +218,7 @@ def plot_val_dist(rand_vars,
                   plot_cdf=True,
                   plot_horizontally=True,
                   fig_scale=1,
-                  font_size=20,
+                  font_size=10,
                   gridlines=True,
                   figsize=(12.4, 2),
                   aspect='auto',
@@ -403,20 +406,171 @@ def plot_val_bar(x_values,
     return fig
 
 
+
+def plot_radar(plot_dict,
+               title=None,
+               n_ordinate_levels=5,
+               fill=True,
+               figsize=(6.4, 4.8),
+               font_size=10,
+               linewidth=1,
+               fill_alpha=0.1,
+               line_alpha=1,
+               linestyle='-',
+               plot_legend=True,
+               legend_ncol=1,
+               plot_style='default',
+               show_fig=True):
+    '''Plots radar plot.
+
+    Required structure of plot dict (keys in <> can be user-defined, otherwise 
+    must use exact key):
+
+    plot_dict = {'<rand_var_name1>': {'range': [0, 1], 'classes': {'<class1>': 0.2, '<class2>': 0.7}},
+                 '<rand_var_name2>': {'range': [10, 100], 'classes': {'<class1>': 20, '<class2>': 90}}}
+
+    e.g.2:
+
+    plot_dict = {'rand_var1': {'range': [0, 1], 'classes': {'class1': 0.2,
+                                                         'class2': 0.4}},
+                 'rand_var2': {'range': [0, 100], 'classes': {'class1': 60,
+                                                               'class2': 20}},
+                 'rand_var3': {'range': [1, 5], 'classes': {'class1': 2,
+                                                             'class2': 5}},
+                 'rand_var4': {'range': [0, 10], 'classes': {'class1': 7,
+                                                              'class2': 3}},
+                 'rand_var5': {'range': [10, 0], 'classes': {'class1': 1,
+                                                              'class2': 8}}
+                }
+
+    To flip axes values (i.e. have lower values going to edge of radar), enter
+    reversed range array (e.g. 'range': [100, 10] instead of 'range': [10, 100])
+
+    Args:
+        n_ordinate_levels (int): Number of gridlines to plot for the radar plot.
+
+    '''
+    fig = plt.figure(figsize=figsize)
+    plt.style.use(plot_style)
+
+    rand_var_names = list(plot_dict.keys())
+
+    classes = []
+    for rand_var in rand_var_names:
+        for _class in plot_dict[rand_var]['classes'].keys():
+            classes.append(_class)
+    classes = np.sort(np.unique(classes))
+    class_colours = iter(sns.color_palette(palette='hls', n_colors=len(classes), desat=None))
+
+    ranges = [plot_dict[rand_var_name]['range'] for rand_var_name in rand_var_names]
+
+    angles = np.arange(0, 360, 360./len(rand_var_names))
+    axes = [fig.add_axes([0.1, 0.1, 0.9, 0.9], polar=True, label='axes{}'.format(rand_var_name)) for rand_var_name in range(len(rand_var_names))]
+    l, text = axes[0].set_thetagrids(angles, labels=rand_var_names, fontsize=font_size)
+    for txt, angle in zip(text, angles):
+        txt.set_rotation(angle-90)
+
+    for ax in axes[1:]:
+        ax.patch.set_visible(False)
+        ax.grid('off')
+        ax.xaxis.set_visible(False)
+
+    # plot radar gridlines
+    for i, ax in enumerate(axes):
+        grid = np.linspace(*ranges[i], num=n_ordinate_levels)
+        gridlabel = ['{}'.format(round(x,2)) for x in grid]
+        gridlabel[0] = '' # clean up origin
+        ax.set_rgrids(grid, labels=gridlabel, angle=angles[i])
+        ax.set_ylim(*ranges[i])
+        ax.yaxis.grid(linestyle='--', color='gray', alpha=0.075, linewidth=1)
+
+        # label_position = ax.get_rlabel_position()
+        # print('label_position: {}'.format(label_position))
+        # if i == 0:
+            # ax.set_rlabel_position(-22.5)
+
+
+        # remove outer edge
+        ax.spines["polar"].set_visible(False)
+
+        # make gridlines polygon
+        gridlines = ax.yaxis.get_gridlines()
+        for gl in gridlines:
+            gl.get_path()._interpolation_steps = len(rand_var_names)
+
+
+    angle = np.deg2rad(np.r_[angles, angles[0]])
+    ax = axes[0]
+
+    for _class in classes:
+        colour = next(class_colours)
+        data = [plot_dict[rand_var]['classes'][_class] for rand_var in rand_var_names]
+        sdata = _scale_data(data, ranges)
+        ax.plot(angle, 
+                np.r_[sdata, sdata[0]], 
+                color=colour,
+                label=str(_class),
+                alpha=line_alpha,
+                linestyle=linestyle,
+                linewidth=linewidth)
+        if fill:
+            ax.fill(angle, 
+                    np.r_[sdata, sdata[0]], 
+                    color=colour,
+                    alpha=fill_alpha,
+                    linestyle=linestyle,
+                    linewidth=linewidth)
+
+    if plot_legend:
+        ax.legend(ncol=legend_ncol)
+    if title is not None:
+        ax.set_title(title, va='bottom')
+
+    if show_fig:
+        plt.show()
+
+    return fig
+
+
+def _invert(x, limits):
+    """inverts a value x on a scale from
+    limits[0] to limits[1]"""
+    return limits[1] - (x - limits[0])
+
+def _scale_data(data, ranges):
+    """scales data[1:] to ranges[0],
+    inverts if the scale is reversed"""
+    for d, (y1, y2) in zip(data[1:], ranges[1:]):
+        assert (y1 <= d <= y2) or (y2 <= d <= y1)
+    x1, x2 = ranges[0]
+    d = data[0]
+    # if x1 > x2:
+        # d = _invert(d, (x1, x2))
+        # x1, x2 = x2, x1
+    sdata = [d]
+    for d, (y1, y2) in zip(data[1:], ranges[1:]):
+        if y1 > y2:
+            d = _invert(d, (y1, y2))
+            y1, y2 = y2, y1
+        sdata.append((d-y1) / (y2-y1) 
+                     * (x2 - x1) + x1)
+    return sdata
+
+
 def plot_val_line(plot_dict={},
-                     xlabel='Random Variable',
-                     ylabel='Random Variable Value',
-                     ylim=None,
-                     linewidth=1,
-                     alpha=1,
-                     vertical_lines=[],
-                     gridlines=True,
-                     aspect='auto',
-                     plot_style='default',
-                     figsize=(6.4, 4.8),
-                     plot_legend=True,
-                     legend_ncol=1,
-                     show_fig=False):
+                 xlabel='Random Variable',
+                 ylabel='Random Variable Value',
+                 ylim=None,
+                 linewidth=1,
+                 alpha=1,
+                 vertical_lines=[],
+                 gridlines=True,
+                 aspect='auto',
+                 plot_style='default',
+                 figsize=(6.4, 4.8),
+                 plot_legend=True,
+                 legend_ncol=1,
+                 show_fig=False):
     '''Plots line plot.
 
     plot_dict= {'class_1': {'x_values': [0.1, 0.2, 0.3], 'y_values': [20, 40, 80]},
@@ -449,15 +603,18 @@ def plot_val_line(plot_dict={},
     if show_fig:
         plt.show()
     
-
     return fig
+
+
 
 def plot_val_scatter(plot_dict={},
                      xlabel='Random Variable',
                      ylabel='Random Variable Value',
                      alpha=1,
-                     marker_size=30,
+                     marker_size=40,
                      marker_style='.',
+                     plot_line=False,
+                     linewidth=1,
                      logscale=False,
                      gridlines=True,
                      figsize=(6.4, 4.8),
@@ -482,7 +639,12 @@ def plot_val_scatter(plot_dict={},
 
     class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
     for _class in sorted(plot_dict.keys()):
-        plt.scatter(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], c=next(class_colours), s=marker_size, alpha=alpha, marker=marker_style, label=str(_class))
+        colour = next(class_colours)
+        # sort in order of x-values
+        sorted_indices = np.argsort(plot_dict[_class]['x_values'])
+        plt.scatter(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], c=colour, s=marker_size, alpha=alpha, marker=marker_style, label=str(_class))
+        if plot_line:
+            plt.plot(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], linewidth=linewidth, c=colour, alpha=alpha)
 
     if logscale:
         ax = plt.gca()
@@ -547,6 +709,9 @@ def plot_val_cdf(plot_dict={},
                  logscale=False,
                  plot_points=True,
                  complementary_cdf=False,
+                 marker_size=40,
+                 marker_style='.',
+                 linewidth=1,
                  gridlines=True,
                  plot_style='default',
                  figsize=(6.4, 4.8),
@@ -573,13 +738,13 @@ def plot_val_cdf(plot_dict={},
         colour = next(class_colours)
         if complementary_cdf:
             ylabel = 'Complementary CDF'
-            plt.plot(ecdf.x, 1-ecdf.y, c=colour, label=str(_class))
+            plt.plot(ecdf.x, 1-ecdf.y, linewidth=linewidth, c=colour, label=str(_class))
             if plot_points: 
-                plt.scatter(ecdf.x, 1-ecdf.y, c=colour)
+                plt.scatter(ecdf.x, 1-ecdf.y, marker=marker_style, s=marker_size, c=colour)
         else:
-            plt.plot(ecdf.x, ecdf.y, c=colour, label=str(_class))
+            plt.plot(ecdf.x, ecdf.y, c=colour, linewidth=linewidth, label=str(_class))
             if plot_points:
-                plt.scatter(ecdf.x, ecdf.y, c=colour)
+                plt.scatter(ecdf.x, ecdf.y, marker=marker_style, s=marker_size, c=colour)
     plt.ylim(top=1, bottom=0)
 
     plt.xlabel(xlabel)
