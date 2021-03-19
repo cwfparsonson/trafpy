@@ -11,7 +11,7 @@ def gen_arbitrary_network(ep_label=None,
                           server_to_rack_channel_capacity=12500, 
                           num_channels=1, 
                           num_eps=10,
-                          bidirectional_links=False):
+                          bidirectional_links=True):
     '''Generates an arbitrary network with num_eps nodes labelled as ep_label.
 
     Note that no edges are formed in this network; it is purely for ep name 

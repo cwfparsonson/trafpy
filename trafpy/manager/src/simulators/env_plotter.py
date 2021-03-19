@@ -2,6 +2,7 @@ import inspect
 from trafpy.generator.src.dists import plot_dists
 import matplotlib.pyplot as plt
 from collections import defaultdict # use for initialising arbitrary length nested dict
+import copy
 import json
 from statistics import mean
 import math
@@ -36,7 +37,7 @@ def get_summary_dict(analysers, headers, time_units='', info_units=''):
         summary_dict['Mean FCT ({})'.format(time_units)].append(round(analyser.mean_fct, 1))
         summary_dict['p99 FCT ({})'.format(time_units)].append(round(analyser.nn_fct, 1))
         summary_dict['Max FCT ({})'.format(time_units)].append(round(analyser.max_fct, 1))
-        summary_dict['Throughput Rate ({}/{})'.format(info_units, time_units)].append(round(analyser.throughput_abs, 1))
+        summary_dict['Throughput Frac'].append(sigfig.round(analyser.throughput_frac, sigfigs=6))
         summary_dict['Frac Flows Dropped'].append(sigfig.round(analyser.dropped_flow_frac, sigfigs=3))
         summary_dict['Frac Info Dropped'].append(sigfig.round(analyser.dropped_info_frac, sigfigs=3))
     return summary_dict
@@ -73,7 +74,7 @@ class EnvsPlotter:
         if 'figsize' not in kwargs:
             kwargs['figsize'] = (12.8, 9.6)
         if 'fill_alpha' not in kwargs:
-            kwargs['fill_alpha'] = 0.1
+            kwargs['fill_alpha'] = 0.05
 
         headers = ['Load', 
                    'Subject', 
@@ -81,7 +82,7 @@ class EnvsPlotter:
                    'Mean FCT ({})'.format(self.time_units), 
                    'p99 FCT ({})'.format(self.time_units), 
                    'Max FCT ({})'.format(self.time_units), 
-                   'Throughput Rate ({}/{})'.format(self.info_units, self.time_units), 
+                   'Throughput Frac', 
                    'Frac Flows Dropped', 
                    'Frac Info Dropped']
         _summary_dict = get_summary_dict(analysers, headers, time_units=self.time_units, info_units=self.info_units)
@@ -102,7 +103,7 @@ class EnvsPlotter:
         # determine if higher is better for each header
         is_higher_better = {}
         for header in headers:
-            if header == 'T-Score' or header == 'Throughput Rate ({}/{})'.format(self.info_units, self.time_units):
+            if header == 'T-Score' or header == 'Throughput Frac':
                 is_higher_better[header] = True
             else:
                 is_higher_better[header] = False
@@ -123,12 +124,24 @@ class EnvsPlotter:
                     classes = summary_dict['Subject'][load_t_score_indices]
                     classes_rand_vars = summary_dict[header][load_t_score_indices]
                     # get min max range
-                    if is_higher_better[header]:
-                        # want higher (better) values on outer radar edge -> don't flip range
-                        _range = [0.9*min(classes_rand_vars), 1.1*max(classes_rand_vars)]
-                    else:
+
+                    min_val, max_val = min(classes_rand_vars), max(classes_rand_vars)
+                    diff = max(max_val - min_val, 1e-9)
+                    min_val -= (0.1*diff)
+                    max_val += (0.1*diff)
+                    _range = [min_val, max_val]
+                    if not is_higher_better[header]:
                         # want lower (better) values on outer radar edge -> flip range
-                        _range = [1.1*max(classes_rand_vars), 0.9*min(classes_rand_vars)]
+                        _range = _range[::-1]
+
+                    # if is_higher_better[header]:
+                        # # want higher (better) values on outer radar edge -> don't flip range
+                        # _range = [0.9*min(classes_rand_vars), 1.1*max(classes_rand_vars)]
+                    # else:
+                        # # want lower (better) values on outer radar edge -> flip range
+                        # _range = [1.1*max(classes_rand_vars), 0.9*min(classes_rand_vars)]
+
+
                     plot_dicts[load_idx][header]['range'] = _range
                     for idx, _class in enumerate(classes):
                         plot_dicts[load_idx][header]['classes'][_class] = classes_rand_vars[idx]
@@ -198,10 +211,14 @@ class EnvsPlotter:
             kwargs['gridlines'] = True
         if 'aspect' not in kwargs:
             kwargs['aspect'] = 'auto'
-        if 'figsize' not in kwargs:
-            kwargs['figsize'] = (6.4, 4.8)
+        if 'cdf_figsize' not in kwargs:
+            kwargs['cdf_figsize'] = (6.4, 4.8)
+        if 'scatter_figsize' not in kwargs:
+            kwargs['scatter_figsize'] = (6.4, 4.8)
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
+        if 'logscale' not in kwargs:
+            kwargs['logscale'] = False
 
         classes = self._group_analyser_classes(*analysers)
         plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
@@ -219,7 +236,8 @@ class EnvsPlotter:
                                            plot_line=True,
                                            aspect=kwargs['aspect'],
                                            gridlines=kwargs['gridlines'],
-                                           figsize=kwargs['figsize'],
+                                           figsize=kwargs['scatter_figsize'],
+                                           ylogscale=kwargs['logscale'],
                                            legend_ncol=kwargs['legend_ncol'],
                                            show_fig=False)
 
@@ -230,21 +248,43 @@ class EnvsPlotter:
                                        complementary_cdf=True, 
                                        aspect=kwargs['aspect'],
                                        gridlines=kwargs['gridlines'],
-                                       figsize=kwargs['figsize'],
+                                       logscale=kwargs['logscale'],
+                                       figsize=kwargs['cdf_figsize'],
                                        legend_ncol=kwargs['legend_ncol'],
                                        show_fig=False)
 
-        return [fig1, fig2]
+        # % change
+        for key in plot_dict.keys():
+            init_idx = np.argmin(plot_dict[key]['x_values'])
+            init_var = plot_dict[key]['y_values'][init_idx]
+            plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+        fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='\u0394F Mean FCT', 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           figsize=kwargs['scatter_figsize'], 
+                                           ylogscale=kwargs['logscale'],
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=False)
+
+
+        return [fig1, fig2, fig3]
 
     def plot_99th_percentile_fct_vs_load(self, *analysers, **kwargs):
         if 'gridlines' not in kwargs:
             kwargs['gridlines'] = True
         if 'aspect' not in kwargs:
             kwargs['aspect'] = 'auto'
-        if 'figsize' not in kwargs:
-            kwargs['figsize'] = (6.4, 4.8)
+        if 'cdf_figsize' not in kwargs:
+            kwargs['cdf_figsize'] = (6.4, 4.8)
+        if 'scatter_figsize' not in kwargs:
+            kwargs['scatter_figsize'] = (6.4, 4.8)
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
+        if 'logscale' not in kwargs:
+            kwargs['logscale'] = False
 
         classes = self._group_analyser_classes(*analysers)
         plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
@@ -261,7 +301,8 @@ class EnvsPlotter:
                                            ylabel='p99 FCT ({})'.format(self.time_units), 
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
-                                           figsize=kwargs['figsize'], 
+                                           figsize=kwargs['scatter_figsize'], 
+                                           ylogscale=kwargs['logscale'],
                                            plot_line=True,
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=False)
@@ -272,22 +313,42 @@ class EnvsPlotter:
                                        ylabel='Complementary CDF', 
                                        gridlines=kwargs['gridlines'], 
                                        aspect=kwargs['aspect'], 
-                                       figsize=kwargs['figsize'], 
+                                       figsize=kwargs['cdf_figsize'], 
+                                       logscale=kwargs['logscale'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        complementary_cdf=True, 
                                        show_fig=False)
 
-        return [fig1, fig2]
+        # % change
+        for key in plot_dict.keys():
+            init_idx = np.argmin(plot_dict[key]['x_values'])
+            init_var = plot_dict[key]['y_values'][init_idx]
+            plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+        fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='\u0394F p99 FCT', 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           figsize=kwargs['scatter_figsize'], 
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=False)
+
+        return [fig1, fig2, fig3]
 
     def plot_max_fct_vs_load(self, *analysers, **kwargs):
         if 'gridlines' not in kwargs:
             kwargs['gridlines'] = True
         if 'aspect' not in kwargs:
             kwargs['aspect'] = 'auto'
-        if 'figsize' not in kwargs:
-            kwargs['figsize'] = (6.4, 4.8)
+        if 'cdf_figsize' not in kwargs:
+            kwargs['cdf_figsize'] = (6.4, 4.8)
+        if 'scatter_figsize' not in kwargs:
+            kwargs['scatter_figsize'] = (6.4, 4.8)
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
+        if 'logscale' not in kwargs:
+            kwargs['logscale'] = False
 
         classes = self._group_analyser_classes(*analysers)
         plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
@@ -304,8 +365,9 @@ class EnvsPlotter:
                                            ylabel='Max FCT ({})'.format(self.time_units), 
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
+                                           ylogscale=kwargs['logscale'],
                                            plot_line=True,
-                                           figsize=kwargs['figsize'], 
+                                           figsize=kwargs['scatter_figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=False)
 
@@ -315,10 +377,26 @@ class EnvsPlotter:
                                        ylabel='Complementary CDF', 
                                        gridlines=kwargs['gridlines'], 
                                        aspect=kwargs['aspect'], 
-                                       figsize=kwargs['figsize'], 
+                                       figsize=kwargs['cdf_figsize'], 
+                                       logscale=kwargs['logscale'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        complementary_cdf=True, 
                                        show_fig=False)
+
+        # % change
+        for key in plot_dict.keys():
+            init_idx = np.argmin(plot_dict[key]['x_values'])
+            init_var = plot_dict[key]['y_values'][init_idx]
+            plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+        fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='\u0394F Max FCT', 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           figsize=kwargs['scatter_figsize'], 
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=False)
 
         return [fig1, fig2]
 
@@ -373,6 +451,8 @@ class EnvsPlotter:
             kwargs['aspect'] = 'auto'
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
+        if 'logscale' not in kwargs:
+            kwargs['logscale'] = False
 
         classes = self._group_analyser_classes(*analysers)
         plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
@@ -390,6 +470,7 @@ class EnvsPlotter:
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
+                                           ylogscale=kwargs['logscale'],
                                            figsize=kwargs['scatter_figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=False)
@@ -400,12 +481,29 @@ class EnvsPlotter:
                                        ylabel='Complementary CDF', 
                                        complementary_cdf=True, 
                                        gridlines=kwargs['gridlines'], 
+                                       logscale=kwargs['logscale'],
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['cdf_figsize'], 
                                        legend_ncol=kwargs['legend_ncol'], 
                                        show_fig=False)
 
-        return [fig1, fig2]
+        # % change
+        for key in plot_dict.keys():
+            init_idx = np.argmin(plot_dict[key]['x_values'])
+            init_var = plot_dict[key]['y_values'][init_idx]
+            plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+        fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='\u0394F Flows Dropped', 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           ylogscale=kwargs['logscale'],
+                                           figsize=kwargs['scatter_figsize'], 
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=False)
+
+        return [fig1, fig2, fig3]
 
     def plot_fraction_of_arrived_info_dropped_vs_load(self, *analysers, **kwargs):
         if 'cdf_figsize' not in kwargs:
@@ -418,6 +516,8 @@ class EnvsPlotter:
             kwargs['aspect'] = 'auto'
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
+        if 'logscale' not in kwargs:
+            kwargs['logscale'] = False
 
         classes = self._group_analyser_classes(*analysers)
         plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
@@ -435,6 +535,7 @@ class EnvsPlotter:
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
+                                           ylogscale=kwargs['logscale'],
                                            figsize=kwargs['scatter_figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=False)
@@ -446,11 +547,28 @@ class EnvsPlotter:
                                        gridlines=kwargs['gridlines'], 
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['cdf_figsize'], 
+                                       logscale=kwargs['logscale'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        complementary_cdf=True, 
                                        show_fig=False)
 
-        return [fig1, fig2]
+        # % change
+        for key in plot_dict.keys():
+            init_idx = np.argmin(plot_dict[key]['x_values'])
+            init_var = plot_dict[key]['y_values'][init_idx]
+            plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+        fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='\u0394F Info Dropped', 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           ylogscale=kwargs['logscale'],
+                                           plot_line=True,
+                                           figsize=kwargs['scatter_figsize'], 
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=False)
+
+        return [fig1, fig2, fig3]
 
 
     def plot_src_dst_queue_evolution_for_different_loads(self, src, dst, length_type='queue_lengths_num_flows', *analysers):
@@ -494,7 +612,71 @@ class EnvsPlotter:
         
         return figs
 
-    def plot_throughput_vs_load(self, *analysers, **kwargs):
+    def plot_throughput_frac_vs_load(self, *analysers, **kwargs):
+        if 'plot_bar_charts' not in kwargs:
+            kwargs['plot_bar_charts'] = True
+        if 'gridlines' not in kwargs:
+            kwargs['gridlines'] = True
+        if 'aspect' not in kwargs:
+            kwargs['aspect'] = 'auto'
+        if 'figsize' not in kwargs:
+            kwargs['figsize'] = (6.4, 4.8)
+        if 'legend_ncol' not in kwargs:
+            kwargs['legend_ncol'] = 1
+
+        classes = self._group_analyser_classes(*analysers)
+
+        # init plot dict
+        nested_dict = lambda: defaultdict(nested_dict)
+        plot_dict = nested_dict()
+        plot_dict2 = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
+        load_to_meas_time = {} # collect measurement times for verical line plotting
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            plot_dict[analyser.load_frac]['x_values'] = []
+            plot_dict[analyser.load_frac]['y_values'] = []
+
+
+        for analyser in analysers:
+            plot_dict[analyser.load_frac]['x_values'].append(analyser.subject_class_name)
+            plot_dict[analyser.load_frac]['y_values'].append(analyser.throughput_frac)
+
+            plot_dict2[analyser.subject_class_name]['x_values'].append(analyser.load_frac)
+            plot_dict2[analyser.subject_class_name]['y_values'].append(analyser.throughput_frac)
+            plot_dict2[analyser.subject_class_name]['rand_vars'].append(analyser.throughput_frac)
+
+        # individual bar chars
+        figs = []
+        if kwargs['plot_bar_charts']:
+            for load in plot_dict.keys():
+                figs.append(plot_dists.plot_val_bar(x_values=plot_dict[load]['x_values'], y_values=plot_dict[load]['y_values'], xlabel='Test Subject Class', ylabel='Load {} Throughput Rate'.format(str(round(load,2)), gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], show_fig=False)))
+
+        # scatter
+        fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict2, 
+                                           xlabel='Load', 
+                                           ylabel='Throughput Fraction',
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           figsize=kwargs['figsize'], 
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=False)
+
+        # complementary cdf
+        fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict2, 
+                xlabel='Throughput Fraction',
+                                       ylabel='Complementary CDF', 
+                                       complementary_cdf=True, 
+                                       gridlines=kwargs['gridlines'], 
+                                       aspect=kwargs['aspect'], 
+                                       figsize=kwargs['figsize'], 
+                                       legend_ncol=kwargs['legend_ncol'], 
+                                       show_fig=False)
+
+        return [figs, fig1, fig2]
+
+
+    def plot_throughput_rate_vs_load(self, *analysers, **kwargs):
         if 'plot_bar_charts' not in kwargs:
             kwargs['plot_bar_charts'] = True
         if 'gridlines' not in kwargs:
@@ -555,7 +737,26 @@ class EnvsPlotter:
                                        legend_ncol=kwargs['legend_ncol'], 
                                        show_fig=False)
 
-        return [figs, fig1, fig2]
+        
+        # % change
+        plot_dict3 = copy.deepcopy(plot_dict2)
+        for key in plot_dict3.keys():
+            init_idx = np.argmin(plot_dict3[key]['x_values'])
+            init_var = plot_dict3[key]['y_values'][init_idx]
+            plot_dict3[key]['y_values'] = [plot_dict3[key]['y_values'][i]/init_var for i in range(len(plot_dict3[key]['y_values']))]
+        fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict3, 
+                                           xlabel='Load', 
+                                           ylabel='\u0394F Throughput Rate', 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           figsize=kwargs['figsize'], 
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=False)
+
+
+
+        return [figs, fig1, fig2, fig3]
 
 
     # def plot_radars_for_different_loads(self, *analysers, **kwargs):
@@ -684,6 +885,7 @@ class EnvsPlotter:
                                                    ylabel='{} Load {} Link Util'.format(subject_class, str(round(load,2))), 
                                                    ylim=[0,1], 
                                                    linewidth=0.4, 
+                                                   title='{}-{}'.format(json.loads(link_type)[0], json.loads(link_type)[1]),
                                                    alpha=kwargs['alpha'], 
                                                    vertical_lines=load_to_meas_time[load], 
                                                    gridlines=kwargs['gridlines'], 
@@ -762,6 +964,7 @@ class EnvsPlotter:
                                                    ylim=[0,None], 
                                                    linewidth=0.4, 
                                                    alpha=1, 
+                                                   title='{}-{}'.format(json.loads(link_type)[0], json.loads(link_type)[1]),
                                                    vertical_lines=load_to_meas_time[load], 
                                                    gridlines=kwargs['gridlines'], 
                                                    aspect=kwargs['aspect'], 

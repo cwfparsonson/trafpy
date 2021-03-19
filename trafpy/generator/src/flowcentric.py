@@ -28,6 +28,7 @@ class FlowGenerator:
                  min_last_demand_arrival_time=None,
                  auto_node_dist_correction=False,
                  check_dont_exceed_one_ep_load=True,
+                 bidirectional_links=True,
                  print_data=False):
         '''
         Args:
@@ -59,7 +60,14 @@ class FlowGenerator:
                 will raise an Exception. If False, no exception will be raised, but run
                 risk of exceeding 1.0 end point load, which for some users might be
                 detrimental to their system.
-
+            bidirectional_links (bool): If True, assume each network link is split
+                into 2 ports; src port and dst port (i.e. the link is bidirectional).
+                If False, treat network links as separate uni-directional links.
+                In uni-directional case, will assume ep_link_capacity of network
+                is for src OR dst link and pack by doubling ep_link_capacity and packing
+                links with src-dst pairs. In bidirectional case,
+                assume ep_link_capacity is for both src and dst ports, therefore no need
+                to double and can pack links with src-dst pairs as they are.
 
         '''
         self.started = time.time()
@@ -74,6 +82,7 @@ class FlowGenerator:
         self.auto_node_dist_correction = auto_node_dist_correction
         self.jensen_shannon_distance_threshold = jensen_shannon_distance_threshold
         self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
+        self.bidirectional_links = bidirectional_links
         self.print_data = print_data
 
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
@@ -129,7 +138,8 @@ class FlowGenerator:
                             interarrival_times,
                             network_load_config=self.network_load_config,
                             auto_node_dist_correction=self.auto_node_dist_correction,
-                            check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load)
+                            check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load,
+                            bidirectional_links=self.bidirectional_links)
         packed_flows = packer.pack_the_flows()
 
         # compile packed flows into demand_data dict ordered in terms of arrival time
@@ -154,6 +164,15 @@ class FlowGenerator:
 
             # while max(demand_data['event_time']) < self.min_last_demand_arrival_time:
                 # demand_data = duplicate_demands_in_demand_data_dict(demand_data, method='all_eps', eps=self.eps)
+
+        # convert to numpy array to save memory space
+        # demand_data['flow_id'] = np.asarray(demand_data['flow_id'])
+        # demand_data['dn'] = np.asarray(demand_data['dn'])
+        # demand_data['sn'] = np.asarray(demand_data['sn'])
+        # demand_data['flow_size'] = np.asarray(demand_data['flow_size'], dtype=np.int64)
+        # demand_data['event_time'] = np.asarray(demand_data['event_time'], dtype=np.float32)
+        # demand_data['establish'] = np.asarray(demand_data['establish'], dtype=np.int8)
+        # demand_data['index'] = np.asarray(demand_data['index'], dtype=np.int32)
 
         return demand_data
 
@@ -221,7 +240,20 @@ class FlowPacker:
                  network_load_config,
                  auto_node_dist_correction=False,
                  check_dont_exceed_one_ep_load=True,
+                 bidirectional_links=True,
                  print_data=False):
+        '''
+        Args:
+            bidirectional_links (bool): If True, assume each network link is split
+                into 2 ports; src port and dst port (i.e. the link is bidirectional).
+                If False, treat network links as separate uni-directional links.
+                In uni-directional case, will assume ep_link_capacity of network
+                is for src OR dst link and pack by doubling ep_link_capacity and packing
+                links with src-dst pairs. In bidirectional case,
+                assume ep_link_capacity is for both src and dst ports, therefore no need
+                to double and can pack links with src-dst pairs as they are.
+
+        '''
         self.generator = generator
         self.eps = eps
         self.node_dist = copy.deepcopy(node_dist)
@@ -231,6 +263,7 @@ class FlowPacker:
         self.network_load_config = network_load_config
         self.auto_node_dist_correction = auto_node_dist_correction
         self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
+        self.bidirectional_links = bidirectional_links
         self.print_data = print_data
         # self.print_data = True # DEBUG
 
@@ -264,11 +297,6 @@ class FlowPacker:
         self.pair_prob_dict = node_dists.get_pair_prob_dict_of_node_dist_matrix(self.node_dist, self.eps, all_combinations=True) # N.B. These values sum to 0.5 -> need to allocate twice (src-dst and dst-src)
         self.pair_target_load_rate_dict = {pair: frac*self.load_rate for pair, frac in self.pair_prob_dict.items()}
 
-        if self.print_data:
-            print('pair prob dict sum: {}'.format(np.sum(list(self.pair_prob_dict.values()))))
-            print('pair prob dict:\n{}'.format(self.pair_prob_dict))
-            print('pair target load rate sum: {}'.format(np.sum(list(self.pair_target_load_rate_dict.values()))))
-            print('pair target load rate dict:\n{}'.format(self.pair_target_load_rate_dict))
 
 
         # # calc target load rate for each ep
@@ -284,9 +312,6 @@ class FlowPacker:
             # set to some number to prevent infinities
             self.duration = 1e6
         self.pair_target_total_info_dict = {pair: load_rate*self.duration for pair, load_rate in self.pair_target_load_rate_dict.items()}
-        if self.print_data:
-            print('pair target total info sum: {}'.format(np.sum(list(self.pair_target_total_info_dict.values()))))
-            print('pair target total info dict:\n{}'.format(self.pair_target_total_info_dict))
 
         # init current total info packed into each src-dst pair and current distance from target info
         self.pair_current_total_info_dict = {pair: 0 for pair in self.pair_prob_dict.keys()}
@@ -294,8 +319,22 @@ class FlowPacker:
 
         # calc max total info during simulation per end point and initialise end point total info tracker
         self.max_total_ep_info = self.network_load_config['ep_link_capacity'] * self.duration
+        if self.bidirectional_links:
+            # double total ep info so can pack src-dst pairs into links
+            self.max_total_ep_info *= 2
         self.ep_total_infos = {ep: 0 for ep in self.eps}
 
+        flow_sizes = [self.packed_flows[flow]['size'] for flow in self.packed_flows.keys()]
+        if self.print_data:
+            print('pair prob dict:\n{}'.format(self.pair_prob_dict))
+            print('pair target load rate dict:\n{}'.format(self.pair_target_load_rate_dict))
+            print('pair target total info dict:\n{}'.format(self.pair_target_total_info_dict))
+            print('duration: {}'.format(self.duration))
+            print('pair prob dict sum: {}'.format(np.sum(list(self.pair_prob_dict.values()))))
+            print('pair target load rate sum: {}'.format(np.sum(list(self.pair_target_load_rate_dict.values()))))
+            print('pair target total info sum: {}'.format(np.sum(list(self.pair_target_total_info_dict.values()))))
+            print('max total ep info: {}'.format(self.max_total_ep_info))
+            print('sum of all flow sizes: {}'.format(sum(flow_sizes)))
 
 
 
@@ -330,7 +369,7 @@ class FlowPacker:
                 if self.check_dont_exceed_one_ep_load:
                     # ensure wont exceed 1.0 end point load by allocating this flow to pair
                     if self.ep_total_infos[ep1] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[ep2] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
-                        # # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
+                        # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
                         pass
                     else:
                         chosen_pair = pair
@@ -342,7 +381,7 @@ class FlowPacker:
 
             if chosen_pair is None:
                 # could not find end point pair with enough capacity to take flow
-                raise Exception('Unable to find valid pair to assign flow {}: {} without exceeding ep total information load limit {} information units for this session. Decrease flow sizes to help with packing (recommended), and/or increase end point link capacity (recommended), and/or decrease your required target load to increase the time duration the flow packer has to pack flows into, and/or change your node dist to be less heavily skewed. Alternatively, try re-running dist and flow generator since may have chance of creating valid dists and flows which can be packed (also recommended). You can also disable this validity checker by setting check_dont_exceed_one_ep_load to False. Doing so will allow end point loads to go above 1.0 when packing the flows and disable this exception being raised. Current end point total information loads (information units):\n{}'.format(flow, self.packed_flows[flow], self.max_total_ep_info, self.ep_total_infos))
+                raise Exception('Unable to find valid pair to assign flow {}: {} without exceeding ep total information load limit {} information units for this session. Decrease flow sizes to help with packing (recommended), and/or increase end point link capacity (recommended), and/or decrease your required target load to increase the time duration the flow packer has to pack flows into, and/or change your node dist to be less heavily skewed. Alternatively, try re-running dist and flow generator since may have chance of creating valid dists and flows which can be packed (also recommended). You can also disable this validity checker by setting check_dont_exceed_one_ep_load to False. Doing so will allow end point loads to go above 1.0 when packing the flows and disable this exception being raised. Current end point total information loads (information units):\n{}\nPair info distances from targets:\n{}'.format(flow, self.packed_flows[flow], self.max_total_ep_info, self.ep_total_infos, self.pair_current_distance_from_target_info_dict))
             
             if self.print_data:
                 print('Assigning flow to pair {}'.format(chosen_pair))
@@ -618,11 +657,17 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
         first_event_time = min(demand_data['event_time'])
         duration = final_event_time - first_event_time
         for idx in range(len(demand_data['flow_id'])):
+            # demand_data['flow_id'] = np.append(demand_data['flow_id'], 'flow_{}'.format(int(idx+num_demands)))
+            # demand_data['sn'] = np.append(demand_data['sn'], demand_data['sn'][idx])
+            # demand_data['dn'] = np.append(demand_data['dn'], demand_data['dn'][idx])
+            # demand_data['flow_size'] = np.append(demand_data['flow_size'], demand_data['flow_size'][idx])
+            # demand_data['event_time'] = np.append(demand_data['event_time'], duration + demand_data['event_time'][idx])
+            # demand_data['establish'] = np.append(demand_data['establish'], demand_data['establish'][idx])
+            # demand_data['index'] = np.append(demand_data['index'], demand_data['index'][idx] + idx)
             demand_data['flow_id'].append('flow_{}'.format(int(idx+num_demands)))
             demand_data['sn'].append(demand_data['sn'][idx])
             demand_data['dn'].append(demand_data['dn'][idx])
             demand_data['flow_size'].append(demand_data['flow_size'][idx])
-            # demand_data['event_time'].append(final_event_time + demand_data['event_time'][idx])
             demand_data['event_time'].append(duration + demand_data['event_time'][idx])
             demand_data['establish'].append(demand_data['establish'][idx])
             demand_data['index'].append(demand_data['index'][idx] + idx)
@@ -633,59 +678,9 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
                     duplication_bar.next()
                     printed_progress[percent] = True
 
-    # elif method == 'per_ep':
-        # original_ep_info = group_demand_data_into_ep_info(copy_demand_data, eps=kwargs['eps'])
-        # # idx_iterator = iter(range(num_demands))
-        # duplicated_flows = {flow_id: False for flow_id in copy_demand_data['flow_id']}
-        # print('Flows before duplication: {}'.format(len(copy_demand_data['flow_id'])))
-        # idx_iterator = iter(range(len(copy_demand_data['flow_id'])))
-        # for ep in kwargs['eps']:
-            # # ep_info = group_demand_data_into_ep_info(copy_demand_data, eps=kwargs['eps'])
-            # num_demands = len(original_ep_info[ep]['flow_id'])
-
-            # first_event_time = min(original_ep_info[ep]['event_time'])
-            # final_event_time = max(original_ep_info[ep]['event_time'])
-            # duration = final_event_time - first_event_time
-
-            # # DEBUG 
-            # total_info = sum(original_ep_info[ep]['flow_size'])
-            # num_flows = len(original_ep_info[ep]['flow_id'])
-            # load = total_info / (final_event_time - first_event_time)
-            # print('Init {} duration: {} total info: {} | load: {} | flows: {}'.format(ep, duration, total_info, load, num_flows))
-
-            # for ep_flow_idx in range(len(original_ep_info[ep]['flow_id'])):
-                # flow_id = original_ep_info[ep]['flow_id'][ep_flow_idx]
-                # if not duplicated_flows[flow_id]:
-                    # duplicated_flows[flow_id] = True
-                    # # not yet duplicated this flow
-                    # # i = find_index_of_int_in_str(flow_id)
-                    # # idx = int(flow_id[i:])
-                    # idx = next(idx_iterator)
-
-                    # # copy_demand_data['flow_id'].append('flow_{}'.format(int(idx+num_demands)))
-                    # copy_demand_data['flow_id'].append('flow_{}'.format(int(idx+len(demand_data['flow_id']))))
-                    # copy_demand_data['sn'].append(original_ep_info[ep]['sn'][ep_flow_idx])
-                    # copy_demand_data['dn'].append(original_ep_info[ep]['dn'][ep_flow_idx])
-                    # copy_demand_data['flow_size'].append(original_ep_info[ep]['flow_size'][ep_flow_idx])
-                    # copy_demand_data['event_time'].append(duration + original_ep_info[ep]['event_time'][ep_flow_idx])
-                    # copy_demand_data['establish'].append(original_ep_info[ep]['establish'][ep_flow_idx])
-                    # copy_demand_data['index'].append(original_ep_info[ep]['index'][ep_flow_idx] + idx)
-                # else:
-                    # # already duplicated this flow in copy_demand_data
-                    # pass
-            # # DEBUG
-            # _ep_info = group_demand_data_into_ep_info(copy_demand_data, eps=kwargs['eps'])
-            # final_event_time = max(_ep_info[ep]['event_time'])
-            # first_event_time = min(_ep_info[ep]['event_time'])
-            # total_info = sum(_ep_info[ep]['flow_size'])
-            # load = total_info / (final_event_time - first_event_time)
-            # num_flows = len(_ep_info[ep]['flow_id'])
-            # print('Adjusted {} duration: {} total info: {} | load: {} | flows: {}'.format(ep, duration, total_info, load, num_flows))
-        # print('Flows after duplication: {}'.format(len(copy_demand_data['flow_id'])))
-
-    # ensure values of dict are lists
-    for key, value in demand_data.items():
-        demand_data[key] = list(value)
+    # # ensure values of dict are lists
+    # for key, value in demand_data.items():
+        # demand_data[key] = list(value)
 
     duplication_bar.finish()
 

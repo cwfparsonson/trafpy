@@ -3,7 +3,7 @@ import numpy as np
 
 class EnvAnalyser:
 
-    def __init__(self, env, time_units='', info_units='', subject_class_name=None):
+    def __init__(self, env, time_units='a.u.', info_units='a.u.', subject_class_name=None):
         '''
         envs (obj): Environment/simulation object to analyse.
         time_units (str): Units of time in env simulation (e.g. us).
@@ -349,7 +349,8 @@ class EnvAnalyser:
         elif self.measurement_start_time is not None and self.measurement_end_time is None:
             for idx in range(len(self.env.completed_flows)):
                 comp_time = self.env.completed_flows[idx]['time_completed']
-                if comp_time > self.measurement_start_time:
+                arr_time = self.env.completed_flows[idx]['time_arrived']
+                if comp_time > self.measurement_start_time and arr_time > self.measurement_start_time:
                     completed_flow_dicts.append(self.env.completed_flows[idx])
                 else:
                     # warming up
@@ -358,10 +359,11 @@ class EnvAnalyser:
         else:
             for idx in range(len(self.env.completed_flows)):
                 comp_time = self.env.completed_flows[idx]['time_completed']
-                if comp_time < self.measurement_start_time:
+                arr_time = self.env.completed_flows[idx]['time_arrived']
+                if comp_time < self.measurement_start_time or arr_time < self.measurement_start_time:
                     # warming up
                     pass
-                elif comp_time > self.measurement_start_time and comp_time < self.measurement_end_time:
+                elif comp_time > self.measurement_start_time and comp_time < self.measurement_end_time and arr_time > self.measurement_start_time:
                     # measure
                     completed_flow_dicts.append(self.env.completed_flows[idx])
                 elif comp_time > self.measurement_end_time:

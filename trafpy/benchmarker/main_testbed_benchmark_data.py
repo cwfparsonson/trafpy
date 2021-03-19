@@ -1,4 +1,4 @@
-from trafpy.generator.src.tools import load_data_from_json
+from trafpy.generator.src.tools import load_data_from_json, unpickle_data
 from trafpy.generator.src.demand import Demand
 from trafpy.manager.src.simulators.simulators import DCN
 from trafpy.manager.src.simulators.env_analyser import EnvAnalyser
@@ -26,7 +26,13 @@ class TestBed:
         self.config = None
 
     def load_benchmark_data(self, demand_file_path):
-        return json.loads(load_data_from_json(demand_file_path))
+        if demand_file_path[-4:] == 'json':
+            return json.loads(load_data_from_json(demand_file_path))
+        elif demand_file_path[-6:] == 'pickle':
+            return unpickle_data(demand_file_path)
+        else:
+            raise Exception('Unrecognised file type \'{}\''.format(demand_file_path))
+
 
     def run_tests(self, config, path_to_save):
         self.config = config
@@ -170,7 +176,7 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        DATA_NAME = 'university_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
+        DATA_NAME = 'private_enterprise_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'private_enterprise_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'social_media_cloud_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'artificial_light_chancap10_numchans1_mldatNone_bidirectional'
@@ -178,6 +184,7 @@ if __name__ == '__main__':
         # benchmark data
         # path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data.json'.format(DATA_NAME)
         path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data.json'.format(DATA_NAME)
+        # path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data.pickle'.format(DATA_NAME)
         tb = TestBed(path_to_benchmark_data)
 
         # dcn
@@ -193,7 +200,7 @@ if __name__ == '__main__':
                                  n=4, 
                                  num_channels=NUM_CHANNELS, 
                                  server_to_rack_channel_capacity=500, 
-                                 rack_to_core_channel_capacity=63, 
+                                 rack_to_core_channel_capacity=250, 
                                  bidirectional_links=True)]
 
         # rwas
@@ -203,7 +210,7 @@ if __name__ == '__main__':
 
         # schedulers
         # SLOT_SIZE = 1e6
-        SLOT_SIZE = 50.0 #1e4 1e5 1e2 0.1  1e3
+        SLOT_SIZE = 50.0 #1e4 1e5 1e2 0.1  1e3 50.0
         PACKET_SIZE = 1 # 300 0.01 1e1 1e2
         schedulers = [SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
                       FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),

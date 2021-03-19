@@ -563,6 +563,7 @@ def plot_val_line(plot_dict={},
                  ylim=None,
                  linewidth=1,
                  alpha=1,
+                 title=None,
                  vertical_lines=[],
                  gridlines=True,
                  aspect='auto',
@@ -599,6 +600,8 @@ def plot_val_line(plot_dict={},
         plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
     if aspect is not 'auto':
         plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
+    if title is not None:
+        plt.title(title)
 
     if show_fig:
         plt.show()
@@ -616,6 +619,7 @@ def plot_val_scatter(plot_dict={},
                      plot_line=False,
                      linewidth=1,
                      logscale=False,
+                     ylogscale=False,
                      gridlines=True,
                      figsize=(6.4, 4.8),
                      aspect='auto',
@@ -649,6 +653,9 @@ def plot_val_scatter(plot_dict={},
     if logscale:
         ax = plt.gca()
         ax.set_xscale('log')
+    if ylogscale:
+        ax = plt.gca()
+        ax.set_yscale('log')
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)

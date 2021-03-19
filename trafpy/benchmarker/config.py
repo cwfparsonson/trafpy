@@ -19,12 +19,12 @@ MIN_NUM_DEMANDS = 10
 JENSEN_SHANNON_DISTANCE_THRESHOLD = 0.1
 
 # define minimum time of last demand's arrival (helps define minimum simulation time)
-MIN_LAST_DEMAND_ARRIVAL_TIME = 2e6 # units of us 3e6 6e7 6e8 None 3000.0 2e6 2.4e5pulse
+MIN_LAST_DEMAND_ARRIVAL_TIME = None # units of us 3e6 6e7 6e8 None 3000.0 2e6 2.4e5pulse 2e6
 # MIN_LAST_DEMAND_ARRIVAL_TIME = None
 
 # define network load fractions
-LOADS = np.arange(0.1, 0.6, 0.1).tolist()
-# LOADS = [0.1]
+# LOADS = np.arange(0.1, 0.6, 0.1).tolist()
+LOADS = [0.9]
 LOADS = [round(load, 3) for load in LOADS] # ensure no python floating point arithmetic errors
 
 # define number of repetitions to perform for each benchmark for each load
@@ -90,14 +90,16 @@ BENCHMARKS = ['university']
 
 # NETS = {'university': gen_fat_tree(k=4, L=2, n=4, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 # NETS = {'university': gen_fat_tree(k=4, L=2, n=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
-NETS = {'university': gen_fat_tree(k=4, L=2, n=4, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
+NETS = {'university': gen_arbitrary_network(ep_label=None, num_eps=64, num_channels=1, server_to_rack_channel_capacity=25000)} # PULSE
+# NETS = {'university': gen_fat_tree(k=4, L=2, n=4, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 
 # define network capacity for each benchmark
 NETWORK_CAPACITIES = {'university': NETS['university'].graph['max_nw_capacity']}
 NETWORK_EP_LINK_CAPACITIES = {'university': NETS['university'].graph['ep_link_capacity']}
 
 # define network racks for each benchmark
-RACKS_DICTS = {'university': NETS['university'].graph['rack_to_ep_dict']}
+# RACKS_DICTS = {'university': NETS['university'].graph['rack_to_ep_dict']}
+RACKS_DICTS = {'university': None} # PULSE
 
 
 
@@ -115,7 +117,7 @@ RACKS_DICTS = {'university': NETS['university'].graph['rack_to_ep_dict']}
 # # NETS = {'private_enterprise': gen_fat_tree(k=6, N=30, num_channels=1)}
 # # NETS = {'private_enterprise': gen_fat_tree(k=4, N=3, num_channels=1, rack_to_edge_channel_capacity=1250, edge_to_agg_channel_capacity=1250, agg_to_core_channel_capacity=1250)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 # # NETS = {'private_enterprise': gen_fat_tree(k=3, N=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
-# NETS = {'private_enterprise': gen_fat_tree(k=4, N=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
+# NETS = {'private_enterprise': gen_fat_tree(k=4, L=2, n=4, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 
 # # define network capacity for each benchmark
 # NETWORK_CAPACITIES = {'private_enterprise': NETS['private_enterprise'].graph['max_nw_capacity']} 
@@ -139,7 +141,8 @@ RACKS_DICTS = {'university': NETS['university'].graph['rack_to_ep_dict']}
 # # NETS = {'commercial_cloud': gen_fat_tree(k=11, N=30, num_channels=1)}
 # # NETS = {'commercial_cloud': gen_fat_tree(k=4, N=3, num_channels=1, rack_to_edge_channel_capacity=1250, edge_to_agg_channel_capacity=1250, agg_to_core_channel_capacity=1250)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 # # NETS = {'commercial_cloud': gen_fat_tree(k=3, N=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
-# NETS = {'commercial_cloud': gen_fat_tree(k=4, N=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
+# # NETS = {'commercial_cloud': gen_fat_tree(k=4, N=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
+# NETS = {'commercial_cloud': gen_fat_tree(k=4, L=2, n=4, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 
 # # define network capacity for each benchmark
 # NETWORK_CAPACITIES = {'commercial_cloud': NETS['commercial_cloud'].graph['max_nw_capacity']}
@@ -162,7 +165,8 @@ RACKS_DICTS = {'university': NETS['university'].graph['rack_to_ep_dict']}
 # # NETS = {'social_media_cloud': gen_fat_tree(k=23, N=35, num_channels=1)}
 # # NETS = {'social_media_cloud': gen_fat_tree(k=4, N=3, num_channels=1, rack_to_edge_channel_capacity=1250, edge_to_agg_channel_capacity=1250, agg_to_core_channel_capacity=1250)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 # # NETS = {'social_media_cloud': gen_fat_tree(k=3, N=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
-# NETS = {'social_media_cloud': gen_fat_tree(k=4, N=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
+# # NETS = {'social_media_cloud': gen_fat_tree(k=4, N=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=10000, edge_to_agg_channel_capacity=40000, agg_to_core_channel_capacity=40000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
+# NETS = {'social_media_cloud': gen_fat_tree(k=4, L=2, n=4, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 
 # # define network capacity for each benchmark
 # NETWORK_CAPACITIES = {'social_media_cloud': NETS['social_media_cloud'].graph['max_nw_capacity']}
@@ -216,6 +220,16 @@ RACKS_DICTS = {'university': NETS['university'].graph['rack_to_ep_dict']}
 
 # # define network racks for each benchmark
 # RACKS_DICTS = {'artificial_light': None}
+
+
+
+
+
+
+
+
+
+
 
 
 

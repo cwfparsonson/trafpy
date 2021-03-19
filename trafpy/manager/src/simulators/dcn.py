@@ -689,7 +689,6 @@ class DCN(gym.Env):
         if flow_dict['size'] != 0 and flow_dict['src'] != flow_dict['dst']:
             # flow was an actual flow
             self.completed_flows.append(flow_dict)
-            fct = flow_dict['time_completed'] - flow_dict['time_arrived']
         else:
             # 'flow' never actually became a flow (src == dst or control dependency)
             pass
@@ -1823,6 +1822,7 @@ class DCN(gym.Env):
             # update global graph property
             self.network.graph['curr_nw_capacity_used'] -= capacity_used_this_slot
         self.network.graph['num_active_connections'] -= 1
+
 
     def path_cost(self, graph, path, weight=None):
         '''

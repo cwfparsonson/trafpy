@@ -1,6 +1,6 @@
 from trafpy.benchmarker import config
 from trafpy.generator.src.builder import create_demand_data
-from trafpy.generator.src.tools import save_data_as_json, save_data_as_csv
+from trafpy.generator.src.tools import save_data_as_json, save_data_as_csv, pickle_data
 from trafpy.benchmarker.versions.benchmark_importer import BenchmarkImporter
 
 import numpy as np
@@ -79,6 +79,8 @@ def gen_benchmark_demands(path_to_save=None, save_format='json', load_prev_dists
             save_data_as_json(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
         elif save_format == 'csv':
             save_data_as_csv(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
+        elif save_format == 'pickle':
+            pickle_data(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
         else:
             raise Exception('Unrecognised save format \'{}\''.format(save_format))
 

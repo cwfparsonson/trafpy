@@ -697,7 +697,7 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
             plt.xlabel('Number of Demands')
             plt.ylabel('Jensen-Shannon Distance')
             plt.show()
-    
+
     if path_to_save is not None:
         tools.pickle_data(path_to_save, sampled_vars)
     
