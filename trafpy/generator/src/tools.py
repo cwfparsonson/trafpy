@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from trafpy.generator.src.demand import *
+# from trafpy.generator.src.demand import *
 import json
 import pickle
 import bz2

@@ -176,7 +176,7 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        DATA_NAME = 'private_enterprise_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
+        DATA_NAME = 'social_media_cloud_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'private_enterprise_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'social_media_cloud_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'artificial_light_chancap10_numchans1_mldatNone_bidirectional'
@@ -200,7 +200,7 @@ if __name__ == '__main__':
                                  n=4, 
                                  num_channels=NUM_CHANNELS, 
                                  server_to_rack_channel_capacity=500, 
-                                 rack_to_core_channel_capacity=250, 
+                                 rack_to_core_channel_capacity=1000, 
                                  bidirectional_links=True)]
 
         # rwas

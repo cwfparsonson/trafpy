@@ -16,6 +16,7 @@ def create_demand_data(eps,
                        interarrival_time_dist,
                        network_load_config=None,
                        min_num_demands=6000,
+                       max_num_demands=None,
                        jensen_shannon_distance_threshold=0.1,
                        check_dont_exceed_one_ep_load=True,
                        min_last_demand_arrival_time=None,
@@ -65,6 +66,11 @@ def create_demand_data(eps,
         min_num_demands (int): Minimum number of demands to generate (will increase
             beyond this if need to meet min_last_demand_arrival_time and/or to
             meet specified jensen_shannon_distance_threshold).
+        max_num_demands (int): If not None, will not exceed this number of demands,
+            which can help if you find you are exceeding memory limitations in
+            your simulations. However, this will also mean that the (1) jensen_shannon_distance_threshold
+            and (2) min_last_demand_arrival_time you specifiy may not be met. To
+            ensure these are met, you must set max_num_demands to None.
         jensen_shannon_distance_threshold (float): Maximum jensen shannon distance
             required of generated random variables w.r.t. discretised dist they're generated from.
             Must be between 0 and 1. Distance of 0 -> distributions are exactly the same.
@@ -108,6 +114,7 @@ def create_demand_data(eps,
                                           interarrival_time_dist=interarrival_time_dist,
                                           network_load_config=network_load_config,
                                           min_num_demands=min_num_demands,
+                                          max_num_demands=max_num_demands,
                                           jensen_shannon_distance_threshold=jensen_shannon_distance_threshold,
                                           min_last_demand_arrival_time=min_last_demand_arrival_time,
                                           auto_node_dist_correction=auto_node_dist_correction,

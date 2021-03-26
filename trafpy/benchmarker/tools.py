@@ -5,18 +5,51 @@ from trafpy.benchmarker.versions.benchmark_importer import BenchmarkImporter
 
 import numpy as np
 import time
+import os
+from collections import defaultdict # use for initialising arbitrary length nested dict
 
 
 
 
 
-def gen_benchmark_demands(path_to_save=None, save_format='json', load_prev_dists=True):
+def gen_benchmark_demands(path_to_save=None, 
+                          save_format='json', 
+                          separate_files=False,
+                          load_prev_dists=True):
+    '''
+    If separate_files, will save each load, repeat and, and benchmark to separate
+    files in a common folder. This can help with memory since not storing everything
+    in one large file.
+
+    '''
+    if path_to_save[-1] == '/' or path_to_save[-1] == '\\':
+        path_to_save = path_to_save[:-1]
+
+    if separate_files:
+        # must separate files under common folder
+        if os.path.exists(path_to_save):
+            # exists, create new version
+            version = 2
+            while os.path.exists(path_to_save+'_v2'):
+                version += 1
+            path_to_save = path_to_save+'_v{}'.format(version)
+        else:
+            pass
+        os.mkdir(path_to_save)
+        print('Created directory {} in which to save separate files.'.format(path_to_save))
+    else:
+        # no need to separate files, save under one file path_to_save
+        pass
+
     # init benchmark importer
     importer = BenchmarkImporter(config.BENCHMARK_VERSION, load_prev_dists=load_prev_dists)
 
     # load distributions for each benchmark
     benchmark_dists = {benchmark: {} for benchmark in config.BENCHMARKS}
-    benchmark_demands = {benchmark: {load: {repeat: {} for repeat in range(config.NUM_REPEATS)} for load in config.LOADS} for benchmark in config.BENCHMARKS}
+
+    # benchmark_demands = {benchmark: {load: {repeat: {} for repeat in range(config.NUM_REPEATS)} for load in config.LOADS} for benchmark in config.BENCHMARKS}
+    nested_dict = lambda: defaultdict(nested_dict)
+    benchmark_demands = nested_dict()
 
     # begin generating data for each benchmark
     num_loads = len(config.LOADS)
@@ -61,7 +94,25 @@ def gen_benchmark_demands(path_to_save=None, save_format='json', load_prev_dists
                                                               min_last_demand_arrival_time=config.MIN_LAST_DEMAND_ARRIVAL_TIME,
                                                               auto_node_dist_correction=config.AUTO_NODE_DIST_CORRECTION,
                                                               print_data=False)
-                benchmark_demands[benchmark][load][repeat] = flow_centric_demand_data
+                if separate_files:
+                    print('Saving benchmark {} load {} repeat {}...'.format(benchmark, load, repeat))
+                    # save as benchmark, load, and repeat into separate files
+                    file_path = path_to_save + '/benchmark_{}_load_{}_repeat_{}'.format(benchmark, load, repeat)
+                    if save_format == 'json':
+                        save_data_as_json(path_to_save=file_path, data=flow_centric_demand_data, overwrite=False)
+                    elif save_format == 'csv':
+                        save_data_as_csv(path_to_save=file_path, data=flow_centric_demand_data, overwrite=False)
+                    elif save_format == 'pickle':
+                        pickle_data(path_to_save=file_path, data=flow_centric_demand_data, overwrite=False)
+                    else:
+                        raise Exception('Unrecognised save format \'{}\''.format(save_format))
+                    # reset benchmark demands dict to save memory
+                    benchmark_demands = nested_dict()
+
+                else:
+                    # saving all benchmarks, loads and repeats into one file
+                    benchmark_demands[benchmark][load][repeat] = flow_centric_demand_data
+
             end_load = time.time()
             print('Generated \'{}\' demands for load {} of {} in {} seconds.'.format(benchmark, load_counter, num_loads, end_load-start_load))
             load_counter += 1
@@ -72,17 +123,19 @@ def gen_benchmark_demands(path_to_save=None, save_format='json', load_prev_dists
     end_loops = time.time()
     print('Generated all benchmarks in {} seconds.'.format(end_loops-start_loops))
 
-    print('Saving benchmark data...')
-    if path_to_save is not None:
-        # save benchmarks
-        if save_format == 'json':
-            save_data_as_json(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
-        elif save_format == 'csv':
-            save_data_as_csv(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
-        elif save_format == 'pickle':
-            pickle_data(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
-        else:
-            raise Exception('Unrecognised save format \'{}\''.format(save_format))
+    if not separate_files:
+        # save all benchmarks, loads, and repeats into 1 file
+        print('Saving benchmark data...')
+        if path_to_save is not None:
+            # save benchmarks
+            if save_format == 'json':
+                save_data_as_json(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
+            elif save_format == 'csv':
+                save_data_as_csv(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
+            elif save_format == 'pickle':
+                pickle_data(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
+            else:
+                raise Exception('Unrecognised save format \'{}\''.format(save_format))
 
     print('Finished.')
 

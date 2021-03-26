@@ -4,6 +4,7 @@ from trafpy.generator.src.dists import val_dists
 from trafpy.generator.src.dists import plot_dists
 from trafpy.generator.src import flowcentric
 from trafpy.generator.src import tools
+from trafpy.generator.src.tools import load_data_from_json
 
 import inspect
 import sys
@@ -21,9 +22,16 @@ class Demand:
                  demand_data,
                  eps,
                  name='demand'):
+        '''
+        demand_data can be a dict, or it can be a str path to a demand_data
+        file, in which case Demand will automatically load this file.
+
+        '''
 
         self.eps = eps
         self.name = name
+        if type(demand_data) is str:
+            demand_data = json.loads(load_data_from_json(demand_data, print_times=False))
         self.reset(demand_data)
 
     def reset(self, demand_data):
@@ -159,9 +167,33 @@ class DemandAnalyser:
 
 
 class DemandsAnalyser:
-    def __init__(self, *demands):
+    def __init__(self, *demands, **kwargs):
+        '''
+        demands can either be a list of Demand objects, or it can be a list of str
+        paths to demand_data files if demand_data have been saved in separate files
+        to save memory. If so, kwargs should contain a net argument for the network
+        object used so DemandsAnalyser can initialise a Demand object for each
+        demand_data file in demands.
+
+        '''
         self.demands = demands
+        self.kwargs = kwargs
         self.computed_metrics = False
+
+        if type(demands[0]) is str:
+            # demands are string paths to separate files rather than Demand objects
+            self.separate_files = True
+            if 'net' not in kwargs.keys():
+                raise Exception('If demands given as list of str paths to demand_data files, must provide net kwarg (i.e. the network of the demand_data) so can use demand_data to init a Demand object.')
+        else:
+            # demands are just Demand objects
+            self.separate_files = False
+
+        if 'job_centric' not in kwargs.keys():
+            print('job_centric bool kwarg not provided. Assuming job_centric=False...')
+            self.job_centric = False
+        else:
+            self.job_centric = kwargs['job_centric']
 
     def _check_analyser_valid(self, analyser):
         if inspect.isclass(analyser):
@@ -173,7 +205,7 @@ class DemandsAnalyser:
     def compute_metrics(self, print_summary=False):
         self.computed_metrics = True
 
-        if self.demands[0].job_centric:
+        if self.job_centric:
             self._compute_job_summary()
         else:
             self._compute_flow_summary()
@@ -193,6 +225,9 @@ class DemandsAnalyser:
                              'Smallest': [],
                              'Largest': []}
         for demand in self.demands:
+            if self.separate_files:
+                # demand is currently a path, instantiate Demand object
+                demand = Demand(demand, self.kwargs['net'])
             demand.analyser.compute_metrics(print_summary=False)
             self.summary_dict['Name'].append(demand.analyser.subject_class_name)
             self.summary_dict['Flows'].append(demand.analyser.num_flows)
@@ -203,6 +238,11 @@ class DemandsAnalyser:
             self.summary_dict['Load'].append(demand.analyser.load_rate)
             self.summary_dict['Smallest'].append(demand.analyser.smallest_flow_size)
             self.summary_dict['Largest'].append(demand.analyser.largest_flow_size)
+
+        # sort in order of load
+        indicies = np.argsort(self.summary_dict['Load'])
+        for key in self.summary_dict.keys():
+            self.summary_dict[key] = np.asarray(self.summary_dict[key])[indicies]
 
     def _compute_job_summary(self):
         raise NotImplementedError
@@ -222,14 +262,14 @@ class DemandPlotter:
         if not analyser.computed_metrics:
             raise Exception('Must compute metrics with DemandAnalyser.compute_metrics() before passing to DemandPlotter.')
 
-    def plot_flow_size_dist(self, logscale=True, num_bins=20):
-        return plot_dists.plot_val_dist(self.demand.demand_data['flow_size'], show_fig=False, logscale=logscale, num_bins=num_bins, rand_var_name='Flow Size')
+    def plot_flow_size_dist(self, logscale=True, num_bins=20, show_fig=True):
+        return plot_dists.plot_val_dist(self.demand.demand_data['flow_size'], show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Flow Size')
 
-    def plot_interarrival_time_dist(self, logscale=True, num_bins=20):
+    def plot_interarrival_time_dist(self, logscale=True, num_bins=20, show_fig=True):
         interarrival_times = [self.demand.demand_data['event_time'][i+1]-self.demand.demand_data['event_time'][i] for i in range(self.demand.num_demands-1)]
-        return plot_dists.plot_val_dist(interarrival_times, show_fig=False, logscale=logscale, num_bins=num_bins, rand_var_name='Interarrival Time')
+        return plot_dists.plot_val_dist(interarrival_times, show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Interarrival Time')
 
-    def plot_node_load_dists(self, eps, ep_link_bandwidth=None):
+    def plot_node_load_dists(self, eps, ep_link_bandwidth=None, show_fig=True):
         '''
         1. Returns bar chart of end point links on x-axis and corresponding load on
         y-axis. If ep_link_bandwidth not given, y-axis will be absolute info units
@@ -259,7 +299,7 @@ class DemandPlotter:
             ylabel = 'End Point Load (Fraction)'
             ylim = None
         xlabel = 'End Point Link'
-        plot_dists.plot_val_bar(ep_loads.keys(), ep_loads.values(), ylabel, ylim, xlabel, show_fig=False)
+        plot_dists.plot_val_bar(ep_loads.keys(), ep_loads.values(), ylabel, ylim, xlabel, show_fig=show_fig)
         figs.append(fig1)
 
         fig2 = plt.figure()
@@ -269,7 +309,7 @@ class DemandPlotter:
             ep_loads_as_frac_of_overall_load[ep] = flowcentric.get_flow_centric_demand_data_ep_load_rate(self.demand.demand_data, index_to_node[ep], eps)
             ep_loads_as_frac_of_overall_load[ep] /= overall_load_rate
         ylabel = 'Fraction of Overall Load Requested'
-        plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_load.keys(), ep_loads_as_frac_of_overall_load.values(), ylabel, ylim, xlabel, show_fig=False)
+        plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_load.keys(), ep_loads_as_frac_of_overall_load.values(), ylabel, ylim, xlabel, show_fig=show_fig)
         figs.append(fig2)
 
         if ep_link_bandwidth is not None:
@@ -297,7 +337,8 @@ class DemandPlotter:
     def plot_node_dist(self, 
                        eps,
                        chord_edge_width_range=[1, 25],
-                       chord_edge_display_threshold=0.3):
+                       chord_edge_display_threshold=0.3,
+                       show_fig=True):
 
         # PLOT MATRIX & CHORD DIAGRAM
         pair_total_infos_requested = {}
@@ -325,7 +366,8 @@ class DemandPlotter:
 
         figs = plot_dists.plot_node_dist(node_dist,
                                          chord_edge_width_range=chord_edge_width_range,
-                                         chord_edge_display_threshold=chord_edge_display_threshold)
+                                         chord_edge_display_threshold=chord_edge_display_threshold,
+                                         show_fig=show_fig)
 
         return figs
 
@@ -423,13 +465,26 @@ class DemandPlotter:
 
 
 class DemandsPlotter:
-    def __init__(self, *demands):
+    def __init__(self, *demands, **kwargs):
         self.demands = demands
+        self.kwargs = kwargs
         self.classes = self._group_analyser_classes(*self.demands)
+
+        if type(demands[0]) is str:
+            # demands are string paths to separate files rather than Demand objects
+            self.separate_files = True
+            if 'net' not in kwargs.keys():
+                raise Exception('If demands given as list of str paths to demand_data files, must provide net kwarg (i.e. the network of the demand_data) so can use demand_data to init a Demand object.')
+        else:
+            # demands are just Demand objects
+            self.separate_files = False
 
     def _group_analyser_classes(self, *demands):
         classes = []
         for demand in demands:
+            if self.separate_files:
+                # demand is currently a path, instantiate Demand object
+                demand = Demand(demand, self.kwargs['net'])
             if demand.name not in classes:
                 classes.append(demand.name)
 

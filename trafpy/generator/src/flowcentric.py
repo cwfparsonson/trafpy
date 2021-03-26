@@ -24,6 +24,7 @@ class FlowGenerator:
                  interarrival_time_dist,
                  network_load_config,
                  min_num_demands=6000,
+                 max_num_demands=None,
                  jensen_shannon_distance_threshold=0.1,
                  min_last_demand_arrival_time=None,
                  auto_node_dist_correction=False,
@@ -48,6 +49,11 @@ class FlowGenerator:
                 removing the invalid end point link load to its maximum 1.0 load
                 and distributing the removed load across all other valid links
                 uniformly.
+            max_num_demands (int): If not None, will not exceed this number of demands,
+                which can help if you find you are exceeding memory limitations in
+                your simulations. However, this will also mean that the (1) jensen_shannon_distance_threshold
+                and (2) min_last_demand_arrival_time you specifiy may not be met. To
+                ensure these are met, you must set max_num_demands to None.
             jensen_shannon_distance_threshold (float): Maximum jensen shannon distance
                 required of generated random variables w.r.t. discretised dist they're generated from.
                 Must be between 0 and 1. Distance of 0 -> distributions are exactly the same.
@@ -77,6 +83,7 @@ class FlowGenerator:
         self.flow_size_dist = flow_size_dist
         self.interarrival_time_dist = interarrival_time_dist
         self.num_demands = min_num_demands 
+        self.max_num_demands = max_num_demands
         self.network_load_config = network_load_config
         self.min_last_demand_arrival_time = min_last_demand_arrival_time
         self.auto_node_dist_correction = auto_node_dist_correction
@@ -121,6 +128,23 @@ class FlowGenerator:
             interarrival_times = self._adjust_demand_load(flow_sizes,
                                                           interarrival_times)
 
+        if self.max_num_demands is not None:
+            if len(interarrival_times) > self.max_num_demands or len(flow_sizes) > self.max_num_demands:
+                print('WARNING: max_num_demands is {} but needed {} flows to meet jensen_shannon_distance_threshold {}. Capping num_demands to max_num_demands, therefore may not meet jensen_shannon_distance_threshold specified. Increase max_num_demands to ensure you meet the jensen_shannon_distance_threshold.'.format(self.max_num_demands, len(flow_sizes), self.jensen_shannon_distance_threshold))
+                # sample flow sizes and interarrival times with max_num_demands
+                flow_sizes = val_dists.gen_rand_vars_from_discretised_dist(unique_vars=list(self.flow_size_dist.keys()),
+                                                                           probabilities=list(self.flow_size_dist.values()),
+                                                                           num_demands=self.max_num_demands,
+                                                                           jensen_shannon_distance_threshold=None)
+                interarrival_times = val_dists.gen_rand_vars_from_discretised_dist(unique_vars=list(self.interarrival_time_dist.keys()),
+                                                                                   probabilities=list(self.interarrival_time_dist.values()),
+                                                                                   num_demands=self.max_num_demands,
+                                                                                   jensen_shannon_distance_threshold=self.jensen_shannon_distance_threshold)
+                # adjust overall interarrival time dist until overall load <= user-specified load
+                interarrival_times = self._adjust_demand_load(flow_sizes,
+                                                              interarrival_times)
+
+
         # corresponding flow event (arrival) times
         event_times = tools.gen_event_times(interarrival_times)
         index, event_times_sorted = np.argsort(event_times), np.sort(event_times)
@@ -160,10 +184,11 @@ class FlowGenerator:
             # duplicate flows until get duration >= user-specified duration
             adjustment_factor = self.min_last_demand_arrival_time / max(demand_data['event_time'])
             num_duplications = math.ceil(math.log(adjustment_factor, 2))
+            if self.max_num_demands is not None:
+                if (2**num_duplications) * len(demand_data['flow_id']) > self.max_num_demands:
+                    print('WARING: max_num_demands is {} but have specified min_last_demand_arrival_time {}. Would need {} demands to reach this min_last_demand_arrival_time, therefore must increase max_num_demands (or set to None) if you want to meet this min_last_demand_arrival_time.'.format(self.max_num_demands, self.min_last_demand_arrival_time, (2**num_duplications)*len(demand_data['flow_id'])))
+                    return demand_data
             demand_data = duplicate_demands_in_demand_data_dict(demand_data, num_duplications=num_duplications, eps=self.eps)
-
-            # while max(demand_data['event_time']) < self.min_last_demand_arrival_time:
-                # demand_data = duplicate_demands_in_demand_data_dict(demand_data, method='all_eps', eps=self.eps)
 
         # convert to numpy array to save memory space
         # demand_data['flow_id'] = np.asarray(demand_data['flow_id'])
@@ -319,9 +344,9 @@ class FlowPacker:
 
         # calc max total info during simulation per end point and initialise end point total info tracker
         self.max_total_ep_info = self.network_load_config['ep_link_capacity'] * self.duration
-        if self.bidirectional_links:
-            # double total ep info so can pack src-dst pairs into links
-            self.max_total_ep_info *= 2
+        # if not self.bidirectional_links:
+            # # double total ep info so can pack src-dst pairs into links
+            # self.max_total_ep_info *= 2
         self.ep_total_infos = {ep: 0 for ep in self.eps}
 
         flow_sizes = [self.packed_flows[flow]['size'] for flow in self.packed_flows.keys()]

@@ -11,6 +11,7 @@ from scipy import stats
 import math
 import matplotlib.pyplot as plt
 import sys
+import random
 
 import ipywidgets as widgets
 from ipywidgets import interact, interactive, interactive_output, interact_manual, fixed
@@ -602,6 +603,8 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                         probabilities, 
                                         num_demands,
                                         jensen_shannon_distance_threshold=None,
+                                        # deterministic_factor=None,
+                                        # difference_filter_threshold=0,
                                         show_fig=False,
                                         xlabel='Random Variable',
                                         marker_size=15,
@@ -620,6 +623,16 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
             Distance of 1 -> distributions are not at all similar.
             https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15
             N.B. To meet threshold, this function will keep doubling num_demands
+        deterministic_factor (int, float): If not None, will deterministically sample from
+            discretised distribution by finding the lowest probability rand var
+            and doing num_demands=int(1/lowest_prob)*deterministic_factor to get 
+            the total number of demands, then deterministically generating the 
+            distribution by generating num_demands*prob for each variable's respective
+            probability. This is useful for ensuring a very low jensen shannon distance
+            without needing to sample many random variables, which can be useful
+            for limiting memory usage for distributions with long tails. If
+            deterministic_factor < 1, will not sample all unique vars in original
+            distribution. If >1, guaranteed to sample all vars in original distribution.
         show_fig (bool): Whether or not to generated sampled var dist plotted
             with the original distribution. 
         path_to_save (str): Path to directory (with file name included) in which
@@ -629,8 +642,51 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
         numpy array: Random variable values sampled from dist.
 
     '''
-    # if np.sum(probabilities) != 1:
-        # raise Exception('Probabilities must sum to 1, but sum to {}'.format(np.sum(probabilities)))
+    # if deterministic_factor is not None:
+        # # deterministic sampling
+        # if type(deterministic_factor) is not int and type(deterministic_factor) is not float:
+            # raise Exception('deterministic_factor must be int or float, but is {}'.format(type(deterministic_factor)))
+        # if difference_filter_threshold < 0:
+            # raise Exception('Must have difference_filter_threshold >= 0, but is {}'.format(difference_filter_threshold))
+
+        # sorted_indices = np.argsort(unique_vars)
+        # sorted_unique_vars = np.asarray(unique_vars)[sorted_indices]
+        # sorted_probabilities = np.asarray(probabilities)[sorted_indices]
+        # dummy_unique_vars = [sorted_unique_vars[0]]
+        # dummy_probabilities = [sorted_probabilities[0]]
+        # for idx in range(1, len(sorted_unique_vars)):
+            # prev, curr = sorted_unique_vars[idx-1], sorted_unique_vars[idx]
+            # if curr > prev*(1+difference_filter_threshold):
+                # # do not filter this rand var
+                # dummy_unique_vars.append(curr)
+                # dummy_probabilities.append(sorted_probabilities[idx])
+            # else:
+                # # has not exceeded difference threshold, filter this rand var
+                # pass
+
+        # lowest_prob = min(probabilities)
+        # min_num_demands = math.ceil((1/lowest_prob)*deterministic_factor)
+        # num_demands = max(min_num_demands, num_demands)
+        # sampled_vars = []
+        # for var, prob in zip(dummy_unique_vars, dummy_probabilities):
+            # for _ in range(math.ceil(prob*num_demands)):
+                # sampled_vars.append(var)
+
+        # # shuffle
+        # sampled_vars = np.asarray(sampled_vars)
+        # np.random.shuffle(sampled_vars)
+        # # check similarity
+        # sampled_unique_vars, pmf = gen_discrete_prob_dist(sampled_vars, 
+                                                          # unique_vars=unique_vars)
+        # p, q = list(probabilities), list(pmf)
+        # distance = tools.compute_jensen_shannon_distance(p, q)
+        # print('deterministic num demands: {} | distance: {}'.format(len(sampled_vars), distance))
+
+    # else:
+        # # random sampling here
+        # pass
+
+    # random sampling
     if jensen_shannon_distance_threshold is not None:
         if jensen_shannon_distance_threshold <= 0 or jensen_shannon_distance_threshold > 1:
             raise Exception('jensen_shannon_distance_threshold must be >0 and <1, but is {}. See https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15'.format(jensen_shannon_distance_threshold))
@@ -638,6 +694,10 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
         distance = 1
         num_demands_list = []
         distance_list = []
+        max_list = []
+        min_list = []
+        mean_list = []
+        std_list = []
         while distance > jensen_shannon_distance_threshold:
             num_demands_list.append(num_demands)
             sampled_vars = np.random.choice(a=unique_vars, 
@@ -648,13 +708,18 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
             p, q = list(probabilities), list(pmf)
             distance = tools.compute_jensen_shannon_distance(p, q)
             distance_list.append(distance)
+            max_list.append(max(sampled_vars))
+            min_list.append(min(sampled_vars))
+            mean_list.append(np.mean(sampled_vars))
+            std_list.append(np.std(sampled_vars))
             num_demands = int(num_demands * 1.1)
     else:
         # no similarity threshold defined
         sampled_vars = np.random.choice(a=unique_vars, 
                                         size=num_demands,
                                         p=probabilities)
-        sampled_unique_vars, pmf = gen_discrete_prob_dist(sampled_vars, unique_vars=unique_vars)
+        sampled_unique_vars, pmf = gen_discrete_prob_dist(sampled_vars, 
+                                                          unique_vars=unique_vars)
 
     if show_fig:
         # dist comparison
@@ -696,6 +761,34 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                         distance_list)
             plt.xlabel('Number of Demands')
             plt.ylabel('Jensen-Shannon Distance')
+            plt.show()
+
+            _ = plt.figure()
+            plt.scatter(num_demands_list,
+                        min_list)
+            plt.xlabel('Number of Demands')
+            plt.ylabel('Min {}'.format(xlabel))
+            plt.show()
+
+            _ = plt.figure()
+            plt.scatter(num_demands_list,
+                        max_list)
+            plt.xlabel('Number of Demands')
+            plt.ylabel('Max {}'.format(xlabel))
+            plt.show()
+
+            _ = plt.figure()
+            plt.scatter(num_demands_list,
+                        mean_list)
+            plt.xlabel('Number of Demands')
+            plt.ylabel('Mean {}'.format(xlabel))
+            plt.show()
+
+            _ = plt.figure()
+            plt.scatter(num_demands_list,
+                        std_list)
+            plt.xlabel('Number of Demands')
+            plt.ylabel('Std {}'.format(xlabel))
             plt.show()
 
     if path_to_save is not None:
@@ -1288,7 +1381,7 @@ def gen_weibull_dist(_alpha,
 def gen_named_val_dist(dist, 
                        params=None, 
                        interactive_plot=False,
-                       size=30000, 
+                       size=400000, 
                        occurrence_multiplier=100,
                        return_data=False, 
                        round_to_nearest=None, 

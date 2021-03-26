@@ -51,10 +51,22 @@ class DistributionGenerator:
         path_to_data = self.benchmark_version_path+'data/{}/{}.json'.format(benchmark, dist_name)
         if os.path.exists(path_to_data):
             print('Loading previously saved benchmark dists from {}'.format(path_to_data))
-            dist = load_data_from_json(path_to_load=path_to_data, print_times=True)
+            dist = json.loads(load_data_from_json(path_to_load=path_to_data, print_times=True))
+            if type(dist) == dict:
+                # convert keys (rand var unique values) from str to float
+                dist = {float(key): dist[key] for key in dist.keys()}
+            else:
+                # convert list to numpy array
+                dist = np.asarray(dist)
         else:
             print('{} distribution not previously saved in {}.'.format(dist_name, path_to_data))
             dist = None
+
+        # if dist_name == 'node_dist':
+            # print(dist)
+        # print('loaded dist_name {}, type {}'.format(dist_name, type(dist)))
+        # if dist_name == 'flow_size_dist' or dist_name == 'interarrival_time_dist':
+            # print('dist_name {} | type {} | idx 0 type {}'.format(dist_name, type(dist), type(dist[0])))
 
         return dist, path_to_data
 
@@ -87,7 +99,12 @@ class DistributionGenerator:
                 else:
                     rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.7}
                 # node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
-                node_dist = node_dists.gen_multimodal_node_dist(eps, rack_prob_config=rack_prob_config, num_skewed_nodes=num_skewed_nodes, skewed_node_probs=skewed_node_probs, show_fig=False, print_data=False)
+                node_dist = node_dists.gen_multimodal_node_dist(eps, 
+                                                                rack_prob_config=rack_prob_config, 
+                                                                num_skewed_nodes=num_skewed_nodes, 
+                                                                skewed_node_probs=skewed_node_probs, 
+                                                                show_fig=False, 
+                                                                print_data=False)
             
             elif benchmark == 'private_enterprise':
                 if racks_dict is None:
@@ -95,7 +112,12 @@ class DistributionGenerator:
                 else:
                     rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.5}
                 # node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
-                node_dist = node_dists.gen_multimodal_node_dist(eps, rack_prob_config=rack_prob_config, num_skewed_nodes=num_skewed_nodes, skewed_node_probs=skewed_node_probs, show_fig=False, print_data=False)
+                node_dist = node_dists.gen_multimodal_node_dist(eps, 
+                                                                rack_prob_config=rack_prob_config, 
+                                                                num_skewed_nodes=num_skewed_nodes, 
+                                                                skewed_node_probs=skewed_node_probs, 
+                                                                show_fig=False, 
+                                                                print_data=False)
 
             elif benchmark == 'commercial_cloud':
                 if racks_dict is None:
@@ -103,7 +125,12 @@ class DistributionGenerator:
                 else:
                     rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.2}
                 # node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
-                node_dist = node_dists.gen_multimodal_node_dist(eps, rack_prob_config=rack_prob_config, num_skewed_nodes=num_skewed_nodes, skewed_node_probs=skewed_node_probs, show_fig=False, print_data=False)
+                node_dist = node_dists.gen_multimodal_node_dist(eps, 
+                                                                rack_prob_config=rack_prob_config, 
+                                                                num_skewed_nodes=num_skewed_nodes, 
+                                                                skewed_node_probs=skewed_node_probs, 
+                                                                show_fig=False, 
+                                                                print_data=False)
 
             elif benchmark == 'social_media_cloud':
                 if racks_dict is None:
@@ -111,7 +138,12 @@ class DistributionGenerator:
                 else:
                     rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.129}
                 # node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
-                node_dist = node_dists.gen_multimodal_node_dist(eps, rack_prob_config=rack_prob_config, num_skewed_nodes=num_skewed_nodes, skewed_node_probs=skewed_node_probs, show_fig=False, print_data=False)
+                node_dist = node_dists.gen_multimodal_node_dist(eps, 
+                                                                rack_prob_config=rack_prob_config, 
+                                                                num_skewed_nodes=num_skewed_nodes, 
+                                                                skewed_node_probs=skewed_node_probs, 
+                                                                show_fig=False, 
+                                                                print_data=False)
 
             elif benchmark == 'uniform':
                 node_dist = node_dists.gen_uniform_node_dist(eps, show_fig=False, print_data=False)
@@ -235,7 +267,7 @@ class DistributionGenerator:
                 interarrival_time_dist = val_dists.gen_named_val_dist(dist='weibull',
                                                                       params={'_alpha': 0.9, '_lambda': 6000},
                                                                       min_val=1,
-                                                                      round_to_nearest=10,
+                                                                      round_to_nearest=1,
                                                                       show_fig=False,
                                                                       print_data=False)
 
@@ -246,7 +278,7 @@ class DistributionGenerator:
                                                                            skews=[-1,4],
                                                                            scales=[60,1000],
                                                                            num_skew_samples=[10000,10000],
-                                                                           round_to_nearest=10,
+                                                                           round_to_nearest=1,
                                                                            bg_factor=0.05)
 
             elif benchmark == 'commercial_cloud':
@@ -256,19 +288,19 @@ class DistributionGenerator:
                                                                            skews=[0,0,0,100],
                                                                            scales=[1,3,4,50],
                                                                            num_skew_samples=[10000,7000,5000,20000],
-                                                                           round_to_nearest=10,
+                                                                           round_to_nearest=1,
                                                                            bg_factor=0.01)
 
             elif benchmark == 'social_media_cloud':
                 interarrival_time_dist = val_dists.gen_named_val_dist(dist='lognormal',
                                                                       params={'_mu': 6, '_sigma': 2.3},
                                                                       min_val=1,
-                                                                      round_to_nearest=10,
+                                                                      round_to_nearest=1,
                                                                       show_fig=False,
                                                                       print_data=False)
 
             elif benchmark == 'uniform':
-                interarrival_time_dist = val_dists.gen_uniform_val_dist(min_val=10,
+                interarrival_time_dist = val_dists.gen_uniform_val_dist(min_val=1,
                                                                         max_val=10000,
                                                                         round_to_nearest=10,
                                                                         show_fig=False,
@@ -319,7 +351,7 @@ class DistributionGenerator:
                 if dists[benchmark][dist_name] is None:
                     raise Exception('Dist {} for benchmark {} not found in {}. Ensure dist is named as one of {}, and that dist has been saved in correct location.'.format(dist_name, benchmark, path_to_data, self.dist_names))
 
-                num_demands = len(dists[benchmark]['node_dist']) * 1000 # estimate appropriate number of rand vars to gen 
+                num_demands = max(len(dists[benchmark]['node_dist']) * 1000, 200000) # estimate appropriate number of rand vars to gen 
 
                 if dist_name == 'flow_size_dist' or dist_name == 'interarrival_time_dist':
                     # remove str keys
