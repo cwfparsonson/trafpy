@@ -184,7 +184,7 @@ class DistributionGenerator:
                 flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
                                                               params={'_mu': 7, '_sigma': 2.5},
                                                               min_val=1,
-                                                              max_val=1e7,
+                                                              max_val=2e7,
                                                               round_to_nearest=1,
                                                               show_fig=False,
                                                               print_data=False)
@@ -195,7 +195,7 @@ class DistributionGenerator:
                 flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
                                                               params={'_mu': 7, '_sigma': 2.5},
                                                               min_val=1,
-                                                              max_val=1e7,
+                                                              max_val=2e7,
                                                               round_to_nearest=1,
                                                               show_fig=False,
                                                               print_data=False)
@@ -204,7 +204,7 @@ class DistributionGenerator:
                 flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
                                                               params={'_mu': 7, '_sigma': 2.5},
                                                               min_val=1,
-                                                              max_val=1e7,
+                                                              max_val=2e7,
                                                               round_to_nearest=1,
                                                               show_fig=False,
                                                               print_data=False)
@@ -213,7 +213,7 @@ class DistributionGenerator:
                 flow_size_dist = val_dists.gen_named_val_dist(dist='weibull',
                                                               params={'_alpha': 0.5, '_lambda': 21000},
                                                               min_val=1,
-                                                              max_val=1e6,
+                                                              max_val=2e6,
                                                               round_to_nearest=1,
                                                               show_fig=False,
                                                               print_data=False)

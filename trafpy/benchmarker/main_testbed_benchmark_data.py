@@ -12,6 +12,7 @@ import sys
 import os
 import tensorflow as tf
 import glob
+from pympler import classtracker
 tf.keras.backend.clear_session()
 
 
@@ -108,25 +109,23 @@ class TestBed:
                     load = float(self.conv_str_path_to_kwarg_value(benchmark_path, 'load_'))
                     benchmark = self.conv_str_path_to_kwarg_value(benchmark_path, 'benchmark_')
                     repeat = self.conv_str_path_to_kwarg_value(benchmark_path, 'repeat_')
-                    # print(load)
-                    # print(config['loads'])
-                    # print(load in config['loads'])
                     if config['loads'] == 'all' or load in config['loads']:
-                        demand = Demand(benchmark_path, config['networks'][0].graph['endpoints'])
-                        
-                        env = DCN(config['networks'][0], 
-                                  demand, 
-                                  scheduler,
-                                  num_k_paths=config['num_k_paths'],
-                                  slot_size=config['slot_size'],
-                                  sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
-                                  max_flows=config['max_flows'], 
-                                  max_time=config['max_time'])
+                        if scheduler.scheduler_name == 'SRPT': # DEBUG
+                            demand = Demand(benchmark_path, config['networks'][0].graph['endpoints'])
+                            
+                            env = DCN(config['networks'][0], 
+                                      demand, 
+                                      scheduler,
+                                      num_k_paths=config['num_k_paths'],
+                                      slot_size=config['slot_size'],
+                                      sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
+                                      max_flows=config['max_flows'], 
+                                      max_time=config['max_time'])
 
-                        p = multiprocessing.Process(target=self.run_test,
-                                args=(scheduler, env, self.envs, path_to_save+'/benchmark_{}_load_{}_repeat_{}'.format(benchmark, load, repeat),))
-                        jobs.append(p)
-                        p.start()
+                            p = multiprocessing.Process(target=self.run_test,
+                                                        args=(scheduler, env, self.envs, path_to_save+'/'+env.sim_name,))
+                            jobs.append(p)
+                            p.start()
 
         for job in jobs:
             job.join() # only execute below code when all jobs finished
@@ -167,6 +166,12 @@ class TestBed:
                 pass
 
     def run_test(self, scheduler, env, envs, path_to_save):
+
+        tracker = classtracker.ClassTracker()
+        tracker.track_object(env)
+        tracker.create_snapshot()
+
+
         printed_percents = [0]
         observation = env.reset()
         try:
@@ -174,6 +179,7 @@ class TestBed:
         except:
             # no need to register env
             pass
+        print('starting')
         while True:
             action = scheduler.get_action(observation)
             observation, reward, done, info = env.step(action, print_memory_usage=False, print_processing_time=False)
@@ -181,15 +187,19 @@ class TestBed:
             # print progress
             flows_arrived, flows_processed = len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)
             percent_demands_processed = round(100*(flows_processed/env.demand.num_demands), 0)
-            if percent_demands_processed % 10 == 0:
+            if percent_demands_processed % 0.01 == 0: # % 10
                 if percent_demands_processed not in printed_percents:
                     percent_demands_arrived = round(100*(flows_arrived/env.demand.num_demands))
                     print('Sim: {} | Flows arrived: {}% | Flows processed: {}%'.format(env.sim_name, percent_demands_arrived, percent_demands_processed))
                     printed_percents.append(percent_demands_processed)
+                    
+                    tracker.create_snapshot()
+
 
             if done:
                 # env.get_scheduling_session_summary(print_summary=True)
                 print('Completed simulation \'{}\''.format(env.sim_name))
+                tracker.stats.print_summary()
                 analyser = EnvAnalyser(env)
                 analyser.compute_metrics(print_summary=True, 
                                          measurement_start_time='auto',
@@ -197,7 +207,11 @@ class TestBed:
                 try:
                     if self.separate_files:
                         # saving each run separately
-                        pickle_data(path_to_save+'/{}'.format(), env.sim_name, overwrite=False, zip_data=True, print_times=False)
+                        pickle_data(path_to_save=path_to_save, 
+                                    data=env,
+                                    overwrite=False, 
+                                    zip_data=True, 
+                                    print_times=False)
                     else:
                         # saving all in one file
                         envs.append(env) # store env
@@ -268,11 +282,11 @@ if __name__ == '__main__':
         # benchmark data
         # path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data.json'.format(DATA_NAME)
         path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data'.format(DATA_NAME)
-        LOADS = [0.1, 0.2] # 'all'
+        LOADS = [0.1] # 'all' [0.1, 0.2]
         tb = TestBed(path_to_benchmark_data)
 
         # dcn
-        MAX_TIME = 1e4 # None
+        MAX_TIME = 1e5 # None
         # MAX_TIME = 'last_demand_arrival_time'
         MAX_FLOWS = 50 # 10 50 100 500
 
