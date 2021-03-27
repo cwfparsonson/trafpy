@@ -955,7 +955,7 @@ def gen_exponential_dist(_beta,
     elif min_val is None and max_val is not None:
         # ensure less than max val
         while max(rand_vars) > max_val:
-            max_idx = np.argmin(np.array(rand_vars))
+            max_idx = np.argmax(np.array(rand_vars))
             rand_vars[max_idx] = np.random.exponential(_beta,size=1)
             counter += 1
             if counter > 10000:
@@ -967,7 +967,7 @@ def gen_exponential_dist(_beta,
                 min_idx = np.argmin(np.array(rand_vars))
                 rand_vars[min_idx] = np.random.exponential(_beta,size=1)
             if max(rand_vars) > max_val:
-                max_idx = np.argmin(np.array(rand_vars))
+                max_idx = np.argmax(np.array(rand_vars))
                 rand_vars[max_idx] = np.random.exponential(_beta,size=1)
             counter += 1
             if counter > 10000:
@@ -1053,7 +1053,7 @@ def gen_lognormal_dist(_mu,
     elif min_val is None and max_val is not None:
         # ensure less than max val
         while max(rand_vars) > max_val:
-            max_idx = np.argmin(np.array(rand_vars))
+            max_idx = np.argmax(np.array(rand_vars))
             rand_vars[max_idx] = stats.lognorm.rvs(s=_sigma,scale=math.exp(_mu),size=1)
             counter += 1
             if counter > 10000:
@@ -1065,7 +1065,7 @@ def gen_lognormal_dist(_mu,
                 min_idx = np.argmin(np.array(rand_vars))
                 rand_vars[min_idx] = stats.lognorm.rvs(s=_sigma,scale=math.exp(_mu),size=1)
             if max(rand_vars) > max_val:
-                max_idx = np.argmin(np.array(rand_vars))
+                max_idx = np.argmax(np.array(rand_vars))
                 rand_vars[max_idx] = stats.lognorm.rvs(s=_sigma,scale=math.exp(_mu),size=1)
             counter += 1
             if counter > 10000:
@@ -1134,7 +1134,7 @@ def gen_normal_dist(loc,
     elif min_val is None and max_val is not None:
         # ensure less than max val
         while max(rand_vars) > max_val:
-            max_idx = np.argmin(np.array(rand_vars))
+            max_idx = np.argmax(np.array(rand_vars))
             rand_vars[max_idx] = np.random.normal(loc=loc, scale=scale, size=1)
             counter += 1
             if counter > 10000:
@@ -1146,7 +1146,7 @@ def gen_normal_dist(loc,
                 min_idx = np.argmin(np.array(rand_vars))
                 rand_vars[min_idx] = np.random.normal(loc=loc, scale=scale, size=1)
             if max(rand_vars) > max_val:
-                max_idx = np.argmin(np.array(rand_vars))
+                max_idx = np.argmax(np.array(rand_vars))
                 rand_vars[max_idx] = np.random.normal(loc=loc, scale=scale, size=1)
             counter += 1
             if counter > 10000:
@@ -1229,7 +1229,7 @@ def gen_pareto_dist(_alpha,
     elif min_val is None and max_val is not None:
         # ensure less than max val
         while max(rand_vars) > max_val:
-            max_idx = np.argmin(np.array(rand_vars))
+            max_idx = np.argmax(np.array(rand_vars))
             rand_vars[max_idx] = stats.pareto.rvs(b=_alpha, loc=0, scale=_mode, size=1)
             counter += 1
             if counter > 10000:
@@ -1241,7 +1241,7 @@ def gen_pareto_dist(_alpha,
                 min_idx = np.argmin(np.array(rand_vars))
                 rand_vars[min_idx] = stats.pareto.rvs(b=_alpha, loc=0, scale=_mode, size=1)
             if max(rand_vars) > max_val:
-                max_idx = np.argmin(np.array(rand_vars))
+                max_idx = np.argmax(np.array(rand_vars))
                 rand_vars[max_idx] = stats.pareto.rvs(b=_alpha, loc=0, scale=_mode, size=1)
             counter += 1
             if counter > 10000:
@@ -1338,7 +1338,7 @@ def gen_weibull_dist(_alpha,
     elif min_val is None and max_val is not None:
         # ensure less than max val
         while max(rand_vars) > max_val:
-            max_idx = np.argmin(np.array(rand_vars))
+            max_idx = np.argmax(np.array(rand_vars))
             rand_vars[max_idx] = (np.random.weibull(_alpha, size=1)) * _lambda
             counter += 1
             if counter > 10000:
@@ -1350,7 +1350,7 @@ def gen_weibull_dist(_alpha,
                 min_idx = np.argmin(np.array(rand_vars))
                 rand_vars[min_idx] = (np.random.weibull(_alpha, size=1)) * _lambda
             if max(rand_vars) > max_val:
-                max_idx = np.argmin(np.array(rand_vars))
+                max_idx = np.argmax(np.array(rand_vars))
                 rand_vars[max_idx] = (np.random.weibull(_alpha, size=1)) * _lambda
             counter += 1
             if counter > 10000:
@@ -1381,7 +1381,7 @@ def gen_weibull_dist(_alpha,
 def gen_named_val_dist(dist, 
                        params=None, 
                        interactive_plot=False,
-                       size=400000, 
+                       size=150000, 
                        occurrence_multiplier=100,
                        return_data=False, 
                        round_to_nearest=None, 

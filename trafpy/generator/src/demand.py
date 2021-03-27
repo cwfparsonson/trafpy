@@ -269,7 +269,7 @@ class DemandPlotter:
         interarrival_times = [self.demand.demand_data['event_time'][i+1]-self.demand.demand_data['event_time'][i] for i in range(self.demand.num_demands-1)]
         return plot_dists.plot_val_dist(interarrival_times, show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Interarrival Time')
 
-    def plot_node_load_dists(self, eps, ep_link_bandwidth=None, show_fig=True):
+    def plot_node_load_dists(self, eps, ep_link_bandwidth=None, plot_extras=False, show_fig=True):
         '''
         1. Returns bar chart of end point links on x-axis and corresponding load on
         y-axis. If ep_link_bandwidth not given, y-axis will be absolute info units
@@ -302,26 +302,27 @@ class DemandPlotter:
         plot_dists.plot_val_bar(ep_loads.keys(), ep_loads.values(), ylabel, ylim, xlabel, show_fig=show_fig)
         figs.append(fig1)
 
-        fig2 = plt.figure()
-        overall_load_rate = flowcentric.get_flow_centric_demand_data_overall_load_rate(self.demand.demand_data)
-        ep_loads_as_frac_of_overall_load = {}
-        for ep in ep_loads.keys():
-            ep_loads_as_frac_of_overall_load[ep] = flowcentric.get_flow_centric_demand_data_ep_load_rate(self.demand.demand_data, index_to_node[ep], eps)
-            ep_loads_as_frac_of_overall_load[ep] /= overall_load_rate
-        ylabel = 'Fraction of Overall Load Requested'
-        plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_load.keys(), ep_loads_as_frac_of_overall_load.values(), ylabel, ylim, xlabel, show_fig=show_fig)
-        figs.append(fig2)
-
-        if ep_link_bandwidth is not None:
-            fig3 = plt.figure()
-            overall_network_capacity = len(eps) * ep_link_bandwidth
-            ep_loads_as_frac_of_overall_capacity = {}
+        if plot_extras:
+            fig2 = plt.figure()
+            overall_load_rate = flowcentric.get_flow_centric_demand_data_overall_load_rate(self.demand.demand_data)
+            ep_loads_as_frac_of_overall_load = {}
             for ep in ep_loads.keys():
-                ep_loads_as_frac_of_overall_capacity[ep] = flowcentric.get_flow_centric_demand_data_ep_load_rate(self.demand.demand_data, index_to_node[ep], eps)
-                ep_loads_as_frac_of_overall_capacity[ep] /=overall_network_capacity 
-            ylabel = 'Fraction of Overall Capacity Requested'
-            plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_capacity.keys(), ep_loads_as_frac_of_overall_capacity.values(), ylabel, ylim, xlabel, show_fig=False)
-            figs.append(fig3)
+                ep_loads_as_frac_of_overall_load[ep] = flowcentric.get_flow_centric_demand_data_ep_load_rate(self.demand.demand_data, index_to_node[ep], eps)
+                ep_loads_as_frac_of_overall_load[ep] /= overall_load_rate
+            ylabel = 'Fraction of Overall Load Requested'
+            plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_load.keys(), ep_loads_as_frac_of_overall_load.values(), ylabel, ylim, xlabel, show_fig=show_fig)
+            figs.append(fig2)
+
+            if ep_link_bandwidth is not None:
+                fig3 = plt.figure()
+                overall_network_capacity = len(eps) * ep_link_bandwidth
+                ep_loads_as_frac_of_overall_capacity = {}
+                for ep in ep_loads.keys():
+                    ep_loads_as_frac_of_overall_capacity[ep] = flowcentric.get_flow_centric_demand_data_ep_load_rate(self.demand.demand_data, index_to_node[ep], eps)
+                    ep_loads_as_frac_of_overall_capacity[ep] /=overall_network_capacity 
+                ylabel = 'Fraction of Overall Capacity Requested'
+                plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_capacity.keys(), ep_loads_as_frac_of_overall_capacity.values(), ylabel, ylim, xlabel, show_fig=False)
+                figs.append(fig3)
 
 
         return figs

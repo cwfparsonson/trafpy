@@ -30,7 +30,7 @@ def gen_benchmark_demands(path_to_save=None,
         if os.path.exists(path_to_save):
             # exists, create new version
             version = 2
-            while os.path.exists(path_to_save+'_v2'):
+            while os.path.exists(path_to_save+'_v{}'.format(version)):
                 version += 1
             path_to_save = path_to_save+'_v{}'.format(version)
         else:
@@ -84,6 +84,7 @@ def gen_benchmark_demands(path_to_save=None,
                                    'disable_timeouts': True}
             # print('\n~~~~~~ network load config ~~~~~~~\n{}'.format(network_load_config))
             for repeat in range(config.NUM_REPEATS):
+                print('Generating demand data for benchmark {} load {} repeat {}...'.format(benchmark, load, repeat))
                 flow_centric_demand_data = create_demand_data(network_load_config=network_load_config,
                                                               eps=eps,
                                                               node_dist=benchmark_dists[benchmark]['node_dist'],
@@ -95,7 +96,7 @@ def gen_benchmark_demands(path_to_save=None,
                                                               auto_node_dist_correction=config.AUTO_NODE_DIST_CORRECTION,
                                                               print_data=False)
                 if separate_files:
-                    print('Saving benchmark {} load {} repeat {}...'.format(benchmark, load, repeat))
+                    print('Saving demand data for benchmark {} load {} repeat {}...'.format(benchmark, load, repeat))
                     # save as benchmark, load, and repeat into separate files
                     file_path = path_to_save + '/benchmark_{}_load_{}_repeat_{}'.format(benchmark, load, repeat)
                     if save_format == 'json':

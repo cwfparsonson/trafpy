@@ -12,4 +12,4 @@ if __name__ == '__main__':
     benchmark_demands = gen_benchmark_demands(path_to_save=path_to_save,
                                               save_format='json', # 'json' 'pickle'
                                               separate_files=True,
-                                              load_prev_dists=True)
+                                              load_prev_dists=False)

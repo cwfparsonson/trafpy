@@ -1,4 +1,4 @@
-from trafpy.generator.src.tools import load_data_from_json, unpickle_data
+from trafpy.generator.src.tools import load_data_from_json, unpickle_data, pickle_data
 from trafpy.generator.src.demand import Demand
 from trafpy.manager.src.simulators.simulators import DCN
 from trafpy.manager.src.simulators.env_analyser import EnvAnalyser
@@ -11,19 +11,29 @@ import pickle
 import sys
 import os
 import tensorflow as tf
+import glob
 tf.keras.backend.clear_session()
 
 
 class TestBed: 
     def __init__(self, path_to_benchmark_data):
-        self.benchmark_data = self.load_benchmark_data(path_to_benchmark_data)
-        self.benchmarks = list(self.benchmark_data.keys())
+        if os.path.isdir(path_to_benchmark_data):
+            # data split into separate files in a directory
+            self.separate_files = True
+            self.benchmarks = glob.glob(path_to_benchmark_data + '/*')
+        else:
+            # all data stored in single file
+            self.separate_files = False
+            self.benchmark_data = self.load_benchmark_data(path_to_benchmark_data)
+            self.benchmarks = list(self.benchmark_data.keys())
+
 
         self.reset()
 
     def reset(self):
         self.envs = multiprocessing.Manager().list()
         self.config = None
+
 
     def load_benchmark_data(self, demand_file_path):
         if demand_file_path[-4:] == 'json':
@@ -37,30 +47,72 @@ class TestBed:
     def run_tests(self, config, path_to_save):
         self.config = config
 
-        # calc how many jobs to run
-        num_benchmark_tests = 0
-        for benchmark in self.benchmarks:
-            for load in self.benchmark_data[benchmark]:
-                for repeat in self.benchmark_data[benchmark][load]:
-                    num_benchmark_tests += 1
-        num_tests = int(len(config['schedulers']))
-        num_jobs = num_benchmark_tests * num_tests
+        if self.separate_files:
+            # must separate files under common folder
+            if os.path.exists(path_to_save):
+                # exists, create new version
+                version = 2
+                while os.path.exists(path_to_save+'_v{}'.format(version)):
+                    version += 1
+                path_to_save = path_to_save+'_v{}'.format(version)
+            else:
+                pass
+            os.mkdir(path_to_save)
+            print('Created directory {} in which to save separate files.'.format(path_to_save))
+        else:
+            # no need to separate files, save under one file path_to_save
+            pass
+
+        # # calc how many jobs to run
+        # num_benchmark_tests = 0
+        # for benchmark in self.benchmarks:
+            # for load in self.benchmark_data[benchmark]:
+                # for repeat in self.benchmark_data[benchmark][load]:
+                    # num_benchmark_tests += 1
+        # num_tests = int(len(config['schedulers']))
+        # num_jobs = num_benchmark_tests * num_tests
 
         jobs = []
         start_time = time.time()
         # _loads = [0.1, 0.2, 0.3, 0.4, 0.5] # DEBUG
-        for benchmark in self.benchmarks:
-            # for load in self.benchmark_data[benchmark]:
-            for load in list(self.benchmark_data[benchmark].keys()):
-                for repeat in self.benchmark_data[benchmark][load]:
-                    for scheduler in config['schedulers']:
-                        # if (json.loads(load) == 0.2 and scheduler.scheduler_name == 'srpt_v2') or (json.loads(load) == 0.2 and scheduler.scheduler_name == 'first_fit'): # DEBUG 
-                        # if json.loads(load) == 0.5 and scheduler.scheduler_name == 'srpt_v2': # DEBUG 
-                        # if json.loads(load) in _loads: # DEBUG
-                        # if json.loads(load) == 0.4: # DEBUG
-                        # if scheduler.scheduler_name != 'random' and scheduler.scheduler_name != 'first_fit' and json.loads(load) == 0.4:
-                        demand_data = self.benchmark_data[benchmark][load][repeat]
-                        demand = Demand(demand_data, config['networks'][0].graph['endpoints'])
+        if not self.separate_files:
+            for benchmark in self.benchmarks:
+                for load in list(self.benchmark_data[benchmark].keys()):
+                    for repeat in self.benchmark_data[benchmark][load]:
+                        for scheduler in config['schedulers']:
+                            if config['loads'] == 'all' or load in config['loads']:
+                                # if (json.loads(load) == 0.2 and scheduler.scheduler_name == 'srpt_v2') or (json.loads(load) == 0.2 and scheduler.scheduler_name == 'first_fit'): # DEBUG 
+                                # if json.loads(load) == 0.5 and scheduler.scheduler_name == 'srpt_v2': # DEBUG 
+                                # if json.loads(load) in _loads: # DEBUG
+                                # if json.loads(load) == 0.4: # DEBUG
+                                # if scheduler.scheduler_name != 'random' and scheduler.scheduler_name != 'first_fit' and json.loads(load) == 0.4:
+                                demand_data = self.benchmark_data[benchmark][load][repeat]
+                                demand = Demand(demand_data, config['networks'][0].graph['endpoints'])
+                                
+                                env = DCN(config['networks'][0], 
+                                          demand, 
+                                          scheduler,
+                                          num_k_paths=config['num_k_paths'],
+                                          slot_size=config['slot_size'],
+                                          sim_name='benchmark_{}_load_{}_repeat_{}_scheduler_{}'.format(benchmark, load, repeat, scheduler.scheduler_name),
+                                          max_flows=config['max_flows'], 
+                                          max_time=config['max_time'])
+
+                                p = multiprocessing.Process(target=self.run_test,
+                                                            args=(scheduler, env, self.envs, path_to_save,))
+                                jobs.append(p)
+                                p.start()
+        else:
+            for benchmark_path in self.benchmarks:
+                for scheduler in config['schedulers']:
+                    load = float(self.conv_str_path_to_kwarg_value(benchmark_path, 'load_'))
+                    benchmark = self.conv_str_path_to_kwarg_value(benchmark_path, 'benchmark_')
+                    repeat = self.conv_str_path_to_kwarg_value(benchmark_path, 'repeat_')
+                    # print(load)
+                    # print(config['loads'])
+                    # print(load in config['loads'])
+                    if config['loads'] == 'all' or load in config['loads']:
+                        demand = Demand(benchmark_path, config['networks'][0].graph['endpoints'])
                         
                         env = DCN(config['networks'][0], 
                                   demand, 
@@ -72,18 +124,47 @@ class TestBed:
                                   max_time=config['max_time'])
 
                         p = multiprocessing.Process(target=self.run_test,
-                                                    args=(scheduler, env, self.envs, path_to_save,))
+                                args=(scheduler, env, self.envs, path_to_save+'/benchmark_{}_load_{}_repeat_{}'.format(benchmark, load, repeat),))
                         jobs.append(p)
                         p.start()
+
         for job in jobs:
             job.join() # only execute below code when all jobs finished
         end_time = time.time()
         total_time = round(end_time-start_time, 2)
-        print('\n{} tests completed in {} seconds.'.format(num_jobs, total_time))
+        # print('\n{} tests completed in {} seconds.'.format(num_jobs, total_time))
+        print('Completed all tests completed in {} seconds.'.format(total_time))
 
         # DEBUG: Don't save if just debugging
-        self.save(path=path_to_save, overwrite=False) # save final testbed state
-
+        if not self.separate_files:
+            # saving all sims as 1 file
+            self.save(path=path_to_save, overwrite=False) # save final testbed state
+        else:
+            # have already saved files separately
+            pass
+    
+    def conv_str_path_to_kwarg_value(self, path, kwarg):
+        '''Takes path string containing kwarg_[kwarg_value]_ and returns kwarg_value as a str.'''
+        starting_index = len(path) - path[::-1].index('/')
+        if kwarg[-1] != '_':
+            # should end in under score
+            kwarg += '_'
+        # print('path: {} | kwarg: {}'.format(path, kwarg))
+        for idx in range(starting_index, len(path)):
+            # print('idx {}'.format(idx))
+            # print(path[idx:idx+len(kwarg)])
+            if path[idx:idx+len(kwarg)] == kwarg:
+                i = idx+len(kwarg)
+                l = ''
+                c = path[idx+len(kwarg)]
+                while c != '_' and path[idx+len(kwarg)+1:] != '.json':
+                    l += c
+                    # print('l: {}'.format(l))
+                    i += 1
+                    c = path[i]
+                return l
+            else:
+                pass
 
     def run_test(self, scheduler, env, envs, path_to_save):
         printed_percents = [0]
@@ -114,7 +195,12 @@ class TestBed:
                                          measurement_start_time='auto',
                                          measurement_end_time='auto')
                 try:
-                    envs.append(env) # store env
+                    if self.separate_files:
+                        # saving each run separately
+                        pickle_data(path_to_save+'/{}'.format(), env.sim_name, overwrite=False, zip_data=True, print_times=False)
+                    else:
+                        # saving all in one file
+                        envs.append(env) # store env
                 except EOFError:
                     print('Memory error appending env to list. See https://stackoverflow.com/questions/57370803/multiprocessing-pool-manager-namespace-eof-error for example. Allocate more system memory or reduce size of TestBed experiment.')
                     sys.exit()
@@ -124,7 +210,7 @@ class TestBed:
     def save(self, path, overwrite=False, conv_back_to_mp_manager_list=False):
         start = time.time()
         self.envs = list(self.envs) # conv to list so is picklable
-        filename = path + '/' + self.config['test_name'] + '.obj'
+        filename = path + '.obj'
 
         if overwrite:
             # overwrite prev saved file
@@ -134,7 +220,7 @@ class TestBed:
             v = 2
             
             while os.path.exists(str(filename)):
-                filename = path + '/' + self.config['test_name'] + '_v{}'.format(v) + '.obj'
+                filename = path + '_v{}'.format(v) + '.obj'
                 v += 1
         filehandler = open(filename, 'wb')
         pickle.dump(dict(self.__dict__), filehandler)
@@ -176,20 +262,18 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        DATA_NAME = 'social_media_cloud_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
-        # DATA_NAME = 'private_enterprise_chancap500_numchans1_mldat2e6_bidirectional'
-        # DATA_NAME = 'social_media_cloud_chancap500_numchans1_mldat2e6_bidirectional'
-        # DATA_NAME = 'artificial_light_chancap10_numchans1_mldatNone_bidirectional'
+        # DATA_NAME = 'social_media_cloud_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
+        DATA_NAME = 'university_k_4_L_2_n_4_chancap3125_numchans1_mldat2e6_bidirectional'
 
         # benchmark data
-        # path_to_benchmark_data = os.path.dirname(trafpy.__file__)+'/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data.json'.format(DATA_NAME)
-        path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data.json'.format(DATA_NAME)
-        # path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data.pickle'.format(DATA_NAME)
+        # path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data.json'.format(DATA_NAME)
+        path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data'.format(DATA_NAME)
+        LOADS = [0.1, 0.2] # 'all'
         tb = TestBed(path_to_benchmark_data)
 
         # dcn
-        # MAX_TIME = None # None
-        MAX_TIME = 'last_demand_arrival_time'
+        MAX_TIME = 1e4 # None
+        # MAX_TIME = 'last_demand_arrival_time'
         MAX_FLOWS = 50 # 10 50 100 500
 
         # networks
@@ -247,7 +331,7 @@ if __name__ == '__main__':
 
 
 
-        test_config = {'test_name': '{}_testbed_data'.format(DATA_NAME),
+        test_config = {'loads': LOADS,
                        'num_k_paths': NUM_K_PATHS,
                        'max_time': MAX_TIME,
                        'max_flows': MAX_FLOWS,
@@ -259,7 +343,7 @@ if __name__ == '__main__':
 
         tb.reset()
         # tb.run_tests(test_config, path_to_save = os.path.dirname(trafpy.__file__)+'/scratch/datasets/trafpy/management/flowcentric/')
-        tb.run_tests(test_config, path_to_save = '/scratch/datasets/trafpy/management/flowcentric/')
+        tb.run_tests(test_config, path_to_save = '/scratch/datasets/trafpy/management/flowcentric/{}_testbed_data'.format(DATA_NAME))
 
         
 
