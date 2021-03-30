@@ -2,11 +2,14 @@ from trafpy.benchmarker import config
 from trafpy.generator.src.builder import create_demand_data
 from trafpy.generator.src.tools import save_data_as_json, save_data_as_csv, pickle_data
 from trafpy.benchmarker.versions.benchmark_importer import BenchmarkImporter
+from trafpy.generator.src.demand import Demand
 
 import numpy as np
 import time
 import os
 from collections import defaultdict # use for initialising arbitrary length nested dict
+from sqlitedict import SqliteDict
+import json
 
 
 
@@ -20,6 +23,10 @@ def gen_benchmark_demands(path_to_save=None,
     If separate_files, will save each load, repeat and, and benchmark to separate
     files in a common folder. This can help with memory since not storing everything
     in one large file.
+
+    If slot size is not None, will also generate an sqlite database for the slots_dict
+    dictionary. This is useful if later during simulations want to have pre-computed
+    slots_dict rather than computing & storing them in memory.
 
     '''
     if path_to_save[-1] == '/' or path_to_save[-1] == '\\':
@@ -113,6 +120,24 @@ def gen_benchmark_demands(path_to_save=None,
                 else:
                     # saving all benchmarks, loads and repeats into one file
                     benchmark_demands[benchmark][load][repeat] = flow_centric_demand_data
+
+                if config.SLOT_SIZE is not None:
+                    # generate slots dict and save as database
+                    print('Creating slots_dict database with slot_size {}...'.format(config.SLOT_SIZE))
+                    s = time.time()
+                    demand = Demand(flow_centric_demand_data, eps=eps)
+                    with SqliteDict(file_path+'_slotsize_{}_slots_dict.sqlite'.format(config.SLOT_SIZE)) as slots_dict:
+                        for key, val in demand.get_slots_dict(slot_size=config.SLOT_SIZE).items():
+                            if type(key) is not str:
+                                slots_dict[json.dumps(key)] = val
+                            else:
+                                slots_dict[key] = val
+                        slots_dict.commit()
+                        slots_dict.close()
+                    e = time.time()
+                    print('Created slots_dict database in {} s'.format(e-s))
+                else:
+                    pass
 
             end_load = time.time()
             print('Generated \'{}\' demands for load {} of {} in {} seconds.'.format(benchmark, load_counter, num_loads, end_load-start_load))

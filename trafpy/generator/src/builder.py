@@ -21,6 +21,7 @@ def create_demand_data(eps,
                        check_dont_exceed_one_ep_load=True,
                        min_last_demand_arrival_time=None,
                        auto_node_dist_correction=False,
+                       bidirectional_links=True,
                        num_ops_dist=None,
                        c=None,
                        use_multiprocessing=True,
@@ -117,6 +118,7 @@ def create_demand_data(eps,
                                           max_num_demands=max_num_demands,
                                           jensen_shannon_distance_threshold=jensen_shannon_distance_threshold,
                                           min_last_demand_arrival_time=min_last_demand_arrival_time,
+                                          bidirectional_links=bidirectional_links,
                                           auto_node_dist_correction=auto_node_dist_correction,
                                           check_dont_exceed_one_ep_load=check_dont_exceed_one_ep_load,
                                           print_data=print_data) 
@@ -405,12 +407,44 @@ def construct_demand_slots_dict(demand_data,
         print('\nNotice: In simulation, the scheduler makes a decision at every time slot. Therefore the more time slots there are, the more processing overhead there is, and therefore the longer the simulation will take. If many of your slot sizes are redundant (i.e. no new flow information is arriving), it is advisable to increase the slot size -> decrease the number of slots -> decrease the number steps in the simulation -> decrease the simulation time. Conversely, if you have a high number of demands arriving per time slot, your scheduler will have a lower resolution to process the flows which can lead to poorer performance and more flows being perhaps unnecesserily dropped from your network. As a rule of thumb, having an average number of flows arriving per time slot of less than 1 is not needed.')
 
 
-
+    # init general slot dict params which are useful for simulations
+    keys = list(slot_dict.keys())
+    slot_dict['slot_keys'] = keys
+    slot_dict['slot_size'] = slot_size
+    slot_dict['time_first_demand_arrived'] = session_start_time
+    slot_dict['time_last_demand_arrived'] = session_end_time
+    slot_dict['job_centric'] = job_centric
+    slot_dict['num_control_deps'], slot_dict['num_data_deps'], slot_dict['num_flows'] = get_num_deps(demand_data, job_centric)
+    slot_dict['num_demands'] = len(demand_data['flow_id'])
 
     
     return slot_dict
 
 
+def get_num_deps(demand_data, job_centric):
+    num_control_deps,num_data_deps,num_flows = 0, 0, 0
+
+    if job_centric:
+        # calc deps
+        for job in demand_data['job']:
+            for op in job.nodes:
+                flows = job.out_edges(op)
+                for flow in flows:
+                    flow_stats = job.get_edge_data(flow[0],flow[1])
+                    src = job.nodes[flow[0]]['attr_dict']['machine']
+                    dst = job.nodes[flow[1]]['attr_dict']['machine']
+                    if flow_stats['attr_dict']['dependency_type'] == 'data_dep':
+                        num_data_deps+=1
+                        if src != dst:
+                            num_flows+=1
+                    else:
+                        num_control_deps+=1
+
+    else:
+        # 1 demand == 1 flow, therefore no dependencies & each demand == flow
+        num_flows = len(demand_data['flow_id'])
+    
+    return num_control_deps, num_data_deps, num_flows
 
 
 

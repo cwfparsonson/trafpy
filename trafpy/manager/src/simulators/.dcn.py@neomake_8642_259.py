@@ -901,6 +901,7 @@ class DCN(gym.Env):
                         # already recorded time of arrival
                         pass
                     self.arrived_flows[arrival_id] = 'present'
+                    self.num_arrived_flows += 1
                     if self.tmp_database_path is not None:
                         with SqliteDict(self.arrived_flow_dicts) as arrived_flow_dicts:
                             arrived_flow_dicts[flow_dict['flow_id']] = flow_dict

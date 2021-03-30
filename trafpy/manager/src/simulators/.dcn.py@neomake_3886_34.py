@@ -1,6 +1,5 @@
 from trafpy.generator.src import networks
 from trafpy.generator.src import tools
-from trafpy.generator.src.demand import Demand
 
 import gym
 import tensorflow as tf
@@ -31,9 +30,10 @@ class DCN(gym.Env):
 
     def __init__(self, 
                  Network, 
-                 slots_dict,
+                 Demand, 
                  Scheduler,
                  num_k_paths,
+                 slot_size, 
                  tmp_database_path=None,
                  sim_name='dcn_sim',
                  max_flows=None, 
@@ -53,9 +53,6 @@ class DCN(gym.Env):
         no time multiplexing of flows occurs and therefore can only schedule
         one flow per channel.
 
-        slots_dict can either be a slots_dict dictionary, or a str path to a
-        pre-defined slots_dict database.
-
         To reduce memory usage, set tracking grid slot & queue length evolution
         to False
 
@@ -64,18 +61,16 @@ class DCN(gym.Env):
         dict. N.B. This process takes a long time (on the order of seconds) and
         will therefore greatly increase simulation time.
 
-        max_time -> time at which to terminate simulation. If None, will run
-        simulation untill all flows have both arrived and been completed. If
-        'last_demand_arrival_time', will terminate when last demand arrives.
+        If max_time == 'last_demand_arrival_time', will terminate simulation when
+        last flow in demand arrives. Otherwise, leave as None to only terminate
+        simulation after all flows compeleted, or set as int or float to specify
+        specific simulation termination time.
 
         If profile_memory, will print out summary of memory usage change compared to previous print 
         every memory_profile_resolution % periods of the
         total simulation time as defined by max_time. E.g. if memory_profile_resolution=10,
         will profile memory usage every 10% of max_time.
         '''
-        self.sim_name = sim_name 
-        print('\nInitialising simulation \'{}\'...'.format(self.sim_name))
-
         self.profile_memory = profile_memory
         self.memory_profile_resolution = memory_profile_resolution
 
@@ -99,86 +94,19 @@ class DCN(gym.Env):
             os.mkdir(tmp_database_path)
         self.tmp_database_path = tmp_database_path
 
-        # init slots dict
-        self.slots_dict = slots_dict
-        if self.tmp_database_path is not None:
-            # create slots dict database
-            _slots_dict = self.tmp_database_path + '/slots_dict.sqlite'
-            print('Establishing {} slots_dict tmp database...'.format(self.sim_name))
-            start = time.time()
-            if type(self.slots_dict) is str:
-                # slots dict database already created, copy database over to tmp database dir and rename
-                shutil.copyfile(self.slots_dict, _slots_dict)
-                with SqliteDict(self.slots_dict) as slots_dict:
-                    self.slot_size = slots_dict['slot_size']
-                    self.job_centric = slots_dict['job_centric']
-                    self.num_demands = slots_dict['num_demands']
-                    self.num_flows = slots_dict['num_flows']
-                    slots_dict.close()
-            else:
-                # no slots_dict database path given, only given slots_dict in memory
-                # create slots_dict database
-                with SqliteDict(self.slots_dict) as slots_dict:
-                    for key, val in slots_dict.items():
-                        if type(key) is not str:
-                            slots_dict[json.dumps(key)] = val
-                        else:
-                            slots_dict[key] = val
-                    self.check_if_pairs_valid(slots_dict)
-                    self.slot_size = slots_dict['slot_size']
-                    self.job_centric = slots_dict['job_centric']
-                    self.num_demands = slots_dict['num_demands']
-                    self.num_flows = slots_dict['num_flows']
-                    slots_dict.commit()
-                    slots_dict.close()
-            self.slots_dict = _slots_dict # update path to new slots_dict database path
-            end = time.time()
-            print('Established {} slots_dict tmp database in {} s.'.format(self.sim_name, end-start))
-        else:
-            # read into memory
-            if type(self.slots_dict) is str:
-                # slots_dict is database, read into memory
-                with SqliteDict(self.slots_dict) as slots_dict:
-                    for key, val in slots_dict.items():
-                        if type(key) is not str:
-                            slots_dict[json.dumps(key)] = val
-                        else:
-                            slots_dict[key] = val
-                    self.check_if_pairs_valid(slots_dict)
-                    self.slot_size = slots_dict['slot_size']
-                    self.job_centric = slots_dict['job_centric']
-                    self.num_demands = slots_dict['num_demands']
-                    self.num_flows = slots_dict['num_flows']
-                    slots_dict.commit()
-                    slots_dict.close()
-                # read into memory
-                self.slots_dict = slots_dict
-            else:
-                # slots_dict already read into memory
-                self.check_if_pairs_valid(self.slots_dict)
-                self.slot_size = self.slots_dict['slot_size']
-                self.job_centric = self.slots_dict['job_centric']
-                self.num_demands = self.slots_dict['num_demands']
-                self.num_flows = slots_dict['num_flows']
-            self.check_if_pairs_valid(self.slots_dict)
-            self.slot_size = self.slots_dict['slot_size']
-        if type(self.slot_size) is not float:
-            raise Exception('slot_size must be float (e.g. 1.0), but is {}'.format(self.slot_size))
-
         # initialise DCN environment characteristics
         self.network = Network
+        self.demand = Demand
         self.scheduler = Scheduler
+        self.slot_size = slot_size
+        if type(slot_size) is not float:
+            raise Exception('slot_size must be float (e.g. 1.0), but is {}'.format(slot_size))
         self.num_k_paths = num_k_paths
+        self.sim_name = sim_name 
         self.max_flows = max_flows # max number of flows per queue
         self.max_time = max_time
         if self.max_time == 'last_demand_arrival_time':
-            if self.tmp_database_path is not None:
-                with SqliteDict(self.slots_dict) as slots_dict:
-                    self.max_time = slots_dict['time_last_demand_arrived']
-                slots_dict.close()
-            else:
-                self.max_time = self.slots_dict['time_last_demand_arrived']
-
+            self.max_time = max(self.demand.demand_data['event_time'])
         
         self.time_multiplexing = time_multiplexing
         self.track_grid_slot_evolution = track_grid_slot_evolution
@@ -215,18 +143,40 @@ class DCN(gym.Env):
             self.observation_space = gym.spaces.Dict({'avail_actions': network_representation_space,
                                                       'machine_readable_network': network_representation_space})
 
-        print('Initialised simulation {}.'.format(self.sim_name))
 
-
-    def reset(self, return_obs=True):
+    def reset(self, pickled_demand_path=None, return_obs=True):
         '''
         Resets DCN simulation environment
         '''
-        print('Resetting simulation \'{}\'...'.format(self.sim_name))
+        print('Resetting simulation \'{}\''.format(self.sim_name))
 
         self.curr_step = 0
         self.curr_time = 0
 
+        if pickled_demand_path is not None:
+            # load a previously saved demand object
+            filehandler = open(pickled_demand_path, 'rb')
+            self.demand = pickle.load(filehandler)
+
+
+        if self.tmp_database_path is not None:
+            # create slots dict database
+            # SQLITE
+            self.slots_dict = self.tmp_database_path + '/slots_dict.sqlite'
+            print('Generating slots_dict tmp database...')
+            start = time.time()
+            with SqliteDict(self.slots_dict) as slots_dict:
+                for key, val in self.demand.get_slots_dict(self.slot_size).items():
+                    slots_dict[json.dumps(key)] = val
+                self.check_if_pairs_valid(slots_dict)
+                slots_dict.commit()
+                slots_dict.close()
+            end = time.time()
+            print('Generated {} tmp database in {} s.'.format(self.slots_dict, end-start))
+        else:
+            # read into memory
+            self.slots_dict = self.demand.get_slots_dict(self.slot_size)
+            self.check_if_pairs_valid(self.slots_dict)
 
         self.num_endpoints = int(len(self.network.graph['endpoints']))
 
@@ -236,7 +186,7 @@ class DCN(gym.Env):
         self.action = {'chosen_flows': []} # init
 
 
-        if self.job_centric:
+        if self.demand.job_centric:
             self.network.graph['queued_jobs'] = [] # init list of curr queued jobs in network
             self.arrived_jobs = {} # use dict so can hash to make searching faster
             self.arrived_job_dicts = []
@@ -247,32 +197,11 @@ class DCN(gym.Env):
             self.running_ops = {}
         else:
             pass
-
-
-        if self.tmp_database_path is not None:
-            # create databases
-            self.arrived_flow_dicts = self.tmp_database_path + '/arrived_flow_dicts.sqlite'
-            with SqliteDict(self.arrived_flow_dicts) as arrived_flow_dicts:
-                arrived_flow_dicts.commit()
-                arrived_flow_dicts.close()
-            self.completed_flow_dicts = self.tmp_database_path + '/completed_flow_dicts.sqlite'
-            with SqliteDict(self.completed_flow_dicts) as completed_flow_dicts:
-                completed_flow_dicts.commit()
-                completed_flow_dicts.close()
-            self.dropped_flow_dicts = self.tmp_database_path + '/dropped_flow_dicts.sqlite'
-            with SqliteDict(self.dropped_flow_dicts) as dropped_flow_dicts:
-                dropped_flow_dicts.commit()
-                dropped_flow_dicts.close()
-        else:
-            # use local memory
-            self.arrived_flow_dicts = {}
-            self.completed_flow_dicts = {}
-            self.dropped_flow_dicts = {}
-        self.arrived_flows = {}
         self.connected_flows = []
-        self.num_arrived_flows = 0
-        self.num_completed_flows = 0
-        self.num_dropped_flows = 0
+        self.arrived_flows = {}
+        self.arrived_flow_dicts = [] # use for calculating throughput at end
+        self.completed_flows = []
+        self.dropped_flows = []
 
 
         self.network = self.init_virtual_queues(self.network)
@@ -305,7 +234,6 @@ class DCN(gym.Env):
                 # read into memory
                 self.link_concurrent_demands_dict = self.init_link_concurrent_demands_dict(self.network)
 
-        print('Reset simulation {}.'.format(self.sim_name))
         
 
 
@@ -325,10 +253,10 @@ class DCN(gym.Env):
         of the slots dict to try to catch this error before the simulation is
         ran.
         '''
-        key = list(slots_dict['slot_keys'])[0]
+        key = list(slots_dict.keys())[0]
         slot = slots_dict[key]
         for event in slot['new_event_dicts']:
-            if self.job_centric:
+            if self.demand.job_centric:
                 for f in event['flow_dicts']:
                     if f['src'] not in self.network.nodes or f['dst'] not in self.network.nodes:
                         sys.exit('ERROR: Demand src-dst pair names (e.g. {}-{}) different from \
@@ -608,15 +536,8 @@ class DCN(gym.Env):
             self.network.nodes[src][dst]['completion_times'].append(None)
         else:
             # no space in queue, must drop flow
-            if self.tmp_database_path is not None:
-                with SqliteDict(self.dropped_flow_dicts) as dropped_flow_dicts:
-                    dropped_flow_dicts[flow_dict['flow_id']] = flow_dict
-                    dropped_flow_dicts.commit()
-                    dropped_flow_dicts.close()
-            else:
-                self.dropped_flow_dicts[flow_dict['flow_id']] = flow_dict
-            self.num_dropped_flows += 1
-            if self.job_centric:
+            self.dropped_flows.append(flow_dict)
+            if self.demand.job_centric:
                 for job_dict in self.network.graph['queued_jobs']:
                     if job_dict['job_id'] == flow_dict['job_id']:
                         # drop job
@@ -790,7 +711,7 @@ class DCN(gym.Env):
                     # event is a take down event, don't need to consider
                     pass
                 elif event_dict['establish'] == 1:
-                    if self.job_centric:
+                    if self.demand.job_centric:
                         self.add_job_to_queue(event_dict, print_times=False)
                     else:
                         self.add_flow_to_queue(event_dict)
@@ -844,14 +765,7 @@ class DCN(gym.Env):
         flow_dict['time_completed'] = copy.copy(self.curr_time)
         if flow_dict['size'] != 0 and flow_dict['src'] != flow_dict['dst']:
             # flow was an actual flow
-            if self.tmp_database_path is not None:
-                with SqliteDict(self.completed_flow_dicts) as completed_flow_dicts:
-                    completed_flow_dicts[flow_dict['flow_id']] = flow_dict
-                    completed_flow_dicts.commit()
-                    completed_flow_dicts.close()
-            else:
-                self.completed_flow_dicts[flow_dict['flow_id']] = flow_dict
-            self.num_completed_flows += 1
+            self.completed_flows.append(flow_dict)
         else:
             # 'flow' never actually became a flow (src == dst or control dependency)
             pass
@@ -872,7 +786,7 @@ class DCN(gym.Env):
             print('Time to remove flow from global queue: {}'.format(end-start))
         
         start = time.time()
-        if self.job_centric:
+        if self.demand.job_centric:
             # make any necessary job completion & job dependency changes
             self.update_completed_flow_job(f)
         end = time.time()
@@ -884,7 +798,7 @@ class DCN(gym.Env):
         # register
         if flow_dict['can_schedule'] == 1:
             # flow is ready to be scheduled therefore can count as arrived
-            if self.job_centric:
+            if self.demand.job_centric:
                 arrival_id = flow_dict['job_id']+'_'+flow_dict['flow_id']
             else:
                 arrival_id = flow_dict['flow_id']
@@ -901,21 +815,13 @@ class DCN(gym.Env):
                         # already recorded time of arrival
                         pass
                     self.arrived_flows[arrival_id] = 'present'
-                    if self.tmp_database_path is not None:
-                        with SqliteDict(self.arrived_flow_dicts) as arrived_flow_dicts:
-                            arrived_flow_dicts[flow_dict['flow_id']] = flow_dict
-                            arrived_flow_dicts.commit()
-                            arrived_flow_dicts.close()
-                    else:
-                        self.arrived_flow_dicts[flow_dict['flow_id']] = flow_dict
-                    self.num_arrived_flows += 1
+                    self.arrived_flow_dicts.append(flow_dict)
                 else:
                     # 'flow' never actually becomes flow (is ctrl dependency or src==dst)
                     pass
         else:
             # can't yet schedule therefore don't count as arrived
             pass
-
         
     def get_max_flow_info_transferred_per_slot(self, flow_dict):
         '''
@@ -1018,7 +924,7 @@ class DCN(gym.Env):
                 self.update_curr_time(observation['slot_dict'])
         
         # update any dependencies of running ops
-        if self.job_centric:
+        if self.demand.job_centric:
             observation = self.update_running_op_dependencies(observation)
 
         if self.gen_machine_readable_network:
@@ -1092,7 +998,7 @@ class DCN(gym.Env):
             y_offset = -appended_node_y_spacing
             for ep_queue in ep_queues.values():
                 for flow in ep_queue['queued_flows']:
-                    if self.job_centric:
+                    if self.demand.job_centric:
                         f_id = str(flow['job_id']+'_'+flow['flow_id'])
                     else:
                         f_id = str(flow['flow_id'])
@@ -1102,7 +1008,7 @@ class DCN(gym.Env):
                     pos[f_id] = (list(pos[flow['src']])[0]+appended_node_x_spacing, list(pos[flow['src']])[1]+y_offset)
                     y_offset-=appended_node_y_spacing
 
-        if self.job_centric:
+        if self.demand.job_centric:
             for ep in eps:
                 y_offset = -appended_node_y_spacing
                 for op in self.running_ops.keys():
@@ -1166,7 +1072,7 @@ class DCN(gym.Env):
                                    style='dashed',
                                    label='Queue link')
 
-        if draw_ops and self.job_centric:
+        if draw_ops and self.demand.job_centric:
             # ops
             nx.draw_networkx_nodes(network, 
                                    pos, 
@@ -1523,6 +1429,14 @@ class DCN(gym.Env):
                 self.take_down_connection(prev_chosen_flow)
         self.time_takedown_flows_end = time.time()
 
+        #self.update_completed_flows(chosen_flows) 
+        # self.time_update_completed_flows_start = time.time()
+        # for flow in chosen_flows:
+            # self.update_flow_packets(flow) # NOW DONE IN SET_UP_FLOW()
+        # self.time_update_completed_flows_end = time.time()
+        
+        
+        #self.update_completed_flows(chosen_flows) 
 
 
         # all chosen flows established and any removed flows taken down
@@ -1702,7 +1616,7 @@ class DCN(gym.Env):
                # # print(c)
            # # else:
                # # pass
-        # print('Time: {} Step: {} | Sim flows: {} | Flows arrived: {} | Flows completed: {} | Flows dropped: {}'.format(self.curr_time, self.curr_step, self.num_flows, self.num_arrived_flows, self.num_completed_flows, self.num_dropped_flows)) 
+        # print('Time: {} Step: {} | Sim flows: {} | Flows arrived: {} | Flows completed: {} | Flows dropped: {}'.format(self.curr_time, self.curr_step, self.demand.num_flows, len(self.arrived_flow_dicts), len(self.completed_flows), len(self.dropped_flows))) 
 
         return obs, reward, done, info
   
@@ -1779,7 +1693,7 @@ class DCN(gym.Env):
     
 
     def check_if_any_flows_arrived(self):
-        if self.num_arrived_flows == 0:
+        if len(self.arrived_flows.keys()) == 0:
             sys.exit('Scheduling session ended, but no flows were recorded as \
                     having arrived. Consider whether the demand data you gave \
                     to the simulator actually contains non-zero sized messages \
@@ -1794,25 +1708,25 @@ class DCN(gym.Env):
         been completed &/or dropped
         '''
         if self.max_time is None:
-            if self.job_centric:
-                if (len(self.arrived_jobs.keys()) != len(self.completed_jobs) and len(self.arrived_jobs.keys()) != 0 and self.num_demands != len(self.dropped_jobs)+len(self.completed_jobs)) or len(self.arrived_jobs.keys()) != self.num_demands:
+            if self.demand.job_centric:
+                if (len(self.arrived_jobs.keys()) != len(self.completed_jobs) and len(self.arrived_jobs.keys()) != 0 and self.demand.num_demands != len(self.dropped_jobs)+len(self.completed_jobs)) or len(self.arrived_jobs.keys()) != self.demand.num_demands:
                     return False
                 else:
                     self.check_if_any_flows_arrived()
                     return True
             else:
-                if (self.num_arrived_flows != self.num_completed_flows and self.num_arrived_flows != 0 and self.num_demands != self.num_dropped_flows+self.num_completed_flows) or self.num_arrived_flows != self.num_demands:
+                if (len(self.arrived_flows.keys()) != len(self.completed_flows) and len(self.arrived_flows.keys()) != 0 and self.demand.num_demands != len(self.dropped_flows)+len(self.completed_flows)) or len(self.arrived_flows.keys()) != self.demand.num_demands:
                     return False
                 else:
                     self.check_if_any_flows_arrived()
                     return True
 
         else:
-            if self.job_centric:
+            if self.demand.job_centric:
                 if self.curr_time >= self.max_time:
                     self.check_if_any_flows_arrived()
                     return True
-                elif (len(self.arrived_jobs.keys()) != len(self.completed_jobs) and len(self.arrived_jobs.keys()) != 0 and self.num_demands != len(self.dropped_jobs)+len(self.completed_jobs)) or len(self.arrived_jobs.keys()) != self.num_demands:
+                elif (len(self.arrived_jobs.keys()) != len(self.completed_jobs) and len(self.arrived_jobs.keys()) != 0 and self.demand.num_demands != len(self.dropped_jobs)+len(self.completed_jobs)) or len(self.arrived_jobs.keys()) != self.demand.num_demands:
                     return False
                 else:
                     self.check_if_any_flows_arrived()
@@ -1821,7 +1735,7 @@ class DCN(gym.Env):
                 if self.curr_time >= self.max_time:
                     self.check_if_any_flows_arrived()
                     return True
-                elif (self.num_arrived_flows != self.num_completed_flows and self.num_arrived_flows != 0 and self.num_demands != self.num_dropped_flows+self.num_completed_flows) or self.num_arrived_flows != self.num_demands:
+                elif (len(self.arrived_flows.keys()) != len(self.completed_flows) and len(self.arrived_flows.keys()) != 0 and self.demand.num_demands != len(self.dropped_flows)+len(self.completed_flows)) or len(self.arrived_flows.keys()) != self.demand.num_demands:
                     return False
                 else:
                     self.check_if_any_flows_arrived()
@@ -2156,7 +2070,7 @@ class DCN(gym.Env):
         '''
         start = time.time()
         if name is None:
-            name = 'sim_jobcentric_{}'.format(str(self.num_demands), str(self.job_centric))
+            name = 'sim_jobcentric_{}'.format(str(self.demand.num_demands), str(self.demand.job_centric))
         else:
             # name already given
             pass

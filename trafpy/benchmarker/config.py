@@ -33,6 +33,10 @@ NUM_REPEATS = 1
 # define whether or not to auto correct invalid node distribution(s)
 AUTO_NODE_DIST_CORRECTION = True
 
+# slot size (if None, won't generate slots_dict database)
+# SLOT_SIZE = None 
+SLOT_SIZE = 50.0
+
 
 
 
@@ -91,7 +95,15 @@ BENCHMARKS = ['university']
 # NETS = {'university': gen_fat_tree(k=4, L=2, n=4, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 # NETS = {'university': gen_fat_tree(k=4, L=2, n=2, num_channels=1, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 # NETS = {'university': gen_arbitrary_network(ep_label=None, num_eps=64, num_channels=1, server_to_rack_channel_capacity=25000)} # PULSE
-NETS = {'university': gen_fat_tree(k=4, L=2, n=4, num_channels=1, server_to_rack_channel_capacity=3125, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
+NETS = {'university': gen_fat_tree(k=10, 
+                                   L=2, 
+                                   n=16, 
+                                   num_channels=1, 
+                                   server_to_rack_channel_capacity=3125, 
+                                   rack_to_edge_channel_capacity=1000, 
+                                   edge_to_agg_channel_capacity=1000, 
+                                   agg_to_core_channel_capacity=2000, 
+                                   bidirectional_links=True)} # small network for quick benchmarking (10 Gbps == 1250 bytes/us)
 
 # define network capacity for each benchmark
 NETWORK_CAPACITIES = {'university': NETS['university'].graph['max_nw_capacity']}

@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import sigfig
 from IPython.display import display
+from sqlitedict import SqliteDict
 
 
 class EnvPlotter:
@@ -836,7 +837,12 @@ class EnvsPlotter:
                 raise Exception('Must set track_link_utilisation_evolution=True when instantiating env simulation in order to plot link utilisation.')
             self._check_analyser_valid(analyser)
 
-            for link in analyser.env.link_utilisation_dict.keys():
+            if type(analyser.env.link_utilisation_dict) is str:
+                # link_utilisation_dict is in database
+                link_utilisation_dict = SqliteDict(analyser.env.link_utilisation_dict)
+            else:
+                link_utilisation_dict = analyser.env.link_utilisation_dict
+            for link in link_utilisation_dict.keys():
                 # assume node labels have format of edge type followed by underscore and int e.g. 'server_1', 'core_3' etc
                 node1, node2 = json.loads(link)[0], json.loads(link)[1]
                 idx1, idx2 = self.find_index_of_int_in_str(node1), self.find_index_of_int_in_str(node2)
@@ -852,8 +858,8 @@ class EnvsPlotter:
                 if flip_link: 
                     link_type = link_type[::-1]
 
-                time_slots = analyser.env.link_utilisation_dict[link]['time_slots']
-                util = analyser.env.link_utilisation_dict[link]['util']
+                time_slots = link_utilisation_dict[link]['time_slots']
+                util = link_utilisation_dict[link]['util']
 
                 # average every n elements (time slots) in lists to smooth line plot
                 n = kwargs['mean_period']
@@ -918,7 +924,12 @@ class EnvsPlotter:
                 raise Exception('Must set track_link_concurrent_demands_evolution=True when instantiating env simulation in order to plot number of concurrent demands.')
             self._check_analyser_valid(analyser)
 
-            for link in analyser.env.link_concurrent_demands_dict.keys():
+            if type(analyser.env.link_concurrent_demands_dict) is str:
+                # link_utilisation_dict is in database
+                link_concurrent_demands_dict = SqliteDict(analyser.env.link_concurrent_demands_dict)
+            else:
+                link_concurrent_demands_dict = analyser.env.link_concurrent_demands_dict
+            for link in link_concurrent_demands_dict.keys():
                 # assume node labels have format of edge type followed by underscore and int e.g. 'server_1', 'core_3' etc
                 node1, node2 = json.loads(link)[0], json.loads(link)[1]
                 idx1, idx2 = self.find_index_of_int_in_str(node1), self.find_index_of_int_in_str(node2)
@@ -932,8 +943,8 @@ class EnvsPlotter:
                 if flip_link:
                     link_type = link_type[::-1]
 
-                time_slots = analyser.env.link_concurrent_demands_dict[link]['time_slots']
-                concurrent_demands = analyser.env.link_concurrent_demands_dict[link]['concurrent_demands']
+                time_slots = link_concurrent_demands_dict[link]['time_slots']
+                concurrent_demands = link_concurrent_demands_dict[link]['concurrent_demands']
 
                 # average every n elements (time slots) in lists
                 n = kwargs['mean_period']
@@ -994,7 +1005,7 @@ class EnvsPlotter:
             self._check_analyser_valid(analyser)
             flow_completion_times = []
             flow_sizes = []
-            for flow in analyser.completed_flow_dicts:
+            for flow in analyser.completed_flow_dicts.values():
                 flow_completion_times.append(flow['time_completed'] - flow['time_arrived'])
                 flow_sizes.append(flow['size'])
             plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = flow_sizes

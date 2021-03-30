@@ -54,14 +54,14 @@ class TestBed:
             # must separate files under common folder
             if os.path.exists(path_to_save):
                 if not overwrite:
-                    # exists, do not overwrite, create new version
+                    # exists, create new version
                     version = 2
                     while os.path.exists(path_to_save+'_v{}'.format(version)):
                         version += 1
                     path_to_save = path_to_save+'_v{}'.format(version)
                     os.mkdir(path_to_save)
                 else:
-                    # overwrite
+                    # do not overwrite
                     pass
             else:
                 # directory doesn't exist, must make
@@ -201,7 +201,7 @@ class TestBed:
             observation, reward, done, info = env.step(action, print_memory_usage=False, print_processing_time=False)
 
             # print progress
-            flows_arrived, flows_processed = env.num_arrived_flows, env.num_completed_flows+env.num_dropped_flows
+            flows_arrived, flows_processed = len(env.arrived_flow_dicts), len(env.completed_flows)+len(env.dropped_flows)
             percent_demands_processed = round(100*(flows_processed/env.num_demands), 0)
             if round(percent_demands_processed % 5, 2) == 0: # % 10
                 if percent_demands_processed not in printed_percents:
@@ -297,13 +297,11 @@ if __name__ == '__main__':
         # path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data.json'.format(DATA_NAME)
         path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data'.format(DATA_NAME)
         # LOADS = 'all' # 'all' [0.1, 0.2]
-        # LOADS = [0.1, 0.2, 0.3, 0.4, 0.5]
-        LOADS = [0.6, 0.7, 0.8, 0.9]
-        # LOADS = [0.1, 0.2]
+        LOADS = [0.1, 0.2, 0.3, 0.4, 0.5]
         tb = TestBed(path_to_benchmark_data)
 
         # dcn
-        # MAX_TIME = 1e4 # None
+        # MAX_TIME = 1e5 # None
         MAX_TIME = 'last_demand_arrival_time'
         MAX_FLOWS = 50 # 10 50 100 500
 
@@ -374,8 +372,8 @@ if __name__ == '__main__':
 
         tb.reset()
         tb.run_tests(test_config, 
-                path_to_save='/scratch/datasets/trafpy/management/flowcentric/{}_testbed_data_v2'.format(DATA_NAME),
-                     overwrite=True)
+                     path_to_save='/scratch/datasets/trafpy/management/flowcentric/{}_testbed_data'.format(DATA_NAME),
+                     overwrite=False)
 
         
 
