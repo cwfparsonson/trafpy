@@ -34,7 +34,7 @@ class DCN(gym.Env):
                  slots_dict,
                  Scheduler,
                  num_k_paths,
-                 tmp_database_path=None,
+                 env_database_path=None,
                  sim_name='dcn_sim',
                  max_flows=None, 
                  max_time=None,
@@ -58,6 +58,10 @@ class DCN(gym.Env):
 
         To reduce memory usage, set tracking grid slot & queue length evolution
         to False
+
+        If env_database_path is not None, will save dicts to database path specified.
+        This can significantly reduce simulation RAM memory usage, thereby allowing
+        for much larger simulations.
 
         If gen_machine_readable_network, will generate tensor representation
         of current network state at each step and return it in the obs
@@ -89,21 +93,21 @@ class DCN(gym.Env):
             end = time.time()
             print('Snapshotted memory in {} s'.format(end-start))
 
-        if tmp_database_path is not None:
+        if env_database_path is not None:
             # using databases to store in external memory, init database dir
-            tmp_database_path += '/tmp_database'
-            if os.path.exists(tmp_database_path):
+            env_database_path += '/env_database'
+            if os.path.exists(env_database_path):
                 # delete dir
-                shutil.rmtree(tmp_database_path)
+                shutil.rmtree(env_database_path)
             # create dir
-            os.mkdir(tmp_database_path)
-        self.tmp_database_path = tmp_database_path
+            os.mkdir(env_database_path)
+        self.env_database_path = env_database_path
 
         # init slots dict
         self.slots_dict = slots_dict
-        if self.tmp_database_path is not None:
+        if self.env_database_path is not None:
             # create slots dict database
-            _slots_dict = self.tmp_database_path + '/slots_dict.sqlite'
+            _slots_dict = self.env_database_path + '/slots_dict.sqlite'
             print('Establishing {} slots_dict tmp database...'.format(self.sim_name))
             start = time.time()
             if type(self.slots_dict) is str:
@@ -172,7 +176,7 @@ class DCN(gym.Env):
         self.max_flows = max_flows # max number of flows per queue
         self.max_time = max_time
         if self.max_time == 'last_demand_arrival_time':
-            if self.tmp_database_path is not None:
+            if self.env_database_path is not None:
                 with SqliteDict(self.slots_dict) as slots_dict:
                     self.max_time = slots_dict['time_last_demand_arrived']
                 slots_dict.close()
@@ -249,17 +253,17 @@ class DCN(gym.Env):
             pass
 
 
-        if self.tmp_database_path is not None:
+        if self.env_database_path is not None:
             # create databases
-            self.arrived_flow_dicts = self.tmp_database_path + '/arrived_flow_dicts.sqlite'
+            self.arrived_flow_dicts = self.env_database_path + '/arrived_flow_dicts.sqlite'
             with SqliteDict(self.arrived_flow_dicts) as arrived_flow_dicts:
                 arrived_flow_dicts.commit()
                 arrived_flow_dicts.close()
-            self.completed_flow_dicts = self.tmp_database_path + '/completed_flow_dicts.sqlite'
+            self.completed_flow_dicts = self.env_database_path + '/completed_flow_dicts.sqlite'
             with SqliteDict(self.completed_flow_dicts) as completed_flow_dicts:
                 completed_flow_dicts.commit()
                 completed_flow_dicts.close()
-            self.dropped_flow_dicts = self.tmp_database_path + '/dropped_flow_dicts.sqlite'
+            self.dropped_flow_dicts = self.env_database_path + '/dropped_flow_dicts.sqlite'
             with SqliteDict(self.dropped_flow_dicts) as dropped_flow_dicts:
                 dropped_flow_dicts.commit()
                 dropped_flow_dicts.close()
@@ -281,9 +285,9 @@ class DCN(gym.Env):
         if self.track_grid_slot_evolution:
             self.grid_slot_dict = self.init_grid_slot_evolution(self.network)
         if self.track_link_utilisation_evolution:
-            if self.tmp_database_path is not None:
+            if self.env_database_path is not None:
                 # create link util dict database
-                self.link_utilisation_dict = self.tmp_database_path + '/link_utilisation_dict.sqlite'
+                self.link_utilisation_dict = self.env_database_path + '/link_utilisation_dict.sqlite'
                 with SqliteDict(self.link_utilisation_dict) as link_utilisation_dict:
                     for key, val in self.init_link_utilisation_evolution(self.network).items():
                         link_utilisation_dict[key] = val
@@ -293,9 +297,9 @@ class DCN(gym.Env):
                 # read into memory
                 self.link_utilisation_dict = self.init_link_utilisation_evolution(self.network)
         if self.track_link_concurrent_demands_evolution:
-            if self.tmp_database_path is not None:
+            if self.env_database_path is not None:
                 # create link concurrent demands dict database
-                self.link_concurrent_demands_dict = self.tmp_database_path + '/link_concurrent_demands_dict.sqlite'
+                self.link_concurrent_demands_dict = self.env_database_path + '/link_concurrent_demands_dict.sqlite'
                 with SqliteDict(self.link_concurrent_demands_dict) as link_concurrent_demands_dict:
                     for key, val in self.init_link_concurrent_demands_dict(self.network).items():
                         link_concurrent_demands_dict[key] = val
@@ -608,7 +612,7 @@ class DCN(gym.Env):
             self.network.nodes[src][dst]['completion_times'].append(None)
         else:
             # no space in queue, must drop flow
-            if self.tmp_database_path is not None:
+            if self.env_database_path is not None:
                 with SqliteDict(self.dropped_flow_dicts) as dropped_flow_dicts:
                     dropped_flow_dicts[flow_dict['flow_id']] = flow_dict
                     dropped_flow_dicts.commit()
@@ -844,7 +848,7 @@ class DCN(gym.Env):
         flow_dict['time_completed'] = copy.copy(self.curr_time)
         if flow_dict['size'] != 0 and flow_dict['src'] != flow_dict['dst']:
             # flow was an actual flow
-            if self.tmp_database_path is not None:
+            if self.env_database_path is not None:
                 with SqliteDict(self.completed_flow_dicts) as completed_flow_dicts:
                     completed_flow_dicts[flow_dict['flow_id']] = flow_dict
                     completed_flow_dicts.commit()
@@ -901,7 +905,7 @@ class DCN(gym.Env):
                         # already recorded time of arrival
                         pass
                     self.arrived_flows[arrival_id] = 'present'
-                    if self.tmp_database_path is not None:
+                    if self.env_database_path is not None:
                         with SqliteDict(self.arrived_flow_dicts) as arrived_flow_dicts:
                             arrived_flow_dicts[flow_dict['flow_id']] = flow_dict
                             arrived_flow_dicts.commit()
@@ -985,7 +989,7 @@ class DCN(gym.Env):
         '''
         self.time_next_obs_start = time.time()
         try:
-            if self.tmp_database_path is not None:
+            if self.env_database_path is not None:
                 # read from database
                 with SqliteDict(self.slots_dict) as slots_dict:
                     observation = {'slot_dict': slots_dict[json.dumps(self.curr_step)],
@@ -1004,7 +1008,7 @@ class DCN(gym.Env):
         except KeyError:
             # curr step either exceeded slots dict indices (no new flows/jobs arriving) or this step was not included in slots_dict since no demands arrived
             # index slot_dict with most recent valid curr step
-            if self.tmp_database_path is not None:
+            if self.env_database_path is not None:
                 # read from database
                 with SqliteDict(self.slots_dict) as slots_dict:
                     observation = {'slot_dict': slots_dict[json.dumps(self.most_recent_valid_curr_step)],
@@ -1535,7 +1539,7 @@ class DCN(gym.Env):
         if self.track_grid_slot_evolution:
             self.update_grid_slot_evolution(chosen_flows)
         if self.track_link_utilisation_evolution:
-            if self.tmp_database_path is not None:
+            if self.env_database_path is not None:
                 # update database dict
                 with SqliteDict(self.link_utilisation_dict) as link_utilisation_dict:
                     self.update_link_utilisation_evolution(link_utilisation_dict)
@@ -1975,7 +1979,7 @@ class DCN(gym.Env):
             self.network[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['channels'][channel], num_decimals)
 
             if self.track_link_concurrent_demands_evolution:
-                if self.tmp_database_path is not None:
+                if self.env_database_path is not None:
                     # update database dict
                     with SqliteDict(self.link_concurrent_demands_dict) as link_concurrent_demands_dict:
                         self.update_link_concurrent_demands_evolution(node_pair, link_concurrent_demands_dict, num_concurrent_demands_to_add=1)

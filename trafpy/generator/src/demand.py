@@ -302,6 +302,31 @@ class DemandPlotter:
         plot_dists.plot_val_bar(ep_loads.keys(), ep_loads.values(), ylabel, ylim, xlabel, show_fig=show_fig)
         figs.append(fig1)
 
+        # plot src & dst ep loads separately
+        src_total_infos = {ep: 0 for ep in eps}
+        dst_total_infos = {ep: 0 for ep in eps}
+        for idx in range(len(self.demand.demand_data['flow_id'])):
+            src = self.demand.demand_data['sn'][idx]
+            dst = self.demand.demand_data['dn'][idx]
+            size = self.demand.demand_data['flow_size'][idx]
+            src_total_infos[src] += size
+            dst_total_infos[dst] += size
+        port_total_capacity = ep_link_bandwidth / 2
+        duration = max(self.demand.demand_data['event_time']) - min(self.demand.demand_data['event_time'])
+        src_loads = {ep: (src_total_infos[ep]/duration)/port_total_capacity for ep in eps}
+        dst_loads = {ep: (dst_total_infos[ep]/duration)/port_total_capacity for ep in eps}
+
+        ylabel = 'Src Load (Fraction)'
+        fig2 = plt.figure()
+        plot_dists.plot_val_bar(src_loads.keys(), src_loads.values(), ylabel, ylim, xlabel, show_fig=show_fig)
+
+        ylabel = 'Dst Load (Fraction)'
+        fig3 = plt.figure()
+        plot_dists.plot_val_bar(dst_loads.keys(), dst_loads.values(), ylabel, ylim, xlabel, show_fig=show_fig)
+
+
+
+
         if plot_extras:
             fig2 = plt.figure()
             overall_load_rate = flowcentric.get_flow_centric_demand_data_overall_load_rate(self.demand.demand_data)
@@ -469,7 +494,6 @@ class DemandsPlotter:
     def __init__(self, *demands, **kwargs):
         self.demands = demands
         self.kwargs = kwargs
-        self.classes = self._group_analyser_classes(*self.demands)
 
         if type(demands[0]) is str:
             # demands are string paths to separate files rather than Demand objects
@@ -480,10 +504,13 @@ class DemandsPlotter:
             # demands are just Demand objects
             self.separate_files = False
 
+        self.classes = self._group_analyser_classes(*self.demands)
+
     def _group_analyser_classes(self, *demands):
         classes = []
         for demand in demands:
-            if self.separate_files:
+            # if self.separate_files:
+            if type(demand) is str:
                 # demand is currently a path, instantiate Demand object
                 demand = Demand(demand, self.kwargs['net'])
             if demand.name not in classes:
@@ -501,6 +528,9 @@ class DemandsPlotter:
     def plot_flow_size_dists(self, logscale=False):
         plot_dict = {_class: {'rand_vars': []} for _class in self.classes}
         for demand in self.demands:
+            if type(demand) is str:
+                # demand is currently a path, instantiate Demand object
+                demand = Demand(demand, self.kwargs['net'])
             plot_dict[demand.name]['rand_vars'] = demand.demand_data['flow_size']
 
         fig = plot_dists.plot_multiple_kdes(plot_dict, plot_hist=False, xlabel='Flow Size', ylabel='Density', logscale=logscale, show_fig=False)
@@ -513,6 +543,9 @@ class DemandsPlotter:
     def plot_interarrival_time_dists(self, logscale=False):
         plot_dict = {_class: {'rand_vars': []} for _class in self.classes}
         for demand in self.demands:
+            if type(demand) is str:
+                # demand is currently a path, instantiate Demand object
+                demand = Demand(demand, self.kwargs['net'])
             plot_dict[demand.name]['rand_vars'] = self._get_demand_interarrival_times(demand)
 
         fig = plot_dists.plot_multiple_kdes(plot_dict, plot_hist=False, xlabel='Interarrival Time', ylabel='Density', logscale=logscale, show_fig=False)

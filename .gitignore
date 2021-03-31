@@ -20,6 +20,8 @@
 *.tar
 *.zip
 *.pickle
+*.json
+*.sqlite
 *.obj
 *.mp4
 *.csv

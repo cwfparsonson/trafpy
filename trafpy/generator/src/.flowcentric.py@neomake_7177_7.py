@@ -347,11 +347,7 @@ class FlowPacker:
         if not self.bidirectional_links:
             # double total ep info so can pack src-dst pairs into links
             self.max_total_ep_info *= 2
-        # calc max info can put on src and dst ports (half ep dedicated to each so / 2)
-        self.max_total_port_info = self.max_total_ep_info / 2
         self.ep_total_infos = {ep: 0 for ep in self.eps}
-        self.src_total_infos = {ep: 0 for ep in self.eps}
-        self.dst_total_infos = {ep: 0 for ep in self.eps}
 
         flow_sizes = [self.packed_flows[flow]['size'] for flow in self.packed_flows.keys()]
         if self.print_data:
@@ -394,11 +390,10 @@ class FlowPacker:
                 print('Looking for pair furthest from target info...')
             for p in sorted_pairs:
                 pair = p[0]
-                src, dst = json.loads(pair)[0], json.loads(pair)[1]
+                ep1, ep2 = json.loads(pair)[0], json.loads(pair)[1]
                 if self.check_dont_exceed_one_ep_load:
                     # ensure wont exceed 1.0 end point load by allocating this flow to pair
-                    # if self.ep_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
-                    if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
+                    if self.ep_total_infos[ep1] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[ep2] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
                         # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
                         pass
                     else:
@@ -430,8 +425,6 @@ class FlowPacker:
             self.packed_flows[flow]['src'], self.packed_flows[flow]['dst'] = src, dst 
             self.ep_total_infos[src] += self.packed_flows[flow]['size']
             self.ep_total_infos[dst] += self.packed_flows[flow]['size']
-            self.src_total_infos[src] += self.packed_flows[flow]['size']
-            self.dst_total_infos[dst] += self.packed_flows[flow]['size']
 
             counter += 1
             percent = round((counter/final_flow_count)*100, 1)
@@ -505,11 +498,8 @@ class FlowPacker:
                 load_rate_to_spread_per_ep = excess_ep_load_rates[self.index_to_node[idx]] / len(free_eps)
                 frac_load_rate_to_spread_per_ep = load_rate_to_spread_per_ep / self.load_rate
                 frac_load_rate_to_spread_per_ep_pair = frac_load_rate_to_spread_per_ep / (self.num_nodes-1)
-                random.shuffle(free_eps) # shuffle so not always spreading load across same eps
                 for ep in free_eps:
-                    indices = list(self.index_to_node.keys())
-                    random.shuffle(indices)
-                    for i in indices:
+                    for i in self.index_to_node.keys():
                         if i != self.node_to_index[ep] and not self.eps_at_capacity[self.index_to_node[i]]:
                             self.node_dist[self.node_to_index[ep], i] += (frac_load_rate_to_spread_per_ep_pair)
                             self.node_dist[i, self.node_to_index[ep]] += (frac_load_rate_to_spread_per_ep_pair)

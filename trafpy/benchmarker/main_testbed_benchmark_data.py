@@ -134,7 +134,7 @@ class TestBed:
                                   slots_dict, 
                                   scheduler,
                                   num_k_paths=config['num_k_paths'],
-                                  tmp_database_path=_path_to_save,
+                                  env_database_path=_path_to_save,
                                   sim_name=sim_name,
                                   max_flows=config['max_flows'], 
                                   profile_memory=False,

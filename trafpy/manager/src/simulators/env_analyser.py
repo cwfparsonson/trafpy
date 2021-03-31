@@ -1,6 +1,8 @@
 import numpy as np
 from sqlitedict import SqliteDict
-
+import os
+import shutil
+import time
 
 class EnvAnalyser:
 
@@ -25,29 +27,53 @@ class EnvAnalyser:
         self.info_units = info_units
 
 
-    def compute_metrics(self, measurement_start_time=None, measurement_end_time=None, print_summary=False):
+    def compute_metrics(self, 
+                        measurement_start_time=None, 
+                        measurement_end_time=None, 
+                        env_analyser_database_path=None,
+                        print_summary=False):
         '''
         measurement_start_time (int, float): Simulation time at which to begin recording
             metrics etc.; is the warm-up time
         measurement_end_time (int, float): Simulation time at which to stop recording
             metrics etc.; is the cool-down time
 
+        If tmp_database_path is not None, will store data in tmp_database_path str
+        specified. This can help with memory errors as avoids holding everything
+        in RAM memory.
+
         '''
+        print('\nComputing metrics for env {}...'.format(self.env.sim_name))
+        start = time.time()
+
         self.computed_metrics = True
-        self.measurement_start_time = measurement_start_time 
-        self.measurement_end_time = measurement_end_time 
+        self.measurement_start_time = measurement_start_time
+        self.measurement_end_time = measurement_end_time
+        if env_analyser_database_path is not None:
+            # using databases to store in external memory, init database dir
+            env_analyser_database_path += '/env_analyser_database'
+            if os.path.exists(env_analyser_database_path):
+                print('Overwriting {}...'.format(env_analyser_database_path))
+                shutil.rmtree(env_analyser_database_path)
+            # create dir
+            os.mkdir(env_analyser_database_path)
+        self.env_analyser_database_path = env_analyser_database_path
 
         self._compute_flow_summary()
         self._compute_general_summary()
         if self.env.job_centric:
             self._compute_job_summary()
 
+        end = time.time()
+        print('Computed metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
+
         if print_summary:
-            print('\n\n-=-=-=-=-=-=--= Summary -=-=-=-=-=-=-=-')
+            print('\n-=-=-=-=-=-=--= Summary -=-=-=-=-=-=-=-')
             self._print_general_summary()
             self._print_flow_summary()
             if self.env.job_centric:
                 self._print_job_summary()
+
 
 
     ####################################### GENERAL ##########################################
@@ -56,7 +82,7 @@ class EnvAnalyser:
         print('Simulation name: \'{}\''.format(self.env.sim_name))
         print('Measurement duration: {} (Start time : {} {} | End time: {} {})'.format(self.measurement_duration, self.measurement_start_time, self.time_units, self.measurement_end_time, self.time_units))
         print('Total number of generated demands (jobs or flows) passed to env: {}'.format(self.env.num_demands)) 
-        print('Total number of these demands which arrived during measurement period: {}'.format(len(self.arrived_flow_dicts)))
+        print('Total number of these demands which arrived during measurement period: {}'.format(self.num_arrived_flows))
         print('Total info arrived: {} {}'.format(self.total_info_arrived, self.info_units))
         print('Total info transported: {} {}'.format(self.total_info_transported, self.info_units))
         print('Load (abs): {} {}/{}'.format(self.load_abs, self.info_units, self.time_units))
@@ -75,11 +101,21 @@ class EnvAnalyser:
         self.t_score = self._compute_t_score()
 
     def _calc_total_info_arrived(self):
-        arrived_flows = list(self.arrived_flow_dicts.values())
+        if self.env_analyser_database_path is not None:
+            with SqliteDict(self.arrived_flow_dicts) as arrived_flow_dicts:
+                arrived_flows = list(arrived_flow_dicts.values())
+                arrived_flow_dicts.close()
+        else:
+            arrived_flows = list(self.arrived_flow_dicts.values())
         return sum([arrived_flows[i]['size'] for i in range(len(arrived_flows))])
 
     def _calc_total_info_transported(self):
-        completed_flows = list(self.completed_flow_dicts.values())
+        if self.env_analyser_database_path is not None:
+            with SqliteDict(self.completed_flow_dicts) as completed_flow_dicts:
+                completed_flows = list(completed_flow_dicts.values())
+                completed_flow_dicts.close()
+        else:
+            completed_flows = list(self.completed_flow_dicts.values())
         return sum([completed_flows[i]['size'] for i in range(len(completed_flows))])
     
     def _calc_network_load_abs(self):
@@ -102,12 +138,12 @@ class EnvAnalyser:
     def _print_flow_summary(self):
         print('\n ~* Flow Information *~')
         print('Total number of generated flows passed to env (src != dst, dependency_type == \'data_dep\'): {}'.format(self.env.num_flows))
-        print('Total number of these flows which arrived during measurement period: {}'.format(len(self.arrived_flow_dicts.keys())))
-        print('Time first flow arrived: {} {}'.format(min(self.flow_times_arrived), self.time_units))
-        print('Time last flow arrived: {} {}'.format(max(self.flow_times_arrived), self.time_units))
-        print('Total number of flows that were completed: {}'.format(len(self.completed_flow_dicts.keys())))
-        print('Total number of flows that were left in queue at end of measurement period: {}'.format(len(self.queued_flow_dicts)))
-        print('Total number of flows that were dropped (dropped + left in queue at end of measurement period): {}'.format(len(self.dropped_flow_dicts.keys())))
+        print('Total number of these flows which arrived during measurement period: {}'.format(self.num_arrived_flows))
+        print('Time first flow arrived: {} {}'.format(self.time_first_flow_arrived, self.time_units))
+        print('Time last flow arrived: {} {}'.format(self.time_last_flow_arrived, self.time_units))
+        print('Total number of flows that were completed: {}'.format(self.num_completed_flows))
+        print('Total number of flows that were left in queue at end of measurement period: {}'.format(self.num_queued_flows))
+        print('Total number of flows that were dropped (dropped + left in queue at end of measurement period): {}'.format(self.num_dropped_flows))
         print('Fraction of arrived flows dropped: {}'.format(self.dropped_flow_frac))
         print('Mean flow completion time (FCT): {} {}'.format(self.mean_fct, self.time_units))
         print('99th percentile FCT: {} {}'.format(self.nn_fct, self.time_units))
@@ -115,15 +151,20 @@ class EnvAnalyser:
     def _compute_t_score(self):
         '''Returns TrafPy overall T-score.'''
         if not self.computed_metrics:
-            raise Exception('Must first run computer_metrics() method.')
+            raise Exception('Must first run compute_metrics() method.')
 
         # FCT COMPONENT
         # collect flow sizes of arrived flows
-        arrived_flows = list(self.arrived_flow_dicts.values())
+        if self.env_analyser_database_path is not None:
+            with SqliteDict(self.arrived_flow_dicts) as arrived_flow_dicts:
+                arrived_flows = list(arrived_flow_dicts.values())
+                arrived_flow_dicts.close()
+        else:
+            arrived_flows = list(self.arrived_flow_dicts.values())
         self.flow_sizes = [flow['size'] for flow in arrived_flows]
 
-        mean_fct = np.mean(self.fcts)
-        std_fct = np.std(self.fcts)
+        mean_fct = self.mean_fct
+        std_fct = self.std_fct
 
         mean_fct_factor = np.mean(self.flow_sizes) / self.env.network.graph['ep_link_capacity']
         std_fct_factor = np.std(self.flow_sizes) / self.env.network.graph['ep_link_capacity']
@@ -131,7 +172,7 @@ class EnvAnalyser:
         mean_fct_component = mean_fct_factor / mean_fct
         std_fct_component = std_fct_factor / std_fct
 
-        self.fct_component = mean_fct_factor + std_fct_component
+        self.fct_component = mean_fct_component + std_fct_component
 
 
         # DROPPED FLOWS COMPONENT
@@ -195,101 +236,190 @@ class EnvAnalyser:
 
 
 
-    def _calc_flow_completion_times(self):
-        flow_completion_times = []
-        for flow in self.completed_flow_dicts.values():
-            flow_completion_times.append(flow['time_completed'] - flow['time_arrived'])
-
+    def _calc_flow_completion_times(self, flow_completion_times):
         if len(flow_completion_times) == 0:
-            mean_fct, ninetyninth_percentile_fct, max_fct = float('inf'), float('inf'), float('inf')
+            mean_fct, ninetyninth_percentile_fct, max_fct, standard_deviation_fct = float('inf'), float('inf'), float('inf'), float('inf')
         else:
             mean_fct = np.average(np.asarray(flow_completion_times))
             ninetyninth_percentile_fct = np.percentile(np.asarray(flow_completion_times), 99)
             max_fct = np.max(np.asarray(flow_completion_times))
+            standard_deviation_fct = np.std(flow_completion_times)
 
-        return flow_completion_times, mean_fct, ninetyninth_percentile_fct, max_fct
+        return mean_fct, ninetyninth_percentile_fct, max_fct, standard_deviation_fct
+
+    def _init_flow_arrival_metrics(self):
+        if self.env_analyser_database_path:
+            # init database
+            self.arrived_flow_dicts = self.env_analyser_database_path + '/arrived_flow_dicts.sqlite'
+            if os.path.exists(self.arrived_flow_dicts):
+                os.remove(self.arrived_flow_dicts)
+            times_arrived = []
+            with SqliteDict(self.arrived_flow_dicts) as arrived_flow_dicts:
+                for key, val in self._get_flows_arrived_in_measurement_period().items():
+                    arrived_flow_dicts[key] = val
+                    times_arrived.append(val['time_arrived'])
+                arrived_flow_dicts.commit()
+                arrived_flow_dicts.close()
+
+        else:
+            # load into memory
+            self.arrived_flow_dicts = self._get_flows_arrived_in_measurement_period() 
+            arrived_flows = list(self.arrived_flow_dicts.values())
+            times_arrived = [arrived_flows[i]['time_arrived'] for i in range(len(arrived_flows))]
+
+        self.num_arrived_flows = len(times_arrived)
+        self.time_first_flow_arrived = min(times_arrived)
+        self.time_last_flow_arrived = max(times_arrived)
+
+
+
 
     def _compute_flow_arrival_metrics(self):
-        self.arrived_flow_dicts = self._get_flows_arrived_in_measurement_period() 
-        arrived_flows = list(self.arrived_flow_dicts.values())
-        self.flow_times_arrived = [arrived_flows[i]['time_arrived'] for i in range(len(arrived_flows))]
+        print('Computing flow arrival metrics for env {}...'.format(self.env.sim_name))
+        start = time.time()
+        self._init_flow_arrival_metrics()
         self.measurement_duration, self.measurement_start_time, self.measurement_end_time = self._get_measurement_times()
-        self.num_arrived_flows = len(arrived_flows)
+        end = time.time()
+        print('Computed flow arrival metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
 
     def _compute_flow_completion_metrics(self):
-        self.completed_flow_dicts = self._get_flows_completed_in_measurement_period()
-        completed_flows = list(self.completed_flow_dicts.values())
-        self.flow_times_completed = [completed_flows[i]['time_completed'] for i in range(len(completed_flows))]
-        self.num_completed_flows = len(completed_flows)
+        print('Computing flow completion metrics for env {}...'.format(self.env.sim_name))
+        start = time.time()
 
-        self.fcts, self.mean_fct, self.nn_fct, self.max_fct = self._calc_flow_completion_times()
+        if self.env_analyser_database_path:
+            # init database
+            self.completed_flow_dicts = self.env_analyser_database_path + '/completed_flow_dicts.sqlite'
+            fcts = []
+            if os.path.exists(self.completed_flow_dicts):
+                os.remove(self.completed_flow_dicts)
+            with SqliteDict(self.completed_flow_dicts) as completed_flow_dicts:
+                for key, val in self._get_flows_completed_in_measurement_period().items():
+                    completed_flow_dicts[key] = val
+                    time_arrived, time_completed = val['time_arrived'], val['time_completed']
+                    fct = time_completed - time_arrived
+                    fcts.append(fct)
+                completed_flow_dicts.commit()
+                completed_flow_dicts.close()
+
+        else:
+            # load into memory
+            self.completed_flow_dicts = self._get_flows_completed_in_measurement_period()
+            for flow in self.completed_flow_dicts.values():
+                fct = flow['time_completed'] - flow['time_arrived']
+                fcts.append(fct)
+
+        self.num_completed_flows = len(fcts)
+        self.mean_fct, self.nn_fct, self.max_fct, self.std_fct = self._calc_flow_completion_times(fcts)
+
+
+        end = time.time()
+        print('Computed flow completion metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
 
     def _compute_flow_dropped_metrics(self):
-        self.dropped_flow_dicts = self._get_flows_dropped_in_measurement_period()
-        self.num_dropped_flows = len(self.dropped_flow_dicts.keys())
-        self.dropped_flow_frac = len(self.dropped_flow_dicts.keys()) / len(self.arrived_flow_dicts.keys())
+        print('Computing flow dropped metrics for env {}...'.format(self.env.sim_name))
+        start = time.time()
+
+        dropped_flows = self._get_flows_dropped_in_measurement_period()
+        if self.env_analyser_database_path is not None:
+            self.dropped_flow_dicts = self.env_analyser_database_path + '/dropped_flow_dicts.sqlite'
+            with SqliteDict(self.dropped_flow_dicts) as dropped_flow_dicts:
+                for key, val in dropped_flows.items():
+                    dropped_flow_dicts[key] = val
+                dropped_flow_dicts.commit()
+                dropped_flow_dicts.close()
+        else:
+            self.dropped_flow_dicts = dropped_flows
+
+        self.num_dropped_flows = len(list(dropped_flows.keys()))
+        self.dropped_flow_frac = self.num_dropped_flows / self.num_arrived_flows
 
         self.total_info_dropped = 0
-        for flow in self.dropped_flow_dicts.values():
+        for flow in dropped_flows.values():
             self.total_info_dropped += flow['size']
         self.dropped_info_frac = self.total_info_dropped / self._calc_total_info_arrived()
 
+        end = time.time()
+        print('Computed flow dropped metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
+
 
     def _compute_flow_queued_metrics(self):
-        self.queued_flow_dicts = self._get_flows_remaining_in_queue_at_end_of_measurement_period()
-        self.num_queued_flows = len(self.queued_flow_dicts)
+        print('Computing flow queued metrics for env {}...'.format(self.env.sim_name))
+        start = time.time()
+
+        queued_flows = self._get_flows_remaining_in_queue_at_end_of_measurement_period()
+        if self.env_analyser_database_path is not None:
+            self.queued_flow_dicts = self.env_analyser_database_path + '/queued_flow_dicts.sqlite'
+            with SqliteDict(self.queued_flow_dicts) as queued_flow_dicts:
+                for key, val in queued_flows.items():
+                    queued_flow_dicts[key] = val
+                queued_flow_dicts.commit()
+                queued_flow_dicts.close()
+        else:
+            self.queued_flow_dicts = queued_flows
+
+        self.num_queued_flows = len(list(queued_flows.keys()))
+
+        end = time.time()
+        print('Computed flow queued metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
+
 
     def _get_measurement_times(self):
         if self.measurement_start_time is None:
-            measurement_start_time = min(self.flow_times_arrived)
+            measurement_start_time = self.time_first_flow_arrived
         elif self.measurement_start_time == 'auto' and self.measurement_end_time == 'auto':
             # both start and end must be assigned simultaneously
-            self.measurement_start_time = 0.1 * max(self.flow_times_arrived)
-            self.measurement_end_time = max(self.flow_times_arrived)
+            self.measurement_start_time = 0.1 * self.time_last_flow_arrived
+            self.measurement_end_time = self.time_last_flow_arrived
             # update arrived flows to be within measurement duration
-            self.arrived_flow_dicts = self._get_flows_arrived_in_measurement_period() 
-            arrived_flows = list(self.arrived_flow_dicts.values())
-            self.flow_times_arrived = [arrived_flows[i]['time_arrived'] for i in range(len(arrived_flows))]
+            self._init_flow_arrival_metrics()
             measurement_start_time = self.measurement_start_time
             measurement_end_time = self.measurement_end_time
         elif self.measurement_start_time == 'auto' and self.measurement_end_time != 'auto':
-            self.measurement_start_time = 0.1 * max(self.flow_times_arrived)
-            self.arrived_flow_dicts = self._get_flows_arrived_in_measurement_period()
-            arrived_flows = list(self.arrived_Flow_dicts.values())
-            self.flow_times_arrived = [arrived_flows[i]['time_arrived'] for i in range(len(arrived_flows))]
+            self.measurement_start_time = 0.1 * self.time_last_flow_arrived
+            self._init_flow_arrival_metrics()
             measurement_start_time = self.measurement_start_time
         else:
             measurement_start_time = self.measurement_start_time
 
         if self.measurement_end_time is None:
-            measurement_end_time = max(self.flow_times_arrived)
+            measurement_end_time = self.time_last_flow_arrived
         elif self.measurement_end_time == 'auto' and self.measurement_start_time != 'auto':
-            self.measurement_start_time = max(self.flow_times_arrived)
-            self.arrived_flow_dicts = self._get_flows_arrived_in_measurement_period()
-            arrived_flows = list(self.arrived_flow_dicts.values())
-            self.flow_times_arrived = [arrived_flows[i]['time_arrived'] for i in range(len(arrived_flows))]
+            self.measurement_start_time = self.time_last_flow_arrived
+            self._init_flow_arrival_metrics()
             measurement_start_time = self.measurement_start_time
         else:
             measurement_end_time = self.measurement_end_time
         measurement_duration = measurement_end_time - measurement_start_time
 
+
         return measurement_duration, measurement_start_time, measurement_end_time
 
     def _get_flows_remaining_in_queue_at_end_of_measurement_period(self):
-        queued_flow_dicts = []
+        queued_flow_dicts = {}
 
         # get flows that were dropped during measurement period -> these won't be in queue
         dropped_flow_dicts = self._get_flows_dropped_in_measurement_period(count_flows_left_in_queue=False)
 
         # create dicts to enable efficient hash searching
-        completed_flows = list(self.completed_flow_dicts.values())
+        if self.env_analyser_database_path is not None:
+            with SqliteDict(self.completed_flow_dicts) as completed_flow_dicts:
+                completed_flows = list(completed_flow_dicts.values())
+                completed_flow_dicts.close()
+        else:
+            completed_flows = list(self.completed_flow_dicts.values())
         completed_flow_ids = {completed_flows[i]['flow_id']: i for i in range(len(completed_flows))}
         dropped_flows = list(dropped_flow_dicts.values())
         dropped_flow_ids = {dropped_flows[i]['flow_id']: i for i in range(len(dropped_flows))}
 
-        for flow_id, flow in self.arrived_flow_dicts.items():
+        if self.env_analyser_database_path is not None:
+            arrived_flow_dicts = SqliteDict(self.arrived_flow_dicts)
+        else:
+            arrived_flow_dicts = self.arrived_flow_dicts
+        for flow_id, flow in arrived_flow_dicts.items():
             if flow_id not in completed_flow_ids and flow_id not in dropped_flow_ids:
-                queued_flow_dicts.append(flow)
+                queued_flow_dicts[flow_id] = flow
+        if self.env_analyser_database_path is not None:
+            arrived_flow_dicts.close()
 
         return queued_flow_dicts
 
@@ -342,8 +472,18 @@ class EnvAnalyser:
                     pass
 
         if count_flows_left_in_queue:
-            for flow in self.queued_flow_dicts:
-                dropped_flow_dicts[flow['flow_id']] = flow
+            if self.env_analyser_database_path is not None:
+                with SqliteDict(self.queued_flow_dicts) as queued_flow_dicts:
+                    for flow in queued_flow_dicts.values():
+                        dropped_flow_dicts[flow['flow_id']] = flow
+                    queued_flow_dicts.close()
+            else:
+                for flow in self.queued_flow_dicts.values():
+                    dropped_flow_dicts[flow['flow_id']] = flow
+
+        if type(self.env.dropped_flow_dicts) is str:
+            env_dropped_flow_dicts.close()
+
             
         return dropped_flow_dicts 
 
@@ -391,6 +531,9 @@ class EnvAnalyser:
                 elif comp_time > self.measurement_end_time:
                     # cooling down
                     pass
+
+        if type(self.env.completed_flow_dicts) is str:
+            env_completed_flow_dicts.close()
 
         return completed_flow_dicts 
 
@@ -441,6 +584,9 @@ class EnvAnalyser:
                 elif arr_time > self.measurement_end_time:
                     # cooling down
                     pass
+
+        if type(self.env.arrived_flow_dicts) is str:
+            env_arrived_flow_dicts.close()
 
         return flows_arrived 
 

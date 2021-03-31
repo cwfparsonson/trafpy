@@ -1,4 +1,5 @@
 import inspect
+from sqlitedict import SqliteDict
 from trafpy.generator.src.dists import plot_dists
 import matplotlib.pyplot as plt
 from collections import defaultdict # use for initialising arbitrary length nested dict
@@ -38,9 +39,9 @@ def get_summary_dict(analysers, headers, time_units='', info_units=''):
         summary_dict['Mean FCT ({})'.format(time_units)].append(round(analyser.mean_fct, 1))
         summary_dict['p99 FCT ({})'.format(time_units)].append(round(analyser.nn_fct, 1))
         summary_dict['Max FCT ({})'.format(time_units)].append(round(analyser.max_fct, 1))
-        summary_dict['Throughput Frac'].append(sigfig.round(analyser.throughput_frac, sigfigs=6))
-        summary_dict['Frac Flows Dropped'].append(sigfig.round(analyser.dropped_flow_frac, sigfigs=3))
-        summary_dict['Frac Info Dropped'].append(sigfig.round(analyser.dropped_info_frac, sigfigs=3))
+        summary_dict['Throughput Frac'].append(sigfig.round(float(analyser.throughput_frac), sigfigs=6))
+        summary_dict['Frac Flows Dropped'].append(sigfig.round(float(analyser.dropped_flow_frac), sigfigs=3))
+        summary_dict['Frac Info Dropped'].append(sigfig.round(float(analyser.dropped_info_frac), sigfigs=3))
     return summary_dict
 
 class EnvsPlotter:
@@ -419,7 +420,19 @@ class EnvsPlotter:
         plot_dict = nested_dict()
         for analyser in analysers:
             self._check_analyser_valid(analyser)
-            plot_dict[analyser.load_frac][analyser.subject_class_name]['rand_vars'] = analyser.fcts
+
+            flow_completion_times = []
+            if type(analyser.completed_flow_dicts) is str:
+                # load from database
+                completed_flow_dicts = SqliteDict(analyser.completed_flow_dicts)
+            else:
+                completed_flow_dicts = analyser.completed_flow_dicts
+            for flow in completed_flow_dicts.values():
+                flow_completion_times.append(flow['time_completed'] - flow['time_arrived'])
+            if type(analyser.completed_flow_dicts) is str:
+                completed_flow_dicts.close()
+
+            plot_dict[analyser.load_frac][analyser.subject_class_name]['rand_vars'] = flow_completion_times
 
         # complementary cdf
         figs = []
@@ -1005,9 +1018,16 @@ class EnvsPlotter:
             self._check_analyser_valid(analyser)
             flow_completion_times = []
             flow_sizes = []
-            for flow in analyser.completed_flow_dicts.values():
+            if type(analyser.completed_flow_dicts) is str:
+                # load from database
+                completed_flow_dicts = SqliteDict(analyser.completed_flow_dicts)
+            else:
+                completed_flow_dicts = analyser.completed_flow_dicts
+            for flow in completed_flow_dicts.values():
                 flow_completion_times.append(flow['time_completed'] - flow['time_arrived'])
                 flow_sizes.append(flow['size'])
+            if type(analyser.completed_flow_dicts) is str:
+                completed_flow_dicts.close()
             plot_dict[analyser.load_frac][analyser.subject_class_name]['x_values'] = flow_sizes
             plot_dict[analyser.load_frac][analyser.subject_class_name]['y_values'] = flow_completion_times
 
