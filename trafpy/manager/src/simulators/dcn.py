@@ -231,14 +231,12 @@ class DCN(gym.Env):
         self.curr_step = 0
         self.curr_time = 0
 
-
         self.num_endpoints = int(len(self.network.graph['endpoints']))
 
         self.net_node_positions = networks.init_network_node_positions(copy.deepcopy(self.network))
         self.animation_images = []
 
         self.action = {'chosen_flows': []} # init
-
 
         if self.job_centric:
             self.network.graph['queued_jobs'] = [] # init list of curr queued jobs in network
@@ -251,7 +249,6 @@ class DCN(gym.Env):
             self.running_ops = {}
         else:
             pass
-
 
         if self.env_database_path is not None:
             # create databases
@@ -479,8 +476,14 @@ class DCN(gym.Env):
 
         self.time_check_valid_end = time.time()
 
-    def update_link_utilisation_evolution(self, link_utilisation_dict):
-        for link in self.network.edges:
+    def update_link_utilisation_evolution(self):
+        if self.env_database_path is not None:
+            link_utilisation_dict = SqliteDict(self.link_utilisation_dict)
+        else:
+            link_utilisation_dict = self.link_utilisation_dict
+
+        for link in link_utilisation_dict.keys():
+            link = json.loads(link)
             # src-dst
             available_link_bw = 0
             max_link_bw = 0
@@ -502,8 +505,20 @@ class DCN(gym.Env):
             link_utilisation_dict[json.dumps(link)]['time_slots'].append(self.curr_step)
             link_utilisation_dict[json.dumps(link)]['util'].append(link_util)
 
-    def update_link_concurrent_demands_evolution(self, link, link_concurrent_demands_dict, num_concurrent_demands_to_add=1):
+        if self.env_database_path is not None:
+            link_utilisation_dict.commit()
+            link_utilisation_dict.close()
+        else:
+            self.link_utilisation_dict = link_utilisation_dict
+
+
+    def update_link_concurrent_demands_evolution(self, link, num_concurrent_demands_to_add=1):
         '''Adds num_concurrent_demands_to_add to current number of concurrent demands on a given link.'''
+        if self.env_database_path is not None:
+            link_concurrent_demands_dict = SqliteDict(self.link_concurrent_demands_dict)
+        else:
+            link_concurrent_demands_dict = self.link_concurrent_demands_dict
+
         if link_concurrent_demands_dict[json.dumps(link)]['time_slots'][-1] != self.curr_step:
             # not yet evolved concurrent demands evolution for this time slot
             link_concurrent_demands_dict[json.dumps(link)]['time_slots'].append(self.curr_step)
@@ -512,6 +527,12 @@ class DCN(gym.Env):
         
         # update num concurrent demands tracker for this time slot
         link_concurrent_demands_dict[json.dumps(link)]['concurrent_demands'][-1] += num_concurrent_demands_to_add
+
+        if self.env_database_path is not None:
+            link_concurrent_demands_dict.commit()
+            link_concurrent_demands_dict.close()
+        else:
+            self.link_concurrent_demands_dict = link_concurrent_demands_dict
 
 
 
@@ -700,7 +721,6 @@ class DCN(gym.Env):
         '''
         Updates current time of simulator using slot dict
         '''
-        # update current time
         if slot_dict['ub_time'] > self.curr_time:
             # observation has a new up-to-date current time
             self.curr_time = slot_dict['ub_time']
@@ -758,7 +778,8 @@ class DCN(gym.Env):
                     except KeyError:
                         # op has already previously been registered as completed
                         pass
-                    dep['time_completed'] = self.curr_time
+                    # dep['time_completed'] = self.curr_time
+                    dep['time_completed'] = self.curr_time + self.slot_size
                     dep['can_schedule'] = 1
                     self.register_completed_flow(dep)
                 else:
@@ -845,7 +866,8 @@ class DCN(gym.Env):
       
         # record time at which flow was completed
         start = time.time()
-        flow_dict['time_completed'] = copy.copy(self.curr_time)
+        # flow_dict['time_completed'] = copy.copy(self.curr_time)
+        flow_dict['time_completed'] = copy.copy(self.curr_time) + self.slot_size
         if flow_dict['size'] != 0 and flow_dict['src'] != flow_dict['dst']:
             # flow was an actual flow
             if self.env_database_path is not None:
@@ -1319,7 +1341,8 @@ class DCN(gym.Env):
     def register_completed_job(self, job_dict):
         
         # record time at which job was completed
-        job_dict['time_completed'] = copy.copy(self.curr_time)
+        # job_dict['time_completed'] = copy.copy(self.curr_time)
+        job_dict['time_completed'] = copy.copy(self.curr_time) + self.slot_size
         self.completed_jobs.append(job_dict)
         jct = job_dict['time_completed']-job_dict['time_arrived']
         
@@ -1539,15 +1562,7 @@ class DCN(gym.Env):
         if self.track_grid_slot_evolution:
             self.update_grid_slot_evolution(chosen_flows)
         if self.track_link_utilisation_evolution:
-            if self.env_database_path is not None:
-                # update database dict
-                with SqliteDict(self.link_utilisation_dict) as link_utilisation_dict:
-                    self.update_link_utilisation_evolution(link_utilisation_dict)
-                    link_utilisation_dict.commit()
-                    link_utilisation_dict.close()
-            else:
-                # update memory dict
-                self.update_link_utilisation_evolution(self.link_utilisation_dict)
+            self.update_link_utilisation_evolution()
         # N.B. update_link_concurrent_demands_evolution() done inside set_up_connection() for efficiency
 
         self.time_take_action_end = time.time()
@@ -1979,16 +1994,7 @@ class DCN(gym.Env):
             self.network[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['channels'][channel] = round(self.network[node_pair[0]][node_pair[1]]['{}_to_{}_port'.format(node_pair[0], node_pair[1])]['channels'][channel], num_decimals)
 
             if self.track_link_concurrent_demands_evolution:
-                if self.env_database_path is not None:
-                    # update database dict
-                    with SqliteDict(self.link_concurrent_demands_dict) as link_concurrent_demands_dict:
-                        self.update_link_concurrent_demands_evolution(node_pair, link_concurrent_demands_dict, num_concurrent_demands_to_add=1)
-                        link_concurrent_demands_dict.commit()
-                        link_concurrent_demands_dict.close()
-
-                else:
-                    # update memory dict
-                    self.update_link_concurrent_demands_evolution(node_pair, self.link_concurrent_demands_dict, num_concurrent_demands_to_add=1)
+                self.update_link_concurrent_demands_evolution(node_pair, num_concurrent_demands_to_add=1)
 
             # update global graph property
             self.network.graph['curr_nw_capacity_used'] += capacity_used_this_slot

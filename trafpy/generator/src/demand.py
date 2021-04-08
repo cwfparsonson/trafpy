@@ -1,4 +1,4 @@
-from trafpy.generator.src import builder 
+from trafpy.generator.src import builder
 from trafpy.generator.src.dists import node_dists
 from trafpy.generator.src.dists import val_dists
 from trafpy.generator.src.dists import plot_dists
@@ -46,9 +46,10 @@ class Demand:
         self.num_control_deps, self.num_data_deps, self.num_flows = self.get_num_deps(demand_data)
         self.analyser = DemandAnalyser(self)
 
-    def get_slots_dict(self, slot_size, print_info=False):
+    def get_slots_dict(self, slot_size, include_empty_slots=True, print_info=False):
         return builder.construct_demand_slots_dict(demand_data=self.demand_data,
                                                    slot_size=slot_size,
+                                                   include_empty_slots=include_empty_slots,
                                                    print_info=print_info)
 
     def get_num_demands(self, demand_data):

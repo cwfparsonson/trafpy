@@ -65,10 +65,12 @@ def convert_data_to_key_occurrences(data):
 
     
 
-def x_round(x, round_to_nearest=1, num_decimal_places=2, print_data=False):
+def x_round(x, round_to_nearest=1, num_decimal_places=2, print_data=False, min_val=None):
     '''Rounds variable to nearest specified value.'''
     factor = round(1/round_to_nearest, num_decimal_places)
     rounded = round(round(x*factor)/factor, num_decimal_places)
+    if min_val is not None:
+        rounded = max(rounded, min_val)
 
     if print_data:
         print('\nOriginal val: {}'.format(x))
@@ -155,7 +157,7 @@ def gen_uniform_val_dist(min_val,
 
     unique_vals = [val for val in np.arange(min_val, max_val+separation, separation)]
     if round_to_nearest is not None:
-        unique_vals = [x_round(val,round_to_nearest,num_decimal_places) for val in unique_vals]
+        unique_vals = [x_round(val,round_to_nearest,num_decimal_places,min_val=min_val) for val in unique_vals]
     else:
         # no need to discretise
         pass
@@ -291,7 +293,7 @@ def gen_skew_data(location,
     skew_data = [y for x in skew_data for y in x] # flatten
     if round_to_nearest is not None:
         # discretise
-        skew_data = [x_round(i,round_to_nearest,num_decimal_places) for i in skew_data]
+        skew_data = [x_round(i,round_to_nearest,num_decimal_places,min_val=min_val) for i in skew_data]
     else:
         pass
 
@@ -865,7 +867,8 @@ def gen_discrete_prob_dist(rand_vars,
     '''
     if round_to_nearest is not None:
         # discretise vars
-        discretised_rand_vars = [x_round(rand_var,round_to_nearest,num_decimal_places,print_data=False) for rand_var in rand_vars]  
+        min_val = min(rand_vars)
+        discretised_rand_vars = [x_round(rand_var,round_to_nearest,num_decimal_places,print_data=False,min_val=min_val) for rand_var in rand_vars]  
     else:
         # no further discretisation required
         discretised_rand_vars = rand_vars
@@ -974,7 +977,7 @@ def gen_exponential_dist(_beta,
                 sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
 
     if round_to_nearest is not None:
-        rand_vars = [x_round(val, round_to_nearest, num_decimal_places) for val in rand_vars]
+        rand_vars = [x_round(val, round_to_nearest, num_decimal_places, min_val=min_val) for val in rand_vars]
     else:
         # no need to discretise
         pass
@@ -1072,7 +1075,7 @@ def gen_lognormal_dist(_mu,
                 sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
 
     if round_to_nearest is not None:
-        rand_vars = [x_round(val, round_to_nearest, num_decimal_places) for val in rand_vars]
+        rand_vars = [x_round(val, round_to_nearest, num_decimal_places, min_val=min_val) for val in rand_vars]
     else:
         # no need to discretise
         pass
@@ -1153,7 +1156,7 @@ def gen_normal_dist(loc,
                 sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
 
     if round_to_nearest is not None:
-        rand_vars = [x_round(val, round_to_nearest, num_decimal_places) for val in rand_vars]
+        rand_vars = [x_round(val, round_to_nearest, num_decimal_places, min_val=min_val) for val in rand_vars]
     else:
         # no need to discretise
         pass
@@ -1248,7 +1251,7 @@ def gen_pareto_dist(_alpha,
                 sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
 
     if round_to_nearest is not None:
-        rand_vars = [x_round(val, round_to_nearest, num_decimal_places) for val in rand_vars]
+        rand_vars = [x_round(val, round_to_nearest, num_decimal_places, min_val=min_val) for val in rand_vars]
     else:
         # no need to discretise
         pass
@@ -1357,7 +1360,7 @@ def gen_weibull_dist(_alpha,
                 sys.exit('Dist to broad for required min-max range. Increase min-max range or reduce dist broadness.')
 
     if round_to_nearest is not None:
-        rand_vars = [x_round(val, round_to_nearest, num_decimal_places) for val in rand_vars]
+        rand_vars = [x_round(val, round_to_nearest, num_decimal_places, min_val=min_val) for val in rand_vars]
     else:
         # no need to discretise
         pass

@@ -18,7 +18,8 @@ import json
 def gen_benchmark_demands(path_to_save=None, 
                           save_format='json', 
                           separate_files=False,
-                          load_prev_dists=True):
+                          load_prev_dists=True,
+                          overwrite=False):
     '''
     If separate_files, will save each load, repeat and, and benchmark to separate
     files in a common folder. This can help with memory since not storing everything
@@ -35,18 +36,43 @@ def gen_benchmark_demands(path_to_save=None,
     if separate_files:
         # must separate files under common folder
         if os.path.exists(path_to_save):
-            # exists, create new version
-            version = 2
-            while os.path.exists(path_to_save+'_v{}'.format(version)):
-                version += 1
-            path_to_save = path_to_save+'_v{}'.format(version)
+            if not overwrite:
+                # exists, do not overwrite, create new version
+                version = 2
+                while os.path.exists(path_to_save+'_v{}'.format(version)):
+                    version += 1
+                path_to_save = path_to_save+'_v{}'.format(version)
+                os.mkdir(path_to_save)
+            else:
+                # overwrite
+                answer = ''
+                while answer not in ['y', 'n']:
+                    answer = input('Overwrite data in {}? (y/n)'.format(path_to_save)).lower()
+                if answer == 'n':
+                    sys.exit('User does not want to overwrite data, terminating session.')
         else:
-            pass
-        os.mkdir(path_to_save)
-        print('Created directory {} in which to save separate files.'.format(path_to_save))
+            # directory doesn't exist, must make
+            os.mkdir(path_to_save)
+        print('Set directory {} in which to save separate files.'.format(path_to_save))
     else:
         # no need to separate files, save under one file path_to_save
         pass
+
+    # if separate_files:
+        # # must separate files under common folder
+        # if os.path.exists(path_to_save):
+            # # exists, create new version
+            # version = 2
+            # while os.path.exists(path_to_save+'_v{}'.format(version)):
+                # version += 1
+            # path_to_save = path_to_save+'_v{}'.format(version)
+        # else:
+            # pass
+        # os.mkdir(path_to_save)
+        # print('Created directory {} in which to save separate files.'.format(path_to_save))
+    # else:
+        # # no need to separate files, save under one file path_to_save
+        # pass
 
     # init benchmark importer
     importer = BenchmarkImporter(config.BENCHMARK_VERSION, load_prev_dists=load_prev_dists)
@@ -64,7 +90,7 @@ def gen_benchmark_demands(path_to_save=None,
     print('\n~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*')
     print('Benchmarks to Generate: {}'.format(config.BENCHMARKS))
     print('Loads to generate: {}'.format(config.LOADS))
-    print('Number of repeats to generate for each benchmark load: {}'.format(config.NUM_REPEATS))
+    print('Number of sets to generate for each benchmark load: {}'.format(config.NUM_REPEATS))
     for benchmark in config.BENCHMARKS:
         print('~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*')
         print('Generating demands for benchmark \'{}\'...'.format(benchmark))
@@ -127,7 +153,7 @@ def gen_benchmark_demands(path_to_save=None,
                     s = time.time()
                     demand = Demand(flow_centric_demand_data, eps=eps)
                     with SqliteDict(file_path+'_slotsize_{}_slots_dict.sqlite'.format(config.SLOT_SIZE)) as slots_dict:
-                        for key, val in demand.get_slots_dict(slot_size=config.SLOT_SIZE).items():
+                        for key, val in demand.get_slots_dict(slot_size=config.SLOT_SIZE, include_empty_slots=True, print_info=True).items():
                             if type(key) is not str:
                                 slots_dict[json.dumps(key)] = val
                             else:

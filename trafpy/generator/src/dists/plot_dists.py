@@ -122,29 +122,36 @@ def plot_node_dist(node_dist,
     nodelist = [n for n in graph.nodes]
     try:
         ws = _rescale([float(graph[u][v]['weight']) for u, v in graph.edges], newmin=chord_edge_width_range[0], newmax=chord_edge_width_range[1])
+        plot_chord = True
     except ZeroDivisionError:
-        raise Exception('Src-dst edge weights in chord diagram are all the same, leading to 0 rescaled values. Decrease chord_edge_display_threshold to ensure a range of edge values are included in the chord diagram.')
-    edgelist = [(str(u),str(v),{"weight":ws.pop(0)}) for u,v in graph.edges]
+        print('Src-dst edge weights in chord diagram are all the same, leading to 0 rescaled values. Decrease chord_edge_display_threshold to ensure a range of edge values are included in the chord diagram.')
+        plot_chord = False
 
-    graph2 = nx.Graph()
-    graph2.add_nodes_from(nodelist)
-    graph2.add_edges_from(edgelist)
+    if plot_chord:
+        edgelist = [(str(u),str(v),{"weight":ws.pop(0)}) for u,v in graph.edges]
 
-    for v in graph2:
-        graph2.nodes[v]['load'] = node_to_load[v]
+        graph2 = nx.Graph()
+        graph2.add_nodes_from(nodelist)
+        graph2.add_edges_from(edgelist)
 
-    plt.set_cmap('YlOrBr')
-    plt.style.use('default')
-    chord_diagram = CircosPlot(graph2, 
-                               node_labels=True,
-                               edge_width='weight',
-                               figsize=figsize,
-                               # edge_color='weight',
-                               # node_size='load',
-                               node_grouping='load',
-                               node_color='load')
-    chord_diagram.draw()
-    figs.append(chord_diagram)
+        for v in graph2:
+            graph2.nodes[v]['load'] = node_to_load[v]
+
+        plt.set_cmap('YlOrBr')
+        plt.style.use('default')
+        chord_diagram = CircosPlot(graph2, 
+                                   node_labels=True,
+                                   edge_width='weight',
+                                   figsize=figsize,
+                                   # edge_color='weight',
+                                   # node_size='load',
+                                   node_grouping='load',
+                                   node_color='load')
+        chord_diagram.draw()
+        figs.append(chord_diagram)
+    else:
+        # do not plot chord
+        pass
     
     if show_fig:
         plt.show()

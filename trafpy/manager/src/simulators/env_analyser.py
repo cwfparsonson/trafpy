@@ -3,6 +3,7 @@ from sqlitedict import SqliteDict
 import os
 import shutil
 import time
+import _pickle as cPickle
 
 class EnvAnalyser:
 
@@ -31,12 +32,17 @@ class EnvAnalyser:
                         measurement_start_time=None, 
                         measurement_end_time=None, 
                         env_analyser_database_path=None,
+                        overwrite=False,
                         print_summary=False):
         '''
         measurement_start_time (int, float): Simulation time at which to begin recording
             metrics etc.; is the warm-up time
         measurement_end_time (int, float): Simulation time at which to stop recording
             metrics etc.; is the cool-down time
+
+        If overwrite is False and an analyser object exists in env_analyser_database_path,
+        will load previously saved analyser object rather than re-computing everything.
+        To overwrite this previously saved analyser, set overwrite=True.
 
         If tmp_database_path is not None, will store data in tmp_database_path str
         specified. This can help with memory errors as avoids holding everything
@@ -49,23 +55,46 @@ class EnvAnalyser:
         self.computed_metrics = True
         self.measurement_start_time = measurement_start_time
         self.measurement_end_time = measurement_end_time
+        load_prev = False
         if env_analyser_database_path is not None:
             # using databases to store in external memory, init database dir
             env_analyser_database_path += '/env_analyser_database'
-            if os.path.exists(env_analyser_database_path):
-                print('Overwriting {}...'.format(env_analyser_database_path))
-                shutil.rmtree(env_analyser_database_path)
-            # create dir
+            if os.path.exists(env_analyser_database_path+'/analyser'):
+                if overwrite:
+                    print('Overwriting {}...'.format(env_analyser_database_path))
+                    shutil.rmtree(env_analyser_database_path)
+                    os.mkdir(env_analyser_database_path)
+                else:
+                    load_prev = True
+                    print('{} exists and overwrite is False. Loading previously completed analysis...'.format(env_analyser_database_path))
+            else:
+                if os.path.exists(env_analyser_database_path):
+                    shutil.rmtree(env_analyser_database_path)
+        if not load_prev and env_analyser_database_path is not None:
             os.mkdir(env_analyser_database_path)
+
         self.env_analyser_database_path = env_analyser_database_path
 
-        self._compute_flow_summary()
-        self._compute_general_summary()
-        if self.env.job_centric:
-            self._compute_job_summary()
+        if load_prev and env_analyser_database_path is not None:
+            self._load_self(path=self.env_analyser_database_path)
+            end = time.time()
+            print('Loaded previously saved analyser object from {} in {} s.'.format(self.env_analyser_database_path, end-start))
 
-        end = time.time()
-        print('Computed metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
+        else:
+            self._compute_flow_summary()
+            self._compute_general_summary()
+            if self.env.job_centric:
+                self._compute_job_summary()
+
+            if self.env_analyser_database_path is not None:
+                print('Saving analyser object for env {}...'.format(self.env.sim_name))
+                s = time.time()
+                self._save_self(path=self.env_analyser_database_path) 
+                e = time.time()
+                print('Saved analyser object to {} in {} s.'.format(self.env_analyser_database_path, e-s))
+            
+            end = time.time()
+            print('Computed metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
 
         if print_summary:
             print('\n-=-=-=-=-=-=--= Summary -=-=-=-=-=-=-=-')
@@ -190,6 +219,19 @@ class EnvAnalyser:
 
         return t_score
 
+
+    
+    def _save_self(self, path):
+        f = open(path+'/analyser', 'wb')
+        cPickle.dump(self.__dict__, f, 2)
+        f.close()
+
+
+    def _load_self(self, path):
+        f = open(path+'/analyser', 'rb')
+        tmp_dict = cPickle.load(f)
+        f.close()
+        self.__dict__.update(tmp_dict)
 
 
 

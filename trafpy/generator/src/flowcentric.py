@@ -389,17 +389,21 @@ class FlowPacker:
 
             # try to allocate flow to pair which is currently furthest away from its target load
             sorted_pairs = sorted(self.pair_current_distance_from_target_info_dict.items(), key = lambda x: x[1], reverse=True) # sorts into descending order
+            # sorted_pairs = list(self.pair_current_distance_from_target_info_dict.keys())
+            # random.shuffle(sorted_pairs)
             if self.print_data:
                 print('Current distance from target info:\n{}'.format(sorted_pairs))
                 print('Looking for pair furthest from target info...')
-            for p in sorted_pairs:
-                pair = p[0]
+
+            # first pass (try not to exceed target pair load)
+            for pair in sorted_pairs:
+                pair = pair[0]
                 src, dst = json.loads(pair)[0], json.loads(pair)[1]
                 if self.check_dont_exceed_one_ep_load:
                     # ensure wont exceed 1.0 end point load by allocating this flow to pair
                     # if self.ep_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
-                    if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
-                        # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
+                    if self.pair_current_distance_from_target_info_dict[pair] - self.packed_flows[flow]['size'] < 0:
+                        # would exceed pair's target total info, try next pair
                         pass
                     else:
                         chosen_pair = pair
@@ -408,6 +412,48 @@ class FlowPacker:
                     # don't worry about exceeding 1.0 end point load, just allocate to pair furthest from target load
                     chosen_pair = pair
                     break
+
+            # second pass (if can't avoid exceeding target pair load, try to assign to pair with highest distance from target info w/o exceeding max ep load)
+            if chosen_pair is None:
+                # consider pair(s) with highest distance from target
+                highest_distance = max(self.pair_current_distance_from_target_info_dict.values())
+                highest_distance_pairs = [pair for pair in self.pair_current_distance_from_target_info_dict.keys() if self.pair_current_distance_from_target_info_dict[pair] == highest_distance]
+                # shuffle so randomly assign and don't get patterns emerging
+                random.shuffle(highest_distance_pairs)
+                for pair in highest_distance_pairs:
+                    src, dst = json.loads(pair)[0], json.loads(pair)[1]
+                    if self.check_dont_exceed_one_ep_load:
+                        # ensure wont exceed 1.0 end point load by allocating this flow to pair
+                        # if self.ep_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
+                        if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
+                            # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
+                            pass
+                        else:
+                            chosen_pair = pair
+                            break
+                    else:
+                        # don't worry about exceeding 1.0 end point load, just allocate to pair furthest from target load
+                        chosen_pair = pair
+                        break
+
+            # third pass (if can't avoid exceeding pairs' eps' max loads for pairs' eps furthest from target info, try any pair)
+            if chosen_pair is None:
+                for pair in sorted_pairs:
+                    pair = pair[0]
+                    src, dst = json.loads(pair)[0], json.loads(pair)[1]
+                    if self.check_dont_exceed_one_ep_load:
+                        # ensure wont exceed 1.0 end point load by allocating this flow to pair
+                        # if self.ep_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
+                        if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
+                            # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
+                            pass
+                        else:
+                            chosen_pair = pair
+                            break
+                    else:
+                        # don't worry about exceeding 1.0 end point load, just allocate to pair furthest from target load
+                        chosen_pair = pair
+                        break
 
             if chosen_pair is None:
                 # could not find end point pair with enough capacity to take flow

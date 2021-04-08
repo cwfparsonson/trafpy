@@ -1183,13 +1183,13 @@ def gen_multimodal_node_pair_dist(eps,
     # find prob of each skewed node pair being chosen
     pairs_per_node = num_nodes - 1
     probs_per_skewed_pair = {json.dumps(pair): prob for pair, prob in zip(skewed_pairs, [p for p in skewed_pair_probs])}
-    # keep src < dst
-    for pair in probs_per_skewed_pair:
-        unpacked_pair = json.loads(pair)
-        if node_to_index[unpacked_pair[0]] > node_to_index[unpacked_pair[1]]:
-            flipped_pair = json.dumps([unpacked_pair[1], unpacked_pair[0]])
-            probs_per_skewed_pair[flipped_pair] = probs_per_skewed_pair[pair]
-            del probs_per_skewed_pair[pair]
+    # # keep src < dst
+    # for pair in probs_per_skewed_pair.keys():
+        # unpacked_pair = json.loads(pair)
+        # if node_to_index[unpacked_pair[0]] > node_to_index[unpacked_pair[1]]:
+            # flipped_pair = json.dumps([unpacked_pair[1], unpacked_pair[0]])
+            # probs_per_skewed_pair[flipped_pair] = probs_per_skewed_pair[pair]
+            # del probs_per_skewed_pair[pair]
 
     # update prob pair chosen for each pair with a skewed node
     prob_pair_chosen = {pair: 0 for pair in pair_to_index.keys()}

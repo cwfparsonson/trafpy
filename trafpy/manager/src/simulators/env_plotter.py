@@ -94,12 +94,14 @@ class EnvsPlotter:
         summary_dict = {}
         for key in _summary_dict.keys():
             summary_dict[key] = np.asarray(_summary_dict[key])[index]
+        # print(summary_dict)
 
         # sort loads by t-score (best first)
         sorted_summary_dict = {header: [] for header in headers}
         num_loads = len(np.unique(list(summary_dict['Load'])))
         num_subjects = len(np.unique(list(summary_dict['Subject'])))
-        i = 0
+        i = 0 # for indexing each row in summary_dict
+        i2 = 0 # for indexing the first instance of a new load row in summary_dict
         nested_dict = lambda: defaultdict(nested_dict)
         plot_dicts = [nested_dict() for _ in range(num_loads)]
         # determine if higher is better for each header
@@ -109,24 +111,39 @@ class EnvsPlotter:
                 is_higher_better[header] = True
             else:
                 is_higher_better[header] = False
-        for load_idx in range(num_loads+1):
+        # for load_idx in range(num_loads+1):
+        for load_idx in range(num_loads):
             # sort t-scores for this load in descending order
-            load_t_scores = summary_dict['T-Score'][i:i+num_subjects]
+            num_subjects = 0
+            loads = []
+            while summary_dict['Load'][i] in loads or len(loads) == 0:
+                loads.append(summary_dict['Load'][i])
+                num_subjects += 1
+                i += 1
+                if i == len(summary_dict['Load']):
+                    # reached end of table
+                    break
+            # print('\nloads: {} | num subjects: {}'.format(loads, num_subjects))
+
+            load_t_scores = summary_dict['T-Score'][i2:i2+num_subjects]
             load_t_score_indices = list(reversed(np.argsort(load_t_scores)))
-            load_t_score_indices = [i+_i for _i in load_t_score_indices]
+            load_t_score_indices = [i2+_i for _i in load_t_score_indices]
+            # print('t scores: {} | t score indices: {}'.format(load_t_scores, load_t_score_indices))
 
             # index by this order
             for header in headers:
                 # update sorted summary dict
                 sorted_summary_dict[header].extend(summary_dict[header][load_t_score_indices])
+                # print('sorted summary dict:\n{}'.format(sorted_summary_dict))
 
                 # update radar plot
                 if header != 'Subject' and header != 'Load' and header != 'T-Score' and load_idx < num_loads:
                     # get classes and corresponding rand var values for this rand var
                     classes = summary_dict['Subject'][load_t_score_indices]
                     classes_rand_vars = summary_dict[header][load_t_score_indices]
-                    # get min max range
+                    # print('classes: {} | classes rand vars: {}'.format(classes, classes_rand_vars))
 
+                    # get min max range
                     min_val, max_val = min(classes_rand_vars), max(classes_rand_vars)
                     diff = max(max_val - min_val, 1e-9)
                     min_val -= (0.1*diff)
@@ -136,19 +153,11 @@ class EnvsPlotter:
                         # want lower (better) values on outer radar edge -> flip range
                         _range = _range[::-1]
 
-                    # if is_higher_better[header]:
-                        # # want higher (better) values on outer radar edge -> don't flip range
-                        # _range = [0.9*min(classes_rand_vars), 1.1*max(classes_rand_vars)]
-                    # else:
-                        # # want lower (better) values on outer radar edge -> flip range
-                        # _range = [1.1*max(classes_rand_vars), 0.9*min(classes_rand_vars)]
-
-
                     plot_dicts[load_idx][header]['range'] = _range
                     for idx, _class in enumerate(classes):
                         plot_dicts[load_idx][header]['classes'][_class] = classes_rand_vars[idx]
 
-            i += num_subjects 
+            i2 += num_subjects 
              
         dataframe = pd.DataFrame(sorted_summary_dict)
         if kwargs['display_table']:
@@ -157,6 +166,7 @@ class EnvsPlotter:
         if kwargs['plot_radar']:
             loads = iter(np.unique(list(summary_dict['Load'])))
             for plot_dict in plot_dicts:
+                # if len(list(plot_dict.keys())) != 0:
                 radar = plot_dists.plot_radar(plot_dict, 
                                               title='Load {}'.format(next(loads)), 
                                               figsize=kwargs['figsize'],
@@ -855,6 +865,7 @@ class EnvsPlotter:
                 link_utilisation_dict = SqliteDict(analyser.env.link_utilisation_dict)
             else:
                 link_utilisation_dict = analyser.env.link_utilisation_dict
+
             for link in link_utilisation_dict.keys():
                 # assume node labels have format of edge type followed by underscore and int e.g. 'server_1', 'core_3' etc
                 node1, node2 = json.loads(link)[0], json.loads(link)[1]
@@ -873,6 +884,7 @@ class EnvsPlotter:
 
                 time_slots = link_utilisation_dict[link]['time_slots']
                 util = link_utilisation_dict[link]['util']
+
 
                 # average every n elements (time slots) in lists to smooth line plot
                 n = kwargs['mean_period']
