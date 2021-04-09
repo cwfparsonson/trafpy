@@ -5,7 +5,7 @@ if __name__ == '__main__':
     import os
 
 
-    DATA_NAME = 'skewed_nodes_sensitivity_0.2_k_4_L_2_n_16_chancap1250_numchans1_mldat3.2e5_bidirectional'
+    DATA_NAME = 'rack_dist_sensitivity_0.6_k_4_L_2_n_16_chancap1250_numchans1_mldat3.2e5_bidirectional'
     # DATA_NAME = 'pulse_university_mldatNone'
     # path_to_save = os.path.dirname(trafpy.__file__)+'/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data'.format(DATA_NAME)
     path_to_save = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data'.format(DATA_NAME)

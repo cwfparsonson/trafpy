@@ -387,8 +387,25 @@ class FlowPacker:
                 print('\nPacking flow {} of size {}'.format(flow, self.packed_flows[flow]['size']))
             chosen_pair = None
 
-            # try to allocate flow to pair which is currently furthest away from its target load
+            # try to allocate flow to pair which is currently highest distance away from its target load
             sorted_pairs = sorted(self.pair_current_distance_from_target_info_dict.items(), key = lambda x: x[1], reverse=True) # sorts into descending order
+
+            # ensure order of sorted pairs is random so don't get unwanted emergent fading patterns in node distribution
+            pairs_with_same_distance = {}
+            for pair in sorted_pairs:
+                distance = pair[1]
+                try:
+                    pairs_with_same_distance[distance].append(pair[0])
+                except:
+                    pairs_with_same_distance[distance] = [pair[0]]
+            sorted_pairs = []
+            for list_of_pairs in pairs_with_same_distance.values():
+                # ensure no emergent patterns by random shuffling
+                random.shuffle(list_of_pairs)
+                for pair in list_of_pairs:
+                    sorted_pairs.append(pair)
+
+            # sorted_pairs = list(self.pair_current_distance_from_target_info_dict.keys())
             # sorted_pairs = list(self.pair_current_distance_from_target_info_dict.keys())
             # random.shuffle(sorted_pairs)
             if self.print_data:
@@ -397,7 +414,7 @@ class FlowPacker:
 
             # first pass (try not to exceed target pair load)
             for pair in sorted_pairs:
-                pair = pair[0]
+                # pair = pair[0]
                 src, dst = json.loads(pair)[0], json.loads(pair)[1]
                 if self.check_dont_exceed_one_ep_load:
                     # ensure wont exceed 1.0 end point load by allocating this flow to pair
@@ -442,7 +459,7 @@ class FlowPacker:
             # third pass (if can't avoid exceeding pairs' eps' max loads for pairs' eps furthest from target info, try any pair)
             if chosen_pair is None:
                 for pair in sorted_pairs:
-                    pair = pair[0]
+                    # pair = pair[0]
                     src, dst = json.loads(pair)[0], json.loads(pair)[1]
                     if self.check_dont_exceed_one_ep_load:
                         # ensure wont exceed 1.0 end point load by allocating this flow to pair
