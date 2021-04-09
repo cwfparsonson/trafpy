@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     base_path = '/scratch/datasets/trafpy/traces/flowcentric/'
     path_to_json_data = base_path + 'rack_dist_sensitivity_0.2_k_4_L_2_n_16_chancap1250_numchans1_mldat3.2e5_bidirectional_benchmark_data'
-    slot_size = 1000.0
+    slot_size = 500.0
 
     json_files = sorted(glob.glob(path_to_json_data + '/*.json'))
     if len(json_files) == 0:

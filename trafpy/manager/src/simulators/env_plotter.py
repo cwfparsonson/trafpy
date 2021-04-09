@@ -98,6 +98,10 @@ class EnvsPlotter:
 
         # sort loads by t-score (best first)
         sorted_summary_dict = {header: [] for header in headers}
+        # create winner table
+        winner_table = {header: [] for header in headers if header != 'T-Score' and header != 'Subject'}
+        winner_table['Load'] = list(np.unique(list(summary_dict['Load'])))
+
         num_loads = len(np.unique(list(summary_dict['Load'])))
         num_subjects = len(np.unique(list(summary_dict['Subject'])))
         i = 0 # for indexing each row in summary_dict
@@ -114,6 +118,8 @@ class EnvsPlotter:
         # for load_idx in range(num_loads+1):
         for load_idx in range(num_loads):
             # sort t-scores for this load in descending order
+
+            # find num_subjects for each load
             num_subjects = 0
             loads = []
             while summary_dict['Load'][i] in loads or len(loads) == 0:
@@ -134,14 +140,28 @@ class EnvsPlotter:
             for header in headers:
                 # update sorted summary dict
                 sorted_summary_dict[header].extend(summary_dict[header][load_t_score_indices])
+                
                 # print('sorted summary dict:\n{}'.format(sorted_summary_dict))
 
-                # update radar plot
+                # update radar plot & winner table
                 if header != 'Subject' and header != 'Load' and header != 'T-Score' and load_idx < num_loads:
                     # get classes and corresponding rand var values for this rand var
                     classes = summary_dict['Subject'][load_t_score_indices]
                     classes_rand_vars = summary_dict[header][load_t_score_indices]
                     # print('classes: {} | classes rand vars: {}'.format(classes, classes_rand_vars))
+
+                    if is_higher_better[header]:
+                        # max val wins
+                        winner_val = max(classes_rand_vars)
+                    else:
+                        # min val wins
+                        winner_val = min(classes_rand_vars)
+                    winner_indices = sorted([u for u, v in enumerate(classes_rand_vars) if v == winner_val])
+                    winner = classes[winner_indices[0]]
+                    if len(winner_indices) > 1:
+                        for winner_idx in winner_indices[1:]:
+                            winner = winner + '+' + classes[winner_idx]
+                    winner_table[header].append(winner)
 
                     # get min max range
                     min_val, max_val = min(classes_rand_vars), max(classes_rand_vars)
@@ -159,9 +179,11 @@ class EnvsPlotter:
 
             i2 += num_subjects 
              
-        dataframe = pd.DataFrame(sorted_summary_dict)
+        summary_dataframe = pd.DataFrame(sorted_summary_dict)
+        winner_dataframe = pd.DataFrame(winner_table)
         if kwargs['display_table']:
-            display(dataframe)
+            display(summary_dataframe)
+            display(winner_dataframe)
 
         if kwargs['plot_radar']:
             loads = iter(np.unique(list(summary_dict['Load'])))
@@ -173,11 +195,8 @@ class EnvsPlotter:
                                               fill_alpha=kwargs['fill_alpha'],
                                               show_fig=True)
 
+        return summary_dataframe, winner_dataframe
 
-
-
-
-        return dataframe
 
     def plot_t_score_scatter(self, *analysers, **kwargs):
         '''Plots performance indicators for T-scores.
@@ -208,7 +227,7 @@ class EnvsPlotter:
 
         figs = []
         for load in plot_dict.keys():
-            fig = plot_dists.plot_val_scatter(plot_dict=plot_dict[load], xlabel='Load {} Throughput Component'.format(str(round(load,2))), ylabel='Load {} FCT Component'.format(str(round(load,2))), alpha=1.0, marker_size=60, logscale=True, gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], legend_ncol=kwargs['legend_ncol'], show_fig=False)
+            fig = plot_dists.plot_val_scatter(plot_dict=plot_dict[load], xlabel='Load {} Throughput Component'.format(str(round(load,2))), ylabel='Load {} FCT Component'.format(str(round(load,2))), alpha=1.0, marker_size=60, logscale=True, gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], legend_ncol=kwargs['legend_ncol'], show_fig=True)
             figs.append(fig)
 
         return figs
@@ -251,7 +270,7 @@ class EnvsPlotter:
                                            figsize=kwargs['scatter_figsize'],
                                            ylogscale=kwargs['logscale'],
                                            legend_ncol=kwargs['legend_ncol'],
-                                           show_fig=False)
+                                           show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
@@ -263,7 +282,7 @@ class EnvsPlotter:
                                        logscale=kwargs['logscale'],
                                        figsize=kwargs['cdf_figsize'],
                                        legend_ncol=kwargs['legend_ncol'],
-                                       show_fig=False)
+                                       show_fig=True)
 
         # % change
         for key in plot_dict.keys():
@@ -279,7 +298,7 @@ class EnvsPlotter:
                                            figsize=kwargs['scatter_figsize'], 
                                            ylogscale=kwargs['logscale'],
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
 
         return [fig1, fig2, fig3]
@@ -317,7 +336,7 @@ class EnvsPlotter:
                                            ylogscale=kwargs['logscale'],
                                            plot_line=True,
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
@@ -329,7 +348,7 @@ class EnvsPlotter:
                                        logscale=kwargs['logscale'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        complementary_cdf=True, 
-                                       show_fig=False)
+                                       show_fig=True)
 
         # % change
         for key in plot_dict.keys():
@@ -344,7 +363,7 @@ class EnvsPlotter:
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
         return [fig1, fig2, fig3]
 
@@ -381,7 +400,7 @@ class EnvsPlotter:
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
@@ -393,7 +412,7 @@ class EnvsPlotter:
                                        logscale=kwargs['logscale'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        complementary_cdf=True, 
-                                       show_fig=False)
+                                       show_fig=True)
 
         # % change
         for key in plot_dict.keys():
@@ -408,7 +427,7 @@ class EnvsPlotter:
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
         return [fig1, fig2]
 
@@ -457,7 +476,7 @@ class EnvsPlotter:
                                           complementary_cdf=True, 
                                           figsize=kwargs['figsize'], 
                                           legend_ncol=kwargs['legend_ncol'], 
-                                          show_fig=False)
+                                          show_fig=True)
             figs.append(fig)
 
         return figs
@@ -497,7 +516,7 @@ class EnvsPlotter:
                                            ylogscale=kwargs['logscale'],
                                            figsize=kwargs['scatter_figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
@@ -509,7 +528,7 @@ class EnvsPlotter:
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['cdf_figsize'], 
                                        legend_ncol=kwargs['legend_ncol'], 
-                                       show_fig=False)
+                                       show_fig=True)
 
         # % change
         for key in plot_dict.keys():
@@ -525,7 +544,7 @@ class EnvsPlotter:
                                            ylogscale=kwargs['logscale'],
                                            figsize=kwargs['scatter_figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
         return [fig1, fig2, fig3]
 
@@ -562,7 +581,7 @@ class EnvsPlotter:
                                            ylogscale=kwargs['logscale'],
                                            figsize=kwargs['scatter_figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
@@ -574,7 +593,7 @@ class EnvsPlotter:
                                        logscale=kwargs['logscale'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        complementary_cdf=True, 
-                                       show_fig=False)
+                                       show_fig=True)
 
         # % change
         for key in plot_dict.keys():
@@ -590,7 +609,7 @@ class EnvsPlotter:
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
         return [fig1, fig2, fig3]
 
@@ -632,7 +651,7 @@ class EnvsPlotter:
                                                  ylim=load_to_ylim[load], 
                                                  vertical_lines=[load_to_meas_time[load][0], 
                                                  load_to_meas_time[load][1]], 
-                                                 show_fig=False))
+                                                 show_fig=True))
         
         return figs
 
@@ -673,7 +692,7 @@ class EnvsPlotter:
         figs = []
         if kwargs['plot_bar_charts']:
             for load in plot_dict.keys():
-                figs.append(plot_dists.plot_val_bar(x_values=plot_dict[load]['x_values'], y_values=plot_dict[load]['y_values'], xlabel='Test Subject Class', ylabel='Load {} Throughput Rate'.format(str(round(load,2)), gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], show_fig=False)))
+                figs.append(plot_dists.plot_val_bar(x_values=plot_dict[load]['x_values'], y_values=plot_dict[load]['y_values'], xlabel='Test Subject Class', ylabel='Load {} Throughput Rate'.format(str(round(load,2)), gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], show_fig=True)))
 
         # scatter
         fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict2, 
@@ -684,7 +703,7 @@ class EnvsPlotter:
                                            plot_line=True,
                                            figsize=kwargs['figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict2, 
@@ -695,7 +714,7 @@ class EnvsPlotter:
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['figsize'], 
                                        legend_ncol=kwargs['legend_ncol'], 
-                                       show_fig=False)
+                                       show_fig=True)
 
         return [figs, fig1, fig2]
 
@@ -737,7 +756,7 @@ class EnvsPlotter:
         figs = []
         if kwargs['plot_bar_charts']:
             for load in plot_dict.keys():
-                figs.append(plot_dists.plot_val_bar(x_values=plot_dict[load]['x_values'], y_values=plot_dict[load]['y_values'], xlabel='Test Subject Class', ylabel='Load {} Throughput Rate'.format(str(round(load,2)), gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], show_fig=False)))
+                figs.append(plot_dists.plot_val_bar(x_values=plot_dict[load]['x_values'], y_values=plot_dict[load]['y_values'], xlabel='Test Subject Class', ylabel='Load {} Throughput Rate'.format(str(round(load,2)), gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], show_fig=True)))
 
         # scatter
         fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict2, 
@@ -748,7 +767,7 @@ class EnvsPlotter:
                                            plot_line=True,
                                            figsize=kwargs['figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict2, 
@@ -759,7 +778,7 @@ class EnvsPlotter:
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['figsize'], 
                                        legend_ncol=kwargs['legend_ncol'], 
-                                       show_fig=False)
+                                       show_fig=True)
 
         
         # % change
@@ -776,7 +795,7 @@ class EnvsPlotter:
                                            plot_line=True,
                                            figsize=kwargs['figsize'], 
                                            legend_ncol=kwargs['legend_ncol'], 
-                                           show_fig=False)
+                                           show_fig=True)
 
 
 
@@ -819,7 +838,7 @@ class EnvsPlotter:
             figs.append(plot_dists.plot_demand_slot_colour_grid(analyser.grid_demands, 
                                                                 title=analyser.env.sim_name, 
                                                                 xlim=None, 
-                                                                show_fig=False, 
+                                                                show_fig=True, 
                                                                 aspect=kwargs['aspect'], 
                                                                 figsize=kwargs['figsize'], 
                                                                 legend_ncol=kwargs['legend_ncol']))
@@ -924,7 +943,7 @@ class EnvsPlotter:
                                                    figsize=kwargs['figsize'], 
                                                    legend_ncol=kwargs['legend_ncol'], 
                                                    plot_legend=kwargs['plot_legend'], 
-                                                   show_fig=False)
+                                                   show_fig=True)
                     figs.append(fig)
 
         return figs
@@ -1006,7 +1025,7 @@ class EnvsPlotter:
                                                    aspect=kwargs['aspect'], 
                                                    figsize=kwargs['figsize'], 
                                                    legend_ncol=kwargs['legend_ncol'], 
-                                                   show_fig=False)
+                                                   show_fig=True)
                     figs.append(fig)
 
         return figs
@@ -1059,7 +1078,7 @@ class EnvsPlotter:
                                               aspect=kwargs['aspect'], 
                                               figsize=kwargs['figsize'], 
                                               legend_ncol=kwargs['legend_ncol'], 
-                                              show_fig=False)
+                                              show_fig=True)
             figs.append(fig)
 
         return figs
@@ -1084,10 +1103,10 @@ class EnvsPlotter:
             # plot_dict[analyser.subject_class_name]['rand_vars'].append(analyser.mean_fct)
 
         # # scatter
-        # fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='V', ylabel='Average FCT', show_fig=False)
+        # fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='V', ylabel='Average FCT', show_fig=True)
 
         # # complementary cdf
-        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Average FCT', ylabel='Complementary CDF', complementary_cdf=True, show_fig=False)
+        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Average FCT', ylabel='Complementary CDF', complementary_cdf=True, show_fig=True)
 
         # return [fig1, fig2]
     
@@ -1102,10 +1121,10 @@ class EnvsPlotter:
             # plot_dict[analyser.subject_class_name]['rand_vars'].append(analyser.nn_fct)
 
         # # scatter
-        # fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='V', ylabel='99th Percentile FCT', show_fig=False)
+        # fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='V', ylabel='99th Percentile FCT', show_fig=True)
 
         # # complementary cdf
-        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='99th Percentile FCT', ylabel='Complementary CDF', complementary_cdf=True, show_fig=False)
+        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='99th Percentile FCT', ylabel='Complementary CDF', complementary_cdf=True, show_fig=True)
 
         # return [fig1, fig2]
 
@@ -1121,10 +1140,10 @@ class EnvsPlotter:
             # plot_dict[analyser.subject_class_name]['rand_vars'].append(analyser.throughput_abs)
 
         # # scatter
-        # fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='V', ylabel='Throughput Rate', show_fig=False)
+        # fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='V', ylabel='Throughput Rate', show_fig=True)
 
         # # complementary cdf
-        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Throughput Rate', ylabel='Complementary CDF', complementary_cdf=True, show_fig=False)
+        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Throughput Rate', ylabel='Complementary CDF', complementary_cdf=True, show_fig=True)
 
         # return [fig1, fig2]
 

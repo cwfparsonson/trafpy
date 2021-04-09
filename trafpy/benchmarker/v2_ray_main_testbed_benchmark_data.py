@@ -323,7 +323,7 @@ if __name__ == '__main__':
         # DATA_NAME = 'social_media_cloud_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'skewed_nodes_sensitivity_0_k_4_L_2_n_16_chancap1250_numchans1_mldat2e6_bidirectional_v2'
         # DATA_NAME = 'commercial_cloud_k_2_L_2_n_2_chancap1250_numchans1_mldatNone_bidirectional'
-        DATA_NAME = 'rack_dist_sensitivity_0_k_4_L_2_n_16_chancap1250_numchans1_mldat3.2e5_bidirectional'
+        DATA_NAME = 'skewed_nodes_sensitivity_0.05_k_4_L_2_n_16_chancap1250_numchans1_mldat3.2e5_bidirectional'
 
         OVERWRITE = True # False
 
@@ -331,8 +331,8 @@ if __name__ == '__main__':
         # path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data.json'.format(DATA_NAME)
         path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data'.format(DATA_NAME)
         # LOADS = 'all' # 'all' [0.1, 0.2]
-        # LOADS = [0.1, 0.2, 0.3, 0.4, 0.5]
-        LOADS = [0.6, 0.7, 0.8, 0.9]
+        LOADS = [0.1, 0.2, 0.3, 0.4, 0.5]
+        # LOADS = [0.6, 0.7, 0.8, 0.9]
         # LOADS = [0.7, 0.8, 0.9]
         # LOADS = [0.9]
         # LOADS = [0.1, 0.2]
@@ -362,7 +362,7 @@ if __name__ == '__main__':
 
         # schedulers
         # SLOT_SIZE = 1e6
-        SLOT_SIZE = 1000.0 #1e4 1e5 1e2 0.1  1e3 50.0
+        SLOT_SIZE = 1000.0 #1e4 1e5 1e2 0.1  1e3 50.0 500.0
         PACKET_SIZE = 1 # 300 0.01 1e1 1e2
         schedulers = [SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
                       FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
@@ -411,7 +411,7 @@ if __name__ == '__main__':
 
         tb.reset()
         tb.run_tests(test_config, 
-                path_to_save='/scratch/datasets/trafpy/management/flowcentric/{}_testbed_data_v2'.format(DATA_NAME),
+                path_to_save='/scratch/datasets/trafpy/management/flowcentric/{}_slotsize_{}_testbed_data'.format(DATA_NAME, SLOT_SIZE),
                          overwrite=OVERWRITE)
 
         

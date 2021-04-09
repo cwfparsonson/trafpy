@@ -401,13 +401,16 @@ class FlowPacker:
                 src, dst = json.loads(pair)[0], json.loads(pair)[1]
                 if self.check_dont_exceed_one_ep_load:
                     # ensure wont exceed 1.0 end point load by allocating this flow to pair
-                    # if self.ep_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
-                    if self.pair_current_distance_from_target_info_dict[pair] - self.packed_flows[flow]['size'] < 0:
-                        # would exceed pair's target total info, try next pair
+                    if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
+                        # would exceed maximum load for at least one of src and/or dst
                         pass
                     else:
-                        chosen_pair = pair
-                        break
+                        if self.pair_current_distance_from_target_info_dict[pair] - self.packed_flows[flow]['size'] < 0:
+                            # would exceed pair's target total info, try next pair
+                            pass
+                        else:
+                            chosen_pair = pair
+                            break
                 else:
                     # don't worry about exceeding 1.0 end point load, just allocate to pair furthest from target load
                     chosen_pair = pair
@@ -424,7 +427,7 @@ class FlowPacker:
                     src, dst = json.loads(pair)[0], json.loads(pair)[1]
                     if self.check_dont_exceed_one_ep_load:
                         # ensure wont exceed 1.0 end point load by allocating this flow to pair
-                        # if self.ep_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_ep_info:
+                        # if self.ep_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_ep_info or self.ep_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_ep_info
                         if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
                             # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
                             pass

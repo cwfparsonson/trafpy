@@ -23,8 +23,8 @@ MIN_LAST_DEMAND_ARRIVAL_TIME = 3.2e5 # units of us 2e6 3e6 6e7 6e8 None 3000.0 2
 # MIN_LAST_DEMAND_ARRIVAL_TIME = None
 
 # define network load fractions
-# LOADS = np.arange(0.1, 1.0, 0.1).tolist()
-LOADS = [0.1]
+LOADS = np.arange(0.1, 1.0, 0.1).tolist()
+# LOADS = [0.1]
 LOADS = [round(load, 3) for load in LOADS] # ensure no python floating point arithmetic errors
 
 # define number of repetitions to perform for each benchmark for each load
@@ -59,14 +59,14 @@ SLOT_SIZE = 1000.0 # 50.0
 # BENCHMARKS = ['artificial_light']
 
 # BENCHMARKS = ['skewed_nodes_sensitivity_0']
-# BENCHMARKS = ['skewed_nodes_sensitivity_0.05']
+BENCHMARKS = ['skewed_nodes_sensitivity_0.05']
 # BENCHMARKS = ['skewed_nodes_sensitivity_0.1']
 # BENCHMARKS = ['skewed_nodes_sensitivity_0.2']
 # BENCHMARKS = ['skewed_nodes_sensitivity_0.4']
 
 # BENCHMARKS = ['rack_dist_sensitivity_0']
 # BENCHMARKS = ['rack_dist_sensitivity_0.2']
-BENCHMARKS = ['rack_dist_sensitivity_0.4']
+# BENCHMARKS = ['rack_dist_sensitivity_0.4']
 # BENCHMARKS = ['rack_dist_sensitivity_0.6']
 # BENCHMARKS = ['rack_dist_sensitivity_0.8']
 
