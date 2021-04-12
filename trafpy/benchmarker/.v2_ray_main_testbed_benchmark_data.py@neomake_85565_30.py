@@ -323,7 +323,7 @@ if __name__ == '__main__':
         # DATA_NAME = 'social_media_cloud_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'skewed_nodes_sensitivity_0_k_4_L_2_n_16_chancap1250_numchans1_mldat2e6_bidirectional_v2'
         # DATA_NAME = 'commercial_cloud_k_2_L_2_n_2_chancap1250_numchans1_mldatNone_bidirectional'
-        DATA_NAME = 'skewed_nodes_sensitivity_0.1_k_4_L_2_n_16_chancap1250_numchans1_mldat3.2e5_bidirectional'
+        DATA_NAME = 'skewed_nodes_sensitivity_0.2_k_4_L_2_n_16_chancap1250_numchans1_mldat3.2e5_bidirectional'
 
         OVERWRITE = True # False
 
