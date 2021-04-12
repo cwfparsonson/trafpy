@@ -16,7 +16,7 @@ BENCHMARK_VERSION = '0.0.1'
 MIN_NUM_DEMANDS = 10
 
 # define maximum allowed Jenson-Shannon distance for flow size and interarrival time distributions (lower value -> distributions must be more similar -> higher number of demands will be generated) (must be between 0 and 1)
-JENSEN_SHANNON_DISTANCE_THRESHOLD = 0.2 # 0.1
+JENSEN_SHANNON_DISTANCE_THRESHOLD = 0.1 # 0.1 0.2
 
 # define minimum time of last demand's arrival (helps define minimum simulation time)
 MIN_LAST_DEMAND_ARRIVAL_TIME = 3.2e5 # units of us 2e6 3e6 6e7 6e8 None 3000.0 2e6 2.4e5pulse 2e6
