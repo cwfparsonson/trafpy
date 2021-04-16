@@ -101,6 +101,9 @@ class EnvsPlotter:
         # create winner table
         winner_table = {header: [] for header in headers if header != 'T-Score' and header != 'Subject'}
         winner_table['Load'] = list(np.unique(list(summary_dict['Load'])))
+        # create ranking table
+        ranking_table = {header: [] for header in headers if header != 'T-Score' and header != 'Subject'}
+        ranking_table['Load'] = list(np.unique(list(summary_dict['Load'])))
 
         num_loads = len(np.unique(list(summary_dict['Load'])))
         num_subjects = len(np.unique(list(summary_dict['Subject'])))
@@ -150,6 +153,7 @@ class EnvsPlotter:
                     classes_rand_vars = summary_dict[header][load_t_score_indices]
                     # print('classes: {} | classes rand vars: {}'.format(classes, classes_rand_vars))
 
+                    # winner table
                     if is_higher_better[header]:
                         # max val wins
                         winner_val = max(classes_rand_vars)
@@ -163,6 +167,40 @@ class EnvsPlotter:
                             winner = winner + '+' + classes[winner_idx]
                     winner_table[header].append(winner)
 
+
+                    # ranking table
+                    if is_higher_better[header]:
+                        # max values better
+                        ranking_indices = np.argsort(classes_rand_vars)[::-1]
+                    else:
+                        # low values better
+                        ranking_indices = np.argsort(classes_rand_vars)
+                    ranking_vals = np.asarray(classes_rand_vars)[ranking_indices]
+                    ranking_classes = np.asarray(classes)[ranking_indices]
+                    # find loser -> make this baseline
+                    baseline_val, baseline_class = ranking_vals[-1], ranking_classes[-1]
+                    # find performance improvement of other classes relative to baseline
+                    relative_performance = []
+                    for val in ranking_vals[:-1]:
+                        diff = val - baseline_val
+                        perf = sigfig.round(float((diff/baseline_val) * 100), sigfigs=4)
+                        # if not is_higher_better[header]:
+                            # # ranking is lower than baseline, make negative
+                            # perf = -(100-perf)
+                            # if abs(perf) == 0:
+                                # # cannot get to 0
+                                # perf = -0.01
+                        relative_performance.append(perf)
+                    relative_performance = iter(relative_performance)
+                    ranks = ''
+                    for _class in ranking_classes[:-1]:
+                        rank = _class + '({}%) | '.format(sigfig.round(next(relative_performance), sigfigs=4))
+                        ranks += rank
+                    ranks += baseline_class
+                    ranking_table[header].append(ranks)
+
+
+                    # radar plot
                     # get min max range
                     min_val, max_val = min(classes_rand_vars), max(classes_rand_vars)
                     diff = max(max_val - min_val, 1e-9)
@@ -181,9 +219,11 @@ class EnvsPlotter:
              
         summary_dataframe = pd.DataFrame(sorted_summary_dict)
         winner_dataframe = pd.DataFrame(winner_table)
+        ranking_dataframe = pd.DataFrame(ranking_table)
         if kwargs['display_table']:
             display(summary_dataframe)
             display(winner_dataframe)
+            display(ranking_dataframe)
 
         if kwargs['plot_radar']:
             loads = iter(np.unique(list(summary_dict['Load'])))
@@ -195,7 +235,7 @@ class EnvsPlotter:
                                               fill_alpha=kwargs['fill_alpha'],
                                               show_fig=True)
 
-        return summary_dataframe, winner_dataframe
+                return summary_dataframe, winner_dataframe, ranking_dataframe
 
 
     def plot_t_score_scatter(self, *analysers, **kwargs):

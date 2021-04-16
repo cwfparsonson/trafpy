@@ -111,7 +111,7 @@ class DCN(gym.Env):
             print('Establishing {} slots_dict tmp database...'.format(self.sim_name))
             start = time.time()
             if type(self.slots_dict) is str:
-                # slots dict database already created, copy database over to tmp database dir and rename
+                print('Slots dict database already created. Copying database over to tmp database dir...')
                 shutil.copyfile(self.slots_dict, _slots_dict)
                 with SqliteDict(self.slots_dict) as slots_dict:
                     self.slot_size = slots_dict['slot_size']
@@ -120,8 +120,7 @@ class DCN(gym.Env):
                     self.num_flows = slots_dict['num_flows']
                     slots_dict.close()
             else:
-                # no slots_dict database path given, only given slots_dict in memory
-                # create slots_dict database
+                print('No slots_dict database path given, only given slots_dict in memory. Creating slots_dict database...')
                 with SqliteDict(self.slots_dict) as slots_dict:
                     for key, val in slots_dict.items():
                         if type(key) is not str:
@@ -491,8 +490,12 @@ class DCN(gym.Env):
                 available_link_bw += self.get_channel_bandwidth(link, channel)
                 max_link_bw += self.network[link[0]][link[1]]['{}_to_{}_port'.format(link[0], link[1])]['max_channel_capacity']
             link_util = 1-(available_link_bw / max_link_bw)
-            link_utilisation_dict[json.dumps(link)]['time_slots'].append(self.curr_step)
-            link_utilisation_dict[json.dumps(link)]['util'].append(link_util)
+            # get link dict
+            link_dict = link_utilisation_dict[json.dumps(link)]
+            # update dict
+            link_dict['time_slots'].append(self.curr_step)
+            link_dict['util'].append(link_util)
+            link_utilisation_dict[json.dumps(link)] = link_dict
 
             # dst-src
             link = link[::-1]
@@ -502,8 +505,12 @@ class DCN(gym.Env):
                 available_link_bw += self.get_channel_bandwidth(link, channel)
                 max_link_bw += self.network[link[0]][link[1]]['{}_to_{}_port'.format(link[0], link[1])]['max_channel_capacity']
             link_util = 1-(available_link_bw / max_link_bw)
-            link_utilisation_dict[json.dumps(link)]['time_slots'].append(self.curr_step)
-            link_utilisation_dict[json.dumps(link)]['util'].append(link_util)
+            # get link dict
+            link_dict = link_utilisation_dict[json.dumps(link)]
+            # update dict
+            link_dict['time_slots'].append(self.curr_step)
+            link_dict['util'].append(link_util)
+            link_utilisation_dict[json.dumps(link)] = link_dict
 
         if self.env_database_path is not None:
             link_utilisation_dict.commit()
@@ -519,14 +526,16 @@ class DCN(gym.Env):
         else:
             link_concurrent_demands_dict = self.link_concurrent_demands_dict
 
+        link_dict = link_concurrent_demands_dict[json.dumps(link)]
         if link_concurrent_demands_dict[json.dumps(link)]['time_slots'][-1] != self.curr_step:
             # not yet evolved concurrent demands evolution for this time slot
-            link_concurrent_demands_dict[json.dumps(link)]['time_slots'].append(self.curr_step)
+            link_dict['time_slots'].append(self.curr_step)
             # init num concurrent demands on link for this time slot
-            link_concurrent_demands_dict[json.dumps(link)]['concurrent_demands'].append(0)
+            link_dict['concurrent_demands'].append(0)
         
         # update num concurrent demands tracker for this time slot
-        link_concurrent_demands_dict[json.dumps(link)]['concurrent_demands'][-1] += num_concurrent_demands_to_add
+        link_dict['concurrent_demands'][-1] += num_concurrent_demands_to_add
+        link_concurrent_demands_dict[json.dumps(link)] = link_dict
 
         if self.env_database_path is not None:
             link_concurrent_demands_dict.commit()
