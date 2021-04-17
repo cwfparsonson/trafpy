@@ -107,6 +107,7 @@ def gen_event_dict(demand_data, event_iter=None):
         if job_centric:
             flow_id = demand_data['flow_id'][event_iter]
             job_id = demand_data['job_id'][event_iter]
+            unique_id = job_id+'_'+flow_id
             parent_deps = demand_data['parent_dependency_flow_ids'][event_iter]
             child_deps = demand_data['child_dependency_flow_ids'][event_iter]
             parent_op_run_time = demand_data['parent_op_run_time'][event_iter]
@@ -121,6 +122,7 @@ def gen_event_dict(demand_data, event_iter=None):
         else:
             flow_id = demand_data['flow_id'][event_iter]
             job_id = None
+            unique_id = flow_id
             parent_deps = None
             child_deps = None
             parent_op_run_time = None
@@ -141,6 +143,7 @@ def gen_event_dict(demand_data, event_iter=None):
             # flows in jobs have unique ids & dependencies
             flow_id = demand_data['flow_id']
             job_id = demand_data['job_id']
+            unique_id = job_id+'_'+flow_id
             parent_deps = demand_data['parent_dependency_flow_ids']
             child_deps = demand_data['child_dependency_flow_ids']
             parent_op_run_time = demand_data['parent_op_run_time']
@@ -155,6 +158,7 @@ def gen_event_dict(demand_data, event_iter=None):
         else:
             flow_id = demand_data['flow_id']
             job_id = None
+            unique_id = flow_id
             parent_deps = None
             child_deps = None
             parent_op_run_time = None
@@ -165,6 +169,7 @@ def gen_event_dict(demand_data, event_iter=None):
         
         
     event_dict = {'flow_id': flow_id,
+                  'unique_id': unique_id,
                   'size': size,
                   'src': sn,
                   'dst': dn,

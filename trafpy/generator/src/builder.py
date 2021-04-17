@@ -1,6 +1,6 @@
 '''Module for building demand data dictionaries (flow- and job-centric).'''
 
-from trafpy.generator.src import jobcentric, flowcentric, flowcentric
+from trafpy.generator.src import jobcentric, flowcentric
 from trafpy.generator.src import tools
 
 import numpy as np
@@ -14,7 +14,7 @@ def create_demand_data(eps,
                        node_dist,
                        flow_size_dist,
                        interarrival_time_dist,
-                       network_load_config=None,
+                       network_load_config,
                        min_num_demands=6000,
                        max_num_demands=None,
                        jensen_shannon_distance_threshold=0.1,
@@ -109,24 +109,44 @@ def create_demand_data(eps,
 
     """
 
-    generator = flowcentric.FlowGenerator(eps,
-                                          node_dist=node_dist,
-                                          flow_size_dist=flow_size_dist,
-                                          interarrival_time_dist=interarrival_time_dist,
-                                          network_load_config=network_load_config,
-                                          min_num_demands=min_num_demands,
-                                          max_num_demands=max_num_demands,
-                                          jensen_shannon_distance_threshold=jensen_shannon_distance_threshold,
-                                          min_last_demand_arrival_time=min_last_demand_arrival_time,
-                                          bidirectional_links=bidirectional_links,
-                                          auto_node_dist_correction=auto_node_dist_correction,
-                                          check_dont_exceed_one_ep_load=check_dont_exceed_one_ep_load,
-                                          print_data=print_data) 
+    if num_ops_dist is None:
+        # flowcentric
+        generator = flowcentric.FlowGenerator(eps,
+                                              node_dist=node_dist,
+                                              flow_size_dist=flow_size_dist,
+                                              interarrival_time_dist=interarrival_time_dist,
+                                              network_load_config=network_load_config,
+                                              min_num_demands=min_num_demands,
+                                              max_num_demands=max_num_demands,
+                                              jensen_shannon_distance_threshold=jensen_shannon_distance_threshold,
+                                              min_last_demand_arrival_time=min_last_demand_arrival_time,
+                                              bidirectional_links=bidirectional_links,
+                                              auto_node_dist_correction=auto_node_dist_correction,
+                                              check_dont_exceed_one_ep_load=check_dont_exceed_one_ep_load,
+                                              print_data=print_data) 
+        return generator.create_flow_centric_demand_data()
 
-    # TODO: Put jobcentric generator here
+    else:
+        # jobcentric
+        generator = jobcentric.JobGenerator(eps,
+                                              node_dist=node_dist,
+                                              flow_size_dist=flow_size_dist,
+                                              interarrival_time_dist=interarrival_time_dist,
+                                              num_ops_dist=num_ops_dist,
+                                              c=c,
+                                              network_load_config=network_load_config,
+                                              min_num_demands=min_num_demands,
+                                              max_num_demands=max_num_demands,
+                                              jensen_shannon_distance_threshold=jensen_shannon_distance_threshold,
+                                              min_last_demand_arrival_time=min_last_demand_arrival_time,
+                                              bidirectional_links=bidirectional_links,
+                                              use_multiprocessing=use_multiprocessing,
+                                              auto_node_dist_correction=auto_node_dist_correction,
+                                              check_dont_exceed_one_ep_load=check_dont_exceed_one_ep_load,
+                                              print_data=print_data) 
+        return generator.create_job_centric_demand_data()
 
 
-    return generator.create_flow_centric_demand_data()
 
 
 
@@ -310,6 +330,7 @@ def construct_demand_slots_dict(demand_data,
     '''
     start = time.time()
 
+    slot_size = float(slot_size)
     if type(slot_size) is not float:
         raise Exception('slot_size must be float (e.g. 1.0), but is {}'.format(slot_size))
 
@@ -417,7 +438,10 @@ def construct_demand_slots_dict(demand_data,
     slot_dict['time_last_demand_arrived'] = session_end_time
     slot_dict['job_centric'] = job_centric
     slot_dict['num_control_deps'], slot_dict['num_data_deps'], slot_dict['num_flows'] = get_num_deps(demand_data, job_centric)
-    slot_dict['num_demands'] = len(demand_data['flow_id'])
+    try:
+        slot_dict['num_demands'] = len(demand_data['flow_id'])
+    except KeyError:
+        slot_dict['num_demands'] = len(demand_data['job_id'])
 
     
     return slot_dict
@@ -429,18 +453,21 @@ def get_num_deps(demand_data, job_centric):
     if job_centric:
         # calc deps
         for job in demand_data['job']:
-            for op in job.nodes:
-                flows = job.out_edges(op)
-                for flow in flows:
-                    flow_stats = job.get_edge_data(flow[0],flow[1])
-                    src = job.nodes[flow[0]]['attr_dict']['machine']
-                    dst = job.nodes[flow[1]]['attr_dict']['machine']
-                    if flow_stats['attr_dict']['dependency_type'] == 'data_dep':
-                        num_data_deps+=1
-                        if src != dst:
-                            num_flows+=1
-                    else:
-                        num_control_deps+=1
+            num_control_deps += job.graph['num_control_deps']
+            num_data_deps += job.graph['num_data_deps']
+            # for op in job.nodes:
+                # flows = job.out_edges(op)
+                # for flow in flows:
+                    # flow_stats = job.get_edge_data(flow[0],flow[1])
+                    # src = job.nodes[flow[0]]['attr_dict']['machine']
+                    # dst = job.nodes[flow[1]]['attr_dict']['machine']
+                    # if flow_stats['attr_dict']['dependency_type'] == 'data_dep':
+                        # num_data_deps+=1
+                        # if src != dst:
+                            # num_flows+=1
+                    # else:
+                        # num_control_deps+=1
+        num_flows = num_data_deps
 
     else:
         # 1 demand == 1 flow, therefore no dependencies & each demand == flow

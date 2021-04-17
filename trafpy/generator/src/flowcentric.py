@@ -131,6 +131,8 @@ class FlowGenerator:
         if self.max_num_demands is not None:
             if len(interarrival_times) > self.max_num_demands or len(flow_sizes) > self.max_num_demands:
                 print('WARNING: max_num_demands is {} but needed {} flows to meet jensen_shannon_distance_threshold {}. Capping num_demands to max_num_demands, therefore may not meet jensen_shannon_distance_threshold specified. Increase max_num_demands to ensure you meet the jensen_shannon_distance_threshold.'.format(self.max_num_demands, len(flow_sizes), self.jensen_shannon_distance_threshold))
+                self.num_demands = self.max_num_demands
+
                 # sample flow sizes and interarrival times with max_num_demands
                 flow_sizes = val_dists.gen_rand_vars_from_discretised_dist(unique_vars=list(self.flow_size_dist.keys()),
                                                                            probabilities=list(self.flow_size_dist.values()),
@@ -189,15 +191,6 @@ class FlowGenerator:
                     print('WARING: max_num_demands is {} but have specified min_last_demand_arrival_time {}. Would need {} demands to reach this min_last_demand_arrival_time, therefore must increase max_num_demands (or set to None) if you want to meet this min_last_demand_arrival_time.'.format(self.max_num_demands, self.min_last_demand_arrival_time, (2**num_duplications)*len(demand_data['flow_id'])))
                     return demand_data
             demand_data = duplicate_demands_in_demand_data_dict(demand_data, num_duplications=num_duplications, eps=self.eps)
-
-        # convert to numpy array to save memory space
-        # demand_data['flow_id'] = np.asarray(demand_data['flow_id'])
-        # demand_data['dn'] = np.asarray(demand_data['dn'])
-        # demand_data['sn'] = np.asarray(demand_data['sn'])
-        # demand_data['flow_size'] = np.asarray(demand_data['flow_size'], dtype=np.int64)
-        # demand_data['event_time'] = np.asarray(demand_data['event_time'], dtype=np.float32)
-        # demand_data['establish'] = np.asarray(demand_data['establish'], dtype=np.int8)
-        # demand_data['index'] = np.asarray(demand_data['index'], dtype=np.int32)
 
         return demand_data
 
@@ -706,50 +699,97 @@ def get_first_last_flow_arrival_times(demand_data):
 def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwargs):
     '''Duplicates set of flows by the specified number of times.'''
     demand_data = copy.deepcopy(demand_data)
+    
+    if 'job_id' in demand_data:
+        job_centric = True
+    else:
+        job_centric = False
 
     # ensure values of dict are lists
     for key, value in demand_data.items():
         demand_data[key] = list(value)
 
-    duplication_bar = ShadyBar('Duplicating flows ', max=int(100))
+    duplication_bar = ShadyBar('Duplicating demands ', max=int(100))
     printed_progress = {percent: False for percent in np.arange(0, 100, 1)}
-    flows_to_add = (2**num_duplications)*len(demand_data['flow_id']) - len(demand_data['flow_id'])
+
+    if job_centric:
+        demands_to_add = (2**num_duplications)*len(demand_data['job_id']) - len(demand_data['job_id'])
+    else:
+        demands_to_add = (2**num_duplications)*len(demand_data['flow_id']) - len(demand_data['flow_id'])
     counter = 0
     for _ in range(num_duplications):
         # final_event_time = max(demand_data['event_time'])
-        num_demands = len(demand_data['flow_id'])
+        if job_centric:
+            num_demands = len(demand_data['job_id'])
+            # get number of edges (dependencies) across all jobs
+            total_num_edges = 0
+            for job in demand_data['job']:
+                total_num_edges += len(job.edges)
+        else:
+            num_demands = len(demand_data['flow_id'])
         final_event_time = max(demand_data['event_time'])
         first_event_time = min(demand_data['event_time'])
         duration = final_event_time - first_event_time
-        for idx in range(len(demand_data['flow_id'])):
-            # demand_data['flow_id'] = np.append(demand_data['flow_id'], 'flow_{}'.format(int(idx+num_demands)))
-            # demand_data['sn'] = np.append(demand_data['sn'], demand_data['sn'][idx])
-            # demand_data['dn'] = np.append(demand_data['dn'], demand_data['dn'][idx])
-            # demand_data['flow_size'] = np.append(demand_data['flow_size'], demand_data['flow_size'][idx])
-            # demand_data['event_time'] = np.append(demand_data['event_time'], duration + demand_data['event_time'][idx])
-            # demand_data['establish'] = np.append(demand_data['establish'], demand_data['establish'][idx])
-            # demand_data['index'] = np.append(demand_data['index'], demand_data['index'][idx] + idx)
-            demand_data['flow_id'].append('flow_{}'.format(int(idx+num_demands)))
-            demand_data['sn'].append(demand_data['sn'][idx])
-            demand_data['dn'].append(demand_data['dn'][idx])
-            demand_data['flow_size'].append(demand_data['flow_size'][idx])
+        for idx in range(num_demands):
+            if job_centric:
+                # job id
+                job_id = int(idx + num_demands)
+                demand_data['job_id'].append('job_{}'.format(job_id))
+
+                # attrs inside job
+                job = copy.deepcopy(demand_data['job'])[idx]
+                flow_stats = {flow: job.get_edge_data(flow[0], flow[1]) for flow in job.edges} 
+                for flow in flow_stats:
+                    attr_dict = flow_stats[flow]['attr_dict']
+                    # # update flow id
+                    # flow_id = num_flows + total_num_edges 
+                    # old_flow_id = json.loads(flow_stats[flow]['attr_dict']['flow_id'].split('_')[1])
+                    # new_flow_id = old_flow_id + total_num_edges 
+                    # flow_stats[flow]['attr_dict']['flow_id'] = 'flow_{}'.format(new_flow_id)
+
+                    # # update parent dependency flow ids
+                    # parent_dependency_flow_ids = []
+                    # for f in flow_stats[flow]['attr_dict']['parent_dependency_flow_ids']:
+                        # old_flow_id = json.loads(flow_stats[f]['attr_dict']['flow_id'].split('_')[1])
+                        # new_flow_id = old_flow_id + total_num_edges 
+                        # parent_dependency_flow_ids.append(new_flow_id)
+                    # flow_stats[flow]['attr_dict']['parent_dependency_flow_ids'] = parent_dependency_flow_ids
+
+                    # # update child dependency flow ids
+                    # child_dependency_flow_ids = []
+                    # for f in flow_stats[flow]['attr_dict']['child_dependency_flow_ids']:
+                        # old_flow_id = json.loads(flow_stats[f]['attr_dict']['flow_id'].split('_')[1])
+                        # new_flow_id = old_flow_id + total_num_edges 
+                        # child_dependency_flow_ids.append(new_flow_id)
+                    # flow_stats[flow]['attr_dict']['child_dependency_flow_ids'] = child_dependency_flow_ids
+
+                    # update job id
+                    # flow_stats[flow]['attr_dict']['job_id'] = 'job_{}'.format(idx+num_demands)
+                    attr_dict['job_id'] = 'job_{}'.format(idx+num_demands)
+
+                    # confirm updates
+                    # edge = flow_stats[flow]['attr_dict']['edge']
+                    edge = attr_dict['edge']
+                    job.add_edge(edge[0], edge[1], attr_dict=attr_dict)
+                demand_data['job'].append(job)
+
+            else:
+                demand_data['flow_id'].append('flow_{}'.format(int(idx+num_demands)))
+                demand_data['flow_size'].append(demand_data['flow_size'][idx])
+                demand_data['sn'].append(demand_data['sn'][idx])
+                demand_data['dn'].append(demand_data['dn'][idx])
+
             demand_data['event_time'].append(duration + demand_data['event_time'][idx])
             demand_data['establish'].append(demand_data['establish'][idx])
-            demand_data['index'].append(demand_data['index'][idx] + idx)
+            demand_data['index'].append(demand_data['index'][idx] + num_demands)
             counter += 1
-            percent = round((counter/flows_to_add)*100, 1)
+            percent = round((counter/demands_to_add)*100, 1)
             if percent != 100:
                 if percent % 1 == 0 and not printed_progress[percent]:
                     duplication_bar.next()
                     printed_progress[percent] = True
 
-    # # ensure values of dict are lists
-    # for key, value in demand_data.items():
-        # demand_data[key] = list(value)
-
     duplication_bar.finish()
-
-
 
     return demand_data 
 

@@ -700,6 +700,7 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
         min_list = []
         mean_list = []
         std_list = []
+        counter = 0
         while distance > jensen_shannon_distance_threshold:
             num_demands_list.append(num_demands)
             sampled_vars = np.random.choice(a=unique_vars, 
@@ -715,6 +716,9 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
             mean_list.append(np.mean(sampled_vars))
             std_list.append(np.std(sampled_vars))
             num_demands = int(num_demands * 1.1)
+            counter += 1
+            if counter == 1e4:
+                raise Exception('Looped 10,000 times but distance {} still > threshold {}. Check no bugs or increase threshold.'.format(distance, jensen_shannon_distance_threshold))
     else:
         # no similarity threshold defined
         sampled_vars = np.random.choice(a=unique_vars, 
