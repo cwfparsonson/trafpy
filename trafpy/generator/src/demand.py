@@ -4,7 +4,7 @@ from trafpy.generator.src.dists import val_dists
 from trafpy.generator.src.dists import plot_dists
 from trafpy.generator.src import flowcentric
 from trafpy.generator.src import tools
-from trafpy.generator.src.tools import load_data_from_json
+from trafpy.generator.src.tools import load_data_from_json, unpickle_data
 
 import inspect
 import sys
@@ -16,6 +16,7 @@ from itertools import chain
 from collections import defaultdict # use for initialising arbitrary length nested dict
 import numpy as np
 import matplotlib.pyplot as plt
+from IPython.display import display
 
 class Demand:
     def __init__(self,
@@ -31,7 +32,12 @@ class Demand:
         self.eps = eps
         self.name = name
         if type(demand_data) is str:
-            demand_data = json.loads(load_data_from_json(demand_data, print_times=False))
+            if demand_data.endswith('.json'):
+                demand_data = json.loads(load_data_from_json(demand_data, print_times=False))
+            elif demand_data.endswith('.pickle'):
+                demand_data = unpickle_data(demand_data, print_times=False)
+            else:
+                raise Exception('Unrecognised file format.')
         self.reset(demand_data)
 
     def reset(self, demand_data):
@@ -39,9 +45,9 @@ class Demand:
         self.num_demands = self.get_num_demands(self.demand_data)
 
         if 'job_id' in demand_data:
-            self.job_centric = True
+            self.jobcentric = True
         else:
-            self.job_centric = False
+            self.jobcentric = False
 
         self.num_control_deps, self.num_data_deps, self.num_flows = self.get_num_deps(demand_data)
         self.analyser = DemandAnalyser(self)
@@ -63,7 +69,7 @@ class Demand:
     def get_num_deps(self, demand_data):
         num_control_deps,num_data_deps,num_flows = 0, 0, 0
 
-        if self.job_centric:
+        if self.jobcentric:
             # calc deps
             for job in demand_data['job']:
                 num_control_deps += job.graph['num_control_deps']
@@ -105,7 +111,7 @@ class DemandAnalyser:
     def compute_metrics(self, print_summary=False):
         self.computed_metrics = True
         self._compute_general_summary()
-        if self.demand.job_centric:
+        if self.demand.jobcentric:
             self._compute_job_summary()
         else:
             self._compute_flow_summary()
@@ -113,7 +119,7 @@ class DemandAnalyser:
         if print_summary:
             print('\n\n-=-=-=-=-=-= Summary =-=-=-=-=-=-=-')
             self._print_general_summary()
-            if self.demand.job_centric:
+            if self.demand.jobcentric:
                 self._print_job_summary()
             else:
                 self._print_flow_summary()
@@ -124,7 +130,7 @@ class DemandAnalyser:
     def _print_general_summary(self):
         print('\n~* General Information *~')
         print('Demand name: \'{}\''.format(self.demand.name))
-        if self.demand.job_centric:
+        if self.demand.jobcentric:
             print('Traffic type: Job-centric')
         else:
             print('Traffic type: Flow-centric')
@@ -170,6 +176,8 @@ class DemandAnalyser:
 
 
     def _compute_job_summary(self):
+        self._compute_flow_summary()
+
         self.num_control_deps = self.demand.num_control_deps
         self.num_data_deps = self.demand.num_data_deps
 
@@ -198,11 +206,11 @@ class DemandsAnalyser:
             # demands are just Demand objects
             self.separate_files = False
 
-        if 'job_centric' not in kwargs.keys():
-            print('job_centric bool kwarg not provided. Assuming job_centric=False...')
-            self.job_centric = False
+        if 'jobcentric' not in kwargs.keys():
+            print('jobcentric bool kwarg not provided. Assuming jobcentric=False...')
+            self.jobcentric = False
         else:
-            self.job_centric = kwargs['job_centric']
+            self.jobcentric = kwargs['jobcentric']
 
     def _check_analyser_valid(self, analyser):
         if inspect.isclass(analyser):
@@ -214,14 +222,15 @@ class DemandsAnalyser:
     def compute_metrics(self, print_summary=False):
         self.computed_metrics = True
 
-        if self.job_centric:
+        if self.jobcentric:
             self._compute_job_summary()
         else:
             self._compute_flow_summary()
 
         if print_summary:
             df = pd.DataFrame(self.summary_dict)
-            print(tabulate(df, headers='keys', tablefmt='psql'))
+            display(df)
+            # print(tabulate(df, headers='keys', tablefmt='psql'))
 
     def _compute_flow_summary(self):
         self.summary_dict = {'Name': [], 
@@ -253,9 +262,33 @@ class DemandsAnalyser:
         for key in self.summary_dict.keys():
             self.summary_dict[key] = np.asarray(self.summary_dict[key])[indicies]
 
-    def _compute_job_summary(self):
-        raise NotImplementedError
+        return self.summary_dict
 
+
+    def _compute_job_summary(self):
+        # raise NotImplementedError
+
+        # get flow metrics
+        self.summary_dict = self._compute_flow_summary()
+
+        # get job metrics
+        self.summary_dict['Jobs'] = []
+        self.summary_dict['Ctrl Deps'] = []
+        self.summary_dict['Data Deps'] = []
+        for demand in self.demands:
+            if self.separate_files:
+                # demand is currently a path, instantiate Demand object
+                demand = Demand(demand, self.kwargs['net'])
+            self.summary_dict['Jobs'].append(demand.num_demands)
+            self.summary_dict['Ctrl Deps'].append(demand.num_control_deps)
+            self.summary_dict['Data Deps'].append(demand.num_data_deps)
+
+        # sort in order of load
+        indicies = np.argsort(self.summary_dict['Load'])
+        for key in self.summary_dict.keys():
+            self.summary_dict[key] = np.asarray(self.summary_dict[key])[indicies]
+
+        return self.summary_dict
 
 
 
@@ -273,6 +306,50 @@ class DemandPlotter:
 
     def plot_flow_size_dist(self, logscale=True, num_bins=20, show_fig=True):
         return plot_dists.plot_val_dist(self.demand.demand_data['flow_size'], show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Flow Size')
+
+
+    def plot_num_ops_dist(self, logscale=True, num_bins=20, show_fig=True):
+        if not self.demand.jobcentric:
+            raise Exception('Flowcentric demand has no num_ops_dist.')
+
+        num_ops = []
+        for job in self.demand.demand_data['job']:
+            num_ops.append(len(job.nodes)-2)
+
+        return plot_dists.plot_val_dist(num_ops, show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Number of Operations')
+
+    def plot_num_deps_dist(self, logscale=True, num_bins=20, show_fig=True):
+        if not self.demand.jobcentric:
+            raise Exception('Flowcentric demand has no dependencies.')
+
+        num_deps = []
+        for job in self.demand.demand_data['job']:
+            num_deps.append(job.graph['num_data_deps'] + job.graph['num_control_deps'])
+
+        return plot_dists.plot_val_dist(num_deps, show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Number of Dependencies')
+
+    def plot_op_run_times_dist(self, logscale=True, num_bins=20, show_fig=True):
+        if not self.demand.jobcentric:
+            raise Exception('Flowcentric demand has no op run times.')
+
+        op_run_times = []
+        for job in self.demand.demand_data['job']:
+            for run_time in job.graph['op_run_times']:
+                op_run_times.append(run_time)
+
+        return plot_dists.plot_val_dist(op_run_times, show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Operation Run Times')
+
+    def plot_graph_diameter_dist(self, logscale=True, num_bins=20, show_fig=True):
+        if not self.demand.jobcentric:
+            raise Exception('Flowcentric demand has no graph_diameter_dist.')
+
+        diameters = []
+        for job in self.demand.demand_data['job']:
+            diameters.append(job.graph['graph_diameter'])
+
+        return plot_dists.plot_val_dist(diameters, show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Graph Diameter')
+
+
 
     def plot_interarrival_time_dist(self, logscale=True, num_bins=20, show_fig=True):
         interarrival_times = [self.demand.demand_data['event_time'][i+1]-self.demand.demand_data['event_time'][i] for i in range(self.demand.num_demands-1)]

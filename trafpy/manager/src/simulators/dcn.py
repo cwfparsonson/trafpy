@@ -165,6 +165,7 @@ class DCN(gym.Env):
                 self.num_flows = slots_dict['num_flows']
             self.check_if_pairs_valid(self.slots_dict)
             self.slot_size = self.slots_dict['slot_size']
+
         if type(self.slot_size) is not float:
             raise Exception('slot_size must be float (e.g. 1.0), but is {}'.format(self.slot_size))
 
@@ -650,13 +651,21 @@ class DCN(gym.Env):
                 with SqliteDict(self.dropped_flow_dicts) as dropped_flow_dicts:
                     # dropped_flow_dicts[flow_dict['flow_id']] = flow_dict
                     # dropped_flow_dicts[dropped_id] = flow_dict
-                    dropped_flow_dicts[flow_dict['unique_id']] = flow_dict
+                    if 'unique_id' in flow_dict:
+                        dropped_flow_dicts[flow_dict['unique_id']] = flow_dict
+                    else:
+                        # no unique id included in flow dict
+                        dropped_flow_dicts[flow_dict['flow_id']] = flow_dict
                     dropped_flow_dicts.commit()
                     dropped_flow_dicts.close()
             else:
                 # self.dropped_flow_dicts[flow_dict['flow_id']] = flow_dict
                 # self.dropped_flow_dicts[dropped_id] = flow_dict
-                self.dropped_flow_dicts[flow_dict['unique_id']] = flow_dict
+                if 'unique_id' in flow_dict:
+                    self.dropped_flow_dicts[flow_dict['unique_id']] = flow_dict
+                else:
+                    # no unique id included in flow dict
+                    self.dropped_flow_dicts[flow_dict['flow_id']] = flow_dict
             self.num_dropped_flows += 1
             if self.job_centric:
                 for job_dict in self.network.graph['queued_jobs']:
@@ -895,13 +904,21 @@ class DCN(gym.Env):
                 with SqliteDict(self.completed_flow_dicts) as completed_flow_dicts:
                     # completed_flow_dicts[flow_dict['flow_id']] = flow_dict
                     # completed_flow_dicts[completion_id] = flow_dict
-                    completed_flow_dicts[flow_dict['unique_id']] = flow_dict
+                    if 'unique_id' in flow_dict:
+                        completed_flow_dicts[flow_dict['unique_id']] = flow_dict
+                    else:
+                        # no unique id included in flow dict
+                        completed_flow_dicts[flow_dict['flow_id']] = flow_dict
                     completed_flow_dicts.commit()
                     completed_flow_dicts.close()
             else:
                 # self.completed_flow_dicts[flow_dict['flow_id']] = flow_dict
                 # self.completed_flow_dicts[completion_id] = flow_dict
-                self.completed_flow_dicts[flow_dict['unique_id']] = flow_dict
+                if 'unique_id' in flow_dict:
+                    self.completed_flow_dicts[flow_dict['unique_id']] = flow_dict
+                else:
+                    # no unique id included in flow dict
+                    self.completed_flow_dicts[flow_dict['flow_id']] = flow_dict
             self.num_completed_flows += 1
         else:
             # 'flow' never actually became a flow (src == dst or control dependency)
@@ -940,7 +957,11 @@ class DCN(gym.Env):
             # else:
                 # arrival_id = flow_dict['flow_id']
             try:
-                _ = self.arrived_flows[flow_dict['unique_id']
+                if 'unique_id' in flow_dict:
+                    _ = self.arrived_flows[flow_dict['unique_id']]
+                else:
+                    # no unique id included in flow dict
+                    _ = self.arrived_flows[flow_dict['flow_id']]
                 # flow already counted as arrived
             except KeyError:
                 # flow not yet counted as arrived
@@ -952,16 +973,28 @@ class DCN(gym.Env):
                         # already recorded time of arrival
                         pass
                     # self.arrived_flows[arrival_id] = 'present'
-                    self.arrived_flows[flow_dict['unique_id']] = 'present'
+                    if 'unique_id' in flow_dict:
+                        self.arrived_flows[flow_dict['unique_id']] = 'present'
+                    else:
+                        # no unique id included in flow dict
+                        self.arrived_flows[flow_dict['flow_id']] = 'present'
                     if self.env_database_path is not None:
                         with SqliteDict(self.arrived_flow_dicts) as arrived_flow_dicts:
                             # arrived_flow_dicts[arrival_id] = flow_dict
-                            arrived_flow_dicts[flow_dict['unique_id']] = flow_dict
+                            if 'unique_id' in flow_dict:
+                                arrived_flow_dicts[flow_dict['unique_id']] = flow_dict
+                            else:
+                                # no unique id included in flow dict
+                                arrived_flow_dicts[flow_dict['flow_id']] = flow_dict
                             arrived_flow_dicts.commit()
                             arrived_flow_dicts.close()
                     else:
                         # self.arrived_flow_dicts[arrival_id] = flow_dict
-                        self.arrived_flow_dicts[flow_dict['unique_id']] = flow_dict
+                        if 'unique_id' in flow_dict:
+                            self.arrived_flow_dicts[flow_dict['unique_id']] = flow_dict
+                        else:
+                            # no unique id included in flow dic5
+                            self.arrived_flow_dicts[flow_dict['flow_id']] = flow_dict
                     self.num_arrived_flows += 1
                 else:
                     # 'flow' never actually becomes flow (is ctrl dependency or src==dst)

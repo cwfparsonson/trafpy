@@ -118,26 +118,45 @@ def gen_benchmark_demands(path_to_save=None,
             # print('\n~~~~~~ network load config ~~~~~~~\n{}'.format(network_load_config))
             for repeat in range(config.NUM_REPEATS):
                 print('Generating demand data for benchmark {} load {} repeat {}...'.format(benchmark, load, repeat))
-                flow_centric_demand_data = create_demand_data(network_load_config=network_load_config,
-                                                              eps=eps,
-                                                              node_dist=benchmark_dists[benchmark]['node_dist'],
-                                                              flow_size_dist=benchmark_dists[benchmark]['flow_size_dist'],
-                                                              interarrival_time_dist=benchmark_dists[benchmark]['interarrival_time_dist'],
-                                                              min_num_demands=config.MIN_NUM_DEMANDS,
-                                                              jensen_shannon_distance_threshold=config.JENSEN_SHANNON_DISTANCE_THRESHOLD,
-                                                              min_last_demand_arrival_time=config.MIN_LAST_DEMAND_ARRIVAL_TIME,
-                                                              auto_node_dist_correction=config.AUTO_NODE_DIST_CORRECTION,
-                                                              print_data=False)
+                if 'num_ops_dist' in benchmark_dists[benchmark]:
+                    # job-centric
+                    demand_data = create_demand_data(min_num_demands=config.MIN_NUM_DEMANDS,
+                                                     max_num_demands=config.MAX_NUM_DEMANDS, 
+                                                     eps=eps,
+                                                     node_dist=benchmark_dists[benchmark]['node_dist'],
+                                                     flow_size_dist=benchmark_dists[benchmark]['flow_size_dist'],
+                                                     interarrival_time_dist=benchmark_dists[benchmark]['interarrival_time_dist'],
+                                                     num_ops_dist=benchmark_dists[benchmark]['num_ops_dist'],
+                                                     c=1.5,
+                                                     jensen_shannon_distance_threshold=config.JENSEN_SHANNON_DISTANCE_THRESHOLD,
+                                                     network_load_config=network_load_config,
+                                                     min_last_demand_arrival_time=config.MIN_LAST_DEMAND_ARRIVAL_TIME,
+                                                     auto_node_dist_correction=config.AUTO_NODE_DIST_CORRECTION,
+                                                     use_multiprocessing=False,
+                                                     print_data=False)
+                else:
+                    # flow-centric
+                    demand_data = create_demand_data(network_load_config=network_load_config,
+                                                                  eps=eps,
+                                                                  node_dist=benchmark_dists[benchmark]['node_dist'],
+                                                                  flow_size_dist=benchmark_dists[benchmark]['flow_size_dist'],
+                                                                  interarrival_time_dist=benchmark_dists[benchmark]['interarrival_time_dist'],
+                                                                  min_num_demands=config.MIN_NUM_DEMANDS,
+                                                                  max_num_demands=config.MAX_NUM_DEMANDS,
+                                                                  jensen_shannon_distance_threshold=config.JENSEN_SHANNON_DISTANCE_THRESHOLD,
+                                                                  min_last_demand_arrival_time=config.MIN_LAST_DEMAND_ARRIVAL_TIME,
+                                                                  auto_node_dist_correction=config.AUTO_NODE_DIST_CORRECTION,
+                                                                  print_data=False)
                 if separate_files:
                     print('Saving demand data for benchmark {} load {} repeat {}...'.format(benchmark, load, repeat))
                     # save as benchmark, load, and repeat into separate files
                     file_path = path_to_save + '/benchmark_{}_load_{}_repeat_{}'.format(benchmark, load, repeat)
                     if save_format == 'json':
-                        save_data_as_json(path_to_save=file_path, data=flow_centric_demand_data, overwrite=False)
+                        save_data_as_json(path_to_save=file_path, data=demand_data, overwrite=overwrite)
                     elif save_format == 'csv':
-                        save_data_as_csv(path_to_save=file_path, data=flow_centric_demand_data, overwrite=False)
+                        save_data_as_csv(path_to_save=file_path, data=demand_data, overwrite=overwrite)
                     elif save_format == 'pickle':
-                        pickle_data(path_to_save=file_path, data=flow_centric_demand_data, overwrite=False)
+                        pickle_data(path_to_save=file_path, data=demand_data, overwrite=overwrite)
                     else:
                         raise Exception('Unrecognised save format \'{}\''.format(save_format))
                     # reset benchmark demands dict to save memory
@@ -145,13 +164,13 @@ def gen_benchmark_demands(path_to_save=None,
 
                 else:
                     # saving all benchmarks, loads and repeats into one file
-                    benchmark_demands[benchmark][load][repeat] = flow_centric_demand_data
+                    benchmark_demands[benchmark][load][repeat] = demand_data
 
                 if config.SLOT_SIZE is not None:
                     # generate slots dict and save as database
                     print('Creating slots_dict database with slot_size {}...'.format(config.SLOT_SIZE))
                     s = time.time()
-                    demand = Demand(flow_centric_demand_data, eps=eps)
+                    demand = Demand(demand_data, eps=eps)
                     with SqliteDict(file_path+'_slotsize_{}_slots_dict.sqlite'.format(config.SLOT_SIZE)) as slots_dict:
                         for key, val in demand.get_slots_dict(slot_size=config.SLOT_SIZE, include_empty_slots=True, print_info=True).items():
                             if type(key) is not str:
@@ -181,11 +200,11 @@ def gen_benchmark_demands(path_to_save=None,
         if path_to_save is not None:
             # save benchmarks
             if save_format == 'json':
-                save_data_as_json(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
+                save_data_as_json(path_to_save=path_to_save, data=benchmark_demands, overwrite=overwrite)
             elif save_format == 'csv':
-                save_data_as_csv(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
+                save_data_as_csv(path_to_save=path_to_save, data=benchmark_demands, overwrite=overwrite)
             elif save_format == 'pickle':
-                pickle_data(path_to_save=path_to_save, data=benchmark_demands, overwrite=False)
+                pickle_data(path_to_save=path_to_save, data=benchmark_demands, overwrite=overwrite)
             else:
                 raise Exception('Unrecognised save format \'{}\''.format(save_format))
 

@@ -7,9 +7,9 @@ from collections import defaultdict # use for initialising arbitrary length nest
 import json
 import copy
 import random
-from progress.bar import ShadyBar
 import math
-
+import multiprocessing
+from tqdm import tqdm # progress bar
 
 
 
@@ -190,7 +190,9 @@ class FlowGenerator:
                 if (2**num_duplications) * len(demand_data['flow_id']) > self.max_num_demands:
                     print('WARING: max_num_demands is {} but have specified min_last_demand_arrival_time {}. Would need {} demands to reach this min_last_demand_arrival_time, therefore must increase max_num_demands (or set to None) if you want to meet this min_last_demand_arrival_time.'.format(self.max_num_demands, self.min_last_demand_arrival_time, (2**num_duplications)*len(demand_data['flow_id'])))
                     return demand_data
-            demand_data = duplicate_demands_in_demand_data_dict(demand_data, num_duplications=num_duplications, eps=self.eps)
+            demand_data = duplicate_demands_in_demand_data_dict(demand_data, 
+                                                                num_duplications=num_duplications,
+                                                                use_multiprocessing=False)
 
         return demand_data
 
@@ -285,6 +287,10 @@ class FlowPacker:
         self.print_data = print_data
         # self.print_data = True # DEBUG
 
+        num_pairs = (len(self.eps)**2)-len(self.eps)
+        if len(flow_sizes) < num_pairs:
+            print('WARNING: {} endpoints have {} possible pairs, but packer has only been given {} flows to pack. This will result in sparse packing, which will limit how accurately the packer is able to replicate the target node distribution. If you do not want this, provide the packer with more flows (e.g. by setting min_num_demands to > number of possible pairs).'.format(len(self.eps), num_pairs, len(flow_sizes)))
+
         self.reset()
         if self.network_load_config['target_load_fraction'] is not None:
             self._check_node_dist_valid_for_this_load()
@@ -371,10 +377,17 @@ class FlowPacker:
 
         '''
         # packer_bar = ShadyBar('Packing flows ', max=len(self.packed_flows.keys()))
-        packer_bar = ShadyBar('Packing flows ', max=100)
-        printed_progress = {percent: False for percent in np.arange(0, 100, 1)}
-        final_flow_count = len(self.flow_ids)
-        counter = 0
+        # packer_bar = ShadyBar('Packing flows ', max=100)
+        # printed_progress = {percent: False for percent in np.arange(0, 100, 1)}
+        # prev_percent = 1
+        # final_flow_count = len(self.flow_ids)
+        # counter = 0
+        pbar = tqdm(total=len(self.packed_flows.keys()), 
+                    desc='Packing flows',
+                    leave=False,
+                    smoothing=0)
+        start = time.time()
+
         pairs = np.asarray(list(self.pair_current_distance_from_target_info_dict.keys()))
         for flow in self.packed_flows.keys():
             if self.print_data:
@@ -456,12 +469,20 @@ class FlowPacker:
             self.src_total_infos[src] += self.packed_flows[flow]['size']
             self.dst_total_infos[dst] += self.packed_flows[flow]['size']
 
-            counter += 1
-            percent = round((counter/final_flow_count)*100, 1)
-            if percent != 100:
-                if percent % 1 == 0 and not printed_progress[percent]:
-                    packer_bar.next()
-                    printed_progress[percent] = True
+            pbar.update(1)
+            # counter += 1
+            # percent = int((counter/final_flow_count)*100)
+            # if percent != 100:
+                # if percent % 1 == 0 and not printed_progress[percent]:
+                    # packer_bar.next()
+                    # printed_progress[percent] = True
+                    # while prev_percent < percent-1:
+                        # # make bar catch up with current percent progress
+                        # packer_bar.next()
+                        # printed_progress[prev_percent+1] = True
+                        # prev_percent += 1
+                    # prev_percent = percent
+
 
         # shuffle flow order to maintain randomness
         shuffled_packed_flows = {}
@@ -470,7 +491,14 @@ class FlowPacker:
         for shuffled_key in shuffled_keys:
             shuffled_packed_flows[shuffled_key] = self.packed_flows[shuffled_key]
 
-        packer_bar.finish()
+        # # finish any incomplete bar
+        # for percent in printed_progress.keys():
+            # if not printed_progress[percent]:
+                # packer_bar.next()
+        # packer_bar.finish()
+        pbar.close()
+        end = time.time()
+        print('Packed {} flows in {} s.'.format(len(self.packed_flows.keys()), end-start))
 
         if self.print_data:
             print('\nFinal total infos at each pair:\n{}'.format(self.pair_current_total_info_dict))
@@ -585,12 +613,12 @@ def get_flow_centric_demand_data_ep_load_rate(demand_data, ep, eps, method='all_
     '''
     ep_info = group_demand_data_into_ep_info(demand_data, eps)
     total_info = sum(ep_info[ep]['flow_size'])
-    if method == 'per_ep':
-        time_first_flow_arrived = min(ep_info[ep]['event_time'])
-        time_last_flow_arrived = max(ep_info[ep]['event_time'])
-    elif method == 'all_eps':
-        time_first_flow_arrived = min(demand_data['event_time'])
-        time_last_flow_arrived = max(demand_data['event_time'])
+    # if method == 'per_ep':
+        # time_first_flow_arrived = min(ep_info[ep]['event_time'])
+        # time_last_flow_arrived = max(ep_info[ep]['event_time'])
+    # if method == 'all_eps':
+    time_first_flow_arrived = min(demand_data['event_time'])
+    time_last_flow_arrived = max(demand_data['event_time'])
     duration = time_last_flow_arrived - time_first_flow_arrived
     if duration != 0:
         load_rate = total_info / duration
@@ -633,11 +661,11 @@ def group_demand_data_into_ep_info(demand_data, eps):
     added_flow = {flow_id: False for flow_id in demand_data['flow_id']}
     for ep in eps:
         ep_info[ep]['flow_size'] = []
-        ep_info[ep]['event_time'] = []
+        # ep_info[ep]['event_time'] = []
         ep_info[ep]['demand_data_idx'] = []
         ep_info[ep]['flow_id'] = []
-        ep_info[ep]['establish'] = []
-        ep_info[ep]['index'] = []
+        # ep_info[ep]['establish'] = []
+        # ep_info[ep]['index'] = []
         ep_info[ep]['sn'] = []
         ep_info[ep]['dn'] = []
     # group demand data by ep
@@ -646,16 +674,16 @@ def group_demand_data_into_ep_info(demand_data, eps):
             # not yet added this flow
             ep_info[demand_data['sn'][idx]]['flow_size'].append(demand_data['flow_size'][idx])
             ep_info[demand_data['dn'][idx]]['flow_size'].append(demand_data['flow_size'][idx])
-            ep_info[demand_data['sn'][idx]]['event_time'].append(demand_data['event_time'][idx])
-            ep_info[demand_data['dn'][idx]]['event_time'].append(demand_data['event_time'][idx])
+            # ep_info[demand_data['sn'][idx]]['event_time'].append(demand_data['event_time'][idx])
+            # ep_info[demand_data['dn'][idx]]['event_time'].append(demand_data['event_time'][idx])
             ep_info[demand_data['sn'][idx]]['demand_data_idx'].append(idx)
             ep_info[demand_data['dn'][idx]]['demand_data_idx'].append(idx)
             ep_info[demand_data['sn'][idx]]['flow_id'].append(demand_data['flow_id'][idx])
             ep_info[demand_data['dn'][idx]]['flow_id'].append(demand_data['flow_id'][idx])
-            ep_info[demand_data['sn'][idx]]['establish'].append(demand_data['establish'][idx])
-            ep_info[demand_data['dn'][idx]]['establish'].append(demand_data['establish'][idx])
-            ep_info[demand_data['sn'][idx]]['index'].append(demand_data['index'][idx])
-            ep_info[demand_data['dn'][idx]]['index'].append(demand_data['index'][idx])
+            # ep_info[demand_data['sn'][idx]]['establish'].append(demand_data['establish'][idx])
+            # ep_info[demand_data['dn'][idx]]['establish'].append(demand_data['establish'][idx])
+            # ep_info[demand_data['sn'][idx]]['index'].append(demand_data['index'][idx])
+            # ep_info[demand_data['dn'][idx]]['index'].append(demand_data['index'][idx])
             ep_info[demand_data['sn'][idx]]['sn'].append(demand_data['sn'][idx])
             ep_info[demand_data['sn'][idx]]['dn'].append(demand_data['dn'][idx])
             ep_info[demand_data['dn'][idx]]['sn'].append(demand_data['sn'][idx])
@@ -670,6 +698,13 @@ def group_demand_data_into_ep_info(demand_data, eps):
 def get_flow_centric_demand_data_total_info_arrived(demand_data): 
     info_arrived = 0
     # print('flow size {} {}'.format(type(demand_data['flow_size']), type(demand_data['flow_size'][0])))
+    # if 'job_id' in demand_data:
+        # # jobcentric
+        # flow_data = demand_data['flow_data']
+    # else:
+        # # flowcentric
+        # flow_data = demand_data
+
     for flow_size in demand_data['flow_size']:
         if flow_size > 0:
             info_arrived += flow_size
@@ -695,10 +730,17 @@ def get_first_last_flow_arrival_times(demand_data):
 
 
 
-
 def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwargs):
-    '''Duplicates set of flows by the specified number of times.'''
+    '''Duplicates set of demands by the specified number of times.'''
     demand_data = copy.deepcopy(demand_data)
+
+    if 'use_multiprocessing' not in kwargs:
+        kwargs['use_multiprocessing'] = False
+    if 'num_processes' not in kwargs:
+        # increase to decrease processing time, decrease to decrease risk of memory errors
+        kwargs['num_processes'] = 10 # num processes to run in parallel if multiprocessing
+    if 'maxtasksperchild' not in kwargs:
+        kwargs['maxtasksperchild'] = 1 # num tasks per process
     
     if 'job_id' in demand_data:
         job_centric = True
@@ -709,89 +751,241 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
     for key, value in demand_data.items():
         demand_data[key] = list(value)
 
-    duplication_bar = ShadyBar('Duplicating demands ', max=int(100))
-    printed_progress = {percent: False for percent in np.arange(0, 100, 1)}
+    init_num_demands = len(demand_data['event_time'])
+    demands_to_add = ((2**num_duplications)*init_num_demands) - init_num_demands
 
-    if job_centric:
-        demands_to_add = (2**num_duplications)*len(demand_data['job_id']) - len(demand_data['job_id'])
-    else:
-        demands_to_add = (2**num_duplications)*len(demand_data['flow_id']) - len(demand_data['flow_id'])
-    counter = 0
-    for _ in range(num_duplications):
-        # final_event_time = max(demand_data['event_time'])
-        if job_centric:
-            num_demands = len(demand_data['job_id'])
-            # get number of edges (dependencies) across all jobs
-            total_num_edges = 0
-            for job in demand_data['job']:
-                total_num_edges += len(job.edges)
-        else:
-            num_demands = len(demand_data['flow_id'])
-        final_event_time = max(demand_data['event_time'])
-        first_event_time = min(demand_data['event_time'])
-        duration = final_event_time - first_event_time
-        for idx in range(num_demands):
+    # progress bar
+    # if not kwargs['use_multiprocessing']:
+        # # TODO: Get progress bar working for multiprocessing
+        # pbar = tqdm(total=demands_to_add, 
+                # desc='Duplicating demands',
+                    # # miniters=1, 
+                    # # mininterval=1,
+                    # # maxinterval=1, # 2
+                    # leave=False,
+                    # smoothing=1e-5) # 1
+    pbar = tqdm(total=demands_to_add, 
+            desc='Duplicating demands',
+                miniters=1, 
+                # mininterval=1,
+                # maxinterval=1, # 2
+                leave=False,
+                smoothing=1e-5) # 1
+    pbar.set_description(refresh=False)
+    pbar.set_postfix(refresh=False)
+
+    start = time.time()
+    for dup in range(num_duplications):
+
+        # get curr num demands
+        num_demands = len(demand_data['event_time'])
+
+        # get curr duration
+        duration = max(demand_data['event_time']) - min(demand_data['event_time']) 
+
+        # duplicate demands
+        if kwargs['use_multiprocessing']:
+            # duplicate demands in parallel
+            print('Duplication {} of {}...'.format(dup+1, num_duplications))
+            s = time.time()
+
+            # init shared lists for appending duplicated demands to
+            jobs = multiprocessing.Manager().list()
+            job_ids = multiprocessing.Manager().list()
+            unique_ids = multiprocessing.Manager().list()
+            flow_ids = multiprocessing.Manager().list()
+            sns = multiprocessing.Manager().list()
+            dns = multiprocessing.Manager().list()
+            flow_sizes = multiprocessing.Manager().list()
+            event_times = multiprocessing.Manager().list()
+            establishes = multiprocessing.Manager().list()
+            indexes = multiprocessing.Manager().list()
+
+            # duplicate demands in parallel
+            # pool = multiprocessing.Pool(multiprocessing.cpu_count())
+            pool = multiprocessing.Pool(kwargs['num_processes'], maxtasksperchild=kwargs['maxtasksperchild'])
+            results = [pool.apply_async(duplicate_demand,
+                                        args=(
+                                        demand_data['job'][idx], 
+                                        demand_data['sn'][idx],
+                                        demand_data['dn'][idx],
+                                        demand_data['flow_size'][idx],
+                                        demand_data['event_time'][idx],
+                                        duration,
+                                        demand_data['establish'][idx],
+                                        demand_data['index'][idx],
+                                        num_demands,
+                                        idx, 
+                                        jobs, 
+                                        job_ids,
+                                        unique_ids,
+                                        flow_ids,
+                                        sns,
+                                        dns,
+                                        flow_sizes,
+                                        event_times,
+                                        establishes,
+                                        indexes,
+                                        job_centric),
+                                       callback=lambda _: pbar.update(1))
+                                        for idx in range(num_demands)]
+            pool.close()
+            pool.join()
+            del pool
+
+            # collect duplicated demands from multiprocessing and add to demand_data
             if job_centric:
-                # job id
-                job_id = int(idx + num_demands)
-                demand_data['job_id'].append('job_{}'.format(job_id))
+                demand_data['job_id'].extend(list(job_ids))
+                demand_data['job'].extend(list(jobs))
+            demand_data['flow_id'].extend(list(flow_ids))
+            demand_data['sn'].extend(list(sns))
+            demand_data['dn'].extend(list(dns))
+            demand_data['flow_size'].extend(list(flow_sizes))
+            demand_data['event_time'].extend(list(event_times))
+            demand_data['establish'].extend(list(establishes))
+            demand_data['index'].extend(list(indexes))
 
-                # attrs inside job
-                job = copy.deepcopy(demand_data['job'])[idx]
-                flow_stats = {flow: job.get_edge_data(flow[0], flow[1]) for flow in job.edges} 
-                for flow in flow_stats:
-                    attr_dict = flow_stats[flow]['attr_dict']
-                    # # update flow id
-                    # flow_id = num_flows + total_num_edges 
-                    # old_flow_id = json.loads(flow_stats[flow]['attr_dict']['flow_id'].split('_')[1])
-                    # new_flow_id = old_flow_id + total_num_edges 
-                    # flow_stats[flow]['attr_dict']['flow_id'] = 'flow_{}'.format(new_flow_id)
+            e = time.time()
+            print('Duplication completed in {} s.'.format(e-s))
 
-                    # # update parent dependency flow ids
-                    # parent_dependency_flow_ids = []
-                    # for f in flow_stats[flow]['attr_dict']['parent_dependency_flow_ids']:
-                        # old_flow_id = json.loads(flow_stats[f]['attr_dict']['flow_id'].split('_')[1])
-                        # new_flow_id = old_flow_id + total_num_edges 
-                        # parent_dependency_flow_ids.append(new_flow_id)
-                    # flow_stats[flow]['attr_dict']['parent_dependency_flow_ids'] = parent_dependency_flow_ids
+        else:
+            # not multiprocessing -> duplicate demands sequentially
+            # init lists for appending duplicated demands to
+            jobs = []
+            job_ids = []
+            unique_ids = []
+            flow_ids = []
+            sns = []
+            dns = []
+            flow_sizes = []
+            event_times = []
+            establishes = []
+            indexes = []
+            for idx in range(num_demands):
+                duplicate_demand(demand_data['job'][idx], 
+                                 demand_data['sn'][idx],
+                                 demand_data['dn'][idx],
+                                 demand_data['flow_size'][idx],
+                                 demand_data['event_time'][idx],
+                                 duration,
+                                 demand_data['establish'][idx],
+                                 demand_data['index'][idx],
+                                 num_demands,
+                                 idx, 
+                                 jobs, 
+                                 job_ids,
+                                 unique_ids,
+                                 flow_ids,
+                                 sns,
+                                 dns,
+                                 flow_sizes,
+                                 event_times,
+                                 establishes,
+                                 indexes,
+                                 job_centric)
 
-                    # # update child dependency flow ids
-                    # child_dependency_flow_ids = []
-                    # for f in flow_stats[flow]['attr_dict']['child_dependency_flow_ids']:
-                        # old_flow_id = json.loads(flow_stats[f]['attr_dict']['flow_id'].split('_')[1])
-                        # new_flow_id = old_flow_id + total_num_edges 
-                        # child_dependency_flow_ids.append(new_flow_id)
-                    # flow_stats[flow]['attr_dict']['child_dependency_flow_ids'] = child_dependency_flow_ids
+                # collect duplicated demands and add to demand_data
+                if job_centric:
+                    demand_data['job_id'].extend(list(job_ids))
+                    demand_data['job'].extend(list(jobs))
+                demand_data['flow_id'].extend(list(flow_ids))
+                demand_data['sn'].extend(list(sns))
+                demand_data['dn'].extend(list(dns))
+                demand_data['flow_size'].extend(list(flow_sizes))
+                demand_data['event_time'].extend(list(event_times))
+                demand_data['establish'].extend(list(establishes))
+                demand_data['index'].extend(list(indexes))
 
-                    # update job id
-                    # flow_stats[flow]['attr_dict']['job_id'] = 'job_{}'.format(idx+num_demands)
-                    attr_dict['job_id'] = 'job_{}'.format(idx+num_demands)
+                pbar.update(1)
 
-                    # confirm updates
-                    # edge = flow_stats[flow]['attr_dict']['edge']
-                    edge = attr_dict['edge']
-                    job.add_edge(edge[0], edge[1], attr_dict=attr_dict)
-                demand_data['job'].append(job)
+    # make sure demand data still ordered in order of event time
+    index = np.argsort(demand_data['event_time'])
+    for key in demand_data.keys():
+        if len(demand_data[key]) == len(index):
+            # only index keys which are events (i.e. for job-centric, these are job keys, not flow keys)
+            demand_data[key] = [demand_data[key][i] for i in index]
 
-            else:
-                demand_data['flow_id'].append('flow_{}'.format(int(idx+num_demands)))
-                demand_data['flow_size'].append(demand_data['flow_size'][idx])
-                demand_data['sn'].append(demand_data['sn'][idx])
-                demand_data['dn'].append(demand_data['dn'][idx])
-
-            demand_data['event_time'].append(duration + demand_data['event_time'][idx])
-            demand_data['establish'].append(demand_data['establish'][idx])
-            demand_data['index'].append(demand_data['index'][idx] + num_demands)
-            counter += 1
-            percent = round((counter/demands_to_add)*100, 1)
-            if percent != 100:
-                if percent % 1 == 0 and not printed_progress[percent]:
-                    duplication_bar.next()
-                    printed_progress[percent] = True
-
-    duplication_bar.finish()
+    if not kwargs['use_multiprocessing']:
+        pbar.close()
+    end = time.time()
+    print('Duplicated from {} to {} total demands ({} duplication(s)) in {} s.'.format(init_num_demands, len(demand_data['event_time']), num_duplications, end-start))
 
     return demand_data 
+
+
+
+
+def duplicate_demand(job, 
+                     sn,
+                     dn,
+                     flow_size,
+                     event_time,
+                     duration,
+                     establish,
+                     index,
+                     num_demands, 
+                     idx, 
+                     jobs,
+                     job_ids,
+                     unique_ids,
+                     flow_ids,
+                     sns,
+                     dns,
+                     flow_sizes,
+                     event_times,
+                     establishes,
+                     indexes,
+                     job_centric=True):
+
+    if job_centric:
+        # job id
+        job_id = int(idx + num_demands)
+        job.graph['job_id'] = 'job_{}'.format(job_id)
+
+        # attrs inside job
+        # job = copy.deepcopy(demand_data['job'])[idx]
+        flow_stats = {flow: job.get_edge_data(flow[0], flow[1]) for flow in job.edges} 
+        for flow in flow_stats:
+            # grab attr_dict for flow
+            attr_dict = flow_stats[flow]['attr_dict']
+
+            # update ids
+            attr_dict['job_id'] = 'job_{}'.format(idx+num_demands)
+            attr_dict['unique_id'] = attr_dict['job_id'] + '_' + attr_dict['flow_id']
+
+            # flow src, dst, & size
+            # if data dependency, is a flow
+            if attr_dict['dependency_type'] == 'data_dep':
+                flow_ids.append(attr_dict['unique_id'])
+                sns.append(attr_dict['sn'])
+                dns.append(attr_dict['dn'])
+                flow_sizes.append(attr_dict['flow_size'])
+
+            # confirm updates
+            edge = attr_dict['edge']
+            job.add_edge(edge[0], edge[1], attr_dict=attr_dict)
+
+        jobs.append(job)
+        job_ids.append('job_{}'.format(job_id))
+
+
+    else:
+        flow_ids.append('flow_{}'.format(int(idx+num_demands)))
+        flow_sizes.append(flow_size)
+        sns.append(sn)
+        dns.append(dn)
+
+    event_times.append(duration + event_time)
+    establishes.append(establish)
+    indexes.append(index + num_demands)
+
+    # time.sleep(0.1)
+
+
+
+
+
+
 
 
 

@@ -449,9 +449,15 @@ class EnvAnalyser:
                 completed_flow_dicts.close()
         else:
             completed_flows = list(self.completed_flow_dicts.values())
-        completed_flow_ids = {completed_flows[i]['flow_id']: i for i in range(len(completed_flows))}
-        dropped_flows = list(dropped_flow_dicts.values())
-        dropped_flow_ids = {dropped_flows[i]['flow_id']: i for i in range(len(dropped_flows))}
+        if 'unique_id' in completed_flows[0]:
+            completed_flow_ids = {completed_flows[i]['unique_id']: i for i in range(len(completed_flows))}
+            dropped_flows = list(dropped_flow_dicts.values())
+            dropped_flow_ids = {dropped_flows[i]['unique_id']: i for i in range(len(dropped_flows))}
+        else:
+            # no unique id included in flow dict
+            completed_flow_ids = {completed_flows[i]['flow_id']: i for i in range(len(completed_flows))}
+            dropped_flows = list(dropped_flow_dicts.values())
+            dropped_flow_ids = {dropped_flows[i]['flow_id']: i for i in range(len(dropped_flows))}
 
         if self.env_analyser_database_path is not None:
             arrived_flow_dicts = SqliteDict(self.arrived_flow_dicts)
@@ -517,11 +523,20 @@ class EnvAnalyser:
             if self.env_analyser_database_path is not None:
                 with SqliteDict(self.queued_flow_dicts) as queued_flow_dicts:
                     for flow in queued_flow_dicts.values():
-                        dropped_flow_dicts[flow['flow_id']] = flow
+                        if 'unique_id' in flow:
+                            dropped_flow_dicts[flow['unique_id']] = flow
+                        else:
+                            # no unique id included in flow dict
+                            dropped_flow_dicts[flow['flow_id']] = flow
+
                     queued_flow_dicts.close()
             else:
                 for flow in self.queued_flow_dicts.values():
-                    dropped_flow_dicts[flow['flow_id']] = flow
+                    if 'unique_id' in flow:
+                        dropped_flow_dicts[flow['unique_id']] = flow
+                    else:
+                        # no unique id included in flow dict
+                        dropped_flow_dicts[flow['flow_id']] = flow
 
         if type(self.env.dropped_flow_dicts) is str:
             env_dropped_flow_dicts.close()

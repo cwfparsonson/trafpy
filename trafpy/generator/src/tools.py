@@ -2,11 +2,13 @@ import numpy as np
 import pandas as pd
 # from trafpy.generator.src.demand import *
 import json
+import jsonpickle
 import pickle
 import bz2
 import time
 import multiprocessing
 import networkx as nx
+from networkx.readwrite import json_graph
 import os
 import scipy
 
@@ -234,6 +236,12 @@ def save_data_as_json(path_to_save,
     dumped = json.dumps(data, cls=NumpyEncoder)
     with open(filename, 'w') as f:
         json.dump(dumped, f)
+    # except TypeError:
+        # with open(filename, 'w') as f:
+            # json.dump(data, f)
+        # # # need special jsonpickle serialisation for networkx digraphs
+        # # with open(filename, 'w+') as f:
+            # # f.write(jsonpickle.encode(json_graph.adjacency_data(data)))
 
     end = time.time()
     if print_times:

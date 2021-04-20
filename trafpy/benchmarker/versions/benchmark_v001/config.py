@@ -13,4 +13,5 @@ ALL_BENCHMARK_SETS = ['university',
                        'rack_dist_sensitivity_0.2',
                        'rack_dist_sensitivity_0.4',
                        'rack_dist_sensitivity_0.6',
-                       'rack_dist_sensitivity_0.8']
+                       'rack_dist_sensitivity_0.8',
+                       'jobcentric_prototyping']

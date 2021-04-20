@@ -360,7 +360,8 @@ def construct_demand_slots_dict(demand_data,
     num_decimals = dummy_slot_size[::-1].find('.')
     if num_decimals == -1:
         raise Exception('Given slot_size {} has invalid num_decimals of {}. Make sure slot_size is given as a float e.g. use slot_size=1.0 rather than slot_size=1'.format(slot_size, num_decimals))
-    for slot_iter in range(len(slot_times)):
+    # for slot_iter in range(len(slot_times)):
+    for slot_iter in range(total_num_time_slots):
         slot_times[slot_iter] = np.round(slot_times[slot_iter], num_decimals)
 
     # init slot dict
@@ -419,7 +420,7 @@ def construct_demand_slots_dict(demand_data,
         frac_redundant_slots = round(num_redundant_slots/num_slots, 3)
         avrg_num_demands_per_slot = round(num_demands / num_slots, 3)
         print('Generated slot dict in {} s with slot size {} and total session time {} for {} demands.'.format(round(end-start, 4), slot_size, total_session_time, num_demands))
-        print('Approx memory size of slot dict: {} Bytes (N.B. This is very unreliable and depends on save format)'.format(sys.getsizeof(json.dumps(slot_dict))))
+        # print('Approx memory size of slot dict: {} Bytes (N.B. This is very unreliable and depends on save format)'.format(sys.getsizeof(json.dumps(slot_dict))))
         print('Number of slots making up total session time: {}'.format(num_slots))
         print('Number of these slots in which no new demands arrived: {}'.format(num_empty_slots))
         print('Fraction of the {} total time slots from simulation start to finish in which no new demands arrive: {}'.format(num_slots, frac_redundant_slots))

@@ -34,7 +34,8 @@ class BenchmarkImporter:
 
         benchmark_dists = {'node_dist': self.distgen.get_node_dist(benchmark, racks_dict, eps),
                            'flow_size_dist': self.distgen.get_flow_size_dist(benchmark),
-                           'interarrival_time_dist': self.distgen.get_interarrival_time_dist(benchmark)}
+                           'interarrival_time_dist': self.distgen.get_interarrival_time_dist(benchmark),
+                           'num_ops_dist': self.distgen.get_num_ops_dist(benchmark)}
 
         return benchmark_dists
 
