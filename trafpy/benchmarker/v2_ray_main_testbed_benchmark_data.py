@@ -28,7 +28,15 @@ class TestBed:
         if os.path.isdir(path_to_benchmark_data):
             print('Data split into separate files in a directory. Loading...')
             self.separate_files = True
-            self.benchmarks = glob.glob(path_to_benchmark_data + '/*.json')
+            if glob.glob(path_to_benchmark_data + '/*.json'):
+                # saved demand data in json format
+                self.demand_data_extension = '.json'
+            elif glob.glob(path_to_benchmark_data + '/*.pickle'):
+                # saved demand data in pickle format
+                self.demand_data_extension = '.pickle'
+            else:
+                raise Exception('Unrecognised or multiple extensions in {}'.format(path_to_benchmark_data))
+            self.benchmarks = glob.glob(path_to_benchmark_data + '/*{}'.format(self.demand_data_extension))
         else:
             print('All data stored in single file. Loading...')
             self.separate_files = False
@@ -50,7 +58,7 @@ class TestBed:
         elif demand_file_path[-6:] == 'pickle':
             return unpickle_data(demand_file_path)
         else:
-            raise Exception('Unrecognised file type \'{}\''.format(demand_file_path))
+            raise Exception('Unrecognised file type \'{}\'. Make sure path is correct.'.format(demand_file_path))
 
 
     def run_tests(self, config, path_to_save, overwrite=False):
@@ -144,10 +152,9 @@ class TestBed:
                         os.mkdir(_path_to_save)
 
                         # get slots_dict path to database
-                        slots_dict = benchmark_path[:-5]+'_slotsize_{}_slots_dict.sqlite'.format(config['slot_size'])
-
-                        # demand = Demand(benchmark_path, config['networks'][0].graph['endpoints'])
+                        slots_dict = benchmark_path[:-(len(self.demand_data_extension))]+'_slotsize_{}_slots_dict.sqlite'.format(config['slot_size'])
                         
+                        # init env
                         env = DCN(config['networks'][0], 
                                   slots_dict, 
                                   scheduler,
@@ -190,23 +197,37 @@ class TestBed:
             # have already saved files separately
             pass
     
-    def conv_str_path_to_kwarg_value(self, path, kwarg):
-        '''Takes path string containing kwarg_[kwarg_value]_ and returns kwarg_value as a str.'''
+    def conv_str_path_to_kwarg_value(self, path, kwarg, print_mode=False):
+        '''
+        Takes path string containing kwarg_[kwarg_value]_ and returns 
+        kwarg_value as a str. Print mode is useful for debugging.
+        '''
+        # get file extension
+        if path.endswith('.json'):
+            extension = '.json'
+        elif path.endswith('.pickle'):
+            extension = '.pickle'
+        else:
+            raise Exception('Unrecognised extension for file {}'.format(path))
+
         starting_index = len(path) - path[::-1].index('/')
         if kwarg[-1] != '_':
             # should end in under score
             kwarg += '_'
-        # print('path: {} | kwarg: {}'.format(path, kwarg))
+        if print_mode:
+            print('path: {} | kwarg: {}'.format(path, kwarg))
         for idx in range(starting_index, len(path)):
-            # print('idx {}'.format(idx))
-            # print(path[idx:idx+len(kwarg)])
+            if print_mode:
+                print('idx {}'.format(idx))
+                print(path[idx:idx+len(kwarg)])
             if path[idx:idx+len(kwarg)] == kwarg:
                 i = idx+len(kwarg)
                 l = ''
                 c = path[idx+len(kwarg)]
-                while c != '_' and path[i:] != '.json':
+                while c != '_' and path[i:] != extension:
                     l += c
-                    # print('l: {}'.format(l))
+                    if print_mode:
+                        print('l: {}'.format(l))
                     i += 1
                     c = path[i]
                 return l
@@ -227,13 +248,18 @@ class TestBed:
             observation, reward, done, info = env.step(action, print_memory_usage=False, print_processing_time=False)
 
             # print progress
-            flows_arrived, flows_processed = env.num_arrived_flows, env.num_completed_flows+env.num_dropped_flows
-            percent_demands_processed = round(100*(flows_processed/env.num_demands), 0)
-            if round(percent_demands_processed % 5, 2) == 0: # % 10
-                if percent_demands_processed not in printed_percents:
-                    percent_demands_arrived = round(100*(flows_arrived/env.num_demands))
-                    print('Sim: {} | Flows arrived: {}% | Flows processed: {}%'.format(env.sim_name, percent_demands_arrived, percent_demands_processed))
-                    printed_percents.append(percent_demands_processed)
+            if env.job_centric:
+                jobs_arrived, jobs_processed = env.num_arrived_jobs, env.num_completed_jobs+env.num_dropped_jobs
+                percent_demands_arrived = round(100*(jobs_arrived/env.num_demands))
+                percent_demands_processed = round(100*(jobs_processed/env.num_demands), 0)
+            else:
+                flows_arrived, flows_processed = env.num_arrived_flows, env.num_completed_flows+env.num_dropped_flows
+                percent_demands_arrived = round(100*(flows_arrived/env.num_demands))
+                percent_demands_processed = round(100*(flows_processed/env.num_demands), 0)
+            if round(percent_demands_arrived % 5, 2) == 0: # % 10
+                if percent_demands_arrived not in printed_percents:
+                    print('Sim: {} | Demands arrived: {}% | Demands processed: {}%'.format(env.sim_name, percent_demands_arrived, percent_demands_processed))
+                    printed_percents.append(percent_demands_arrived)
 
             if done:
                 print('Completed simulation \'{}\''.format(env.sim_name))
@@ -242,8 +268,8 @@ class TestBed:
                                        info_units='B',
                                        subject_class_name=env.scheduler.scheduler_name)
                 analyser.compute_metrics(print_summary=True, 
-                                         measurement_start_time='auto',
-                                         measurement_end_time='auto',
+                                         measurement_start_time='auto', # 'auto' None
+                                         measurement_end_time='auto', # 'auto' None
                                          env_analyser_database_path=path_to_save)
                 try:
                     if self.separate_files:
@@ -323,17 +349,19 @@ if __name__ == '__main__':
         # DATA_NAME = 'social_media_cloud_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
         # DATA_NAME = 'skewed_nodes_sensitivity_0_k_4_L_2_n_16_chancap1250_numchans1_mldat2e6_bidirectional_v2'
         # DATA_NAME = 'commercial_cloud_k_2_L_2_n_2_chancap1250_numchans1_mldatNone_bidirectional'
-        DATA_NAME = 'rack_dist_sensitivity_0.2_k_4_L_2_n_16_chancap1250_numchans1_mldat3.2e5_bidirectional'
+        # DATA_NAME = 'skewed_nodes_sensitivity_0_k_4_L_2_n_16_chancap1250_numchans1_mldat3.2e5_bidirectional'
+        DATA_NAME = 'jobcentric_prototyping_k_4_L_2_n_16_chancap1_numchans1_mldat3e3_bidirectional'
 
         OVERWRITE = True # False
 
         # benchmark data
         # path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data'.format(DATA_NAME)
-        path_to_benchmark_data = '/rdata/ong/trafpy/traces/flowcentric/{}_benchmark_data'.format(DATA_NAME)
+        # path_to_benchmark_data = '/rdata/ong/trafpy/traces/flowcentric/{}_benchmark_data'.format(DATA_NAME)
+        path_to_benchmark_data = '/rdata/ong/trafpy/traces/jobcentric/{}_benchmark_data'.format(DATA_NAME)
         # LOADS = 'all' # 'all' [0.1, 0.2]
-        # LOADS = [0.1]
+        LOADS = [0.1]
         # LOADS = [0.1, 0.2, 0.3, 0.4, 0.5]
-        LOADS = [0.6, 0.7, 0.8, 0.9]
+        # LOADS = [0.6, 0.7, 0.8, 0.9]
         # LOADS = [0.1, 0.3, 0.4, 0.5]
         # LOADS = [0.7, 0.8, 0.9]
         # LOADS = [0.9]
@@ -343,7 +371,8 @@ if __name__ == '__main__':
 
         # dcn
         # MAX_TIME = 1e4 # None
-        MAX_TIME = 'last_demand_arrival_time'
+        MAX_TIME = 300 # None 'last_demand_arrival_time'
+        # MAX_TIME = 'last_demand_arrival_time' # None 'last_demand_arrival_time'
         MAX_FLOWS = 50 # 10 50 100 500
 
         # networks
@@ -353,7 +382,8 @@ if __name__ == '__main__':
                                  L=2, 
                                  n=16, 
                                  num_channels=NUM_CHANNELS, 
-                                 server_to_rack_channel_capacity=1250, # 500
+                                 # server_to_rack_channel_capacity=1250, # 500 1250
+                                 server_to_rack_channel_capacity=10,
                                  rack_to_core_channel_capacity=10000, 
                                  bidirectional_links=True)]
 
@@ -363,15 +393,15 @@ if __name__ == '__main__':
         rwas = [RWA(gen_channel_names(NUM_CHANNELS), NUM_K_PATHS)]
 
         # schedulers
-        # SLOT_SIZE = 1e6
-        SLOT_SIZE = 1000.0 #1e4 1e5 1e2 0.1  1e3 50.0 500.0
+        # SLOT_SIZE = 1000.0 #1e4 1e5 1e2 0.1  1e3 50.0 500.0 10.0 1000.0 0.1
+        SLOT_SIZE = 10.0
         PACKET_SIZE = 1 # 300 0.01 1e1 1e2
-        schedulers = [SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      FirstFit(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
-        # # DEBUG 
-        # schedulers = [SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
+        # schedulers = [SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                      # FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                      # FirstFit(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                      # RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
+        # DEBUG 
+        schedulers = [SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
 
         # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
                       # SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
@@ -417,7 +447,8 @@ if __name__ == '__main__':
         tb.reset()
         tb.run_tests(test_config, 
                 # path_to_save='/scratch/datasets/trafpy/management/flowcentric/{}_slotsize_{}_testbed_data'.format(DATA_NAME, SLOT_SIZE),
-                path_to_save='/rdata/ong/trafpy/management/flowcentric/{}_slotsize_{}_testbed_data'.format(DATA_NAME, SLOT_SIZE),
+                # path_to_save='/rdata/ong/trafpy/management/flowcentric/{}_slotsize_{}_testbed_data'.format(DATA_NAME, SLOT_SIZE),
+                path_to_save='/rdata/ong/trafpy/management/jobcentric/{}_slotsize_{}_testbed_data'.format(DATA_NAME, SLOT_SIZE),
                          overwrite=OVERWRITE)
 
         

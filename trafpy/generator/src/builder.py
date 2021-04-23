@@ -361,14 +361,14 @@ def construct_demand_slots_dict(demand_data,
     if num_decimals == -1:
         raise Exception('Given slot_size {} has invalid num_decimals of {}. Make sure slot_size is given as a float e.g. use slot_size=1.0 rather than slot_size=1'.format(slot_size, num_decimals))
     # for slot_iter in range(len(slot_times)):
-    for slot_iter in range(total_num_time_slots):
+    for slot_iter in range(len(slot_times)):
         slot_times[slot_iter] = np.round(slot_times[slot_iter], num_decimals)
 
     # init slot dict
     slot_dict = {slot_iter: {'lb_time': slot_times[slot_iter],
-                             'ub_time': slot_times[slot_iter+1],
+                             'ub_time': slot_times[slot_iter]+slot_size,
                              'new_event_dicts': []}
-                    for slot_iter in range(total_num_time_slots)}
+                         for slot_iter in range(len(slot_times))}
 
     event_iter = 0
     slot_iter = 0
@@ -439,9 +439,9 @@ def construct_demand_slots_dict(demand_data,
     slot_dict['time_last_demand_arrived'] = session_end_time
     slot_dict['job_centric'] = job_centric
     slot_dict['num_control_deps'], slot_dict['num_data_deps'], slot_dict['num_flows'] = get_num_deps(demand_data, job_centric)
-    try:
+    if not job_centric:
         slot_dict['num_demands'] = len(demand_data['flow_id'])
-    except KeyError:
+    else:
         slot_dict['num_demands'] = len(demand_data['job_id'])
 
     

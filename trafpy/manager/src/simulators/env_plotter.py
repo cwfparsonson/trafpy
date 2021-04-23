@@ -42,6 +42,13 @@ def get_summary_dict(analysers, headers, time_units='', info_units=''):
         summary_dict['Throughput Frac'].append(sigfig.round(float(analyser.throughput_frac), sigfigs=6))
         summary_dict['Frac Flows Dropped'].append(sigfig.round(float(analyser.dropped_flow_frac), sigfigs=3))
         summary_dict['Frac Info Dropped'].append(sigfig.round(float(analyser.dropped_info_frac), sigfigs=3))
+
+        if analyser.env.job_centric:
+            summary_dict['Mean JCT ({})'.format(time_units)].append(round(analyser.mean_jct, 1))
+            summary_dict['p99 JCT ({})'.format(time_units)].append(round(analyser.nn_jct, 1))
+            summary_dict['Max JCT ({})'.format(time_units)].append(round(analyser.max_jct, 1))
+            summary_dict['Frac Jobs Dropped'].append(sigfig.round(float(analyser.dropped_job_frac), sigfigs=3))
+
     return summary_dict
 
 class EnvsPlotter:
@@ -87,6 +94,16 @@ class EnvsPlotter:
                    'Throughput Frac', 
                    'Frac Flows Dropped', 
                    'Frac Info Dropped']
+        for analyser in analysers:
+            job_centric = analyser.env.job_centric
+            break
+        if job_centric:
+            headers.append('Mean JCT ({})'.format(self.time_units))
+            headers.append('p99 JCT ({})'.format(self.time_units))
+            headers.append('Max JCT ({})'.format(self.time_units))
+            headers.append('Frac Jobs Dropped')
+
+
         _summary_dict = get_summary_dict(analysers, headers, time_units=self.time_units, info_units=self.info_units)
 
         # sort by order of load
@@ -1188,14 +1205,322 @@ class EnvsPlotter:
         # return [fig1, fig2]
 
 
+    def plot_jcts_cdf_for_different_loads(self, *analysers, **kwargs):
+        if 'gridlines' not in kwargs:
+            kwargs['gridlines'] = True
+        if 'aspect' not in kwargs:
+            kwargs['aspect'] = 'auto'
+        if 'figsize' not in kwargs:
+            kwargs['figsize'] = (6.4, 4.8)
+        if 'legend_ncol' not in kwargs:
+            kwargs['legend_ncol'] = 1
+
+        # plot cdf of all jcts for each test subject for different loads
+        classes = self._group_analyser_classes(*analysers)
+        # plot_dict = {_class: {'x_values': [], 'rand_vars': []} for _class in classes}
+
+        nested_dict = lambda: defaultdict(nested_dict)
+        plot_dict = nested_dict()
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+
+            job_completion_times = []
+            if type(analyser.completed_job_dicts) is str:
+                # load from database
+                completed_job_dicts = SqliteDict(analyser.completed_job_dicts)
+            else:
+                completed_job_dicts = analyser.completed_job_dicts
+            for job in completed_job_dicts.values():
+                job_completion_times.append(job['time_completed'] - job['time_arrived'])
+            if type(analyser.completed_job_dicts) is str:
+                completed_job_dicts.close()
+
+            plot_dict[analyser.load_frac][analyser.subject_class_name]['rand_vars'] = job_completion_times
+
+        # complementary cdf
+        figs = []
+        for load in plot_dict.keys():
+            fig = plot_dists.plot_val_cdf(plot_dict=plot_dict[load], 
+                                          xlabel='Load {} JCTs ({})'.format(round(load,2), self.time_units), 
+                                          ylabel='Complementary CDF', 
+                                          gridlines=kwargs['gridlines'], 
+                                          aspect=kwargs['aspect'], 
+                                          logscale=True, 
+                                          plot_points=False, 
+                                          complementary_cdf=True, 
+                                          figsize=kwargs['figsize'], 
+                                          legend_ncol=kwargs['legend_ncol'], 
+                                          show_fig=True)
+            figs.append(fig)
+
+        return figs
+
+
+    def plot_mean_jct_vs_load(self, *analysers, **kwargs):
+        '''
+        *analysers (*args): Analyser objects whose metrics you wish to plot.
+        '''
+        if 'gridlines' not in kwargs:
+            kwargs['gridlines'] = True
+        if 'aspect' not in kwargs:
+            kwargs['aspect'] = 'auto'
+        if 'cdf_figsize' not in kwargs:
+            kwargs['cdf_figsize'] = (6.4, 4.8)
+        if 'scatter_figsize' not in kwargs:
+            kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'legend_ncol' not in kwargs:
+            kwargs['legend_ncol'] = 1
+        if 'logscale' not in kwargs:
+            kwargs['logscale'] = False
+
+        classes = self._group_analyser_classes(*analysers)
+        plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
+
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            plot_dict[analyser.subject_class_name]['x_values'].append(analyser.load_frac)
+            plot_dict[analyser.subject_class_name]['y_values'].append(analyser.mean_jct)
+            plot_dict[analyser.subject_class_name]['rand_vars'].append(analyser.mean_jct)
+
+        # scatter
+        fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='Mean JCT ({})'.format(self.time_units), 
+                                           plot_line=True,
+                                           aspect=kwargs['aspect'],
+                                           gridlines=kwargs['gridlines'],
+                                           figsize=kwargs['scatter_figsize'],
+                                           ylogscale=kwargs['logscale'],
+                                           legend_ncol=kwargs['legend_ncol'],
+                                           show_fig=True)
+
+        # complementary cdf
+        fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
+                                       xlabel='Mean JCT ({})'.format(self.time_units), 
+                                       ylabel='Complementary CDF', 
+                                       complementary_cdf=True, 
+                                       aspect=kwargs['aspect'],
+                                       gridlines=kwargs['gridlines'],
+                                       logscale=kwargs['logscale'],
+                                       figsize=kwargs['cdf_figsize'],
+                                       legend_ncol=kwargs['legend_ncol'],
+                                       show_fig=True)
+
+        # % change
+        for key in plot_dict.keys():
+            init_idx = np.argmin(plot_dict[key]['x_values'])
+            init_var = plot_dict[key]['y_values'][init_idx]
+            plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+        fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='\u0394F Mean JCT', 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           figsize=kwargs['scatter_figsize'], 
+                                           ylogscale=kwargs['logscale'],
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=True)
+
+
+        return [fig1, fig2, fig3]
 
 
 
+    def plot_99th_percentile_jct_vs_load(self, *analysers, **kwargs):
+        if 'gridlines' not in kwargs:
+            kwargs['gridlines'] = True
+        if 'aspect' not in kwargs:
+            kwargs['aspect'] = 'auto'
+        if 'cdf_figsize' not in kwargs:
+            kwargs['cdf_figsize'] = (6.4, 4.8)
+        if 'scatter_figsize' not in kwargs:
+            kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'legend_ncol' not in kwargs:
+            kwargs['legend_ncol'] = 1
+        if 'logscale' not in kwargs:
+            kwargs['logscale'] = False
+
+        classes = self._group_analyser_classes(*analysers)
+        plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
+
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            plot_dict[analyser.subject_class_name]['x_values'].append(analyser.load_frac)
+            plot_dict[analyser.subject_class_name]['y_values'].append(analyser.nn_jct)
+            plot_dict[analyser.subject_class_name]['rand_vars'].append(analyser.nn_jct)
+
+        # scatter
+        fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='p99 JCT ({})'.format(self.time_units), 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           figsize=kwargs['scatter_figsize'], 
+                                           ylogscale=kwargs['logscale'],
+                                           plot_line=True,
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=True)
+
+        # complementary cdf
+        fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
+                                       xlabel='p99 JCT ({})'.format(self.time_units), 
+                                       ylabel='Complementary CDF', 
+                                       gridlines=kwargs['gridlines'], 
+                                       aspect=kwargs['aspect'], 
+                                       figsize=kwargs['cdf_figsize'], 
+                                       logscale=kwargs['logscale'],
+                                       legend_ncol=kwargs['legend_ncol'], 
+                                       complementary_cdf=True, 
+                                       show_fig=True)
+
+        # % change
+        for key in plot_dict.keys():
+            init_idx = np.argmin(plot_dict[key]['x_values'])
+            init_var = plot_dict[key]['y_values'][init_idx]
+            plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+        fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='\u0394F p99 JCT', 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           figsize=kwargs['scatter_figsize'], 
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=True)
+
+        return [fig1, fig2, fig3]
 
 
+    def plot_max_jct_vs_load(self, *analysers, **kwargs):
+        if 'gridlines' not in kwargs:
+            kwargs['gridlines'] = True
+        if 'aspect' not in kwargs:
+            kwargs['aspect'] = 'auto'
+        if 'cdf_figsize' not in kwargs:
+            kwargs['cdf_figsize'] = (6.4, 4.8)
+        if 'scatter_figsize' not in kwargs:
+            kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'legend_ncol' not in kwargs:
+            kwargs['legend_ncol'] = 1
+        if 'logscale' not in kwargs:
+            kwargs['logscale'] = False
+
+        classes = self._group_analyser_classes(*analysers)
+        plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
+
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            plot_dict[analyser.subject_class_name]['x_values'].append(analyser.load_frac)
+            plot_dict[analyser.subject_class_name]['y_values'].append(analyser.max_jct)
+            plot_dict[analyser.subject_class_name]['rand_vars'].append(analyser.max_jct)
+
+        # scatter
+        fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='Max JCT ({})'.format(self.time_units), 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           ylogscale=kwargs['logscale'],
+                                           plot_line=True,
+                                           figsize=kwargs['scatter_figsize'], 
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=True)
+
+        # complementary cdf
+        fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
+                                       xlabel='Max JCT ({})'.format(self.time_units), 
+                                       ylabel='Complementary CDF', 
+                                       gridlines=kwargs['gridlines'], 
+                                       aspect=kwargs['aspect'], 
+                                       figsize=kwargs['cdf_figsize'], 
+                                       logscale=kwargs['logscale'],
+                                       legend_ncol=kwargs['legend_ncol'], 
+                                       complementary_cdf=True, 
+                                       show_fig=True)
+
+        # % change
+        for key in plot_dict.keys():
+            init_idx = np.argmin(plot_dict[key]['x_values'])
+            init_var = plot_dict[key]['y_values'][init_idx]
+            plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+        fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='\u0394F Max JCT', 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           figsize=kwargs['scatter_figsize'], 
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=True)
+
+        return [fig1, fig2]
 
 
+    def plot_fraction_of_arrived_jobs_dropped_vs_load(self, *analysers, **kwargs):
+        if 'cdf_figsize' not in kwargs:
+            kwargs['cdf_figsize'] = (6.4, 4.8)
+        if 'scatter_figsize' not in kwargs:
+            kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'gridlines' not in kwargs:
+            kwargs['gridlines'] = True
+        if 'aspect' not in kwargs:
+            kwargs['aspect'] = 'auto'
+        if 'legend_ncol' not in kwargs:
+            kwargs['legend_ncol'] = 1
+        if 'logscale' not in kwargs:
+            kwargs['logscale'] = False
 
+        classes = self._group_analyser_classes(*analysers)
+        plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in classes}
+
+        for analyser in analysers:
+            self._check_analyser_valid(analyser)
+            plot_dict[analyser.subject_class_name]['x_values'].append(analyser.load_frac)
+            plot_dict[analyser.subject_class_name]['y_values'].append(analyser.dropped_job_frac)
+            plot_dict[analyser.subject_class_name]['rand_vars'].append(analyser.dropped_job_frac)
+
+        # scatter 
+        fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='Fraction Jobs Dropped', 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           ylogscale=kwargs['logscale'],
+                                           figsize=kwargs['scatter_figsize'], 
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=True)
+
+        # complementary cdf
+        fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
+                                       xlabel='Fraction Jobs Dropped', 
+                                       ylabel='Complementary CDF', 
+                                       complementary_cdf=True, 
+                                       gridlines=kwargs['gridlines'], 
+                                       logscale=kwargs['logscale'],
+                                       aspect=kwargs['aspect'], 
+                                       figsize=kwargs['cdf_figsize'], 
+                                       legend_ncol=kwargs['legend_ncol'], 
+                                       show_fig=True)
+
+        # % change
+        for key in plot_dict.keys():
+            init_idx = np.argmin(plot_dict[key]['x_values'])
+            init_var = plot_dict[key]['y_values'][init_idx]
+            plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+        fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel='Load', 
+                                           ylabel='\u0394F Jobs Dropped', 
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           ylogscale=kwargs['logscale'],
+                                           figsize=kwargs['scatter_figsize'], 
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=True)
+
+        return [fig1, fig2, fig3]
 
 
 

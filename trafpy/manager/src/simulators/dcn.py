@@ -239,15 +239,46 @@ class DCN(gym.Env):
         self.action = {'chosen_flows': []} # init
 
         if self.job_centric:
+            # init dicts & lists required for job centric simulations
+            if self.env_database_path is not None:
+                # create databases
+                self.arrived_job_dicts = self.env_database_path + '/arrived_job_dicts.sqlite'
+                with SqliteDict(self.arrived_job_dicts) as arrived_job_dicts:
+                    arrived_job_dicts.commit()
+                    arrived_job_dicts.close()
+                self.completed_job_dicts = self.env_database_path + '/completed_job_dicts.sqlite'
+                with SqliteDict(self.completed_job_dicts) as completed_job_dicts:
+                    completed_job_dicts.commit()
+                    completed_job_dicts.close()
+                self.dropped_job_dicts = self.env_database_path + '/dropped_job_dicts.sqlite'
+                with SqliteDict(self.dropped_job_dicts) as dropped_job_dicts:
+                    dropped_job_dicts.commit()
+                    dropped_job_dicts.close()
+                self.control_deps = self.env_database_path + '/control_deps.sqlite'
+                with SqliteDict(self.control_deps) as control_deps:
+                    control_deps.commit()
+                    control_deps.close()
+            else:
+                # use local memory
+                # self.arrived_job_dicts = []
+                self.arrived_job_dicts = {}
+                # self.completed_jobs = []
+                self.completed_job_dicts = {}
+                # self.dropped_jobs = []
+                self.dropped_job_dicts = {}
+                # self.control_deps = [] # list of control dependencies
+                self.control_deps = {} # list of control dependencies
+                # self.control_deps_that_were_flows = []
             self.network.graph['queued_jobs'] = [] # init list of curr queued jobs in network
-            self.arrived_jobs = {} # use dict so can hash to make searching faster
-            self.arrived_job_dicts = []
-            self.completed_jobs = []
-            self.dropped_jobs = []
-            self.arrived_control_deps = [] # list of control dependencies
-            self.arrived_control_deps_that_were_flows = []
+            self.arrived_jobs = {} # use hash table for quick look ups
             self.running_ops = {}
+            self.num_arrived_control_deps = 0
+            self.num_completed_control_deps = 0
+            self.num_arrived_jobs = 0
+            self.num_completed_jobs = 0
+            self.num_dropped_jobs = 0
         else:
+            # flow centric dicts and lists also needed for job centric -> init below
             pass
 
         if self.env_database_path is not None:
@@ -264,6 +295,7 @@ class DCN(gym.Env):
             with SqliteDict(self.dropped_flow_dicts) as dropped_flow_dicts:
                 dropped_flow_dicts.commit()
                 dropped_flow_dicts.close()
+
         else:
             # use local memory
             self.arrived_flow_dicts = {}
@@ -557,6 +589,11 @@ class DCN(gym.Env):
                              for ep in self.network.graph['endpoints']}
 
         # update grid slot evolution with any ep link channels which are now occupied 
+        if 'unique_id' in chosen_flows[0]:
+            identifier = 'unique_id'
+        else:
+            identifier = 'flow_id'
+
         for flow in chosen_flows:
             sn, dn, channel = flow['src'], flow['dst'], flow['channel']
             if sn == dn:
@@ -564,12 +601,12 @@ class DCN(gym.Env):
                 pass
             else:
                 # src ep link
-                self.grid_slot_dict[sn][channel]['demands'].append(flow['flow_id'])
+                self.grid_slot_dict[sn][channel]['demands'].append(flow[identifier])
                 self.grid_slot_dict[sn][channel]['times'].append(time)
                 self.grid_slot_dict[sn][channel]['demands_info'].append(flow) # useful for debugging
                 ep_link_occupation[sn][channel] = 'occupied'
                 # dst ep link
-                self.grid_slot_dict[dn][channel]['demands'].append(flow['flow_id'])
+                self.grid_slot_dict[dn][channel]['demands'].append(flow[identifier])
                 self.grid_slot_dict[dn][channel]['times'].append(time)
                 self.grid_slot_dict[dn][channel]['demands_info'].append(flow) # useful for debugging
                 ep_link_occupation[dn][channel] = 'occupied'
@@ -615,6 +652,11 @@ class DCN(gym.Env):
         Adds a new flow to the appropriate src-dst virtual queue in the 
         simulator's network. Also updates arrived flows record
         '''
+        if 'unique_id' in flow_dict:
+            identifier = 'unique_id'
+        else:
+            identifier = 'flow_id'
+
         # add to arrived flows list
         self.register_arrived_flow(flow_dict)
         
@@ -651,27 +693,27 @@ class DCN(gym.Env):
                 with SqliteDict(self.dropped_flow_dicts) as dropped_flow_dicts:
                     # dropped_flow_dicts[flow_dict['flow_id']] = flow_dict
                     # dropped_flow_dicts[dropped_id] = flow_dict
-                    if 'unique_id' in flow_dict:
-                        dropped_flow_dicts[flow_dict['unique_id']] = flow_dict
-                    else:
-                        # no unique id included in flow dict
-                        dropped_flow_dicts[flow_dict['flow_id']] = flow_dict
+                    dropped_flow_dicts[flow_dict[identifier]] = flow_dict
                     dropped_flow_dicts.commit()
                     dropped_flow_dicts.close()
             else:
                 # self.dropped_flow_dicts[flow_dict['flow_id']] = flow_dict
                 # self.dropped_flow_dicts[dropped_id] = flow_dict
-                if 'unique_id' in flow_dict:
-                    self.dropped_flow_dicts[flow_dict['unique_id']] = flow_dict
-                else:
-                    # no unique id included in flow dict
-                    self.dropped_flow_dicts[flow_dict['flow_id']] = flow_dict
+                self.dropped_flow_dicts[flow_dict[identifier]] = flow_dict
             self.num_dropped_flows += 1
             if self.job_centric:
                 for job_dict in self.network.graph['queued_jobs']:
                     if job_dict['job_id'] == flow_dict['job_id']:
                         # drop job
-                        self.dropped_jobs.append(job_dict)
+                        # self.dropped_jobs.append(job_dict)
+                        if self.env_database_path is not None:
+                            with SqliteDict(self.dropped_job_dicts) as dropped_job_dicts:
+                                dropped_job_dicts[job_dict['job_id']] = job_dict
+                                dropped_job_dicts.commit()
+                                dropped_job_dicts.close()
+                        else:
+                            self.dropped_job_dicts[job_dict['job_id']] = job_dict
+                        self.num_dropped_jobs += 1
                         self.remove_job_from_queue(job_dict)
                         break
                         
@@ -685,7 +727,15 @@ class DCN(gym.Env):
         time_started_adding = time.time()
         # add to arrived jobs list
         self.arrived_jobs[job_dict['job_id']] = 'present' # record arrived job as being present in queue
-        self.arrived_job_dicts.append(job_dict)
+        self.num_arrived_jobs += 1
+        # self.arrived_job_dicts.append(job_dict)
+        if self.env_database_path is not None:
+            with SqliteDict(self.arrived_job_dicts) as arrived_job_dicts:
+                arrived_job_dicts[job_dict['job_id']] = job_dict
+                arrived_job_dicts.commit()
+                arrived_job_dicts.close()
+        else:
+            self.arrived_job_dicts[job_dict['job_id']] = job_dict
         self.network.graph['queued_jobs'].append(job_dict)
    
         # to ensure all child flows of completed 'flows' are updated, need to wait
@@ -708,14 +758,21 @@ class DCN(gym.Env):
                 #if flow_dict['src'] != flow_dict['dst'] and int(flow_dict['size']) == 0:
                 if int(flow_dict['size']) == 0:
                     # is a control dependency or src==dst therefore never becomes a flow therefore treat as control dep
-                    self.arrived_control_deps.append(flow_dict)
-                    if flow_dict['src'] == flow_dict['dst'] and flow_dict['dependency_type'] == 'data_dep':
-                        self.arrived_control_deps_that_were_flows.append(flow_dict)
                     if int(flow_dict['parent_op_run_time']) == 0 and len(flow_dict['completed_parent_deps']) == len(flow_dict['parent_deps']):
                         # control dependency satisfied immediately
                         flow_dict['time_arrived'] = self.curr_time
+                        flow_dict['time_completed'] = self.curr_time
                         flow_dict['can_schedule'] = 1
                         flows_to_complete.append(flow_dict)
+                    # add control dependency to arrived control dependencies
+                    if self.env_database_path is not None:
+                        with SqliteDict(self.control_deps) as control_deps:
+                            control_deps[flow_dict['unique_id']] = flow_dict
+                            control_deps.commit()
+                            control_deps.close()
+                    else:
+                        self.control_deps[flow_dict['unique_id']] = flow_dict
+                    self.num_arrived_control_deps += 1
                 elif len(flow_dict['parent_deps']) == 0 and flow_dict['src'] != flow_dict['dst'] and flow_dict['size'] != 0:
                     # flow with no parent dependencies, count as having arrived immediately
                     flow_dict['time_arrived'] = job_dict['time_arrived']
@@ -791,8 +848,20 @@ class DCN(gym.Env):
                         # can already schedule or child op not started therefore dont need to consider
                         pass
 
+        if self.env_database_path is not None:
+            control_deps = SqliteDict(self.control_deps)
+        else:
+            control_deps = self.control_deps
+
         # go through queued control dependencies
-        for dep in self.arrived_control_deps:
+        _control_deps = {} # tmp for updated control deps so don't crash database by updating while looping through
+        # must update control_deps dict outside of loop 
+        # or will crash database, therefore register any completed flows
+        # (which requires accessing control_deps to check flow/dep completed)
+        # outside of loop
+        deps_to_complete = []
+        for key in control_deps.keys():
+            dep = control_deps[key]
             if dep['time_parent_op_started'] is not None and dep['time_completed'] is None:
                 # dep child op has begun and dep has not been registered as completed
                 if self.curr_time >= dep['time_parent_op_started'] + dep['parent_op_run_time']:
@@ -805,15 +874,38 @@ class DCN(gym.Env):
                         # op has already previously been registered as completed
                         pass
                     # dep['time_completed'] = self.curr_time
-                    dep['time_completed'] = self.curr_time + self.slot_size
-                    dep['can_schedule'] = 1
-                    self.register_completed_flow(dep)
+                    if dep['time_completed'] is None:
+                        dep['time_completed'] = self.curr_time + self.slot_size
+                        dep['can_schedule'] = 1
+                        deps_to_complete.append(dep)
+                        # self.register_completed_flow(dep)
+
+                        # store update
+                        _control_deps[dep['unique_id']] = dep
+                    else:
+                        # already registed completed
+                        pass
+
                 else:
                     # parent op not yet finished
                     pass
             else:
                 # parent op not yet started
                 pass
+
+        # update with stored updates
+        for key, val in _control_deps.items():        
+            control_deps[key] = val
+
+        if self.env_database_path is not None:
+            control_deps.commit()
+            control_deps.close()
+        else:
+            self.control_deps = control_deps
+
+        # complete any deps to complete
+        for dep in deps_to_complete:
+            self.register_completed_flow(dep)
 
         observation['network'] = self.network
 
@@ -889,6 +981,10 @@ class DCN(gym.Env):
         with size == 0), will update dependencies but won't append to completed
         flows etc.
         '''
+        if 'unique_id' in flow_dict:
+            identifier = 'unique_id'
+        else:
+            identifier = 'flow_id'
       
         # record time at which flow was completed
         start = time.time()
@@ -904,25 +1000,17 @@ class DCN(gym.Env):
                 with SqliteDict(self.completed_flow_dicts) as completed_flow_dicts:
                     # completed_flow_dicts[flow_dict['flow_id']] = flow_dict
                     # completed_flow_dicts[completion_id] = flow_dict
-                    if 'unique_id' in flow_dict:
-                        completed_flow_dicts[flow_dict['unique_id']] = flow_dict
-                    else:
-                        # no unique id included in flow dict
-                        completed_flow_dicts[flow_dict['flow_id']] = flow_dict
+                    completed_flow_dicts[flow_dict[identifier]] = flow_dict
                     completed_flow_dicts.commit()
                     completed_flow_dicts.close()
             else:
                 # self.completed_flow_dicts[flow_dict['flow_id']] = flow_dict
                 # self.completed_flow_dicts[completion_id] = flow_dict
-                if 'unique_id' in flow_dict:
-                    self.completed_flow_dicts[flow_dict['unique_id']] = flow_dict
-                else:
-                    # no unique id included in flow dict
-                    self.completed_flow_dicts[flow_dict['flow_id']] = flow_dict
+                self.completed_flow_dicts[flow_dict[identifier]] = flow_dict
             self.num_completed_flows += 1
         else:
             # 'flow' never actually became a flow (src == dst or control dependency)
-            pass
+            self.num_completed_control_deps += 1
         end = time.time()
         if print_times:
             print('\nTime to record time flow completed: {}'.format(end-start))
@@ -949,6 +1037,11 @@ class DCN(gym.Env):
 
 
     def register_arrived_flow(self, flow_dict):
+        if 'unique_id' in flow_dict:
+            identifier = 'unique_id'
+        else:
+            identifier = 'flow_id'
+
         # register
         if flow_dict['can_schedule'] == 1:
             # flow is ready to be scheduled therefore can count as arrived
@@ -956,14 +1049,10 @@ class DCN(gym.Env):
                 # arrival_id = flow_dict['job_id']+'_'+flow_dict['flow_id']
             # else:
                 # arrival_id = flow_dict['flow_id']
-            try:
-                if 'unique_id' in flow_dict:
-                    _ = self.arrived_flows[flow_dict['unique_id']]
-                else:
-                    # no unique id included in flow dict
-                    _ = self.arrived_flows[flow_dict['flow_id']]
+            if flow_dict[identifier] in self.arrived_flows:
                 # flow already counted as arrived
-            except KeyError:
+                pass
+            else:
                 # flow not yet counted as arrived
                 if flow_dict['src'] != flow_dict['dst'] and flow_dict['size'] != 0:
                     if flow_dict['time_arrived'] is None:
@@ -973,28 +1062,15 @@ class DCN(gym.Env):
                         # already recorded time of arrival
                         pass
                     # self.arrived_flows[arrival_id] = 'present'
-                    if 'unique_id' in flow_dict:
-                        self.arrived_flows[flow_dict['unique_id']] = 'present'
-                    else:
-                        # no unique id included in flow dict
-                        self.arrived_flows[flow_dict['flow_id']] = 'present'
+                    self.arrived_flows[flow_dict[identifier]] = 'present'
                     if self.env_database_path is not None:
                         with SqliteDict(self.arrived_flow_dicts) as arrived_flow_dicts:
-                            # arrived_flow_dicts[arrival_id] = flow_dict
-                            if 'unique_id' in flow_dict:
-                                arrived_flow_dicts[flow_dict['unique_id']] = flow_dict
-                            else:
-                                # no unique id included in flow dict
-                                arrived_flow_dicts[flow_dict['flow_id']] = flow_dict
+                            arrived_flow_dicts[flow_dict[identifier]] = flow_dict
                             arrived_flow_dicts.commit()
                             arrived_flow_dicts.close()
                     else:
                         # self.arrived_flow_dicts[arrival_id] = flow_dict
-                        if 'unique_id' in flow_dict:
-                            self.arrived_flow_dicts[flow_dict['unique_id']] = flow_dict
-                        else:
-                            # no unique id included in flow dic5
-                            self.arrived_flow_dicts[flow_dict['flow_id']] = flow_dict
+                        self.arrived_flow_dicts[flow_dict[identifier]] = flow_dict
                     self.num_arrived_flows += 1
                 else:
                     # 'flow' never actually becomes flow (is ctrl dependency or src==dst)
@@ -1404,8 +1480,16 @@ class DCN(gym.Env):
         # record time at which job was completed
         # job_dict['time_completed'] = copy.copy(self.curr_time)
         job_dict['time_completed'] = copy.copy(self.curr_time) + self.slot_size
-        self.completed_jobs.append(job_dict)
-        jct = job_dict['time_completed']-job_dict['time_arrived']
+        self.num_completed_jobs += 1
+        # self.completed_jobs.append(job_dict)
+        if self.env_database_path is not None:
+            with SqliteDict(self.completed_job_dicts) as completed_job_dicts:
+                completed_job_dicts[job_dict['job_id']] = job_dict
+                completed_job_dicts.commit()
+                completed_job_dicts.close()
+        else:
+            self.completed_job_dicts[job_dict['job_id']] = job_dict
+        # jct = job_dict['time_completed']-job_dict['time_arrived']
         
         # remove job from queue
         self.remove_job_from_queue(job_dict) 
@@ -1434,11 +1518,19 @@ class DCN(gym.Env):
                         break
 
         # check job ctrl deps
-        for dep in self.arrived_control_deps:
+        if self.env_database_path is not None:
+            control_deps = SqliteDict(self.control_deps)
+        else:
+            control_deps = self.control_deps
+
+        for dep in control_deps.values():
             if dep['job_id'] == job_id and dep['time_completed'] is None:
                 # job still has at least one uncompleted control dependency left
                 job_ctrl_deps_completed = False
                 break
+
+        if self.env_database_path is not None:
+            control_deps.close()
 
         if job_flows_completed == True and job_ctrl_deps_completed == True:
             # register completed job
@@ -1458,6 +1550,12 @@ class DCN(gym.Env):
         '''
         completed_child_dependencies = completed_flow['child_deps']
         eps = self.network.graph['endpoints']
+
+        if self.env_database_path is not None:
+            control_deps = SqliteDict(self.control_deps)
+        else:
+            control_deps = self.control_deps
+        _control_deps = {} # tmp dict so don't need to edit dict during loop (crashes database)
         
         for child_dep in completed_child_dependencies:
             # go through queued flows
@@ -1493,10 +1591,12 @@ class DCN(gym.Env):
                         else:
                             # flow not part of same job as completed flow
                             pass
+
                           
             for child_dep in completed_child_dependencies:
                 # go through arrived control dependencies
-                for control_dep in self.arrived_control_deps:
+                for key in control_deps.keys():
+                    control_dep = control_deps[key]
                     if control_dep['job_id'] == completed_flow['job_id']:
                         # only update if part of same job!
                         if control_dep['flow_id'] == child_dep:
@@ -1519,12 +1619,24 @@ class DCN(gym.Env):
                             else:
                                 # still can't schedule
                                 pass
+                            # store update
+                            _control_deps[control_dep['unique_id']] = control_dep
                         else:
                             # dep is not a child dep of completed flow
                             pass
                     else:
                         # dep not part of same job as completed flow
                         pass
+
+        # update with stored updates
+        for key, val in _control_deps.items():
+            control_deps[key] = val
+
+        if self.env_database_path is not None:
+            control_deps.commit()
+            control_deps.close()
+        else:
+            self.control_deps = control_deps
                     
 
     def update_flow_attrs(self, chosen_flows):
@@ -1735,6 +1847,32 @@ class DCN(gym.Env):
         Performs an action in the DCN simulation environment, moving simulator
         to next step
         '''
+        # # DEBUG:
+        # queues = self.get_current_queue_states() 
+        # print('\nQueues being given to scheduler:')
+        # i = 0
+        # for q in queues:
+           # print('queue {}:\n{}'.format(i, q))
+           # i+=1
+        # # print('Chosen action received by environment:\n{}'.format(action))
+        # # print('Queued jobs:\n{}'.format(self.network.graph['queued_jobs']))
+        # print('Incomplete control deps:')
+        # control_deps = SqliteDict(self.control_deps)
+        # for c in control_deps.values():
+           # if c['time_completed'] is None or c['time_parent_op_started'] is None:
+               # print(c)
+           # else:
+               # pass
+        # control_deps.close()
+        if self.job_centric:
+            print('Time: {} Step: {} | Sim demands: {} | Flows arrived/completed/dropped: {}/{}/{} | Jobs arrived/completed/dropped: {}/{}/{} | Ctrl deps arrived/completed: {}/{}'.format(self.curr_time, self.curr_step, self.num_demands, self.num_arrived_flows, self.num_completed_flows, self.num_dropped_flows, self.num_arrived_jobs, self.num_completed_jobs, self.num_dropped_jobs, self.num_arrived_control_deps, self.num_completed_control_deps)) 
+        else:
+            print('Time: {} Step: {} | Sim demands: {} | Flows arrived/completed/dropped: {}/{}/{}'.format(self.curr_time, self.curr_step, self.num_demands, self.num_arrived_flows, self.num_completed_flows, self.num_dropped_flows)) 
+
+
+
+
+
         self.time_step_start = time.time()
 
         self.action = action # save action
@@ -1768,21 +1906,6 @@ class DCN(gym.Env):
 
 
 
-        # # DEBUG:
-        # queues = self.get_current_queue_states() 
-        # print('Queues being given to scheduler:')
-        # i = 0
-        # for q in queues:
-           # print('queue {}:\n{}'.format(i, q))
-           # i+=1
-        # print('Chosen action received by environment:\n{}'.format(action))
-        # print('Incomplete control deps:')
-        # # for c in self.arrived_control_deps:
-           # # if c['time_completed'] is None or c['time_parent_op_started'] is None:
-               # # print(c)
-           # # else:
-               # # pass
-        # print('Time: {} Step: {} | Sim flows: {} | Flows arrived: {} | Flows completed: {} | Flows dropped: {}'.format(self.curr_time, self.curr_step, self.num_flows, self.num_arrived_flows, self.num_completed_flows, self.num_dropped_flows)) 
 
         return obs, reward, done, info
   
@@ -1875,7 +1998,7 @@ class DCN(gym.Env):
         '''
         if self.max_time is None:
             if self.job_centric:
-                if (len(self.arrived_jobs.keys()) != len(self.completed_jobs) and len(self.arrived_jobs.keys()) != 0 and self.num_demands != len(self.dropped_jobs)+len(self.completed_jobs)) or len(self.arrived_jobs.keys()) != self.num_demands:
+                if (self.num_arrived_jobs != self.num_completed_jobs and self.num_arrived_jobs != 0 and self.num_demands != self.num_dropped_jobs+self.num_completed_jobs) or self.num_arrived_jobs != self.num_demands:
                     return False
                 else:
                     self.check_if_any_flows_arrived()
@@ -1892,7 +2015,7 @@ class DCN(gym.Env):
                 if self.curr_time >= self.max_time:
                     self.check_if_any_flows_arrived()
                     return True
-                elif (len(self.arrived_jobs.keys()) != len(self.completed_jobs) and len(self.arrived_jobs.keys()) != 0 and self.num_demands != len(self.dropped_jobs)+len(self.completed_jobs)) or len(self.arrived_jobs.keys()) != self.num_demands:
+                elif (self.num_arrived_jobs != self.num_completed_jobs and self.num_arrived_jobs != 0 and self.num_demands != self.num_dropped_jobs+self.num_completed_jobs) or self.num_arrived_jobs != self.num_demands:
                     return False
                 else:
                     self.check_if_any_flows_arrived()
@@ -2031,6 +2154,9 @@ class DCN(gym.Env):
         Args:
         - flow (dict): flow dict containing flow info to set up
         '''
+        if flow['can_schedule'] == 0:
+            raise Exception('Tried to set up flow {}, but this flow cannot yet be scheduled (can_schedule == 0)! Scheduler should not be giving invalid chosen flow sets to the environment.'.format(flow)) 
+
         path = flow['path']
         channel = flow['channel']
         flow_size = flow['size']
@@ -2040,6 +2166,7 @@ class DCN(gym.Env):
 
         info_to_transfer_this_slot = packets_this_slot * packet_size
         capacity_used_this_slot = round(info_to_transfer_this_slot / self.slot_size, num_decimals) # info units of this flow transferred this time slot == capacity used on each channel in flow's path this time slot
+
 
         edges = self.get_path_edges(path)
         num_edges = len(edges)

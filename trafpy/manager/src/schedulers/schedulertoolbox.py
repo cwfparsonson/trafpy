@@ -57,9 +57,9 @@ class SchedulerToolbox_v2:
             self.network = copy.deepcopy(observation)
 
         if reset_channel_capacities:
-            self.reset_channel_capacities_of_edges()
+            self.network = self.reset_channel_capacities_of_edges()
         if hide_child_dependency_flows:
-            self.filter_unavailable_flows()
+            self.network = self.filter_unavailable_flows()
 
 
     def reset_channel_capacities_of_edges(self):
@@ -73,16 +73,18 @@ class SchedulerToolbox_v2:
         # update global graph property
         net.graph['curr_nw_capacity_used'] = 0
 
+        return net
+
     def filter_unavailable_flows(self):
         '''
         Takes a network and filters out any flow that is not ready to be scheduled
         yet i.e. has incomplete parent flow dependencies. Use this method to get
         network representation for 'job-agnostic' flow scheduling systems.
         '''
-        net = self.network
+        net = copy.deepcopy(self.network)
         eps = net.graph['endpoints']
         for ep in eps:
-            ep_queues = net.nodes[ep]
+            ep_queues = copy.deepcopy(net.nodes[ep]) # must make copy or will miss flows since length of list changes during iteration
             for ep_queue in ep_queues.values():
                 for flow_dict in ep_queue['queued_flows']:
                     if flow_dict['can_schedule'] == 0:
@@ -91,7 +93,6 @@ class SchedulerToolbox_v2:
                     else:
                         # can schedule
                         pass
-                        # can schedule
         
         # check no bad flows left in queue
         for ep in eps:
@@ -110,7 +111,6 @@ class SchedulerToolbox_v2:
         Given flow dict and network that flow is in, will locate flow 
         in network and remove from queue
         '''
-        
         sn = flow_dict['src']
         dn = flow_dict['dst']
         queued_flows = network.nodes[sn][dn]['queued_flows']
@@ -128,6 +128,8 @@ class SchedulerToolbox_v2:
         - source
         - destination
         - time arrived
+        - flow_id
+        - job_id
 
         Args:
         - flow (dict): flow dictionary
@@ -137,17 +139,20 @@ class SchedulerToolbox_v2:
         src = flow['src']
         dst = flow['dst']
         time_arrived = flow['time_arrived']
+        flow_id = flow['flow_id']
+        job_id = flow['job_id']
 
         idx = 0
         for f in flows:
-            if f['size']==size and f['src']==src and f['dst']==dst and f['time_arrived']==time_arrived:
+            if f['size']==size and f['src']==src and f['dst']==dst and f['time_arrived']==time_arrived and f['flow_id'] == flow_id and f['job_id'] == job_id:
                 # flow found in flows
                 return idx
             else:
                 # flow not found, move to next f in flows
                 idx += 1
-         
-        raise Exception('Flow not found in list of flows.')
+        
+        raise Exception('Flow not found in list of flows')
+
 
     def init_paths_and_packets(self, flow_dict):
         if flow_dict['k_shortest_paths'] is None:
@@ -285,26 +290,27 @@ class SchedulerToolbox_v2:
                     else:
                         raise Exception('Unrecognised path_channel_assignment_strategy {}'.format(path_channel_assignment_strategy))
 
+                    if 'unique_id' in flow:
+                        identifier = 'unique_id'
+                    else:
+                        identifier = 'flow_id'
+
                     # assign a cost to this flow
                     if cost_function is None:
                         pass
                     else:
-                        flow_id_to_cost[flow['flow_id']] = cost_function(flow)
+                        flow_id_to_cost[flow[identifier]] = cost_function(flow)
 
                     # collect flow
-                    queued_flows[flow['flow_id']] = flow
+                    queued_flows[flow[identifier]] = flow
 
                     # collect requested edges
                     edges = self.get_path_edges(flow['path'])
                     for e in edges:
-                        # if json.dumps(sorted(e)) in requested_edges.keys():
-                            # requested_edges[json.dumps(sorted(e))].append(flow['flow_id']) # sort to keep order consistent
-                        # else:
-                            # requested_edges[json.dumps(sorted(e))] = [flow['flow_id']] # sort to keep order consistent
                         if json.dumps(e) in requested_edges.keys():
-                            requested_edges[json.dumps(e)].append(flow['flow_id']) # sort to keep order consistent
+                            requested_edges[json.dumps(e)].append(flow[identifier]) # sort to keep order consistent
                         else:
-                            requested_edges[json.dumps(e)] = [flow['flow_id']] # sort to keep order consistent
+                            requested_edges[json.dumps(e)] = [flow[identifier]] # sort to keep order consistent
 
         edge_to_flow_ids = {edge: [flow_id for flow_id in requested_edges[edge]] for edge in requested_edges.keys()}
 
@@ -514,11 +520,16 @@ class SchedulerToolbox_v2:
         Cost resolution strategy -> choose flow with lowest cost.
         Random resolution strategy -> choose random flow.
         '''
+        if 'unique_id' in flow:
+            identifier = 'unique_id'
+        else:
+            identifier = 'flow_id'
+
         valid_resolution_strategies = ['cost', 'random', 'fair_share', 'first_fit']
         if resolution_strategy not in valid_resolution_strategies:
             raise Exception('resolution_strategy {} must be one of {}'.format(resolution_strategy, valid_resolution_strategies))
 
-        chosen_flow_ids = {f['flow_id']: None for f in chosen_flows}
+        chosen_flow_ids = {f[identifier]: None for f in chosen_flows}
         if self.debug_mode:
             print('\n-----')
             print('considering flow: {}'.format(flow))
@@ -575,7 +586,7 @@ class SchedulerToolbox_v2:
                 flow_edges = self.get_path_edges(flow['path'])
                 bandwidth_requested = (flow['packets_this_slot'] * flow['packet_size'])/self.slot_size
                 if self.debug_mode:
-                    print('flow {} bandwidth requested: {}'.format(flow['flow_id'], bandwidth_requested))
+                    print('flow {} bandwidth requested: {}'.format(flow[identifier], bandwidth_requested))
                 for edge in flow_edges:
                     if not self.check_edge_valid(flow, edge):
                         # contention is on this edge
@@ -646,12 +657,12 @@ class SchedulerToolbox_v2:
                                         i = 0
                                         while not found_f:
                                             f = chosen_flows[i]
-                                            if f['flow_id'] == _id:
+                                            if f[identifier] == _id:
                                                 if self.debug_mode:
                                                     print('found established flow, take down')
                                                 self.take_down_connection(f)
                                                 chosen_flows.remove(f)
-                                                del chosen_flow_ids[f['flow_id']]
+                                                del chosen_flow_ids[f[identifier]]
                                                 removed_flows.append(f)
                                                 found_f = True
                                                 if self.debug_mode:
@@ -675,7 +686,7 @@ class SchedulerToolbox_v2:
                                 _cost = costs[idx]
                                 if _id in chosen_flow_ids:
                                     # this flow has previously been chosen, check if should keep or discard
-                                    if _cost < cost_info['flow_id_to_cost'][flow['flow_id']]:
+                                    if _cost < cost_info['flow_id_to_cost'][flow[identifier]]:
                                         if self.debug_mode:
                                             print('cost of prospective flow greater than already established flow, do not set up')
                                         # already established flow has lower cost -> do not establish flow, re-establish any flows that were taken down
@@ -691,12 +702,12 @@ class SchedulerToolbox_v2:
                                         i = 0
                                         while not found_f:
                                             f = chosen_flows[i]
-                                            if f['flow_id'] == _id:
+                                            if f[identifier] == _id:
                                                 if self.debug_mode:
                                                     print('found high cost established flow {}, take down'.format(_id))
                                                 self.take_down_connection(f)
                                                 chosen_flows.remove(f)
-                                                del chosen_flow_ids[f['flow_id']]
+                                                del chosen_flow_ids[f[identifier]]
                                                 removed_flows.append(f)
                                                 found_f = True
                                                 if self.debug_mode:
@@ -812,6 +823,8 @@ class SchedulerToolbox_v2:
         Args:
         - flow (dict): flow dict containing flow info to set up
         '''
+        if flow['can_schedule'] == 0:
+            raise Exception('Tried to set up flow {}, but this flow cannot yet be scheduled (can_schedule == 0)! Scheduler should not be giving invalid chosen flow sets to the environment.'.format(flow)) 
 
         # if self.debug_mode:
             # print('Setting up connection for flow {}'.format(flow))

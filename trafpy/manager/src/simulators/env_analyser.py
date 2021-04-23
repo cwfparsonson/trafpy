@@ -70,7 +70,7 @@ class EnvAnalyser:
             else:
                 if os.path.exists(env_analyser_database_path):
                     shutil.rmtree(env_analyser_database_path)
-        if not load_prev and env_analyser_database_path is not None:
+        if not load_prev and env_analyser_database_path is not None and not os.path.exists(env_analyser_database_path):
             os.mkdir(env_analyser_database_path)
 
         self.env_analyser_database_path = env_analyser_database_path
@@ -81,10 +81,10 @@ class EnvAnalyser:
             print('Loaded previously saved analyser object from {} in {} s.'.format(self.env_analyser_database_path, end-start))
 
         else:
-            self._compute_flow_summary()
-            self._compute_general_summary()
             if self.env.job_centric:
                 self._compute_job_summary()
+            self._compute_flow_summary()
+            self._compute_general_summary()
 
             if self.env_analyser_database_path is not None:
                 print('Saving analyser object for env {}...'.format(self.env.sim_name))
@@ -109,9 +109,8 @@ class EnvAnalyser:
     def _print_general_summary(self):
         print('\n ~* General Information *~')
         print('Simulation name: \'{}\''.format(self.env.sim_name))
-        print('Measurement duration: {} (Start time : {} {} | End time: {} {})'.format(self.measurement_duration, self.measurement_start_time, self.time_units, self.measurement_end_time, self.time_units))
+        print('Measurement duration: {} {} (Start time : {} {} | End time: {} {})'.format(self.measurement_duration, self.time_units, self.measurement_start_time, self.time_units, self.measurement_end_time, self.time_units))
         print('Total number of generated demands (jobs or flows) passed to env: {}'.format(self.env.num_demands)) 
-        print('Total number of these demands which arrived during measurement period: {}'.format(self.num_arrived_flows))
         print('Total info arrived: {} {}'.format(self.total_info_arrived, self.info_units))
         print('Total info transported: {} {}'.format(self.total_info_transported, self.info_units))
         print('Load (abs): {} {}/{}'.format(self.load_abs, self.info_units, self.time_units))
@@ -320,7 +319,13 @@ class EnvAnalyser:
         print('Computing flow arrival metrics for env {}...'.format(self.env.sim_name))
         start = time.time()
         self._init_flow_arrival_metrics()
-        self.measurement_duration, self.measurement_start_time, self.measurement_end_time = self._get_measurement_times()
+        # self.measurement_duration, self.measurement_start_time, self.measurement_end_time = self._get_flow_measurement_times()
+        if not self.env.job_centric:
+            # compute flow-centric measurement tims
+            self.measurement_duration, self.measurement_start_time, self.measurement_end_time = self._get_measurement_times()
+        else:
+            # demands are jobs therefore measurements times computed by job arrivals
+            pass
         end = time.time()
         print('Computed flow arrival metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
 
@@ -352,7 +357,6 @@ class EnvAnalyser:
 
         self.num_completed_flows = len(fcts)
         self.mean_fct, self.nn_fct, self.max_fct, self.std_fct = self._calc_flow_completion_times(fcts)
-
 
         end = time.time()
         print('Computed flow completion metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
@@ -404,29 +408,46 @@ class EnvAnalyser:
         end = time.time()
         print('Computed flow queued metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
 
-
     def _get_measurement_times(self):
         if self.measurement_start_time is None:
-            measurement_start_time = self.time_first_flow_arrived
+            if self.env.job_centric:
+                measurement_start_time = self.time_first_job_arrived
+            else:
+                measurement_start_time = self.time_first_flow_arrived
         elif self.measurement_start_time == 'auto' and self.measurement_end_time == 'auto':
-            # both start and end must be assigned simultaneously
-            self.measurement_start_time = 0.1 * self.time_last_flow_arrived
-            self.measurement_end_time = self.time_last_flow_arrived
-            # update arrived flows to be within measurement duration
+            if self.env.job_centric:
+                # both start and end must be assigned simultaneously
+                self.measurement_start_time = 0.1 * self.time_last_job_arrived
+                self.measurement_end_time = self.env.curr_time + self.env.slot_size
+            else:
+                # both start and end must be assigned simultaneously
+                self.measurement_start_time = 0.1 * self.time_last_flow_arrived
+                self.measurement_end_time = self.env.curr_time + self.env.slot_size
+            # update arrived demands to be within measurement duration
+            self._init_job_arrival_metrics()
             self._init_flow_arrival_metrics()
             measurement_start_time = self.measurement_start_time
             measurement_end_time = self.measurement_end_time
         elif self.measurement_start_time == 'auto' and self.measurement_end_time != 'auto':
-            self.measurement_start_time = 0.1 * self.time_last_flow_arrived
+            if self.env.job_centric:
+                self.measurement_start_time = 0.1 * self.time_last_job_arrived
+            else:
+                self.measurement_start_time = 0.1 * self.time_last_flow_arrived
+            self._init_job_arrival_metrics()
             self._init_flow_arrival_metrics()
             measurement_start_time = self.measurement_start_time
         else:
             measurement_start_time = self.measurement_start_time
 
         if self.measurement_end_time is None:
-            measurement_end_time = self.time_last_flow_arrived
+            measurement_end_time = self.env.curr_time + self.env.slot_size # time sim was ended
+            self.measurement_end_time = measurement_end_time
         elif self.measurement_end_time == 'auto' and self.measurement_start_time != 'auto':
-            self.measurement_start_time = self.time_last_flow_arrived
+            if self.env.job_centric:
+                self.measurement_start_time = self.time_last_job_arrived
+            else:
+                self.measurement_start_time = self.time_last_flow_arrived
+            self._init_job_arrival_metrics()
             self._init_flow_arrival_metrics()
             measurement_start_time = self.measurement_start_time
         else:
@@ -435,6 +456,37 @@ class EnvAnalyser:
 
 
         return measurement_duration, measurement_start_time, measurement_end_time
+
+    # def _get_flow_measurement_times(self):
+        # if self.measurement_start_time is None:
+            # measurement_start_time = self.time_first_flow_arrived
+        # elif self.measurement_start_time == 'auto' and self.measurement_end_time == 'auto':
+            # # both start and end must be assigned simultaneously
+            # self.measurement_start_time = 0.1 * self.time_last_flow_arrived
+            # self.measurement_end_time = self.time_last_flow_arrived
+            # # update arrived flows to be within measurement duration
+            # self._init_flow_arrival_metrics()
+            # measurement_start_time = self.measurement_start_time
+            # measurement_end_time = self.measurement_end_time
+        # elif self.measurement_start_time == 'auto' and self.measurement_end_time != 'auto':
+            # self.measurement_start_time = 0.1 * self.time_last_flow_arrived
+            # self._init_flow_arrival_metrics()
+            # measurement_start_time = self.measurement_start_time
+        # else:
+            # measurement_start_time = self.measurement_start_time
+
+        # if self.measurement_end_time is None:
+            # measurement_end_time = self.env.curr_time # time sim was ended
+        # elif self.measurement_end_time == 'auto' and self.measurement_start_time != 'auto':
+            # self.measurement_start_time = self.time_last_flow_arrived
+            # self._init_flow_arrival_metrics()
+            # measurement_start_time = self.measurement_start_time
+        # else:
+            # measurement_end_time = self.measurement_end_time
+        # measurement_duration = measurement_end_time - measurement_start_time
+
+
+        # return measurement_duration, measurement_start_time, measurement_end_time
 
     def _get_flows_remaining_in_queue_at_end_of_measurement_period(self):
         queued_flow_dicts = {}
@@ -491,7 +543,7 @@ class EnvAnalyser:
         elif self.measurement_start_time is None and self.measurement_end_time is not None:
             for flow_id, flow in env_dropped_flow_dicts.items():
                 arr_time = flow['time_arrived']
-                if arr_time < self.measurement_end_time:
+                if arr_time <= self.measurement_end_time:
                     dropped_flow_dicts[flow_id] = flow
                 else:
                     # cooling down
@@ -500,7 +552,7 @@ class EnvAnalyser:
         elif self.measurement_start_time is not None and self.measurement_end_time is None:
             for flow_id, flow in env_dropped_flow_dicts.items():
                 arr_time = flow['time_arrived']
-                if arr_time > self.measurement_start_time:
+                if arr_time >= self.measurement_start_time:
                     dropped_flow_dicts[flow_id] = flow
                 else:
                     # warming up
@@ -512,7 +564,7 @@ class EnvAnalyser:
                 if arr_time < self.measurement_start_time:
                     # warming up
                     pass
-                elif arr_time > self.measurement_start_time and arr_time < self.measurement_end_time:
+                elif arr_time >= self.measurement_start_time and arr_time <= self.measurement_end_time:
                     # measure
                     dropped_flow_dicts[flow_id] = flow
                 else:
@@ -560,7 +612,7 @@ class EnvAnalyser:
         elif self.measurement_start_time is None and self.measurement_end_time is not None:
             for flow_id, flow in env_completed_flow_dicts.items():
                 comp_time = flow['time_completed']
-                if comp_time < self.measurement_end_time:
+                if comp_time <= self.measurement_end_time:
                     completed_flow_dicts[flow_id] = flow
                 else:
                     # cooling down
@@ -570,7 +622,7 @@ class EnvAnalyser:
         elif self.measurement_start_time is not None and self.measurement_end_time is None:
             for flow_id, flow in env_completed_flow_dicts.items():
                 arr_time, comp_time = flow['time_arrived'], flow['time_completed']
-                if comp_time > self.measurement_start_time and arr_time > self.measurement_start_time:
+                if comp_time >= self.measurement_start_time and arr_time >= self.measurement_start_time:
                     completed_flow_dicts[flow_id] = flow
                 else:
                     # warming up
@@ -579,10 +631,11 @@ class EnvAnalyser:
         else:
             for flow_id, flow in env_completed_flow_dicts.items():
                 arr_time, comp_time = flow['time_arrived'], flow['time_completed']
+                # print('flow arr time: {} | meas start time: {} | comp time: {} | meas end time: {}'.format(flow['time_arrived'], self.measurement_start_time, flow['time_completed'], self.measurement_end_time))
                 if comp_time < self.measurement_start_time or arr_time < self.measurement_start_time:
                     # warming up
                     pass
-                elif comp_time > self.measurement_start_time and comp_time < self.measurement_end_time and arr_time > self.measurement_start_time:
+                elif comp_time >= self.measurement_start_time and comp_time <= self.measurement_end_time and arr_time >= self.measurement_start_time:
                     # measure
                     completed_flow_dicts[flow_id] = flow
                 elif comp_time > self.measurement_end_time:
@@ -614,7 +667,7 @@ class EnvAnalyser:
         elif self.measurement_start_time is None and self.measurement_end_time is not None:
             for flow_id, flow in env_arrived_flow_dicts.items():
                 arr_time = flow['time_arrived']
-                if arr_time < self.measurement_end_time:
+                if arr_time <= self.measurement_end_time:
                     flows_arrived[flow_id] = flow
                 else:
                     # cooling down
@@ -622,8 +675,7 @@ class EnvAnalyser:
 
         elif self.measurement_start_time is not None and self.measurement_end_time is None:
             for flow_id, flow in env_arrived_flow_dicts.items():
-                arr_time = flow['time_arrived']
-                if arr_time > self.measurement_start_time:
+                if arr_time >= self.measurement_start_time:
                     flows_arrived[flow_id] = flow
                 else:
                     # warming up
@@ -632,10 +684,11 @@ class EnvAnalyser:
         else:
             for flow_id, flow in env_arrived_flow_dicts.items():
                 arr_time = flow['time_arrived']
+                # print('flow arr time: {} | meas start time: {}'.format(flow['time_arrived'], self.measurement_start_time))
                 if arr_time < self.measurement_start_time:
                     # warming up
                     pass
-                elif arr_time > self.measurement_start_time and arr_time < self.measurement_end_time:
+                elif arr_time >= self.measurement_start_time and arr_time <= self.measurement_end_time:
                     # measure
                     flows_arrived[flow_id] = flow
                 elif arr_time > self.measurement_end_time:
@@ -652,192 +705,400 @@ class EnvAnalyser:
     def _print_job_summary(self):
         print('\n ~* Job Information *~')
         print('Total number of generated jobs passed to env: {}'.format(self.env.num_demands))
-        print('Total number of these jobs which arrived during measurement period: {}'.format(len(self.arrived_job_dicts)))
-        print('Time first job arrived: {}'.format(min(self.job_times_arrived)))
-        print('Time last job arrived: {}'.format(max(self.job_times_arrived)))
-        print('Total number of jobs that were completed: {}'.format(len(self.completed_job_dicts)))
-        print('Total number of jobs that were dropped: {}'.format(len(self.dropped_job_dicts)))
-        print('Total number of jobs that were left in queue at end of measurement period: {}'.format(len(self.queued_job_dicts)))
-        print('Average job completion time (JCT): {}'.format(self.average_jct))
-        print('99th percentile JCT: {}'.format(self.nn_jct))
+        print('Total number of these jobs which arrived during measurement period: {}'.format(self.num_arrived_jobs))
+        print('Time first job arrived: {} {}'.format(self.time_first_job_arrived, self.time_units))
+        print('Time last job arrived: {} {}'.format(self.time_last_job_arrived, self.time_units))
+        print('Total number of jobs that were completed: {}'.format(self.num_completed_jobs))
+        print('Total number of jobs that were left in queue at end of measurement period: {}'.format(self.num_queued_jobs))
+        print('Total number of jobs that were dropped (dropped + left in queue at end of measurement period): {}'.format(self.num_dropped_jobs))
+        print('Fraction of arrived jobs dropped: {}'.format(self.dropped_job_frac))
+        print('Mean job completion time (JCT): {} {}'.format(self.mean_jct, self.time_units))
+        print('99th percentile JCT: {} {}'.format(self.nn_jct, self.time_units))
 
     def _compute_job_summary(self):
         self._compute_job_arrival_metrics()
         self._compute_job_completion_metrics()
-        self._compute_job_dropped_metrics()
         self._compute_job_queued_metrics()
+        self._compute_job_dropped_metrics()
 
     def _compute_job_arrival_metrics(self):
-        self.arrived_job_dicts = self._get_jobs_arrived_in_measurement_period(self.measurement_start_time, self.measurement_end_time)
-        self.job_times_arrived = [self.arrived_job_dicts[i]['time_arrived'] for i in range(len(self.arrived_job_dicts))]
-        self.num_arrived_jobs = len(self.arrived_job_dicts)
+        print('Computing job arrival metrics for env {}...'.format(self.env.sim_name))
+        start = time.time()
+        # self.arrived_job_dicts = self._get_jobs_arrived_in_measurement_period(self.measurement_start_time, self.measurement_end_time)
+        # self.job_times_arrived = [self.arrived_job_dicts[i]['time_arrived'] for i in range(len(self.arrived_job_dicts))]
+        # self.num_arrived_jobs = len(self.arrived_job_dicts)
+        self._init_job_arrival_metrics()
+        # self.measurement_duration, self.measurement_start_time, self.measurement_end_time = self._get_job_measurement_times()
+        self.measurement_duration, self.measurement_start_time, self.measurement_end_time = self._get_measurement_times()
+        end = time.time()
+        print('Computed job arrival metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
 
     def _compute_job_completion_metrics(self):
-        self.completed_job_dicts = self._get_jobs_completed_in_measurement_period()
-        self.num_completed_jobs = len(self.completed_job_dicts)
+        # self.completed_job_dicts = self._get_jobs_completed_in_measurement_period()
+        # self.num_completed_jobs = len(self.completed_job_dicts)
+        print('Computing job completion metrics for env {}...'.format(self.env.sim_name))
+        start = time.time()
 
-        self.jcts, self.average_jct, self.nn_jct = self._calc_job_completion_times()
+        if self.env_analyser_database_path:
+            # init database
+            self.completed_job_dicts = self.env_analyser_database_path + '/completed_job_dicts.sqlite'
+            jcts = []
+            if os.path.exists(self.completed_job_dicts):
+                os.remove(self.completed_job_dicts)
+            with SqliteDict(self.completed_job_dicts) as completed_job_dicts:
+                for key, val in self._get_jobs_completed_in_measurement_period().items():
+                    completed_job_dicts[key] = val
+                    time_arrived, time_completed = val['time_arrived'], val['time_completed']
+                    jct = time_completed - time_arrived
+                    jcts.append(jct)
+                completed_job_dicts.commit()
+                completed_job_dicts.close()
+
+        else:
+            # load into memory
+            self.completed_job_dicts = self._get_jobs_completed_in_measurement_period()
+            for job in self.completed_job_dicts.values():
+                jct = job['time_completed'] - job['time_arrived']
+                jcts.append(jct)
+
+        self.num_completed_jobs = len(jcts)
+        self.mean_jct, self.nn_jct, self.max_jct, self.std_jct = self._calc_job_completion_times(jcts)
+
+        end = time.time()
+        print('Computed job completion metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
         
     def _compute_job_dropped_metrics(self):
-        self.dropped_job_dicts = self._get_jobs_dropped_in_measurement_period()
-        self.num_dropped_jobs = len(self.dropped_job_dicts)
+        # self.dropped_job_dicts = self._get_jobs_dropped_in_measurement_period()
+        # self.num_dropped_jobs = len(self.dropped_job_dicts)
+        print('Computing job dropped metrics for env {}...'.format(self.env.sim_name))
+        start = time.time()
+
+        dropped_jobs = self._get_jobs_dropped_in_measurement_period()
+        if self.env_analyser_database_path is not None:
+            self.dropped_job_dicts = self.env_analyser_database_path + '/dropped_job_dicts.sqlite'
+            with SqliteDict(self.dropped_job_dicts) as dropped_job_dicts:
+                for key, val in dropped_jobs.items():
+                    dropped_job_dicts[key] = val
+                dropped_job_dicts.commit()
+                dropped_job_dicts.close()
+        else:
+            self.dropped_job_dicts = dropped_jobs
+
+        self.num_dropped_jobs = len(list(dropped_jobs.keys()))
+        self.dropped_job_frac = self.num_dropped_jobs / self.num_arrived_jobs
+
+        # self.total_info_dropped = 0
+        # for job in dropped_jobs.values():
+            # self.total_info_dropped += job['size']
+        # self.dropped_info_frac = self.total_info_dropped / self._calc_total_info_arrived()
+
+        end = time.time()
+        print('Computed job dropped metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
 
     def _compute_job_queued_metrics(self):
-        self.queued_job_dicts = self._get_job_remaining_in_queue_at_end_of_measurement_period()
-        self.num_queued_jobs = len(self.queued_job_dicts)
+        # self.queued_job_dicts = self._get_job_remaining_in_queue_at_end_of_measurement_period()
+        # self.num_queued_jobs = len(self.queued_job_dicts)
+        print('Computing job queued metrics for env {}...'.format(self.env.sim_name))
+        start = time.time()
+
+        queued_jobs = self._get_jobs_remaining_in_queue_at_end_of_measurement_period()
+        if self.env_analyser_database_path is not None:
+            self.queued_job_dicts = self.env_analyser_database_path + '/queued_job_dicts.sqlite'
+            with SqliteDict(self.queued_job_dicts) as queued_job_dicts:
+                for key, val in queued_jobs.items():
+                    queued_job_dicts[key] = val
+                queued_job_dicts.commit()
+                queued_job_dicts.close()
+        else:
+            self.queued_job_dicts = queued_jobs
+
+        self.num_queued_jobs = len(list(queued_jobs.keys()))
+
+        end = time.time()
+        print('Computed job queued metrics for env {} in {} s.'.format(self.env.sim_name, end-start))
 
     def _get_jobs_remaining_in_queue_at_end_of_measurement_period(self):
-        queued_job_dicts = []
+        queued_job_dicts = {}
+
+        # get jobs that were dropped during measurement period -> these won't be in queue
+        dropped_job_dicts = self._get_jobs_dropped_in_measurement_period(count_jobs_left_in_queue=False)
 
         # create dicts to enable efficient hash searching
-        completed_job_ids = {self.completed_job_dicts[i]['job_id']: i for i in range(len(self.completed_job_dicts))}
-        dropped_job_ids = {self.dropped_job_dicts[i]['job_id']: i for i in range(len(self.dropped_job_dicts))}
+        if self.env_analyser_database_path is not None:
+            with SqliteDict(self.completed_job_dicts) as completed_job_dicts:
+                completed_jobs = list(completed_job_dicts.values())
+                completed_job_dicts.close()
+        else:
+            completed_jobs = list(self.completed_job_dicts.values())
+        if 'unique_id' in completed_jobs[0]:
+            completed_job_ids = {completed_jobs[i]['unique_id']: i for i in range(len(completed_jobs))}
+            dropped_jobs = list(dropped_job_dicts.values())
+            dropped_job_ids = {dropped_jobs[i]['unique_id']: i for i in range(len(dropped_jobs))}
+        else:
+            # no unique id included in job dict
+            completed_job_ids = {completed_jobs[i]['job_id']: i for i in range(len(completed_jobs))}
+            dropped_jobs = list(dropped_job_dicts.values())
+            dropped_job_ids = {dropped_jobs[i]['job_id']: i for i in range(len(dropped_jobs))}
 
-        for i in range(len(self.arrived_job_dicts)):
-            job_id = self.arrived_job_dicts[i]['job_id']
+        if self.env_analyser_database_path is not None:
+            arrived_job_dicts = SqliteDict(self.arrived_job_dicts)
+        else:
+            arrived_job_dicts = self.arrived_job_dicts
+        for job_id, job in arrived_job_dicts.items():
             if job_id not in completed_job_ids and job_id not in dropped_job_ids:
-                queued_job_dicts.append(self.arrived_job_dicts[i])
+                queued_job_dicts[job_id] = job
+        if self.env_analyser_database_path is not None:
+            arrived_job_dicts.close()
 
         return queued_job_dicts
 
     def _get_jobs_arrived_in_measurement_period(self):
         '''Find jobs arrived during measurement period.'''
-        jobs_arrived = []
+        if type(self.env.arrived_job_dicts) is str:
+            # load database
+            env_arrived_job_dicts = SqliteDict(self.env.arrived_job_dicts)
+        else:
+            env_arrived_job_dicts = self.env.arrived_job_dicts
+
+        jobs_arrived = {}
 
         if self.measurement_start_time is None and self.measurement_end_time is None:
-            return self.env.arrived_job_dicts
+            return env_arrived_job_dicts
+
+        elif self.measurement_start_time == 'auto' and self.measurement_end_time == 'auto':
+            # assume all arrived for now, will update later
+            return env_arrived_job_dicts
 
         elif self.measurement_start_time is None and self.measurement_end_time is not None:
-            for idx in range(len(self.env.arrived_job_dicts)):
-                arr_time = self.env.arrived_job_dicts[idx]['time_arrived']
-                if arr_time < self.measurement_end_time:
-                    jobs_arrived.append(self.env.arrived_job_dicts[idx])
+            for job_id, job in env_arrived_job_dicts.items():
+                arr_time = job['time_arrived']
+                if arr_time <= self.measurement_end_time:
+                    jobs_arrived[job_id] = job
                 else:
                     # cooling down
                     pass
 
         elif self.measurement_start_time is not None and self.measurement_end_time is None:
-            for idx in range(len(self.env.arrived_job_dicts)):
-                arr_time = self.env.arrived_job_dicts[idx]['time_arrived']
-                if arr_time > self.measurement_start_time:
-                    jobs_arrived.append(self.env.arrived_job_dicts[idx])
+            for job_id, job in env_arrived_job_dicts.items():
+                arr_time = job['time_arrived']
+                if arr_time >= self.measurement_start_time:
+                    jobs_arrived[job_id] = job
                 else:
                     # warming up
                     pass
 
         else:
-            for idx in range(len(self.env.arrived_job_dicts)):
-                arr_time = self.env.arrived_job_dicts[idx]['time_arrived']
+            for job_id, job in env_arrived_job_dicts.items():
+                arr_time = job['time_arrived']
                 if arr_time < self.measurement_start_time:
                     # warming up
                     pass
-                elif arr_time > self.measurement_start_time and arr_time < self.measurement_end_time:
+                elif arr_time >= self.measurement_start_time and arr_time <= self.measurement_end_time:
                     # measure
-                    jobs_arrived.append(self.env.arrived_job_dicts[idx])
-                elif arr_time > self.measurement_start_time and arr_time > self.measurement_end_time:
+                    jobs_arrived[job_id] = job
+                elif arr_time > self.measurement_end_time:
                     # cooling down
                     pass
+
+        if type(self.env.arrived_job_dicts) is str:
+            env_arrived_job_dicts.close()
 
         return jobs_arrived 
 
     def _get_jobs_completed_in_measurement_period(self):
         '''Find all jobs which arrived during measurement period and were completed.'''
-        completed_job_dicts = []
+        if type(self.env.completed_job_dicts) is str:
+            # load database
+            env_completed_job_dicts = SqliteDict(self.env.completed_job_dicts)
+        else:
+            env_completed_job_dicts = self.env.completed_job_dicts
+
+        completed_job_dicts = {}
 
         if self.measurement_start_time is None and self.measurement_end_time is None:
-            return self.env.completed_job_dicts
+            return env_completed_job_dicts
 
         elif self.measurement_start_time is None and self.measurement_end_time is not None:
-            for idx in range(len(self.env.completed_jobs)):
-                arr_time = self.env.completed_jobs[idx]['time_arrived']
-                if arr_time < self.measurement_end_time:
-                    completed_job_dicts.append(self.env.completed_jobs[idx])
+            for job_id, job in env_completed_job_dicts.items():
+                comp_time = job['time_completed']
+                if comp_time <= self.measurement_end_time:
+                    completed_job_dicts[job_id] = job
                 else:
                     # cooling down
                     pass
 
+
         elif self.measurement_start_time is not None and self.measurement_end_time is None:
-            for idx in range(len(self.env.completed_jobs)):
-                arr_time = self.env.completed_jobs[idx]['time_arrived']
-                if arr_time > self.measurement_start_time:
-                    completed_job_dicts.append(self.env.completed_jobs[idx])
+            for job_id, job in env_completed_job_dicts.items():
+                arr_time, comp_time = job['time_arrived'], job['time_completed']
+                if comp_time >= self.measurement_start_time and arr_time >= self.measurement_start_time:
+                    completed_job_dicts[job_id] = job
                 else:
                     # warming up
                     pass
 
         else:
-            for idx in range(len(self.env.completed_jobs)):
-                arr_time = self.env.completed_jobs[idx]['time_arrived']
-                if arr_time < self.measurement_start_time:
+            for job_id, job in env_completed_job_dicts.items():
+                arr_time, comp_time = job['time_arrived'], job['time_completed']
+                if comp_time < self.measurement_start_time or arr_time < self.measurement_start_time:
                     # warming up
                     pass
-                elif arr_time > self.measurement_start_time and arr_time < self.measurement_end_time:
+                elif comp_time >= self.measurement_start_time and comp_time <= self.measurement_end_time and arr_time >= self.measurement_start_time:
                     # measure
-                    completed_job_dicts.append(self.env.completed_jobs[idx])
-                elif arr_time > self.measurement_start_time and arr_time > self.measurement_end_time:
+                    completed_job_dicts[job_id] = job
+                elif comp_time > self.measurement_end_time:
                     # cooling down
                     pass
+
+        if type(self.env.completed_job_dicts) is str:
+            env_completed_job_dicts.close()
 
         return completed_job_dicts 
 
-    def _calc_job_completion_times(self):
-        job_completion_times = []
-        for job in self.completed_job_dicts:
-            job_completion_times.append(job['time_completed'] - job['time_arrived'])
-
+    def _calc_job_completion_times(self, job_completion_times):
         if len(job_completion_times) == 0:
-            average_jct, ninetyninth_percentile_jct = float('inf'), float('inf')
+            mean_jct, ninetyninth_percentile_jct, max_jct, standard_deviation_jct = float('inf'), float('inf'), float('inf'), float('inf')
         else:
-            average_jct = np.average(np.asarray(job_completion_times))
+            mean_jct = np.average(np.asarray(job_completion_times))
             ninetyninth_percentile_jct = np.percentile(np.asarray(job_completion_times), 99)
+            max_jct = np.max(np.asarray(job_completion_times))
+            standard_deviation_jct = np.std(job_completion_times)
 
-        return job_completion_times, average_jct, ninetyninth_percentile_jct
+        return mean_jct, ninetyninth_percentile_jct, max_jct, standard_deviation_jct
 
 
-    def _get_jobs_dropped_in_measurement_period(self):
-        '''Find all jobs which arrived during measurement period and were dropped.'''
-        dropped_job_dicts = []
+    def _get_jobs_dropped_in_measurement_period(self, count_jobs_left_in_queue=True):
+        '''Find all jobs which arrived during measurement period and were dropped.
+
+        If count_jobs_left_in_queue, will count jobs left in queue at end of
+        measurement period as having been dropped.
+        '''
+        if type(self.env.dropped_job_dicts) is str:
+            # load database
+            env_dropped_job_dicts = SqliteDict(self.env.dropped_job_dicts)
+        else:
+            env_dropped_job_dicts = self.env.dropped_job_dicts
+
+        dropped_job_dicts = {}
 
         if self.measurement_start_time is None and self.measurement_end_time is None:
-            return self.env.dropped_jobs
+            return env_dropped_job_dicts
 
         elif self.measurement_start_time is None and self.measurement_end_time is not None:
-            for idx in range(len(self.env.dropped_jobs)):
-                arr_time = self.env.dropped_jobs[idx]['time_arrived']
-                if arr_time < self.measurement_end_time:
-                    dropped_job_dicts.append(self.env.dropped_jobs[idx])
+            for job_id, job in env_dropped_job_dicts.items():
+                arr_time = job['time_arrived']
+                if arr_time <= self.measurement_end_time:
+                    dropped_job_dicts[job_id] = job
                 else:
                     # cooling down
                     pass
 
         elif self.measurement_start_time is not None and self.measurement_end_time is None:
-            for idx in range(len(self.env.dropped_jobs)):
-                arr_time = self.env.dropped_jobs[idx]['time_arrived']
-                if arr_time > self.measurement_start_time:
-                    dropped_job_dicts.append(self.env.dropped_jobs[idx])
+            for job_id, job in env_dropped_job_dicts.items():
+                arr_time = job['time_arrived']
+                if arr_time >= self.measurement_start_time:
+                    dropped_job_dicts[job_id] = job
                 else:
                     # warming up
                     pass
 
         else:
-            for idx in range(len(self.env.dropped_jobs)):
-                arr_time = self.env.dropped_jobs[idx]['time_arrived']
+            for job_id, job in env_dropped_job_dicts.items():
+                arr_time = job['time_arrived']
                 if arr_time < self.measurement_start_time:
                     # warming up
                     pass
-                elif arr_time > self.measurement_start_time and arr_time < self.measurement_end_time:
+                elif arr_time >= self.measurement_start_time and arr_time <= self.measurement_end_time:
                     # measure
-                    dropped_job_dicts.append(self.env.dropped_jobs[idx])
-                elif arr_time > self.measurement_start_time and arr_time > self.measurement_end_time:
+                    dropped_job_dicts[job_id] = job
+                else:
                     # cooling down
                     pass
 
+        if count_jobs_left_in_queue:
+            if self.env_analyser_database_path is not None:
+                with SqliteDict(self.queued_job_dicts) as queued_job_dicts:
+                    for job in queued_job_dicts.values():
+                        if 'unique_id' in job:
+                            dropped_job_dicts[job['unique_id']] = job
+                        else:
+                            # no unique id included in job dict
+                            dropped_job_dicts[job['job_id']] = job
+
+                    queued_job_dicts.close()
+            else:
+                for job in self.queued_job_dicts.values():
+                    if 'unique_id' in job:
+                        dropped_job_dicts[job['unique_id']] = job
+                    else:
+                        # no unique id included in job dict
+                        dropped_job_dicts[job['job_id']] = job
+
+        if type(self.env.dropped_job_dicts) is str:
+            env_dropped_job_dicts.close()
+
+            
         return dropped_job_dicts 
 
 
 
+    def _init_job_arrival_metrics(self):
+        if self.env_analyser_database_path:
+            # init database
+            self.arrived_job_dicts = self.env_analyser_database_path + '/arrived_job_dicts.sqlite'
+            if os.path.exists(self.arrived_job_dicts):
+                os.remove(self.arrived_job_dicts)
+            times_arrived = []
+            with SqliteDict(self.arrived_job_dicts) as arrived_job_dicts:
+                for key, val in self._get_jobs_arrived_in_measurement_period().items():
+                    arrived_job_dicts[key] = val
+                    times_arrived.append(val['time_arrived'])
+                arrived_job_dicts.commit()
+                arrived_job_dicts.close()
+
+        else:
+            # load into memory
+            self.arrived_job_dicts = self._get_jobs_arrived_in_measurement_period() 
+            arrived_jobs = list(self.arrived_job_dicts.values())
+            times_arrived = [arrived_jobs[i]['time_arrived'] for i in range(len(arrived_jobs))]
+
+        self.num_arrived_jobs = len(times_arrived)
+        self.time_first_job_arrived = min(times_arrived)
+        self.time_last_job_arrived = max(times_arrived)
 
 
+    # def _get_job_measurement_times(self):
+        # if self.measurement_start_time is None:
+            # measurement_start_time = self.time_first_job_arrived
+        # elif self.measurement_start_time == 'auto' and self.measurement_end_time == 'auto':
+            # # both start and end must be assigned simultaneously
+            # self.measurement_start_time = 0.1 * self.time_last_job_arrived
+            # self.measurement_end_time = self.time_last_job_arrived
+            # # update arrived jobs to be within measurement duration
+            # self._init_job_arrival_metrics()
+            # measurement_start_time = self.measurement_start_time
+            # measurement_end_time = self.measurement_end_time
+        # elif self.measurement_start_time == 'auto' and self.measurement_end_time != 'auto':
+            # self.measurement_start_time = 0.1 * self.time_last_job_arrived
+            # self._init_job_arrival_metrics()
+            # measurement_start_time = self.measurement_start_time
+        # else:
+            # measurement_start_time = self.measurement_start_time
+
+        # if self.measurement_end_time is None:
+            # measurement_end_time = self.env.curr_time # time sim ended
+        # elif self.measurement_end_time == 'auto' and self.measurement_start_time != 'auto':
+            # self.measurement_start_time = self.time_last_job_arrived
+            # self._init_job_arrival_metrics()
+            # measurement_start_time = self.measurement_start_time
+        # else:
+            # measurement_end_time = self.measurement_end_time
+        # measurement_duration = measurement_end_time - measurement_start_time
+
+        # print('measurement end time: {} | curr sim time: {}'.format(self.measurement_end_time, self.env.curr_time))
+
+
+        # return measurement_duration, measurement_start_time, measurement_end_time
     
 
 

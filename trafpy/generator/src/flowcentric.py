@@ -10,6 +10,8 @@ import random
 import math
 import multiprocessing
 from tqdm import tqdm # progress bar
+from tqdm import trange
+from tqdm.contrib.concurrent import process_map
 
 
 
@@ -755,24 +757,22 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
     demands_to_add = ((2**num_duplications)*init_num_demands) - init_num_demands
 
     # progress bar
-    # if not kwargs['use_multiprocessing']:
-        # # TODO: Get progress bar working for multiprocessing
-        # pbar = tqdm(total=demands_to_add, 
-                # desc='Duplicating demands',
-                    # # miniters=1, 
-                    # # mininterval=1,
-                    # # maxinterval=1, # 2
-                    # leave=False,
-                    # smoothing=1e-5) # 1
-    pbar = tqdm(total=demands_to_add, 
-            desc='Duplicating demands',
-                miniters=1, 
-                # mininterval=1,
-                # maxinterval=1, # 2
-                leave=False,
-                smoothing=1e-5) # 1
-    pbar.set_description(refresh=False)
-    pbar.set_postfix(refresh=False)
+    if not kwargs['use_multiprocessing']:
+        # TODO: Get progress bar working for multiprocessing
+        pbar = tqdm(total=demands_to_add, 
+                desc='Duplicating demands',
+                    miniters=1, 
+                    # mininterval=1,
+                    # maxinterval=1, # 2
+                    leave=False,
+                    smoothing=1e-5) # 1
+    # pbar = tqdm(total=demands_to_add, 
+            # desc='Duplicating demands',
+            # miniters=1)
+                # # mininterval=1,
+                # # maxinterval=1, # 2
+                # # leave=False,
+                # # smoothing=1e-5) # 1
 
     start = time.time()
     for dup in range(num_duplications):
@@ -801,8 +801,30 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
             establishes = multiprocessing.Manager().list()
             indexes = multiprocessing.Manager().list()
 
+            # for idx in trange(num_demands): 
+                # results = process_map(duplicate_demand,
+                                            # [demand_data['job'][idx], 
+                                            # demand_data['sn'][idx],
+                                            # demand_data['dn'][idx],
+                                            # demand_data['flow_size'][idx],
+                                            # demand_data['event_time'][idx],
+                                            # duration,
+                                            # demand_data['establish'][idx],
+                                            # demand_data['index'][idx],
+                                            # num_demands,
+                                            # idx, 
+                                            # jobs, 
+                                            # job_ids,
+                                            # unique_ids,
+                                            # flow_ids,
+                                            # sns,
+                                            # dns,
+                                            # flow_sizes,
+                                            # event_times,
+                                            # establishes,
+                                            # indexes,
+                                            # job_centric])
             # duplicate demands in parallel
-            # pool = multiprocessing.Pool(multiprocessing.cpu_count())
             pool = multiprocessing.Pool(kwargs['num_processes'], maxtasksperchild=kwargs['maxtasksperchild'])
             results = [pool.apply_async(duplicate_demand,
                                         args=(
@@ -826,8 +848,8 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
                                         event_times,
                                         establishes,
                                         indexes,
-                                        job_centric),
-                                       callback=lambda _: pbar.update(1))
+                                        job_centric))
+                                       # callback=lambda _: pbar.update(1))
                                         for idx in range(num_demands)]
             pool.close()
             pool.join()

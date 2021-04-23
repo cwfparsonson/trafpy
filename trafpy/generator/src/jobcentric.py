@@ -317,6 +317,7 @@ class JobGenerator:
         
         # set list of op run times as global graph attr
         job.graph['op_run_times'] = run_times
+        job.graph['sum_op_run_times'] = sum(run_times)
 
         if jobs is not None:
             jobs.append(job)
@@ -342,6 +343,8 @@ class JobGenerator:
         '''
         job_id = job_ids[job_idx]
         job.graph['job_id'] = job_id
+
+        sum_flow_info = 0
 
         # get flows allocated to this job's data deps
         flow_indices = self.job_id_to_flow_indices[job_id]
@@ -378,17 +381,15 @@ class JobGenerator:
                 if src != dst and job.edges[edge]['dependency'] == 1:
                     # edge in job graph is a data dependency and becomes flow
                     flow_size = flows[f]['size']
+                    sum_flow_info += flow_size
+                    dependency_type = 'data_dep'
                 else:
                     # edge head & tail at same machine or is control dep therefore not a flow
                     # if src == dst, is still a dependency but not a data dependency,
                     # therefore can register this as a control dependency
                     flow_size = 0
-
-                if job.edges[edge]['dependency'] == 1:
-                    dependency_type = 'data_dep'
-                else:
                     dependency_type = 'control_dep'
-                
+
                 flow_stats={'sn': src,
                             'dn': dst,
                             'flow_size': float(flow_size),
@@ -407,6 +408,7 @@ class JobGenerator:
                 
                 job.add_edge(edge[0],edge[1],attr_dict=flow_stats)
 
+        job['sum_flow_info'] = sum_flow_info
 
         if jobs is not None:
             jobs.append(job)

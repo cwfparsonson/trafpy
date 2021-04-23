@@ -13,14 +13,14 @@ import numpy as np
 BENCHMARK_VERSION = '0.0.1'
 
 # define minimum number of demands to generate (may generate more to meet jensen_shannon_distance_threshold and/or min_last_demand_arrival_time)
-MIN_NUM_DEMANDS = 4000 # 4000 10
-MAX_NUM_DEMANDS = None
+MIN_NUM_DEMANDS = 100 # 4000 10
+MAX_NUM_DEMANDS = None # None
 
 # define maximum allowed Jenson-Shannon distance for flow size and interarrival time distributions (lower value -> distributions must be more similar -> higher number of demands will be generated) (must be between 0 and 1)
 JENSEN_SHANNON_DISTANCE_THRESHOLD = 0.5 # 0.1 0.2
 
 # define minimum time of last demand's arrival (helps define minimum simulation time)
-MIN_LAST_DEMAND_ARRIVAL_TIME = 300 # units of us 3.2e5 2e6 3e6 6e7 6e8 None 3000.0 2e6 2.4e5pulse 2e6
+MIN_LAST_DEMAND_ARRIVAL_TIME = 3e3 # 3e3 300 units of us 3.2e5 2e6 3e6 6e7 6e8 None 3000.0 2e6 2.4e5pulse 2e6
 # MIN_LAST_DEMAND_ARRIVAL_TIME = None
 
 # define network load fractions
@@ -86,7 +86,7 @@ net = gen_fat_tree(k=4,
                    L=2, 
                    n=16, 
                    num_channels=1, 
-                   server_to_rack_channel_capacity=1250, 
+                   server_to_rack_channel_capacity=10, # 1250
                    rack_to_edge_channel_capacity=1000, 
                    edge_to_agg_channel_capacity=1000, 
                    agg_to_core_channel_capacity=2000, 
