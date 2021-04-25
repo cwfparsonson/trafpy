@@ -192,9 +192,11 @@ class FlowGenerator:
                 if (2**num_duplications) * len(demand_data['flow_id']) > self.max_num_demands:
                     print('WARING: max_num_demands is {} but have specified min_last_demand_arrival_time {}. Would need {} demands to reach this min_last_demand_arrival_time, therefore must increase max_num_demands (or set to None) if you want to meet this min_last_demand_arrival_time.'.format(self.max_num_demands, self.min_last_demand_arrival_time, (2**num_duplications)*len(demand_data['flow_id'])))
                     return demand_data
-            demand_data = duplicate_demands_in_demand_data_dict(demand_data, 
-                                                                num_duplications=num_duplications,
-                                                                use_multiprocessing=False)
+            if num_duplications > 0:
+                # duplicate
+                demand_data = duplicate_demands_in_demand_data_dict(demand_data, 
+                                                                    num_duplications=num_duplications,
+                                                                    use_multiprocessing=False)
 
         return demand_data
 
@@ -792,7 +794,7 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
             # init shared lists for appending duplicated demands to
             jobs = multiprocessing.Manager().list()
             job_ids = multiprocessing.Manager().list()
-            unique_ids = multiprocessing.Manager().list()
+            # unique_ids = multiprocessing.Manager().list()
             flow_ids = multiprocessing.Manager().list()
             sns = multiprocessing.Manager().list()
             dns = multiprocessing.Manager().list()
@@ -840,7 +842,7 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
                                         idx, 
                                         jobs, 
                                         job_ids,
-                                        unique_ids,
+                                        # unique_ids,
                                         flow_ids,
                                         sns,
                                         dns,
@@ -872,19 +874,27 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
 
         else:
             # not multiprocessing -> duplicate demands sequentially
-            # init lists for appending duplicated demands to
-            jobs = []
-            job_ids = []
-            unique_ids = []
-            flow_ids = []
-            sns = []
-            dns = []
-            flow_sizes = []
-            event_times = []
-            establishes = []
-            indexes = []
+            # no need to init separate lists since can append directly
+            if job_centric:
+                jobs = demand_data['job']
+                job_ids = demand_data['job_id']
+            else:
+                jobs = None
+                job_ids = None
+            # unique_ids = []
+            flow_ids = demand_data['flow_id']
+            sns = demand_data['sn']
+            dns = demand_data['dn']
+            flow_sizes = demand_data['flow_size']
+            event_times = demand_data['event_time']
+            establishes = demand_data['establish']
+            indexes = demand_data['index']
+            if job_centric:
+                demand = demand_data['job'][idx]
+            else:
+                demand = None # don't need
             for idx in range(num_demands):
-                duplicate_demand(demand_data['job'][idx], 
+                duplicate_demand(demand, 
                                  demand_data['sn'][idx],
                                  demand_data['dn'][idx],
                                  demand_data['flow_size'][idx],
@@ -896,7 +906,7 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
                                  idx, 
                                  jobs, 
                                  job_ids,
-                                 unique_ids,
+                                 # unique_ids,
                                  flow_ids,
                                  sns,
                                  dns,
@@ -906,17 +916,17 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
                                  indexes,
                                  job_centric)
 
-                # collect duplicated demands and add to demand_data
-                if job_centric:
-                    demand_data['job_id'].extend(list(job_ids))
-                    demand_data['job'].extend(list(jobs))
-                demand_data['flow_id'].extend(list(flow_ids))
-                demand_data['sn'].extend(list(sns))
-                demand_data['dn'].extend(list(dns))
-                demand_data['flow_size'].extend(list(flow_sizes))
-                demand_data['event_time'].extend(list(event_times))
-                demand_data['establish'].extend(list(establishes))
-                demand_data['index'].extend(list(indexes))
+                # # collect duplicated demands and add to demand_data
+                # if job_centric:
+                    # demand_data['job_id'].extend(list(job_ids))
+                    # demand_data['job'].extend(list(jobs))
+                # demand_data['flow_id'].extend(list(flow_ids))
+                # demand_data['sn'].extend(list(sns))
+                # demand_data['dn'].extend(list(dns))
+                # demand_data['flow_size'].extend(list(flow_sizes))
+                # demand_data['event_time'].extend(list(event_times))
+                # demand_data['establish'].extend(list(establishes))
+                # demand_data['index'].extend(list(indexes))
 
                 pbar.update(1)
 
@@ -949,7 +959,7 @@ def duplicate_demand(job,
                      idx, 
                      jobs,
                      job_ids,
-                     unique_ids,
+                     # unique_ids,
                      flow_ids,
                      sns,
                      dns,

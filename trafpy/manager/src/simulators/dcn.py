@@ -1864,10 +1864,10 @@ class DCN(gym.Env):
            # else:
                # pass
         # control_deps.close()
-        if self.job_centric:
-            print('Time: {} Step: {} | Sim demands: {} | Flows arrived/completed/dropped: {}/{}/{} | Jobs arrived/completed/dropped: {}/{}/{} | Ctrl deps arrived/completed: {}/{}'.format(self.curr_time, self.curr_step, self.num_demands, self.num_arrived_flows, self.num_completed_flows, self.num_dropped_flows, self.num_arrived_jobs, self.num_completed_jobs, self.num_dropped_jobs, self.num_arrived_control_deps, self.num_completed_control_deps)) 
-        else:
-            print('Time: {} Step: {} | Sim demands: {} | Flows arrived/completed/dropped: {}/{}/{}'.format(self.curr_time, self.curr_step, self.num_demands, self.num_arrived_flows, self.num_completed_flows, self.num_dropped_flows)) 
+        # if self.job_centric:
+            # print('Time: {} Step: {} | Sim demands: {} | Flows arrived/completed/dropped: {}/{}/{} | Jobs arrived/completed/dropped: {}/{}/{} | Ctrl deps arrived/completed: {}/{}'.format(self.curr_time, self.curr_step, self.num_demands, self.num_arrived_flows, self.num_completed_flows, self.num_dropped_flows, self.num_arrived_jobs, self.num_completed_jobs, self.num_dropped_jobs, self.num_arrived_control_deps, self.num_completed_control_deps)) 
+        # else:
+            # print('Time: {} Step: {} | Sim demands: {} | Flows arrived/completed/dropped: {}/{}/{}'.format(self.curr_time, self.curr_step, self.num_demands, self.num_arrived_flows, self.num_completed_flows, self.num_dropped_flows)) 
 
 
 
