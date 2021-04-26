@@ -300,6 +300,10 @@ def plot_val_dist(rand_vars,
     if aspect is not 'auto':
         plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
     
+    # can't have 0 vals for fitting
+    for i, val in enumerate(rand_vars):
+        if val == 0:
+            rand_vars[i] = 1e-12
     if dist_fit_line is None:
         pass
     elif dist_fit_line == 'exponential':

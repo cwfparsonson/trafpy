@@ -124,7 +124,8 @@ class DistributionGenerator:
                                                                 show_fig=False, 
                                                                 print_data=False)
 
-            elif benchmark == 'commercial_cloud':
+            elif benchmark in ['commercial_cloud', 
+                               'tensorflow']:
                 num_skewed_nodes = math.ceil(0.2 * len(eps))
                 skewed_node_probs = [0.55/num_skewed_nodes for _ in range(num_skewed_nodes)]
                 if racks_dict is None:
@@ -330,6 +331,17 @@ class DistributionGenerator:
             elif benchmark == 'jobcentric_prototyping':
                 flow_size_dist = {10.0: 1}
 
+            elif benchmark == 'tensorflow':
+                # taken from DeepMind paper https://arxiv.org/pdf/1905.02494.pdf, no units given. Assume units are in MB -> convert to B
+                conversion = 1e6
+                flow_size_dist = val_dists.gen_named_val_dist(dist='normal',
+                                                              params={'_loc': 50*conversion, '_scale': 10*conversion},
+                                                              min_val=1,
+                                                              max_val=None,
+                                                              round_to_nearest=25,
+                                                              show_fig=False,
+                                                              print_data=False)
+
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
 
@@ -424,6 +436,14 @@ class DistributionGenerator:
             elif benchmark == 'jobcentric_prototyping':
                 interarrival_time_dist = {10000.0: 1.0}
 
+            elif benchmark == 'tensorflow':
+                interarrival_time_dist = val_dists.gen_multimodal_val_dist(1,
+                                                                           1e8,
+                                                                           locations=[1, 1, 3000, 1, 1800000, 10000000],
+                                                                           skews=[0, 100, -10, 10, 50, 6],
+                                                                           scales=[0.1, 62, 2000, 7500, 3500000, 20000000],
+                                                                           num_skew_samples=[800, 1000, 2000, 4000, 4000, 3000],
+                                                                           bg_factor=0.025)
 
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
@@ -444,7 +464,8 @@ class DistributionGenerator:
 
         dist_name = 'num_ops_dist'
         num_ops_dist = None
-        if benchmark not in ['jobcentric_prototyping']:
+        if benchmark not in ['jobcentric_prototyping',
+                             'tensorflow']:
             # not a job-centric benchmark, no num_ops_dist, return None
             return None
 
@@ -462,6 +483,15 @@ class DistributionGenerator:
 
             if benchmark == 'jobcentric_prototyping':
                 num_ops_dist = {10: 1}
+
+            elif benchmark == 'tensorflow':
+                num_ops_dist = val_dists.gen_named_val_dist(dist='lognormal',
+                                                              params={'_mu': 4.55, '_sigma': 0.18},
+                                                              min_val=50,
+                                                              max_val=200,
+                                                              round_to_nearest=1,
+                                                              show_fig=False,
+                                                              print_data=False)
 
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
@@ -497,7 +527,7 @@ class DistributionGenerator:
 
                 # check loaded dist successfully
                 if dists[benchmark][dist_name] is None:
-                    raise Exception('Dist {} for benchmark {} not found in {}. Ensure dist is named as one of {}, and that dist has been saved in correct location.'.format(dist_name, benchmark, path_to_data, self.dist_names))
+                    print('Dist {} for benchmark {} not found in {}. Ensure dist is named as one of {}, and that dist has been saved in correct location.'.format(dist_name, benchmark, path_to_data, self.dist_names))
 
                 num_demands = max(len(dists[benchmark]['node_dist']) * 1000, 200000) # estimate appropriate number of rand vars to gen 
 
@@ -531,7 +561,7 @@ class DistributionGenerator:
                     plots[benchmark][dist_name] = fig
 
                 else:
-                    raise Exception('Unrecognised dist_name {}'.format(dist_name))
+                    print('Unrecognised dist_name {}'.format(dist_name))
                     
         
         # # create plot of sub plots

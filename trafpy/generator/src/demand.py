@@ -318,7 +318,7 @@ class DemandPlotter:
 
         return plot_dists.plot_val_dist(num_ops, show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Number of Operations')
 
-    def plot_num_deps_dist(self, logscale=True, num_bins=20, show_fig=True):
+    def plot_num_deps_dist(self, logscale=True, xlim=None, num_bins=20, show_fig=True):
         if not self.demand.jobcentric:
             raise Exception('Flowcentric demand has no dependencies.')
 
@@ -326,7 +326,7 @@ class DemandPlotter:
         for job in self.demand.demand_data['job']:
             num_deps.append(job.graph['num_data_deps'] + job.graph['num_control_deps'])
 
-        return plot_dists.plot_val_dist(num_deps, show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Number of Dependencies')
+        return plot_dists.plot_val_dist(num_deps, show_fig=show_fig, xlim=xlim, logscale=logscale, num_bins=num_bins, rand_var_name='Number of Dependencies')
 
     def plot_op_run_times_dist(self, logscale=True, num_bins=20, show_fig=True):
         if not self.demand.jobcentric:
