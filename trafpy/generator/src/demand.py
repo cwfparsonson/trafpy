@@ -308,7 +308,7 @@ class DemandPlotter:
         return plot_dists.plot_val_dist(self.demand.demand_data['flow_size'], show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Flow Size')
 
 
-    def plot_num_ops_dist(self, logscale=True, num_bins=20, show_fig=True):
+    def plot_num_ops_dist(self, logscale=True, xlim=None, num_bins=20, show_fig=True):
         if not self.demand.jobcentric:
             raise Exception('Flowcentric demand has no num_ops_dist.')
 
@@ -316,7 +316,7 @@ class DemandPlotter:
         for job in self.demand.demand_data['job']:
             num_ops.append(len(job.nodes)-2)
 
-        return plot_dists.plot_val_dist(num_ops, show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Number of Operations')
+        return plot_dists.plot_val_dist(num_ops, show_fig=show_fig, xlim=xlim, logscale=logscale, num_bins=num_bins, rand_var_name='Number of Operations')
 
     def plot_num_deps_dist(self, logscale=True, xlim=None, num_bins=20, show_fig=True):
         if not self.demand.jobcentric:
@@ -355,7 +355,15 @@ class DemandPlotter:
         interarrival_times = [self.demand.demand_data['event_time'][i+1]-self.demand.demand_data['event_time'][i] for i in range(self.demand.num_demands-1)]
         return plot_dists.plot_val_dist(interarrival_times, show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Interarrival Time')
 
-    def plot_node_load_dists(self, eps, ep_link_bandwidth=None, plot_extras=False, show_fig=True):
+    def plot_node_load_dists(self, 
+                             eps, 
+                             ep_link_bandwidth=None, 
+                             plot_extras=False, 
+                             figsize=(6.4, 4.8),
+                             font_size=10,
+                             bar_width=0.8,
+                             plot_all_x_ticks=False,
+                             show_fig=True):
         '''
         1. Returns bar chart of end point links on x-axis and corresponding load on
         y-axis. If ep_link_bandwidth not given, y-axis will be absolute info units
@@ -379,13 +387,22 @@ class DemandPlotter:
                 ep_loads[ep] /= ep_link_bandwidth
 
         if ep_link_bandwidth is None:
-            ylabel = 'End Point Load (Absolute)'
+            ylabel = 'Load (info/time)'
             ylim = None
         else:
-            ylabel = 'End Point Load (Fraction)'
+            ylabel = 'Load'
             ylim = None
-        xlabel = 'End Point Link'
-        plot_dists.plot_val_bar(ep_loads.keys(), ep_loads.values(), ylabel, ylim, xlabel, show_fig=show_fig)
+        xlabel = 'Server'
+        plot_dists.plot_val_bar(ep_loads.keys(), 
+                                ep_loads.values(), 
+                                ylabel=ylabel, 
+                                ylim=ylim, 
+                                xlabel=xlabel, 
+                                bar_width=bar_width,
+                                figsize=figsize,
+                                font_size=font_size,
+                                plot_all_x_ticks=plot_all_x_ticks,
+                                show_fig=show_fig)
         figs.append(fig1)
 
         # plot src & dst ep loads separately
@@ -402,13 +419,30 @@ class DemandPlotter:
         src_loads = {ep: (src_total_infos[ep]/duration)/port_total_capacity for ep in eps}
         dst_loads = {ep: (dst_total_infos[ep]/duration)/port_total_capacity for ep in eps}
 
-        ylabel = 'Src Load (Fraction)'
+        xlabel = 'Src Port'
         fig2 = plt.figure()
-        plot_dists.plot_val_bar(src_loads.keys(), src_loads.values(), ylabel, ylim, xlabel, show_fig=show_fig)
+        plot_dists.plot_val_bar(src_loads.keys(), 
+                                src_loads.values(), 
+                                ylabel=ylabel, 
+                                ylim=ylim, 
+                                xlabel=xlabel, 
+                                bar_width=bar_width,
+                                figsize=figsize,
+                                font_size=font_size,
+                                plot_all_x_ticks=plot_all_x_ticks,
+                                show_fig=show_fig)
 
-        ylabel = 'Dst Load (Fraction)'
+        xlabel = 'Dst Port'
         fig3 = plt.figure()
-        plot_dists.plot_val_bar(dst_loads.keys(), dst_loads.values(), ylabel, ylim, xlabel, show_fig=show_fig)
+        plot_dists.plot_val_bar(dst_loads.keys(), 
+                                dst_loads.values(), 
+                                ylabel=ylabel, 
+                                ylim=ylim, 
+                                xlabel=xlabel, 
+                                figsize=figsize,
+                                font_size=font_size,
+                                plot_all_x_ticks=plot_all_x_ticks,
+                                show_fig=show_fig)
 
 
 
@@ -432,7 +466,7 @@ class DemandPlotter:
                     ep_loads_as_frac_of_overall_capacity[ep] = flowcentric.get_flow_centric_demand_data_ep_load_rate(self.demand.demand_data, index_to_node[ep], eps)
                     ep_loads_as_frac_of_overall_capacity[ep] /=overall_network_capacity 
                 ylabel = 'Fraction of Overall Capacity Requested'
-                plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_capacity.keys(), ep_loads_as_frac_of_overall_capacity.values(), ylabel, ylim, xlabel, show_fig=False)
+                plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_capacity.keys(), ep_loads_as_frac_of_overall_capacity.values(), ylabel, ylim, xlabel, show_fig=True)
                 figs.append(fig3)
 
 
@@ -450,7 +484,9 @@ class DemandPlotter:
                        eps,
                        chord_edge_width_range=[1, 25],
                        chord_edge_display_threshold=0.3,
-                       show_fig=True):
+                       show_fig=True,
+                       font_size=10,
+                       plot_chord=True):
 
         # PLOT MATRIX & CHORD DIAGRAM
         pair_total_infos_requested = {}
@@ -479,6 +515,8 @@ class DemandPlotter:
         figs = plot_dists.plot_node_dist(node_dist,
                                          chord_edge_width_range=chord_edge_width_range,
                                          chord_edge_display_threshold=chord_edge_display_threshold,
+                                         font_size=font_size,
+                                         plot_chord=plot_chord,
                                          show_fig=show_fig)
 
         return figs
@@ -559,10 +597,10 @@ class DemandPlotter:
 
 
         # load absolute
-        fig1 = plot_dists.plot_val_line(plot_dict=plot_dict1, xlabel='Time Slot', ylabel='Link Load (Abs)', linewidth=0.4, alpha=1, show_fig=False)
+        fig1 = plot_dists.plot_val_line(plot_dict=plot_dict1, xlabel='Time Slot', ylabel='Link Load (Abs)', linewidth=0.4, alpha=1, show_fig=True)
 
         # load fraction
-        fig2 = plot_dists.plot_val_line(plot_dict=plot_dict2, xlabel='Time Slot', ylabel='Link Load (Frac)', linewidth=0.4, alpha=1, show_fig=False)
+        fig2 = plot_dists.plot_val_line(plot_dict=plot_dict2, xlabel='Time Slot', ylabel='Link Load (Frac)', linewidth=0.4, alpha=1, show_fig=True)
 
         return [fig1, fig2]
 
@@ -619,7 +657,7 @@ class DemandsPlotter:
                 demand = Demand(demand, self.kwargs['net'])
             plot_dict[demand.name]['rand_vars'] = demand.demand_data['flow_size']
 
-        fig = plot_dists.plot_multiple_kdes(plot_dict, plot_hist=False, xlabel='Flow Size', ylabel='Density', logscale=logscale, show_fig=False)
+        fig = plot_dists.plot_multiple_kdes(plot_dict, plot_hist=False, xlabel='Flow Size', ylabel='Density', logscale=logscale, show_fig=True)
 
         return fig
 
@@ -634,7 +672,7 @@ class DemandsPlotter:
                 demand = Demand(demand, self.kwargs['net'])
             plot_dict[demand.name]['rand_vars'] = self._get_demand_interarrival_times(demand)
 
-        fig = plot_dists.plot_multiple_kdes(plot_dict, plot_hist=False, xlabel='Interarrival Time', ylabel='Density', logscale=logscale, show_fig=False)
+        fig = plot_dists.plot_multiple_kdes(plot_dict, plot_hist=False, xlabel='Interarrival Time', ylabel='Density', logscale=logscale, show_fig=True)
 
         return fig
 

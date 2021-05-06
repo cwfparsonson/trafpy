@@ -6,11 +6,15 @@ trafpy.egg-info/SOURCES.txt
 trafpy.egg-info/dependency_links.txt
 trafpy.egg-info/top_level.txt
 trafpy/benchmarker/__init__.py
+trafpy/benchmarker/_main_testbed_benchmark_data.py
 trafpy/benchmarker/config.py
+trafpy/benchmarker/gen_new_slots_dict.py
 trafpy/benchmarker/main_gen_benchmark_data.py
-trafpy/benchmarker/main_testbed_benchmark_data.py
 trafpy/benchmarker/ray_main_testbed_benchmark_data.py
+trafpy/benchmarker/speed_test.py
+trafpy/benchmarker/test.py
 trafpy/benchmarker/tools.py
+trafpy/benchmarker/v2_ray_main_testbed_benchmark_data.py
 trafpy/benchmarker/versions/__init__.py
 trafpy/benchmarker/versions/benchmark_importer.py
 trafpy/benchmarker/versions/benchmark_v001/__init__.py
@@ -40,6 +44,7 @@ trafpy/manager/src/schedulers/agent.py
 trafpy/manager/src/schedulers/basrpt.py
 trafpy/manager/src/schedulers/fair_share.py
 trafpy/manager/src/schedulers/first_fit.py
+trafpy/manager/src/schedulers/lambda_share.py
 trafpy/manager/src/schedulers/parametric_agent.py
 trafpy/manager/src/schedulers/random_agent.py
 trafpy/manager/src/schedulers/schedulers.py

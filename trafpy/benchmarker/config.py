@@ -14,7 +14,7 @@ BENCHMARK_VERSION = '0.0.1'
 
 # define minimum number of demands to generate (may generate more to meet jensen_shannon_distance_threshold and/or min_last_demand_arrival_time)
 MIN_NUM_DEMANDS = 10 # 1500 4000 10 400
-MAX_NUM_DEMANDS = 30 # 2000 None 100
+MAX_NUM_DEMANDS = 50 # 2000 None 100
 
 # define maximum allowed Jenson-Shannon distance for flow size and interarrival time distributions (lower value -> distributions must be more similar -> higher number of demands will be generated) (must be between 0 and 1)
 JENSEN_SHANNON_DISTANCE_THRESHOLD = 0.1 # 0.1 0.2 0.5
@@ -24,9 +24,9 @@ MIN_LAST_DEMAND_ARRIVAL_TIME = 3.2e5 # 3e3 300 units of us 3.2e5 2e6 3e6 6e7 6e8
 # MIN_LAST_DEMAND_ARRIVAL_TIME = None
 
 # define network load fractions
-# LOADS = np.arange(0.1, 1.0, 0.1).tolist()
+LOADS = np.arange(0.1, 1.0, 0.1).tolist()
 # LOADS = [0.2, 0.8]
-LOADS = [0.1]
+# LOADS = [0.1]
 LOADS = [round(load, 3) for load in LOADS] # ensure no python floating point arithmetic errors
 
 # define number of repetitions to perform for each benchmark for each load
@@ -39,7 +39,7 @@ AUTO_NODE_DIST_CORRECTION = True
 # SLOT_SIZE = None 
 # SLOT_SIZE = 1000.0 # 50.0 1000.0 10.0
 # SLOT_SIZE = 10.0
-SLOT_SIZE = 1000.0
+SLOT_SIZE = 10000.0
 
 
 

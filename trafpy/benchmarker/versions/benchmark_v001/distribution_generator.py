@@ -444,6 +444,14 @@ class DistributionGenerator:
                                                                            scales=[0.1, 62, 2000, 7500, 3500000, 20000000],
                                                                            num_skew_samples=[800, 1000, 2000, 4000, 4000, 3000],
                                                                            bg_factor=0.025)
+                # interarrival_time_dist = val_dists.gen_multimodal_val_dist(min_val=1,
+                                                                           # max_val=10000,
+                                                                           # locations=[10,20,100,1],
+                                                                           # skews=[0,0,0,100],
+                                                                           # scales=[1,3,4,50],
+                                                                           # num_skew_samples=[10000,7000,5000,20000],
+                                                                           # round_to_nearest=25,
+                                                                           # bg_factor=0.01)
 
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
@@ -485,11 +493,18 @@ class DistributionGenerator:
                 num_ops_dist = {10: 1}
 
             elif benchmark == 'tensorflow':
-                num_ops_dist = val_dists.gen_named_val_dist(dist='lognormal',
-                                                              params={'_mu': 4.55, '_sigma': 0.18},
+                # num_ops_dist = val_dists.gen_named_val_dist(dist='lognormal',
+                                                              # params={'_mu': 4.55, '_sigma': 0.18},
+                                                              # min_val=50,
+                                                              # max_val=200,
+                                                              # round_to_nearest=1,
+                                                              # show_fig=False,
+                                                              # print_data=False)
+                num_ops_dist = val_dists.gen_named_val_dist(dist='skewnorm',
+                                                            params={'_a': 2.3, '_loc': 80, '_scale': 30},
                                                               min_val=50,
                                                               max_val=200,
-                                                              round_to_nearest=1,
+                                                              round_to_nearest=10,
                                                               show_fig=False,
                                                               print_data=False)
 
@@ -501,7 +516,7 @@ class DistributionGenerator:
     
 
 
-    def plot_benchmark_dists(self, benchmarks):
+    def plot_benchmark_dists(self, benchmarks, fontsize=20, time_units='\u03BCs', info_units='B'):
         '''Plots dist info of all benchmark(s).
 
         e.g. benchmarks = ['uniform', 'university']
@@ -548,16 +563,20 @@ class DistributionGenerator:
                         logscale = True
 
                     if dist_name == 'flow_size_dist':
-                        fig = plot_dists.plot_val_dist(rand_vars, show_fig=False, figsize=(12.4, 2), plot_horizontally=True, logscale=logscale, num_bins=20, rand_var_name='Flow Size (Bytes)')
+                        # fig = plot_dists.plot_val_dist(rand_vars, show_fig=True, figsize=(12.4, 2), plot_horizontally=True, logscale=logscale, num_bins=20, rand_var_name='Flow Size ({})'.format(info_units), font_size=fontsize)
+                        fig = plot_dists.plot_val_dist(rand_vars, show_fig=True, figsize=(6.2, 4), use_scientific_notation_yaxis=True, plot_horizontally=False, logscale=logscale, num_bins=20, rand_var_name='Flow Size ({})'.format(info_units), font_size=fontsize)
                         plots[benchmark][dist_name] = fig
                     elif dist_name == 'interarrival_time_dist':
-                        fig = plot_dists.plot_val_dist(rand_vars, show_fig=False, figsize=(12.4, 2), plot_horizontally=True, logscale=logscale, num_bins=20, rand_var_name='Interarrival Time (us)')
+                        # fig = plot_dists.plot_val_dist(rand_vars, show_fig=True, figsize=(12.4, 2), plot_horizontally=True, logscale=logscale, num_bins=20, rand_var_name='Interarrival Time ({})'.format(time_units), font_size=fontsize)
+                        fig = plot_dists.plot_val_dist(rand_vars, show_fig=True, figsize=(6.2, 4), use_scientific_notation_yaxis=True, plot_horizontally=False, logscale=logscale, num_bins=20, rand_var_name='Interarrival Time ({})'.format(time_units), font_size=fontsize)
                         plots[benchmark][dist_name] = fig
 
                 elif dist_name == 'node_dist':
                     fig = plot_dists.plot_node_dist(dists[benchmark][dist_name],
                                                     chord_edge_width_range=[1,25],
-                                                    chord_edge_display_threshold=0.35) # 0.475
+                                                    chord_edge_display_threshold=0.35,
+                                                    font_size=fontsize,
+                                                    show_fig=True) # 0.475
                     plots[benchmark][dist_name] = fig
 
                 else:

@@ -120,6 +120,12 @@ def gen_benchmark_demands(path_to_save=None,
                 print('Generating demand data for benchmark {} load {} repeat {}...'.format(benchmark, load, repeat))
                 # if 'num_ops_dist' in benchmark_dists[benchmark]:
                 # job-centric
+                if benchmark_dists[benchmark]['num_ops_dist'] is not None:
+                    # job-centric
+                    use_multiprocessing = True
+                else:
+                    # flow-centric
+                    use_multiprocessing = False
                 demand_data = create_demand_data(min_num_demands=config.MIN_NUM_DEMANDS,
                                                  max_num_demands=config.MAX_NUM_DEMANDS, 
                                                  eps=eps,
@@ -127,12 +133,12 @@ def gen_benchmark_demands(path_to_save=None,
                                                  flow_size_dist=benchmark_dists[benchmark]['flow_size_dist'],
                                                  interarrival_time_dist=benchmark_dists[benchmark]['interarrival_time_dist'],
                                                  num_ops_dist=benchmark_dists[benchmark]['num_ops_dist'],
-                                                 c=1.5,
+                                                 c=3, # 1.5
                                                  jensen_shannon_distance_threshold=config.JENSEN_SHANNON_DISTANCE_THRESHOLD,
                                                  network_load_config=network_load_config,
                                                  min_last_demand_arrival_time=config.MIN_LAST_DEMAND_ARRIVAL_TIME,
                                                  auto_node_dist_correction=config.AUTO_NODE_DIST_CORRECTION,
-                                                 use_multiprocessing=True,
+                                                 use_multiprocessing=use_multiprocessing,
                                                  print_data=False)
                 # else:
                     # # flow-centric

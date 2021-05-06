@@ -419,21 +419,21 @@ class EnvAnalyser:
                 # both start and end must be assigned simultaneously
                 self.measurement_start_time = 0.1 * self.time_last_job_arrived
                 self.measurement_end_time = self.env.curr_time + self.env.slot_size
+                self._init_job_arrival_metrics()
             else:
                 # both start and end must be assigned simultaneously
                 self.measurement_start_time = 0.1 * self.time_last_flow_arrived
                 self.measurement_end_time = self.env.curr_time + self.env.slot_size
             # update arrived demands to be within measurement duration
-            self._init_job_arrival_metrics()
             self._init_flow_arrival_metrics()
             measurement_start_time = self.measurement_start_time
             measurement_end_time = self.measurement_end_time
         elif self.measurement_start_time == 'auto' and self.measurement_end_time != 'auto':
             if self.env.job_centric:
                 self.measurement_start_time = 0.1 * self.time_last_job_arrived
+                self._init_job_arrival_metrics()
             else:
                 self.measurement_start_time = 0.1 * self.time_last_flow_arrived
-            self._init_job_arrival_metrics()
             self._init_flow_arrival_metrics()
             measurement_start_time = self.measurement_start_time
         else:
@@ -445,9 +445,9 @@ class EnvAnalyser:
         elif self.measurement_end_time == 'auto' and self.measurement_start_time != 'auto':
             if self.env.job_centric:
                 self.measurement_start_time = self.time_last_job_arrived
+                self._init_job_arrival_metrics()
             else:
                 self.measurement_start_time = self.time_last_flow_arrived
-            self._init_job_arrival_metrics()
             self._init_flow_arrival_metrics()
             measurement_start_time = self.measurement_start_time
         else:

@@ -211,20 +211,21 @@ class JobGenerator:
 
         
         # allocate flows to data deps in jobs and allocate attrs to each flow
-        pbar = tqdm(total=len(jobs),
-                    desc='Allocating flow attrs',
-                    miniters=1, 
-                    # mininterval=1,
-                    # maxinterval=1, # 2
-                    leave=False,
-                    smoothing=1e-5) # 1
+        # pbar = tqdm(total=len(jobs),
+                    # desc='Allocating job flow attrs',
+                    # miniters=1, 
+                    # # mininterval=1,
+                    # # maxinterval=1, # 2
+                    # leave=False,
+                    # smoothing=0) # 1
         tasks = [] # for multiprocessing
         start = time.time()
         job_idx = 0
+        print('Allocating job flow attrs...')
         if self.use_multiprocessing:
             pool = multiprocessing.Pool(processes=num_processes,maxtasksperchild=maxtasksperchild)
-            # results = [pool.apply_async(self._allocate_job_flow_attrs, args=(job, job_idx, job_ids, packed_flows, None,)) for job, job_idx in zip(jobs, range(len(jobs)))]
-            results = [pool.apply_async(self._allocate_job_flow_attrs, args=(job, job_idx, job_ids, packed_flows, None,), callback=lambda _: pbar.update(1)) for job, job_idx in zip(jobs, range(len(jobs)))]
+            results = [pool.apply_async(self._allocate_job_flow_attrs, args=(job, job_idx, job_ids, packed_flows, None,)) for job, job_idx in zip(jobs, range(len(jobs)))]
+            # results = [pool.apply_async(self._allocate_job_flow_attrs, args=(job, job_idx, job_ids, packed_flows, None,), callback=lambda _: pbar.update(1)) for job, job_idx in zip(jobs, range(len(jobs)))]
             pool.close()
             pool.join()
             output = [p.get() for p in results]
@@ -237,17 +238,18 @@ class JobGenerator:
                 job_idx += 1
             jobs = _jobs
         end = time.time()
-        pbar.close()
-        print('Allocated flow attrs of {} jobs in {} seconds.'.format(len(jobs), end-start))
+        # pbar.close()
+        print('Allocated flow attrs for {} jobs in {} seconds.'.format(len(jobs), end-start))
 
         # set job op run times
-        pbar = tqdm(total=len(jobs),
-                    desc='Allocating flow attrs',
-                    miniters=1, 
-                    # mininterval=1,
-                    # maxinterval=1, # 2
-                    leave=False,
-                    smoothing=1e-5) # 1
+        # pbar = tqdm(total=len(jobs),
+                # desc='Setting op run times',
+                    # miniters=1, 
+                    # # mininterval=1,
+                    # # maxinterval=1, # 2
+                    # leave=False,
+                    # smoothing=0) # 1
+        print('Setting op run times...')
         start = time.time()
         _jobs = []
         for job in jobs:
@@ -255,11 +257,11 @@ class JobGenerator:
                                            self.run_time_gaussian_noise_mean, 
                                            self.run_time_gaussian_noise_sd, 
                                            self.round_op_run_time_to_nearest)
-            pbar.update(1)
+            # pbar.update(1)
             _jobs.append(job)
         jobs = _jobs
         end = time.time()
-        pbar.close()
+        # pbar.close()
         print('Set op run times of {} jobs in {} seconds'.format(len(jobs), end-start))
 
         _jobs = [jobs[i] for i in index]
@@ -338,6 +340,7 @@ class JobGenerator:
         # set list of op run times as global graph attr
         job.graph['op_run_times'] = run_times
         job.graph['sum_op_run_times'] = sum(run_times)
+
 
         if jobs is not None:
             jobs.append(job)

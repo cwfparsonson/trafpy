@@ -227,7 +227,8 @@ class FlowGenerator:
 
         # gen new interarrival times
         # NEW METHOD: Just scale interarrival times as you have scaled interarrival time dist
-        interarrival_times *= factor
+        # interarrival_times *= factor
+        interarrival_times = (interarrival_times * factor)
 
         # OLD METHOD: Re-generates by sampling from new dist. CON: Leads to different data -> get different loads.
         # interarrival_times = val_dists.gen_rand_vars_from_discretised_dist(unique_vars=list(self.interarrival_time_dist.keys()),
@@ -782,15 +783,6 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
         # get curr num demands
         num_demands = len(demand_data['event_time'])
 
-        pbar = tqdm(total=demands_to_add, 
-                desc='Duplication {} of {}'.format(dup+1, num_duplications),
-                miniters=1,
-                leave=False)
-                    # mininterval=1,
-                    # maxinterval=1, # 2
-                    # leave=False,
-                    # smoothing=1e-5) # 1
-
         # get curr duration
         duration = max(demand_data['event_time']) - min(demand_data['event_time']) 
 
@@ -859,8 +851,8 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
                                         event_times,
                                         establishes,
                                         indexes,
-                                        job_centric),
-                                       callback=lambda _: pbar.update(1))
+                                        job_centric))
+                                       # callback=lambda _: pbar.update(1))
                                         for idx in range(num_demands)]
             pool.close()
             pool.join()
@@ -938,8 +930,6 @@ def duplicate_demands_in_demand_data_dict(demand_data, num_duplications=1, **kwa
                 # demand_data['index'].extend(list(indexes))
 
                 pbar.update(1)
-
-        pbar.close()
 
     # make sure demand data still ordered in order of event time
     index = np.argsort(demand_data['event_time'])

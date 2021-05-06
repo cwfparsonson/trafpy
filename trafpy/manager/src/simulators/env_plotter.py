@@ -14,6 +14,7 @@ import numpy as np
 import sigfig
 from IPython.display import display
 from sqlitedict import SqliteDict
+import os
 
 
 class EnvPlotter:
@@ -52,9 +53,19 @@ def get_summary_dict(analysers, headers, time_units='', info_units=''):
     return summary_dict
 
 class EnvsPlotter:
-    def __init__(self, time_units='', info_units=''):
+    def __init__(self, time_units='', info_units='', path_to_save=None):
         self.time_units = time_units
         self.info_units = info_units
+
+        if path_to_save is not None:
+            folder_name = path_to_save.split('/')[-1] # want unique to make copying to local machine easier across multiple envs_plotter folders
+            path_to_save = path_to_save + '/envs_plotter_{}'.format(folder_name)
+            if os.path.exists(path_to_save):
+                pass
+            else:
+                os.mkdir(path_to_save)
+        self.path_to_save = path_to_save
+
 
     def _group_analyser_classes(self, *analysers):
         classes = []
@@ -82,8 +93,12 @@ class EnvsPlotter:
             kwargs['plot_radar'] = True
         if 'figsize' not in kwargs:
             kwargs['figsize'] = (12.8, 9.6)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'fill_alpha' not in kwargs:
             kwargs['fill_alpha'] = 0.05
+        if 'print_latex_tables' not in kwargs:
+            kwargs['print_latex_tables'] = True # path to write excel tables to
 
         headers = ['Load', 
                    'Subject', 
@@ -121,6 +136,13 @@ class EnvsPlotter:
         # create ranking table
         ranking_table = {header: [] for header in headers if header != 'T-Score' and header != 'Subject'}
         ranking_table['Load'] = list(np.unique(list(summary_dict['Load'])))
+        # create excel tables
+        # excel_summary_table = {header: {subject: [] for subject in np.unique(list(summary_dict['Subject']))} for header in headers if header != 'T-Score' and header != 'Subject'}
+        # excel_summary_table['Load'] = list(np.unique(list(summary_dict['Load'])))
+        # excel_ranking_table = {header: {subject: [] for subject in np.unique(list(summary_dict['Subject']))} for header in headers if header != 'T-Score' and header != 'Subject'}
+        # excel_ranking_table['Load'] = list(np.unique(list(summary_dict['Load'])))
+        latex_winner_table = {header: [] for header in headers if header != 'T-Score' and header != 'Subject'}
+        latex_winner_table['Load'] = list(np.unique(list(summary_dict['Load'])))
 
         num_loads = len(np.unique(list(summary_dict['Load'])))
         num_subjects = len(np.unique(list(summary_dict['Subject'])))
@@ -201,20 +223,38 @@ class EnvsPlotter:
                     for val in ranking_vals[:-1]:
                         diff = val - baseline_val
                         perf = sigfig.round(float((diff/baseline_val) * 100), sigfigs=4)
-                        # if not is_higher_better[header]:
-                            # # ranking is lower than baseline, make negative
-                            # perf = -(100-perf)
-                            # if abs(perf) == 0:
-                                # # cannot get to 0
-                                # perf = -0.01
                         relative_performance.append(perf)
-                    relative_performance = iter(relative_performance)
+                    relative_performance_iterator = iter(relative_performance)
                     ranks = ''
                     for _class in ranking_classes[:-1]:
-                        rank = _class + '({}%) | '.format(sigfig.round(next(relative_performance), sigfigs=4))
+                        rank = _class + '({}%) | '.format(sigfig.round(next(relative_performance_iterator), sigfigs=4))
                         ranks += rank
                     ranks += baseline_class
                     ranking_table[header].append(ranks)
+
+                    # add winner w/ relative performance to excel winner table
+                    # winner = ranking_classes[0]
+                    perf = relative_performance[0]
+                    latex_winner_table[header].append('{}, {}%'.format(winner, perf))
+
+                    # # sort ranking classes by alphabet and add to excel ranking table
+                    # excel_indices = np.argsort(ranking_classes[:-1])
+                    # relative_performance_iterator = iter(np.asarray(relative_performance)[excel_indices])
+                    # for _class in np.asarray(ranking_classes[:-1])[excel_indices]:
+                        # excel_ranking_table[header][_class].append(next(relative_performance_iterator))
+                    # excel_ranking_table[header][baseline_class].append(0)
+                    
+
+                    # excel summary table
+                    # excel_indices = np.argsort(classes)
+                    # for _class, val in zip(np.asarray(classes)[excel_indices], np.asarray(classes_rand_vars)[excel_indices]):
+                        # excel_summary_table[header][_class].append(val)
+                        
+
+
+
+
+
 
 
                     # radar plot
@@ -233,26 +273,127 @@ class EnvsPlotter:
                         plot_dicts[load_idx][header]['classes'][_class] = classes_rand_vars[idx]
 
             i2 += num_subjects 
+
+        # change headers of winner table to appropriate headers
+        keys = list(latex_winner_table.keys())
+        for key in keys:
+            new_key = None
+            if 'Mean' in key:
+                new_key = 'Mean FCT'
+            elif 'p99' in key:
+                new_key = 'p99 FCT'
+            elif 'Max' in key:
+                new_key = 'Max FCT'
+            elif 'Throughput' in key:
+                new_key = 'Throughput'
+            elif 'Flows Dropped' in key:
+                new_key = 'Flows Dropped'
+            elif 'Info Dropped' in key:
+                new_key = 'Info Dropped'
+            else:
+                # don't need to adjust
+                pass
+            if new_key is not None:
+                latex_winner_table[new_key] = latex_winner_table.pop(key)
+
+        # change headers of latex summary table
+        latex_summary_table = copy.deepcopy(sorted_summary_dict)
+        keys = list(latex_summary_table.keys())
+        for key in keys:
+            new_key = None
+            if 'Mean' in key:
+                new_key = 'Mean FCT ($\mu$s)'
+            elif 'p99' in key:
+                new_key = 'p99 FCT ($\mu$s)'
+            elif 'Max' in key:
+                new_key = 'Max FCT ($\mu$s)'
+            elif 'Throughput' in key:
+                new_key = 'Throughput (Frac)'
+            elif 'Flows Dropped' in key:
+                new_key = 'Flows Dropped (Frac)'
+            elif 'Info Dropped' in key:
+                new_key = 'Info Dropped (Frac)'
+            else:
+                # don't need to adjust
+                pass
+            if new_key is not None:
+                latex_summary_table[new_key] = latex_summary_table.pop(key)
+        del latex_summary_table['T-Score']
+            
              
         summary_dataframe = pd.DataFrame(sorted_summary_dict)
         winner_dataframe = pd.DataFrame(winner_table)
         ranking_dataframe = pd.DataFrame(ranking_table)
+        latex_summary_dataframe = pd.DataFrame(latex_summary_table)
+        latex_winner_dataframe = pd.DataFrame(latex_winner_table)
+
+
+        # # excel summary 
+        # multiindex_dict = {}
+        # for header in excel_summary_table.keys():
+            # if header != 'Load':
+                # for subject in excel_summary_table[header].keys():
+                    # multiindex_dict[(header, subject)] = excel_summary_table[header][subject]
+            # else:
+                # multiindex_dict['Load'] = excel_summary_table['Load']
+        # excel_summary_dataframe = pd.DataFrame(multiindex_dict)
+        # if kwargs['path_or_buf'] is not None:
+            # excel_summary_dataframe.to_csv(kwargs['path_or_buf']+'/summary_dataframe_csv')
+            # excel_summary_dataframe.to_latex(kwargs['path_or_buf']+'/summary_dataframe_latex')
+            # print('Saved summary_dataframe to {}.'.format(kwargs['path_or_buf']))
+
+        # # excel ranking
+        # multiindex_dict = {}
+        # for header in excel_ranking_table.keys():
+            # if header != 'Load':
+                # for subject in excel_ranking_table[header].keys():
+                    # multiindex_dict[(header, subject)] = excel_ranking_table[header][subject]
+            # else:
+                # multiindex_dict['Load'] = excel_ranking_table['Load']
+        # excel_ranking_dataframe = pd.DataFrame(multiindex_dict)
+        # if kwargs['path_or_buf'] is not None:
+            # excel_ranking_dataframe.to_csv(kwargs['path_or_buf']+'/ranking_dataframe_csv')
+            # excel_ranking_dataframe.to_latex(kwargs['path_or_buf']+'/ranking_dataframe_latex')
+            # print('Saved ranking_dataframe to {}.'.format(kwargs['path_or_buf']))
+
+
+        if kwargs['print_latex_tables']:
+            print('\n\nSummary latex table:')
+            print(latex_summary_dataframe.to_latex(index=False, multicolumn=True))
+            print('\n\nWinner latex table:')
+            print(latex_winner_dataframe.to_latex(index=False, multicolumn=True))
+
+        if self.path_to_save is not None:
+            summary_dataframe.to_pickle(self.path_to_save+'/summary_dataframe.pkl')
+            latex_summary_dataframe.to_latex(index=False, multicolumn=True, buf=self.path_to_save+'/latex_summary_table')
+            latex_winner_dataframe.to_latex(index=False, multicolumn=True, buf=self.path_to_save+'/latex_winner_table')
+
+
+
         if kwargs['display_table']:
             display(summary_dataframe)
             display(winner_dataframe)
             display(ranking_dataframe)
+            # display(excel_summary_dataframe)
+            # display(excel_ranking_dataframe)
+            # display(latex_winner_dataframe)
 
         if kwargs['plot_radar']:
             loads = iter(np.unique(list(summary_dict['Load'])))
             for plot_dict in plot_dicts:
                 # if len(list(plot_dict.keys())) != 0:
+                load = next(loads)
                 radar = plot_dists.plot_radar(plot_dict, 
-                                              title='Load {}'.format(next(loads)), 
+                                              title='Load {}'.format(load), 
                                               figsize=kwargs['figsize'],
+                                              font_size=kwargs['font_size'],
                                               fill_alpha=kwargs['fill_alpha'],
                                               show_fig=True)
+                if self.path_to_save is not None:
+                    radar.savefig(self.path_to_save+'/radar_load_{}.png'.format(round(load, 2)), bbox_inches='tight')
 
-                return summary_dataframe, winner_dataframe, ranking_dataframe
+
+        return summary_dataframe, winner_dataframe, ranking_dataframe
 
 
     def plot_t_score_scatter(self, *analysers, **kwargs):
@@ -271,6 +412,8 @@ class EnvsPlotter:
             kwargs['aspect'] = 'auto'
         if 'figsize' not in kwargs:
             kwargs['figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
 
@@ -284,7 +427,7 @@ class EnvsPlotter:
 
         figs = []
         for load in plot_dict.keys():
-            fig = plot_dists.plot_val_scatter(plot_dict=plot_dict[load], xlabel='Load {} Throughput Component'.format(str(round(load,2))), ylabel='Load {} FCT Component'.format(str(round(load,2))), alpha=1.0, marker_size=60, logscale=True, gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], legend_ncol=kwargs['legend_ncol'], show_fig=True)
+            fig = plot_dists.plot_val_scatter(plot_dict=plot_dict[load], xlabel='Load {} Throughput Component'.format(str(round(load,2))), ylabel='Load {} FCT Component'.format(str(round(load,2))), alpha=1.0, marker_size=60, logscale=True, gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], font_size=kwargs['font_size'], figsize=kwargs['figsize'], legend_ncol=kwargs['legend_ncol'], show_fig=True)
             figs.append(fig)
 
         return figs
@@ -303,6 +446,8 @@ class EnvsPlotter:
             kwargs['cdf_figsize'] = (6.4, 4.8)
         if 'scatter_figsize' not in kwargs:
             kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
         if 'logscale' not in kwargs:
@@ -325,6 +470,7 @@ class EnvsPlotter:
                                            aspect=kwargs['aspect'],
                                            gridlines=kwargs['gridlines'],
                                            figsize=kwargs['scatter_figsize'],
+                                           font_size=kwargs['font_size'],
                                            ylogscale=kwargs['logscale'],
                                            legend_ncol=kwargs['legend_ncol'],
                                            show_fig=True)
@@ -332,12 +478,13 @@ class EnvsPlotter:
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
                                        xlabel='Mean FCT ({})'.format(self.time_units), 
-                                       ylabel='Complementary CDF', 
+                                       ylabel='C-CDF', 
                                        complementary_cdf=True, 
                                        aspect=kwargs['aspect'],
                                        gridlines=kwargs['gridlines'],
                                        logscale=kwargs['logscale'],
                                        figsize=kwargs['cdf_figsize'],
+                                       font_size=kwargs['font_size'],
                                        legend_ncol=kwargs['legend_ncol'],
                                        show_fig=True)
 
@@ -353,9 +500,15 @@ class EnvsPlotter:
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            ylogscale=kwargs['logscale'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
+
+        if self.path_to_save is not None:
+            fig1.savefig(self.path_to_save+'/mean_fct_vs_load_scatter.png', bbox_inches='tight')
+            fig2.savefig(self.path_to_save+'/mean_fct_vs_load_complementary_cdf.png', bbox_inches='tight')
+            fig3.savefig(self.path_to_save+'/mean_fct_vs_load_change.png', bbox_inches='tight')
 
 
         return [fig1, fig2, fig3]
@@ -369,6 +522,8 @@ class EnvsPlotter:
             kwargs['cdf_figsize'] = (6.4, 4.8)
         if 'scatter_figsize' not in kwargs:
             kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
         if 'logscale' not in kwargs:
@@ -390,6 +545,7 @@ class EnvsPlotter:
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            ylogscale=kwargs['logscale'],
                                            plot_line=True,
                                            legend_ncol=kwargs['legend_ncol'], 
@@ -398,10 +554,11 @@ class EnvsPlotter:
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
                                        xlabel='p99 FCT ({})'.format(self.time_units), 
-                                       ylabel='Complementary CDF', 
+                                       ylabel='C-CDF', 
                                        gridlines=kwargs['gridlines'], 
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['cdf_figsize'], 
+                                       font_size=kwargs['font_size'],
                                        logscale=kwargs['logscale'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        complementary_cdf=True, 
@@ -419,8 +576,14 @@ class EnvsPlotter:
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
+
+        if self.path_to_save is not None:
+            fig1.savefig(self.path_to_save+'/p99_fct_vs_load_scatter.png', bbox_inches='tight')
+            fig2.savefig(self.path_to_save+'/p99_fct_vs_load_complementary_cdf.png', bbox_inches='tight')
+            fig3.savefig(self.path_to_save+'/p99_fct_vs_load_change.png', bbox_inches='tight')
 
         return [fig1, fig2, fig3]
 
@@ -433,6 +596,8 @@ class EnvsPlotter:
             kwargs['cdf_figsize'] = (6.4, 4.8)
         if 'scatter_figsize' not in kwargs:
             kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
         if 'logscale' not in kwargs:
@@ -456,16 +621,18 @@ class EnvsPlotter:
                                            ylogscale=kwargs['logscale'],
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
                                        xlabel='Max FCT ({})'.format(self.time_units), 
-                                       ylabel='Complementary CDF', 
+                                       ylabel='C-CDF', 
                                        gridlines=kwargs['gridlines'], 
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['cdf_figsize'], 
+                                       font_size=kwargs['font_size'],
                                        logscale=kwargs['logscale'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        complementary_cdf=True, 
@@ -483,8 +650,14 @@ class EnvsPlotter:
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
+
+        if self.path_to_save is not None:
+            fig1.savefig(self.path_to_save+'/max_fct_vs_load_scatter.png', bbox_inches='tight')
+            fig2.savefig(self.path_to_save+'/max_fct_vs_load_complementary_cdf.png', bbox_inches='tight')
+            fig3.savefig(self.path_to_save+'/max_fct_vs_load_change.png', bbox_inches='tight')
 
         return [fig1, fig2]
 
@@ -495,6 +668,8 @@ class EnvsPlotter:
             kwargs['aspect'] = 'auto'
         if 'figsize' not in kwargs:
             kwargs['figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
 
@@ -525,15 +700,18 @@ class EnvsPlotter:
         for load in plot_dict.keys():
             fig = plot_dists.plot_val_cdf(plot_dict=plot_dict[load], 
                                           xlabel='Load {} FCTs ({})'.format(round(load,2), self.time_units), 
-                                          ylabel='Complementary CDF', 
+                                          ylabel='C-CDF', 
                                           gridlines=kwargs['gridlines'], 
                                           aspect=kwargs['aspect'], 
                                           logscale=True, 
                                           plot_points=False, 
                                           complementary_cdf=True, 
                                           figsize=kwargs['figsize'], 
+                                          font_size=kwargs['font_size'],
                                           legend_ncol=kwargs['legend_ncol'], 
                                           show_fig=True)
+            if self.path_to_save is not None:
+                fig.savefig(self.path_to_save+'/fcts_cdf_load_{}.png'.format(round(load, 2)), bbox_inches='tight')
             figs.append(fig)
 
         return figs
@@ -545,6 +723,8 @@ class EnvsPlotter:
             kwargs['cdf_figsize'] = (6.4, 4.8)
         if 'scatter_figsize' not in kwargs:
             kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'gridlines' not in kwargs:
             kwargs['gridlines'] = True
         if 'aspect' not in kwargs:
@@ -566,24 +746,26 @@ class EnvsPlotter:
         # scatter 
         fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
                                            xlabel='Load', 
-                                           ylabel='Fraction Flows Dropped', 
+                                           ylabel='Flows Dropped', 
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
                                            ylogscale=kwargs['logscale'],
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
-                                       xlabel='Fraction Flows Dropped', 
-                                       ylabel='Complementary CDF', 
+                                       xlabel='Flows Dropped', 
+                                       ylabel='C-CDF', 
                                        complementary_cdf=True, 
                                        gridlines=kwargs['gridlines'], 
                                        logscale=kwargs['logscale'],
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['cdf_figsize'], 
+                                       font_size=kwargs['font_size'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        show_fig=True)
 
@@ -600,8 +782,14 @@ class EnvsPlotter:
                                            plot_line=True,
                                            ylogscale=kwargs['logscale'],
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
+
+        if self.path_to_save is not None:
+            fig1.savefig(self.path_to_save+'/frac_arrived_flows_dropped_vs_load_scatter.png', bbox_inches='tight')
+            fig2.savefig(self.path_to_save+'/frac_arrived_flows_dropped_vs_load_complementary_cdf.png', bbox_inches='tight')
+            fig3.savefig(self.path_to_save+'/frac_arrived_flows_dropped_vs_load_change.png', bbox_inches='tight')
 
         return [fig1, fig2, fig3]
 
@@ -610,6 +798,8 @@ class EnvsPlotter:
             kwargs['cdf_figsize'] = (6.4, 4.8)
         if 'scatter_figsize' not in kwargs:
             kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'gridlines' not in kwargs:
             kwargs['gridlines'] = True
         if 'aspect' not in kwargs:
@@ -631,22 +821,24 @@ class EnvsPlotter:
         # scatter 
         fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
                                            xlabel='Load', 
-                                           ylabel='Fraction Info Dropped', 
+                                           ylabel='Info Dropped', 
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
                                            ylogscale=kwargs['logscale'],
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
-                                       xlabel='Fraction Info Dropped', 
-                                       ylabel='Complementary CDF', 
+                                       xlabel='Info Dropped', 
+                                       ylabel='C-CDF', 
                                        gridlines=kwargs['gridlines'], 
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['cdf_figsize'], 
+                                       font_size=kwargs['font_size'],
                                        logscale=kwargs['logscale'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        complementary_cdf=True, 
@@ -665,8 +857,14 @@ class EnvsPlotter:
                                            ylogscale=kwargs['logscale'],
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
+
+        if self.path_to_save is not None:
+            fig1.savefig(self.path_to_save+'/frac_arrived_info_dropped_vs_load_scatter.png', bbox_inches='tight')
+            fig2.savefig(self.path_to_save+'/frac_arrived_info_dropped_vs_load_complementary_cdf.png', bbox_inches='tight')
+            fig3.savefig(self.path_to_save+'/frac_arrived_info_dropped_vs_load_change.png', bbox_inches='tight')
 
         return [fig1, fig2, fig3]
 
@@ -719,8 +917,12 @@ class EnvsPlotter:
             kwargs['gridlines'] = True
         if 'aspect' not in kwargs:
             kwargs['aspect'] = 'auto'
-        if 'figsize' not in kwargs:
-            kwargs['figsize'] = (6.4, 4.8)
+        if 'cdf_figsize' not in kwargs:
+            kwargs['cdf_figsize'] = (6.4, 4.8)
+        if 'scatter_figsize' not in kwargs:
+            kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
 
@@ -736,7 +938,6 @@ class EnvsPlotter:
             plot_dict[analyser.load_frac]['x_values'] = []
             plot_dict[analyser.load_frac]['y_values'] = []
 
-
         for analyser in analysers:
             plot_dict[analyser.load_frac]['x_values'].append(analyser.subject_class_name)
             plot_dict[analyser.load_frac]['y_values'].append(analyser.throughput_frac)
@@ -749,29 +950,35 @@ class EnvsPlotter:
         figs = []
         if kwargs['plot_bar_charts']:
             for load in plot_dict.keys():
-                figs.append(plot_dists.plot_val_bar(x_values=plot_dict[load]['x_values'], y_values=plot_dict[load]['y_values'], xlabel='Test Subject Class', ylabel='Load {} Throughput Rate'.format(str(round(load,2)), gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], show_fig=True)))
+                figs.append(plot_dists.plot_val_bar(x_values=plot_dict[load]['x_values'], y_values=plot_dict[load]['y_values'], xlabel='Test Subject Class', ylabel='Load {} Throughput ({}/{})'.format(round(load,2), self.info_units, self.time_units), gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], show_fig=True))
 
         # scatter
         fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict2, 
                                            xlabel='Load', 
-                                           ylabel='Throughput Fraction',
+                                           ylabel='Throughput',
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
-                                           figsize=kwargs['figsize'], 
+                                           figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict2, 
-                xlabel='Throughput Fraction',
-                                       ylabel='Complementary CDF', 
+                                       xlabel='Throughput',
+                                       ylabel='C-CDF', 
                                        complementary_cdf=True, 
                                        gridlines=kwargs['gridlines'], 
                                        aspect=kwargs['aspect'], 
-                                       figsize=kwargs['figsize'], 
+                                       figsize=kwargs['cdf_figsize'], 
+                                       font_size=kwargs['font_size'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        show_fig=True)
+
+        if self.path_to_save is not None:
+            fig1.savefig(self.path_to_save+'/throughput_frac_vs_load_scatter.png', bbox_inches='tight')
+            fig2.savefig(self.path_to_save+'/throughput_frac_vs_load_complementary_cdf.png', bbox_inches='tight')
 
         return [figs, fig1, fig2]
 
@@ -783,10 +990,16 @@ class EnvsPlotter:
             kwargs['gridlines'] = True
         if 'aspect' not in kwargs:
             kwargs['aspect'] = 'auto'
-        if 'figsize' not in kwargs:
-            kwargs['figsize'] = (6.4, 4.8)
+        if 'cdf_figsize' not in kwargs:
+            kwargs['cdf_figsize'] = (6.4, 4.8)
+        if 'scatter_figsize' not in kwargs:
+            kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
+        if 'use_scientific_notation' not in kwargs:
+            kwargs['use_scientific_notation'] = False
 
         classes = self._group_analyser_classes(*analysers)
 
@@ -813,27 +1026,31 @@ class EnvsPlotter:
         figs = []
         if kwargs['plot_bar_charts']:
             for load in plot_dict.keys():
-                figs.append(plot_dists.plot_val_bar(x_values=plot_dict[load]['x_values'], y_values=plot_dict[load]['y_values'], xlabel='Test Subject Class', ylabel='Load {} Throughput Rate'.format(str(round(load,2)), gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], show_fig=True)))
+                figs.append(plot_dists.plot_val_bar(x_values=plot_dict[load]['x_values'], y_values=plot_dict[load]['y_values'], xlabel='Test Subject Class', ylabel='Load {} Throughput ({}/{})'.format(round(load,2), self.info_units, self.time_units), gridlines=kwargs['gridlines'], aspect=kwargs['aspect'], figsize=kwargs['figsize'], show_fig=True))
 
         # scatter
         fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict2, 
                                            xlabel='Load', 
-                                           ylabel='Throughput Rate ({}/{})'.format(self.info_units, self.time_units), 
+                                           ylabel='Throughput ({}/{})'.format(self.info_units, self.time_units), 
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
-                                           figsize=kwargs['figsize'], 
+                                           use_scientific_notation_yaxis=kwargs['use_scientific_notation'],
+                                           figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict2, 
-                                       xlabel='Throughput Rate ({}/{})'.format(self.info_units, self.time_units), 
-                                       ylabel='Complementary CDF', 
+                                       xlabel='Throughput ({}/{})'.format(self.info_units, self.time_units), 
+                                       ylabel='C-CDF', 
                                        complementary_cdf=True, 
                                        gridlines=kwargs['gridlines'], 
+                                       use_scientific_notation=kwargs['use_scientific_notation'],
                                        aspect=kwargs['aspect'], 
-                                       figsize=kwargs['figsize'], 
+                                       figsize=kwargs['cdf_figsize'], 
+                                       font_size=kwargs['font_size'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        show_fig=True)
 
@@ -846,13 +1063,19 @@ class EnvsPlotter:
             plot_dict3[key]['y_values'] = [plot_dict3[key]['y_values'][i]/init_var for i in range(len(plot_dict3[key]['y_values']))]
         fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict3, 
                                            xlabel='Load', 
-                                           ylabel='\u0394F Throughput Rate', 
+                                           ylabel='\u0394F Throughput', 
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
-                                           figsize=kwargs['figsize'], 
+                                           figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
+
+        if self.path_to_save is not None:
+            fig1.savefig(self.path_to_save+'/throughput_rate_vs_load_scatter.png', bbox_inches='tight')
+            fig2.savefig(self.path_to_save+'/throughput_rate_vs_load_complementary_cdf.png', bbox_inches='tight')
+            fig3.savefig(self.path_to_save+'/throughput_rate_vs_load_change.png', bbox_inches='tight')
 
 
 
@@ -884,6 +1107,8 @@ class EnvsPlotter:
             kwargs['aspect'] = 'auto'
         if 'figsize' not in kwargs:
             kwargs['figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
 
@@ -898,6 +1123,7 @@ class EnvsPlotter:
                                                                 show_fig=True, 
                                                                 aspect=kwargs['aspect'], 
                                                                 figsize=kwargs['figsize'], 
+                                                                font_size=kwargs['font_size'],
                                                                 legend_ncol=kwargs['legend_ncol']))
 
         return figs
@@ -924,6 +1150,8 @@ class EnvsPlotter:
             kwargs['aspect'] = 'auto'
         if 'figsize' not in kwargs:
             kwargs['figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
 
@@ -998,6 +1226,7 @@ class EnvsPlotter:
                                                    gridlines=kwargs['gridlines'], 
                                                    aspect=kwargs['aspect'], 
                                                    figsize=kwargs['figsize'], 
+                                                   font_size=kwargs['font_size'],
                                                    legend_ncol=kwargs['legend_ncol'], 
                                                    plot_legend=kwargs['plot_legend'], 
                                                    show_fig=True)
@@ -1013,6 +1242,8 @@ class EnvsPlotter:
             kwargs['aspect'] = 'auto'
         if 'figsize' not in kwargs:
             kwargs['figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
 
@@ -1081,6 +1312,7 @@ class EnvsPlotter:
                                                    gridlines=kwargs['gridlines'], 
                                                    aspect=kwargs['aspect'], 
                                                    figsize=kwargs['figsize'], 
+                                                   font_size=kwargs['font_size'],
                                                    legend_ncol=kwargs['legend_ncol'], 
                                                    show_fig=True)
                     figs.append(fig)
@@ -1097,8 +1329,12 @@ class EnvsPlotter:
             kwargs['aspect'] = 'auto'
         if 'figsize' not in kwargs:
             kwargs['figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
+        if 'use_scientific_notation' not in kwargs:
+            kwargs['use_scientific_notation'] = False
 
         nested_dict = lambda: defaultdict(nested_dict)
         plot_dict = nested_dict()
@@ -1133,9 +1369,13 @@ class EnvsPlotter:
                                               logscale=True, 
                                               gridlines=kwargs['gridlines'], 
                                               aspect=kwargs['aspect'], 
+                                              use_scientific_notation_yaxis=kwargs['use_scientific_notation_yaxis'],
                                               figsize=kwargs['figsize'], 
+                                              font_size=kwargs['font_size'],
                                               legend_ncol=kwargs['legend_ncol'], 
                                               show_fig=True)
+            if self.path_to_save is not None:
+                fig.savefig(self.path_to_save+'/demand_completion_time_vs_size_load_{}.png'.format(round(load, 2)), bbox_inches='tight')
             figs.append(fig)
 
         return figs
@@ -1163,7 +1403,7 @@ class EnvsPlotter:
         # fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='V', ylabel='Average FCT', show_fig=True)
 
         # # complementary cdf
-        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Average FCT', ylabel='Complementary CDF', complementary_cdf=True, show_fig=True)
+        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Average FCT', ylabel='C-CDF', complementary_cdf=True, show_fig=True)
 
         # return [fig1, fig2]
     
@@ -1181,7 +1421,7 @@ class EnvsPlotter:
         # fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='V', ylabel='99th Percentile FCT', show_fig=True)
 
         # # complementary cdf
-        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='99th Percentile FCT', ylabel='Complementary CDF', complementary_cdf=True, show_fig=True)
+        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='99th Percentile FCT', ylabel='C-CDF', complementary_cdf=True, show_fig=True)
 
         # return [fig1, fig2]
 
@@ -1197,10 +1437,10 @@ class EnvsPlotter:
             # plot_dict[analyser.subject_class_name]['rand_vars'].append(analyser.throughput_abs)
 
         # # scatter
-        # fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='V', ylabel='Throughput Rate', show_fig=True)
+        # fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, xlabel='V', ylabel='Throughput', show_fig=True)
 
         # # complementary cdf
-        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Throughput Rate', ylabel='Complementary CDF', complementary_cdf=True, show_fig=True)
+        # fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, xlabel='Throughput', ylabel='C-CDF', complementary_cdf=True, show_fig=True)
 
         # return [fig1, fig2]
 
@@ -1212,6 +1452,8 @@ class EnvsPlotter:
             kwargs['aspect'] = 'auto'
         if 'figsize' not in kwargs:
             kwargs['figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
 
@@ -1242,15 +1484,18 @@ class EnvsPlotter:
         for load in plot_dict.keys():
             fig = plot_dists.plot_val_cdf(plot_dict=plot_dict[load], 
                                           xlabel='Load {} JCTs ({})'.format(round(load,2), self.time_units), 
-                                          ylabel='Complementary CDF', 
+                                          ylabel='C-CDF', 
                                           gridlines=kwargs['gridlines'], 
                                           aspect=kwargs['aspect'], 
                                           logscale=True, 
                                           plot_points=False, 
                                           complementary_cdf=True, 
                                           figsize=kwargs['figsize'], 
+                                          font_size=kwargs['font_size'],
                                           legend_ncol=kwargs['legend_ncol'], 
                                           show_fig=True)
+            if self.path_to_save is not None:
+                fig.savefig(self.path_to_save+'/jcts_cdf_load_{}.png'.format(round(load, 2)), bbox_inches='tight')
             figs.append(fig)
 
         return figs
@@ -1268,6 +1513,8 @@ class EnvsPlotter:
             kwargs['cdf_figsize'] = (6.4, 4.8)
         if 'scatter_figsize' not in kwargs:
             kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
         if 'logscale' not in kwargs:
@@ -1290,6 +1537,7 @@ class EnvsPlotter:
                                            aspect=kwargs['aspect'],
                                            gridlines=kwargs['gridlines'],
                                            figsize=kwargs['scatter_figsize'],
+                                           font_size=kwargs['font_size'],
                                            ylogscale=kwargs['logscale'],
                                            legend_ncol=kwargs['legend_ncol'],
                                            show_fig=True)
@@ -1297,12 +1545,13 @@ class EnvsPlotter:
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
                                        xlabel='Mean JCT ({})'.format(self.time_units), 
-                                       ylabel='Complementary CDF', 
+                                       ylabel='C-CDF', 
                                        complementary_cdf=True, 
                                        aspect=kwargs['aspect'],
                                        gridlines=kwargs['gridlines'],
                                        logscale=kwargs['logscale'],
                                        figsize=kwargs['cdf_figsize'],
+                                       font_size=kwargs['font_size'],
                                        legend_ncol=kwargs['legend_ncol'],
                                        show_fig=True)
 
@@ -1318,10 +1567,15 @@ class EnvsPlotter:
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            ylogscale=kwargs['logscale'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
 
+        if self.path_to_save is not None:
+            fig1.savefig(self.path_to_save+'/mean_jct_vs_load_scatter.png', bbox_inches='tight')
+            fig2.savefig(self.path_to_save+'/mean_jct_vs_load_complementary_cdf.png', bbox_inches='tight')
+            fig3.savefig(self.path_to_save+'/mean_jct_vs_load_change.png', bbox_inches='tight')
 
         return [fig1, fig2, fig3]
 
@@ -1336,6 +1590,8 @@ class EnvsPlotter:
             kwargs['cdf_figsize'] = (6.4, 4.8)
         if 'scatter_figsize' not in kwargs:
             kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
         if 'logscale' not in kwargs:
@@ -1357,6 +1613,7 @@ class EnvsPlotter:
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            ylogscale=kwargs['logscale'],
                                            plot_line=True,
                                            legend_ncol=kwargs['legend_ncol'], 
@@ -1365,10 +1622,11 @@ class EnvsPlotter:
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
                                        xlabel='p99 JCT ({})'.format(self.time_units), 
-                                       ylabel='Complementary CDF', 
+                                       ylabel='C-CDF', 
                                        gridlines=kwargs['gridlines'], 
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['cdf_figsize'], 
+                                       font_size=kwargs['font_size'],
                                        logscale=kwargs['logscale'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        complementary_cdf=True, 
@@ -1386,8 +1644,14 @@ class EnvsPlotter:
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
+
+        if self.path_to_save is not None:
+            fig1.savefig(self.path_to_save+'/p99_jct_vs_load_scatter.png', bbox_inches='tight')
+            fig2.savefig(self.path_to_save+'/p99_jct_vs_load_complementary_cdf.png', bbox_inches='tight')
+            fig3.savefig(self.path_to_save+'/p99_jct_vs_load_change.png', bbox_inches='tight')
 
         return [fig1, fig2, fig3]
 
@@ -1401,6 +1665,8 @@ class EnvsPlotter:
             kwargs['cdf_figsize'] = (6.4, 4.8)
         if 'scatter_figsize' not in kwargs:
             kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'legend_ncol' not in kwargs:
             kwargs['legend_ncol'] = 1
         if 'logscale' not in kwargs:
@@ -1424,16 +1690,18 @@ class EnvsPlotter:
                                            ylogscale=kwargs['logscale'],
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
                                        xlabel='Max JCT ({})'.format(self.time_units), 
-                                       ylabel='Complementary CDF', 
+                                       ylabel='C-CDF', 
                                        gridlines=kwargs['gridlines'], 
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['cdf_figsize'], 
+                                       font_size=kwargs['font_size'],
                                        logscale=kwargs['logscale'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        complementary_cdf=True, 
@@ -1451,8 +1719,14 @@ class EnvsPlotter:
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
+
+        if self.path_to_save is not None:
+            fig1.savefig(self.path_to_save+'/max_jct_vs_load_scatter.png', bbox_inches='tight')
+            fig2.savefig(self.path_to_save+'/max_jct_vs_load_complementary_cdf.png', bbox_inches='tight')
+            fig3.savefig(self.path_to_save+'/max_jct_vs_load_change.png', bbox_inches='tight')
 
         return [fig1, fig2]
 
@@ -1462,6 +1736,8 @@ class EnvsPlotter:
             kwargs['cdf_figsize'] = (6.4, 4.8)
         if 'scatter_figsize' not in kwargs:
             kwargs['scatter_figsize'] = (6.4, 4.8)
+        if 'font_size' not in kwargs:
+            kwargs['font_size'] = 10
         if 'gridlines' not in kwargs:
             kwargs['gridlines'] = True
         if 'aspect' not in kwargs:
@@ -1483,24 +1759,26 @@ class EnvsPlotter:
         # scatter 
         fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
                                            xlabel='Load', 
-                                           ylabel='Fraction Jobs Dropped', 
+                                           ylabel='Jobs Dropped', 
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
                                            plot_line=True,
                                            ylogscale=kwargs['logscale'],
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
-                                       xlabel='Fraction Jobs Dropped', 
-                                       ylabel='Complementary CDF', 
+                                       xlabel='Jobs Dropped', 
+                                       ylabel='C-CDF', 
                                        complementary_cdf=True, 
                                        gridlines=kwargs['gridlines'], 
                                        logscale=kwargs['logscale'],
                                        aspect=kwargs['aspect'], 
                                        figsize=kwargs['cdf_figsize'], 
+                                       font_size=kwargs['font_size'],
                                        legend_ncol=kwargs['legend_ncol'], 
                                        show_fig=True)
 
@@ -1517,10 +1795,207 @@ class EnvsPlotter:
                                            plot_line=True,
                                            ylogscale=kwargs['logscale'],
                                            figsize=kwargs['scatter_figsize'], 
+                                           font_size=kwargs['font_size'],
                                            legend_ncol=kwargs['legend_ncol'], 
                                            show_fig=True)
 
+        if self.path_to_save is not None:
+            fig1.savefig(self.path_to_save+'/frac_arrived_jobs_dropped_vs_load_scatter.png', bbox_inches='tight')
+            fig2.savefig(self.path_to_save+'/frac_arrived_jobs_dropped_vs_load_complementary_cdf.png', bbox_inches='tight')
+            fig3.savefig(self.path_to_save+'/frac_arrived_jobs_dropped_vs_load_change.png', bbox_inches='tight')
+
         return [fig1, fig2, fig3]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# FUNCS
+def plot_summary_dict_params(summary_dicts, 
+                              dependent_var_name='Random Variable', 
+                              control_var_name='Param', 
+                              loads=[0.1, 0.5, 0.9], 
+                              subjects_to_plot='all',
+                              path_to_save=None,
+                              **kwargs):
+    '''
+    This function is for when you have used envs_plotter to plot individual
+    simulation statistics for various loads, and now wish to do some plots
+    across multiple simulation statistics for cross-simulation analysis. Note
+    that this notebook requires you having set a path_to_save string when
+    calling envs_plotter so that an envs_plotter_ directory contains a
+    summary_dataframe.pkl file.
+
+    summary_dicts should be a dict of dicts. The keys of summary_dicts should
+    be the parameter values of the control_var_name (e.g. for
+    rack_dist_sensitivity benchmark, would be 0.2, 0.4, 0.6, and 0.8 for 20%,
+    40%, 60%, and 80% intra-rack traffic).  The values are the originial
+    summary_dataframe.pkl file which has been loaded as a pandas dataframe and
+    converted to a dict (pf.read_pickle(path_to_summary_dataframe.pkl).to_dict)
+
+    The keys of these individual summary dicts will be e.g. 'Load', 'Subject',
+    'Mean FCT' etc., and the values will be the corresponding values.
+    '''
+    if 'gridlines' not in kwargs:
+        kwargs['gridlines'] = True
+    if 'aspect' not in kwargs:
+        kwargs['aspect'] = 'auto'
+    if 'cdf_figsize' not in kwargs:
+        kwargs['cdf_figsize'] = (6.4, 4.8)
+    if 'scatter_figsize' not in kwargs:
+        kwargs['scatter_figsize'] = (6.4, 4.8)
+    if 'font_size' not in kwargs:
+        kwargs['font_size'] = 10
+    if 'legend_ncol' not in kwargs:
+        kwargs['legend_ncol'] = 1
+    if 'logscale' not in kwargs:
+        kwargs['logscale'] = False
+    if 'use_scientific_notation' not in kwargs:
+        kwargs['use_scientific_notation'] = False
+    if 'replace_summary_dict_dependent_var_name' not in kwargs: # useful to replace to e.g. replace Throughput Frac with Throughput, but less useful if want to keep e.g. Mean FCT units
+        kwargs['replace_summary_dict_dependent_var_name'] = False
+
+    all_subjects = np.unique(list(summary_dicts[list(summary_dicts.keys())[0]]['Subject'].values()))
+    ghost_subjects = [] # track which (if any) subjects not plotted so retain consistent plot class colours
+    if type(subjects_to_plot) is str:
+        if subjects_to_plot == 'all':
+            subjects_to_plot = all_subjects
+             # no ghost subjects needed to keep same class plot colours
+    else:
+        # check if any subjects not included, add to ghost_subjects if not included
+        for subject in all_subjects:
+            if subject not in subjects_to_plot:
+                ghost_subjects.append(subject)
+    
+    for load in loads:
+        # new plot
+    
+        # num entries for this load
+        num_entries = list(summary_dicts[list(summary_dicts.keys())[0]]['Load'].values()).count(load)
+        # index where entries for this load start
+        starting_idx = list(summary_dicts[list(summary_dicts.keys())[0]]['Load'].values()).index(load)
+
+        # get rand var key
+        rand_var_key = None
+        for key in summary_dicts[list(summary_dicts.keys())[0]].keys():
+            if dependent_var_name in key:
+                rand_var_key = key
+                break
+        if rand_var_key is None:
+            raise Exception('Unable to find {} in {}'.format(dependent_var_name, list(summary_dicts.keys())[0]))
+
+        # get subjects and rand vars
+        subjects = []
+        rand_vars = []
+        params = []
+        for param in list(summary_dicts.keys()):
+            all_subjects = list(summary_dicts[param]['Subject'].values())
+            all_rand_vars = list(summary_dicts[param][rand_var_key].values())
+            for idx in range(starting_idx, starting_idx+num_entries):
+                subject, rand_var = all_subjects[idx], all_rand_vars[idx]
+                if subject in subjects_to_plot:
+                    rand_vars.append(all_rand_vars[idx])
+                    subjects.append(all_subjects[idx])
+                    params.append(param)
+
+        # organise into plot_dict
+        plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in np.unique(subjects)}
+        for subject, rand_var, param in zip(subjects, rand_vars, params):
+            plot_dict[subject]['x_values'].append(float(param))
+            plot_dict[subject]['y_values'].append(rand_var)
+            plot_dict[subject]['rand_vars'].append(rand_var)
+        
+        
+        if kwargs['replace_summary_dict_dependent_var_name']:
+            rand_var_key = dependent_var_name
+
+        # scatter
+        fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel=control_var_name, 
+                                           # ylabel='Load {} '.format(load)+rand_var_key,
+                                           ylabel=rand_var_key,
+                                           title='Load {}'.format(load),
+                                           ghost_classes=ghost_subjects,
+                                           plot_line=True,
+                                           aspect=kwargs['aspect'],
+                                           gridlines=kwargs['gridlines'],
+                                           use_scientific_notation_yaxis=kwargs['use_scientific_notation'],
+                                           figsize=kwargs['scatter_figsize'],
+                                           font_size=kwargs['font_size'],
+                                           ylogscale=kwargs['logscale'],
+                                           legend_ncol=kwargs['legend_ncol'],
+                                           show_fig=True)
+
+        # complementary cdf
+        fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
+                                       xlabel=rand_var_key, 
+                                       ylabel='C-CDF', 
+                                       title='Load {}'.format(load),
+                                       ghost_classes=ghost_subjects,
+                                       complementary_cdf=True, 
+                                       aspect=kwargs['aspect'],
+                                       use_scientific_notation=kwargs['use_scientific_notation'],
+                                       gridlines=kwargs['gridlines'],
+                                       logscale=kwargs['logscale'],
+                                       figsize=kwargs['cdf_figsize'],
+                                       font_size=kwargs['font_size'],
+                                       legend_ncol=kwargs['legend_ncol'],
+                                       show_fig=True)
+
+        # % change
+        for key in plot_dict.keys():
+            init_idx = np.argmin(plot_dict[key]['x_values'])
+            init_var = plot_dict[key]['y_values'][init_idx]
+            plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+        fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
+                                           xlabel=control_var_name, 
+                                           # ylabel='Load {} '.format(load)+'\u0394F {}'.format(dependent_var_name), 
+                                           ylabel='\u0394F {}'.format(dependent_var_name), 
+                                           title='Load {}'.format(load),
+                                           ghost_classes=ghost_subjects,
+                                           gridlines=kwargs['gridlines'], 
+                                           aspect=kwargs['aspect'], 
+                                           plot_line=True,
+                                           figsize=kwargs['scatter_figsize'], 
+                                           use_scientific_notation_yaxis=False,
+                                           font_size=kwargs['font_size'],
+                                           ylogscale=False,
+                                           legend_ncol=kwargs['legend_ncol'], 
+                                           show_fig=True)
+
+        if path_to_save is not None:
+            fig1.savefig(path_to_save+'/{}_vs_{}_load_{}_scatter.png'.format(rand_var_key, control_var_name, load), bbox_inches='tight')
+            fig2.savefig(path_to_save+'/{}_vs_{}_load_{}_complementary_cdf.png'.format(rand_var_key, control_var_name, load), bbox_inches='tight')
+            fig3.savefig(path_to_save+'/{}_vs_{}_load_{}_change.png'.format(rand_var_key, control_var_name, load), bbox_inches='tight')
+
+
+    return [fig1, fig2, fig3]
+
+
 
 
 

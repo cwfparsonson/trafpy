@@ -179,7 +179,8 @@ def gen_uniform_val_dist(min_val,
                                        rand_var_name=rand_var_name,
                                        prob_rand_var_less_than=prob_rand_var_less_than,
                                        num_bins=num_bins,
-                                       show_fig=show_fig)
+                                       show_fig=show_fig,
+                                       print_characteristics=False)
         if return_data:
             return prob_dist, rand_vars, fig
         else:
@@ -305,7 +306,8 @@ def gen_skew_data(location,
                              logscale=logscale,
                              num_bins=num_bins,
                              transparent=transparent,
-                             rand_var_name=rand_var_name)
+                             rand_var_name=rand_var_name,
+                             print_characteristics=False)
 
     return skew_data
 
@@ -558,6 +560,7 @@ def gen_multimodal_val_dist(min_val,
                                        rand_var_name=rand_var_name,
                                        prob_rand_var_less_than=prob_rand_var_less_than,
                                        num_bins=num_bins,
+                                       print_characteristics=False,
                                        show_fig=show_fig)
         if return_data:
             return prob_dist, rand_vars, fig
@@ -571,7 +574,17 @@ def gen_multimodal_val_dist(min_val,
             return prob_dist
 
 
-def gen_skewnorm_data(a, loc, scale, min_val, max_val, num_samples):
+def gen_skewnorm_data(a, 
+                      loc, 
+                      scale, 
+                      num_samples,
+                      min_val=None, 
+                      max_val=None, 
+                      round_to_nearest=None,
+                      num_decimal_places=2,
+                      interactive_params=None,
+                      logscale=False,
+                      transparent=False):
     '''Generates skew data.
 
     Args:
@@ -591,14 +604,51 @@ def gen_skewnorm_data(a, loc, scale, min_val, max_val, num_samples):
 
     '''
     data = skewnorm(a, loc, scale).rvs(num_samples)
-    for data_iter in range(len(data)):
-        counter = 0
-        while data[data_iter] < min_val or data[data_iter] > max_val:
-            data[data_iter] = skewnorm(a, loc, scale).rvs(size=1)
-            counter += 1
-            if counter > 10000:
-                sys.exit('scale too high for required max-min range')
-    return list(data.astype(float))
+    if min_val is not None or max_val is not None:
+        for data_iter in range(len(data)):
+            counter = 0
+            if min_val is not None and max_val is not None:
+                while data[data_iter] < min_val or data[data_iter] > max_val:
+                    data[data_iter] = skewnorm(a, loc, scale).rvs(size=1)
+                    counter += 1
+                    if counter > 10000:
+                        sys.exit('scale too high for required max-min range')
+            elif min_val is None and max_val is not None:
+                while data[data_iter] > max_val:
+                    data[data_iter] = skewnorm(a, loc, scale).rvs(size=1)
+                    counter += 1
+                    if counter > 10000:
+                        sys.exit('scale too high for required max-min range')
+            elif min_val is not None and max_val is None:
+                while data[data_iter] < min_val:
+                    data[data_iter] = skewnorm(a, loc, scale).rvs(size=1)
+                    counter += 1
+                    if counter > 10000:
+                        sys.exit('scale too high for required max-min range')
+            else:
+                raise Exception('Bug')
+
+    rand_vars = list(data.astype(float))
+
+    if round_to_nearest is not None:
+        rand_vars = [x_round(val, round_to_nearest, num_decimal_places, min_val=min_val) for val in rand_vars]
+
+    if interactive_params is not None:
+        # gen interactive plot
+        data_description = stats.describe(rand_vars) 
+        print('Characteristics of generated distribution:\n{}'.format(data_description))
+        
+        plot_dists.plot_val_dist(rand_vars, 
+                                 xlim=interactive_params['xlim'], 
+                                 logscale=logscale,
+                                 num_bins=interactive_params['num_bins'],
+                                 transparent=transparent,
+                                 dist_fit_line=None,
+                                 rand_var_name=interactive_params['rand_var_name'],
+                                 print_characteristics=False,
+                                 prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
+
+    return rand_vars
 
 
 def gen_rand_vars_from_discretised_dist(unique_vars, 
@@ -609,6 +659,8 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                         # difference_filter_threshold=0,
                                         show_fig=False,
                                         xlabel='Random Variable',
+                                        font_size=20,
+                                        figsize=(4,3),
                                         marker_size=15,
                                         logscale=False,
                                         path_to_save=None):
@@ -644,50 +696,6 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
         numpy array: Random variable values sampled from dist.
 
     '''
-    # if deterministic_factor is not None:
-        # # deterministic sampling
-        # if type(deterministic_factor) is not int and type(deterministic_factor) is not float:
-            # raise Exception('deterministic_factor must be int or float, but is {}'.format(type(deterministic_factor)))
-        # if difference_filter_threshold < 0:
-            # raise Exception('Must have difference_filter_threshold >= 0, but is {}'.format(difference_filter_threshold))
-
-        # sorted_indices = np.argsort(unique_vars)
-        # sorted_unique_vars = np.asarray(unique_vars)[sorted_indices]
-        # sorted_probabilities = np.asarray(probabilities)[sorted_indices]
-        # dummy_unique_vars = [sorted_unique_vars[0]]
-        # dummy_probabilities = [sorted_probabilities[0]]
-        # for idx in range(1, len(sorted_unique_vars)):
-            # prev, curr = sorted_unique_vars[idx-1], sorted_unique_vars[idx]
-            # if curr > prev*(1+difference_filter_threshold):
-                # # do not filter this rand var
-                # dummy_unique_vars.append(curr)
-                # dummy_probabilities.append(sorted_probabilities[idx])
-            # else:
-                # # has not exceeded difference threshold, filter this rand var
-                # pass
-
-        # lowest_prob = min(probabilities)
-        # min_num_demands = math.ceil((1/lowest_prob)*deterministic_factor)
-        # num_demands = max(min_num_demands, num_demands)
-        # sampled_vars = []
-        # for var, prob in zip(dummy_unique_vars, dummy_probabilities):
-            # for _ in range(math.ceil(prob*num_demands)):
-                # sampled_vars.append(var)
-
-        # # shuffle
-        # sampled_vars = np.asarray(sampled_vars)
-        # np.random.shuffle(sampled_vars)
-        # # check similarity
-        # sampled_unique_vars, pmf = gen_discrete_prob_dist(sampled_vars, 
-                                                          # unique_vars=unique_vars)
-        # p, q = list(probabilities), list(pmf)
-        # distance = tools.compute_jensen_shannon_distance(p, q)
-        # print('deterministic num demands: {} | distance: {}'.format(len(sampled_vars), distance))
-
-    # else:
-        # # random sampling here
-        # pass
-
     # random sampling
     if jensen_shannon_distance_threshold is not None:
         if jensen_shannon_distance_threshold <= 0 or jensen_shannon_distance_threshold > 1:
@@ -728,74 +736,160 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                                           unique_vars=unique_vars)
 
     if show_fig:
+        print('Num demands needed for distance {}: {}'.format(jensen_shannon_distance_threshold, num_demands_list[-1]))
+
         # dist comparison
-        plot_dict = {'original': {'x_values': unique_vars, 'y_values': probabilities},
-                     'sampled': {'x_values': sampled_unique_vars, 'y_values': pmf}}
+        plot_dict = {'Original': {'x_values': unique_vars, 'y_values': probabilities},
+                     'Sampled': {'x_values': sampled_unique_vars, 'y_values': pmf}}
         _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
                                        xlabel=xlabel,
                                        ylabel='Probability',
+                                       figsize=figsize,
+                                       font_size=font_size,
                                        logscale=logscale,
                                        marker_style='+',
                                        alpha=1,
                                        marker_size=marker_size,
+                                       use_scientific_notation_yaxis=True,
+                                       use_scientific_notation_xaxis=True,
                                        show_fig=True)
 
-        plot_dict = {'original': {'x_values': unique_vars, 'y_values': probabilities}}
+        plot_dict = {'Original': {'x_values': unique_vars, 'y_values': probabilities}}
         _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
                                        xlabel=xlabel,
                                        ylabel='Probability',
+                                       ghost_classes=['Sampled'],
+                                       figsize=figsize,
+                                       font_size=font_size,
                                        logscale=logscale,
                                        marker_style='+',
                                        alpha=1,
                                        marker_size=marker_size,
+                                       use_scientific_notation_yaxis=True,
+                                       use_scientific_notation_xaxis=True,
                                        show_fig=True)
 
-        plot_dict = {'sampled': {'x_values': sampled_unique_vars, 'y_values': pmf}}
+        plot_dict = {'Sampled': {'x_values': sampled_unique_vars, 'y_values': pmf}}
         _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
                                        xlabel=xlabel,
                                        ylabel='Probability',
+                                       ghost_classes=['Original'],
+                                       figsize=figsize,
+                                       font_size=font_size,
                                        logscale=logscale,
                                        marker_style='+',
                                        alpha=1,
                                        marker_size=marker_size,
+                                       use_scientific_notation_yaxis=True,
+                                       use_scientific_notation_xaxis=True,
                                        show_fig=True)
 
         # distance vs. num demands
         if jensen_shannon_distance_threshold is not None:
-            _ = plt.figure()
-            plt.scatter(num_demands_list,
-                        distance_list)
-            plt.xlabel('Number of Demands')
-            plt.ylabel('Jensen-Shannon Distance')
-            plt.show()
+            plot_dict = {'sampled': {'x_values': num_demands_list, 'y_values': distance_list}}
+            _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
+                                           xlabel='Demands',
+                                           ylabel='$\sqrt{JSD}$',
+                                           ylim=[0,1],
+                                           ghost_classes=['Sampled'],
+                                           figsize=figsize,
+                                           font_size=font_size,
+                                           logscale=logscale,
+                                           marker_style='+',
+                                           plot_legend=False,
+                                           alpha=1,
+                                           marker_size=marker_size,
+                                           use_scientific_notation_xaxis=True,
+                                           show_fig=True)
 
-            _ = plt.figure()
-            plt.scatter(num_demands_list,
-                        min_list)
-            plt.xlabel('Number of Demands')
-            plt.ylabel('Min {}'.format(xlabel))
-            plt.show()
 
-            _ = plt.figure()
-            plt.scatter(num_demands_list,
-                        max_list)
-            plt.xlabel('Number of Demands')
-            plt.ylabel('Max {}'.format(xlabel))
-            plt.show()
+            # _ = plt.figure()
+            # plt.scatter(num_demands_list,
+                        # min_list)
+            # plt.xlabel('Number of Demands')
+            # plt.ylabel('Min {}'.format(xlabel))
+            # plt.show()
+            plot_dict = {'sampled': {'x_values': num_demands_list, 'y_values': min_list}}
+            _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
+                                           xlabel='Demands',
+                                           ylabel='Min {}'.format(xlabel),
+                                           ghost_classes=['Sampled'],
+                                           figsize=figsize,
+                                           font_size=font_size,
+                                           logscale=logscale,
+                                           marker_style='+',
+                                           plot_legend=False,
+                                           alpha=1,
+                                           marker_size=marker_size,
+                                           use_scientific_notation_yaxis=True,
+                                           use_scientific_notation_xaxis=True,
+                                           show_fig=True)
 
-            _ = plt.figure()
-            plt.scatter(num_demands_list,
-                        mean_list)
-            plt.xlabel('Number of Demands')
-            plt.ylabel('Mean {}'.format(xlabel))
-            plt.show()
+            # _ = plt.figure()
+            # plt.scatter(num_demands_list,
+                        # max_list)
+            # plt.xlabel('Number of Demands')
+            # plt.ylabel('Max {}'.format(xlabel))
+            # plt.show()
+            plot_dict = {'sampled': {'x_values': num_demands_list, 'y_values': max_list}}
+            _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
+                                           xlabel='Demands',
+                                           ylabel='Max {}'.format(xlabel),
+                                           ghost_classes=['Sampled'],
+                                           figsize=figsize,
+                                           font_size=font_size,
+                                           logscale=logscale,
+                                           marker_style='+',
+                                           plot_legend=False,
+                                           alpha=1,
+                                           marker_size=marker_size,
+                                           use_scientific_notation_yaxis=True,
+                                           use_scientific_notation_xaxis=True,
+                                           show_fig=True)
 
-            _ = plt.figure()
-            plt.scatter(num_demands_list,
-                        std_list)
-            plt.xlabel('Number of Demands')
-            plt.ylabel('Std {}'.format(xlabel))
-            plt.show()
+            # _ = plt.figure()
+            # plt.scatter(num_demands_list,
+                        # mean_list)
+            # plt.xlabel('Number of Demands')
+            # plt.ylabel('Mean {}'.format(xlabel))
+            # plt.show()
+            plot_dict = {'sampled': {'x_values': num_demands_list, 'y_values': mean_list}}
+            _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
+                                           xlabel='Demands',
+                                           ylabel='Mean {}'.format(xlabel),
+                                           ghost_classes=['Sampled'],
+                                           figsize=figsize,
+                                           font_size=font_size,
+                                           logscale=logscale,
+                                           marker_style='+',
+                                           plot_legend=False,
+                                           alpha=1,
+                                           marker_size=marker_size,
+                                           use_scientific_notation_yaxis=True,
+                                           use_scientific_notation_xaxis=True,
+                                           show_fig=True)
+
+            # _ = plt.figure()
+            # plt.scatter(num_demands_list,
+                        # std_list)
+            # plt.xlabel('Number of Demands')
+            # plt.ylabel('Std {}'.format(xlabel))
+            # plt.show()
+            plot_dict = {'sampled': {'x_values': num_demands_list, 'y_values': std_list}}
+            _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
+                                           xlabel='Demands',
+                                           ylabel='Std {}'.format(xlabel),
+                                           ghost_classes=['Sampled'],
+                                           figsize=figsize,
+                                           font_size=font_size,
+                                           logscale=logscale,
+                                           marker_style='+',
+                                           plot_legend=False,
+                                           alpha=1,
+                                           marker_size=marker_size,
+                                           use_scientific_notation_yaxis=True,
+                                           use_scientific_notation_xaxis=True,
+                                           show_fig=True)
 
     if path_to_save is not None:
         tools.pickle_data(path_to_save, sampled_vars)
@@ -998,6 +1092,7 @@ def gen_exponential_dist(_beta,
                                  transparent=transparent,
                                  dist_fit_line='exponential', 
                                  rand_var_name=interactive_params['rand_var_name'],
+                                 print_characteristics=False,
                                  prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
 
     return rand_vars
@@ -1096,6 +1191,7 @@ def gen_lognormal_dist(_mu,
                                  transparent=transparent,
                                  dist_fit_line='lognormal',
                                  rand_var_name=interactive_params['rand_var_name'],
+                                 print_characteristics=False,
                                  prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
     return rand_vars
 
@@ -1177,6 +1273,7 @@ def gen_normal_dist(loc,
                                  transparent=transparent,
                                  dist_fit_line='normal', 
                                  rand_var_name=interactive_params['rand_var_name'],
+                                 print_characteristics=False,
                                  prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
     return rand_vars
 
@@ -1272,6 +1369,7 @@ def gen_pareto_dist(_alpha,
                                  transparent=transparent,
                                  dist_fit_line='pareto', 
                                  rand_var_name=interactive_params['rand_var_name'],
+                                 print_characteristics=False,
                                  prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
     return rand_vars
 
@@ -1381,6 +1479,7 @@ def gen_weibull_dist(_alpha,
                                  transparent=transparent,
                                  dist_fit_line='weibull', 
                                  rand_var_name=interactive_params['rand_var_name'],
+                                 print_characteristics=False,
                                  prob_rand_var_less_than=interactive_params['prob_rand_var_less_than'])
     return rand_vars
 
@@ -1598,6 +1697,36 @@ def gen_named_val_dist(dist,
                                         min_val=min_val,
                                         max_val=max_val)
 
+    elif dist == 'skewnorm':
+        if interactive_plot:
+            _a_skewnorm_widget = widgets.FloatText(description='_a:',value=0.0,step=0.1,disabled=False)
+            _loc_skewnorm_widget = widgets.FloatText(description='_loc:',value=50.0,step=0.1,disabled=False)
+            _scale_skewnorm_widget = widgets.FloatText(description='_scale:',value=10.0,step=0.1,disabled=False)
+            rand_vars = interactive(gen_skewnorm_data,
+                                    {'manual': True},
+                                    a=_a_skewnorm_widget,
+                                    loc=_loc_skewnorm_widget,
+                                    scale=_scale_skewnorm_widget,
+                                    num_samples=fixed(size),
+                                    round_to_nearest=fixed(round_to_nearest),
+                                    num_decimal_places=fixed(num_decimal_places),
+                                    min_val=fixed(min_val),
+                                    max_val=fixed(max_val),
+                                    interactive_params=fixed({'xlim': xlim, 
+                                                              'rand_var_name': rand_var_name,
+                                                              'prob_rand_var_less_than': prob_rand_var_less_than,
+                                                              'num_bins': num_bins}))
+        else:
+            rand_vars = gen_skewnorm_data(a=params['_a'],
+                                          loc=params['_loc'],
+                                          scale=params['_scale'],
+                                          num_samples=size,
+                                          round_to_nearest=round_to_nearest,
+                                          num_decimal_places=num_decimal_places,
+                                          min_val=min_val,
+                                          max_val=max_val)
+
+
 
     else:
         raise Exception('Must provide valid name distribution to use')
@@ -1625,6 +1754,7 @@ def gen_named_val_dist(dist,
                                            num_bins=num_bins,
                                            rand_var_name=rand_var_name,
                                            prob_rand_var_less_than=prob_rand_var_less_than,
+                                           print_characteristics=False,
                                            show_fig=show_fig)
             if return_data:
                 return prob_dist, rand_vars, fig

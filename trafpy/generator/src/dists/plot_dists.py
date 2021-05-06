@@ -10,6 +10,7 @@ np.set_printoptions(threshold=np.inf)
 import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib import colors
+from matplotlib.ticker import ScalarFormatter
 import seaborn as sns
 from statsmodels.distributions.empirical_distribution import ECDF
 from scipy import stats
@@ -21,13 +22,24 @@ import json
 # warnings.filterwarnings('error')
 
 
+def get_plot_params_config(font_size):
+    params = {'legend.fontsize': font_size*0.75,
+              'axes.labelsize': font_size,
+              'axes.titlesize': font_size,
+              'xtick.labelsize': font_size*0.75,
+              'ytick.labelsize': font_size*0.75}
+    return params
+
+
 
 def plot_node_dist(node_dist, 
                    eps=None,
                    node_to_index_dict=None,
                    add_labels=False, 
                    add_ticks=False,
-                   cbar_label='Fraction',
+                   cbar_label='%',
+                   conv_to_percentage=True,
+                   plot_chord=True,
                    chord_edge_width_range=[1, 25],
                    chord_edge_display_threshold=0.3,
                    font_size=10,
@@ -56,6 +68,8 @@ def plot_node_dist(node_dist,
         matplotlib.figure.Figure: node distribution plotted as a 2d matrix. 
 
     '''
+    plt.rcParams.update(get_plot_params_config(font_size=font_size))
+
     # print(node_dist)
     if type(node_dist[0]) == str and eps is None:
         eps = list(set(node_dist))
@@ -63,6 +77,12 @@ def plot_node_dist(node_dist,
         # assert eps is not None, 'must provide list of end points as arg if node_dist contains no endpoint labels.'
     else:
         eps = [str(i) for i in range(np.array(node_dist).shape[0])]
+
+    if conv_to_percentage:
+        # conv node dist to percentage
+        for row in node_dist:
+            for el in row:
+                el *= 100
 
     if node_to_index_dict is None:
         _,_,node_to_index_dict,_=tools.get_network_params(eps) 
@@ -84,9 +104,9 @@ def plot_node_dist(node_dist,
                      bbox = dict(boxstyle='round', 
                      facecolor='white', 
                      edgecolor='0.3'))
-    plt.xlabel('Destination (Node #)', fontsize=font_size)
-    plt.ylabel('Source (Node #)', fontsize=font_size)
-    cbar.ax.set_ylabel(cbar_label, rotation=270, x=0.5)
+    plt.xlabel('Dst')
+    plt.ylabel('Src')
+    cbar.ax.set_ylabel(cbar_label, rotation=270, x=0.5, fontsize=font_size*0.75)
     if add_ticks:
         plt.xticks([node_to_index_dict[node] for node in eps])
         plt.yticks([node_to_index_dict[node] for node in eps])
@@ -97,61 +117,62 @@ def plot_node_dist(node_dist,
 
 
     # 2. PLOT CHORD DIAGRAM
-    probs = node_dists.assign_matrix_to_probs(eps, node_dist)
-    graph = nx.Graph()
-    node_to_load = {}
-    _, _, node_to_index, index_to_node = tools.get_network_params(eps)
-    max_pair_load = max(list(probs.values()))
-    for pair in probs.keys():
-        pair_load = probs[pair]
-        p = json.loads(pair)
-        src, dst = str(p[0]), str(p[1])
-        if src not in node_to_load:
-            node_to_load[src] = pair_load
-        else:
-            node_to_load[src] += pair_load
-        if dst not in node_to_load:
-            node_to_load[dst] = pair_load
-        else:
-            node_to_load[dst] += pair_load
-        if pair_load > chord_edge_display_threshold*max_pair_load:
-            graph.add_weighted_edges_from([(src, dst, pair_load)])
-        else:
-            graph.add_nodes_from([src, dst])
-
-    nodelist = [n for n in graph.nodes]
-    try:
-        ws = _rescale([float(graph[u][v]['weight']) for u, v in graph.edges], newmin=chord_edge_width_range[0], newmax=chord_edge_width_range[1])
-        plot_chord = True
-    except ZeroDivisionError:
-        print('Src-dst edge weights in chord diagram are all the same, leading to 0 rescaled values. Decrease chord_edge_display_threshold to ensure a range of edge values are included in the chord diagram.')
-        plot_chord = False
-
     if plot_chord:
-        edgelist = [(str(u),str(v),{"weight":ws.pop(0)}) for u,v in graph.edges]
+        probs = node_dists.assign_matrix_to_probs(eps, node_dist)
+        graph = nx.Graph()
+        node_to_load = {}
+        _, _, node_to_index, index_to_node = tools.get_network_params(eps)
+        max_pair_load = max(list(probs.values()))
+        for pair in probs.keys():
+            pair_load = probs[pair]
+            p = json.loads(pair)
+            src, dst = str(p[0]), str(p[1])
+            if src not in node_to_load:
+                node_to_load[src] = pair_load
+            else:
+                node_to_load[src] += pair_load
+            if dst not in node_to_load:
+                node_to_load[dst] = pair_load
+            else:
+                node_to_load[dst] += pair_load
+            if pair_load > chord_edge_display_threshold*max_pair_load:
+                graph.add_weighted_edges_from([(src, dst, pair_load)])
+            else:
+                graph.add_nodes_from([src, dst])
 
-        graph2 = nx.Graph()
-        graph2.add_nodes_from(nodelist)
-        graph2.add_edges_from(edgelist)
+        nodelist = [n for n in graph.nodes]
+        try:
+            ws = _rescale([float(graph[u][v]['weight']) for u, v in graph.edges], newmin=chord_edge_width_range[0], newmax=chord_edge_width_range[1])
+            plot_chord = True
+        except ZeroDivisionError:
+            print('Src-dst edge weights in chord diagram are all the same, leading to 0 rescaled values. Decrease chord_edge_display_threshold to ensure a range of edge values are included in the chord diagram.')
+            plot_chord = False
 
-        for v in graph2:
-            graph2.nodes[v]['load'] = node_to_load[v]
+        if plot_chord:
+            edgelist = [(str(u),str(v),{"weight":ws.pop(0)}) for u,v in graph.edges]
 
-        plt.set_cmap('YlOrBr')
-        plt.style.use('default')
-        chord_diagram = CircosPlot(graph2, 
-                                   node_labels=True,
-                                   edge_width='weight',
-                                   figsize=figsize,
-                                   # edge_color='weight',
-                                   # node_size='load',
-                                   node_grouping='load',
-                                   node_color='load')
-        chord_diagram.draw()
-        figs.append(chord_diagram)
-    else:
-        # do not plot chord
-        pass
+            graph2 = nx.Graph()
+            graph2.add_nodes_from(nodelist)
+            graph2.add_edges_from(edgelist)
+
+            for v in graph2:
+                graph2.nodes[v]['load'] = node_to_load[v]
+
+            plt.set_cmap('YlOrBr')
+            plt.style.use('default')
+            chord_diagram = CircosPlot(graph2, 
+                                       node_labels=True,
+                                       edge_width='weight',
+                                       figsize=figsize,
+                                       # edge_color='weight',
+                                       # node_size='load',
+                                       node_grouping='load',
+                                       node_color='load')
+            chord_diagram.draw()
+            figs.append(chord_diagram)
+        else:
+            # do not plot chord
+            pass
     
     if show_fig:
         plt.show()
@@ -187,19 +208,21 @@ def plot_dict_scatter(_dict,
     random variable values, _dict values are their respective probabilities of
     occurring.
     '''
+
     fig = plt.figure(figsize=figsize)
     plt.style.use(plot_style)
+    plt.rcParams.update(get_plot_params_config(font_size=font_size))
     if logscale:
         ax = plt.gca()
         ax.set_xscale('log')
 
     plt.scatter(list(_dict.keys()), list(_dict.values()), s=marker_size)
-    plt.xlabel(rand_var_name, fontsize=font_size)
-    plt.ylabel(ylabel, fontsize=font_size)
+    plt.xlabel(rand_var_name)
+    plt.ylabel(ylabel)
 
     if gridlines:
         plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
-    if aspect is not 'auto':
+    if aspect != 'auto':
         plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
 
     if xlim is not None:
@@ -218,7 +241,7 @@ def plot_val_dist(rand_vars,
                   dist_fit_line=None, 
                   xlim=None, 
                   logscale=False,
-                  transparent=False,
+                  transparent=True,
                   rand_var_name='Random Variable', 
                   prob_rand_var_less_than=None,
                   num_bins=0,
@@ -230,6 +253,8 @@ def plot_val_dist(rand_vars,
                   figsize=(12.4, 2),
                   aspect='auto',
                   plot_style='default',
+                  use_scientific_notation_yaxis=False,
+                  print_characteristics=True,
                   show_fig=False):
     '''Plots (1) probability distribution and (2) cumulative distribution function.
     
@@ -250,6 +275,8 @@ def plot_val_dist(rand_vars,
             or vertically (False).
         fig_scale (int/float): Scale by which to multiply figure size.
         font_size (int): Size of axes ticks and titles.
+        print_characteristics (bool): Whether to print characteristics of rand_vars
+            distribution.
         show_fig (bool): Whether or not to plot and show fig. If True, will
             return and display fig.
     
@@ -257,13 +284,18 @@ def plot_val_dist(rand_vars,
         matplotlib.figure.Figure: node distribution plotted as a 2d matrix. 
 
     '''
+    plt.rcParams.update(get_plot_params_config(font_size=font_size))
+
+    if print_characteristics:
+        description = stats.describe(rand_vars)
+        print('Characteristics of {} distribution: {}'.format(rand_var_name, description))
 
     if num_bins==0:
         histo, bins = np.histogram(rand_vars,density=True,bins='auto')
     else:
         histo, bins = np.histogram(rand_vars,density=True,bins=num_bins)
     if transparent:
-        alpha=0.30
+        alpha=0.50
     else:
         alpha=1.0
     # HISTOGRAM
@@ -271,10 +303,12 @@ def plot_val_dist(rand_vars,
         # fig = plt.figure(figsize=(15*fig_scale,5*fig_scale))
         fig = plt.figure(figsize=figsize)
         plt.subplot(1,2,1)
+        plt.xlabel(rand_var_name)
     else:
         # fig = plt.figure(figsize=(10*fig_scale,15*fig_scale))
         fig = plt.figure(figsize=figsize)
-        plt.subplot(2,1,1)
+        ax1 = plt.subplot(2,1,1)
+        plt.setp(ax1.get_xticklabels(), visible=False)
     plt.style.use(plot_style)
     if logscale:
         ax = plt.gca()
@@ -286,18 +320,20 @@ def plot_val_dist(rand_vars,
     else:
         plotbins = bins
     
-
-
     plt.hist(rand_vars,
              bins=plotbins,
              align='mid',
              color='tab:red',
              edgecolor='tab:red',
              alpha=alpha)
+    if use_scientific_notation_yaxis:
+        plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+    else:
+        plt.ticklabel_format(axis="y", style="plain")
 
     if gridlines:
         plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
-    if aspect is not 'auto':
+    if aspect != 'auto':
         plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
     
     # can't have 0 vals for fitting
@@ -319,14 +355,14 @@ def plot_val_dist(rand_vars,
         shape, loc, scale = stats.pareto.fit(rand_vars, floc=0)
         y = stats.pareto.pdf(plotbins, shape, loc, scale)
 
-    plt.xlabel(rand_var_name, fontsize=font_size)
-    plt.ylabel('Counts', fontsize=font_size)
+    plt.ylabel('Counts')
     try:
         plt.xlim(xlim)
     except NameError:
         pass
     
     if plot_cdf:
+        plt.rcParams.update(get_plot_params_config(font_size=font_size))
         # CDF
         # empirical hist
         if plot_horizontally:
@@ -349,8 +385,8 @@ def plot_val_dist(rand_vars,
         # theoretical line
         ecdf = ECDF(rand_vars)
         plt.plot(ecdf.x, ecdf.y, alpha=0.5, color='tab:blue')
-        plt.xlabel(rand_var_name, fontsize=font_size)
-        plt.ylabel('CDF', fontsize=font_size)
+        plt.xlabel(rand_var_name)
+        plt.ylabel('CDF')
         try:
             plt.xlim(xlim)
         except NameError:
@@ -359,7 +395,7 @@ def plot_val_dist(rand_vars,
 
         if gridlines:
             plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
-        if aspect is not 'auto':
+        if aspect != 'auto':
             plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
     
     # PRINT ANY EXTRA ANALYSIS OF DISTRIBUTION
@@ -380,23 +416,32 @@ def plot_val_bar(x_values,
                  ylabel='Random Variable',
                  ylim=None,
                  xlabel=None,
-                 plot_x_ticks=True,
-                 bar_width=0.35,
+                 plot_all_x_ticks=True,
+                 bar_width=0.8,
                  gridlines=True,
                  aspect='auto',
                  figsize=(6.4, 4.8),
+                 font_size=10,
+                 alpha=0.5,
                  plot_style='default',
                  show_fig=False):
     '''Plots standard bar chart.'''
+
     x_pos = [x for x in range(len(x_values))]
 
     fig = plt.figure(figsize=figsize)
     plt.style.use(plot_style)
+    plt.rcParams.update(get_plot_params_config(font_size=font_size))
 
-    plt.bar(x_pos, y_values, bar_width)
+    plt.bar(x_pos, 
+            y_values, 
+            bar_width, 
+            alpha=alpha,
+            color='tab:red',
+            edgecolor='tab:red')
 
     plt.ylabel(ylabel)
-    if plot_x_ticks:
+    if plot_all_x_ticks:
         plt.xticks(x_pos, (x_val for x_val in x_values))
     if xlabel is not None:
         plt.xlabel(xlabel)
@@ -406,9 +451,11 @@ def plot_val_bar(x_values,
     except NameError:
         pass
 
+    # fig.autofmt_xdate()
+
     if gridlines:
         plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
-    if aspect is not 'auto':
+    if aspect != 'auto':
         plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
 
     if show_fig:
@@ -461,8 +508,10 @@ def plot_radar(plot_dict,
         n_ordinate_levels (int): Number of gridlines to plot for the radar plot.
 
     '''
+
     fig = plt.figure(figsize=figsize)
     plt.style.use(plot_style)
+    plt.rcParams.update(get_plot_params_config(font_size=font_size))
 
     rand_var_names = list(plot_dict.keys())
 
@@ -579,6 +628,7 @@ def plot_val_line(plot_dict={},
                  gridlines=True,
                  aspect='auto',
                  plot_style='default',
+                 font_size=10,
                  figsize=(6.4, 4.8),
                  plot_legend=True,
                  legend_ncol=1,
@@ -589,14 +639,16 @@ def plot_val_line(plot_dict={},
                 'class_2': {'x_values': [0.1, 0.2, 0.3], 'y_values': [80, 60, 20]}}
 
     '''
+
     keys = list(plot_dict.keys())
 
     fig = plt.figure(figsize=figsize)
     plt.style.use(plot_style)
+    plt.rcParams.update(get_plot_params_config(font_size=font_size))
 
     class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
     for _class in sorted(plot_dict.keys()):
-        plt.plot(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], c=next(class_colours), linewidth=linewidth, alpha=alpha, label=str(_class))
+        plt.plot(plot_dict[_class]['x_values'], plot_dict[_class]['y_values'], color=next(class_colours), linewidth=linewidth, alpha=alpha, label=str(_class))
         for vline in vertical_lines:
             plt.axvline(x=vline, color='r', linestyle='--')
 
@@ -609,7 +661,7 @@ def plot_val_line(plot_dict={},
 
     if gridlines:
         plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
-    if aspect is not 'auto':
+    if aspect != 'auto':
         plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
     if title is not None:
         plt.title(title)
@@ -624,6 +676,8 @@ def plot_val_line(plot_dict={},
 def plot_val_scatter(plot_dict={},
                      xlabel='Random Variable',
                      ylabel='Random Variable Value',
+                     ghost_classes=[],
+                     title=None,
                      alpha=1,
                      marker_size=40,
                      marker_style='.',
@@ -632,17 +686,30 @@ def plot_val_scatter(plot_dict={},
                      logscale=False,
                      ylogscale=False,
                      gridlines=True,
+                     xlim=None,
+                     ylim=None,
+                     use_scientific_notation_yaxis=False,
+                     use_scientific_notation_xaxis=False,
+                     font_size=10,
                      figsize=(6.4, 4.8),
                      aspect='auto',
                      plot_style='default',
                      legend_ncol=1,
+                     plot_legend=True,
                      show_fig=False):
     '''Plots scatter plot.
 
     plot_dict= {'class_1': {'x_values': [0.1, 0.2, 0.3], 'y_values': [20, 40, 80]},
                 'class_2': {'x_values': [0.1, 0.2, 0.3], 'y_values': [80, 60, 20]}}
 
+    N.B. ghost classes is useful for where are doing a particular plot where plotting
+    e.g. 2 of the usual 4 classes that you'd plot, but want to keep the class
+    names having the same colours in the plot. E.g. If usually plot classes A, B, C
+    and D, but now plotting A and C but want to keep same class colours, should
+    enter ghost_classes=[B, D].
+
     '''
+
     keys = list(plot_dict.keys())
     # num_vals = len(plot_dict[keys[0]]['x_values'])
     # for key in keys:
@@ -651,31 +718,53 @@ def plot_val_scatter(plot_dict={},
 
     fig = plt.figure(figsize=figsize)
     plt.style.use(plot_style)
+    plt.rcParams.update(get_plot_params_config(font_size=font_size))
 
-    class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
-    for _class in sorted(plot_dict.keys()):
+    colour_keys = copy.deepcopy(keys)
+    for ghost in ghost_classes:
+        colour_keys.append(ghost)
+    class_colours = iter(sns.color_palette(palette='hls', n_colors=len(colour_keys), desat=None))
+    for _class in sorted(colour_keys):
         colour = next(class_colours)
         # sort in order of x-values
-        sorted_indices = np.argsort(plot_dict[_class]['x_values'])
-        plt.scatter(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], c=colour, s=marker_size, alpha=alpha, marker=marker_style, label=str(_class))
-        if plot_line:
-            plt.plot(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], linewidth=linewidth, c=colour, alpha=alpha)
+        if _class in keys:
+            sorted_indices = np.argsort(plot_dict[_class]['x_values'])
+            plt.scatter(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], color=colour, s=marker_size, alpha=alpha, marker=marker_style, label=str(_class))
+            if plot_line:
+                plt.plot(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], linewidth=linewidth, color=colour, alpha=alpha)
 
+    if use_scientific_notation_yaxis:
+        plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+    else:
+        plt.ticklabel_format(axis="y", style="plain", useOffset=False)
+    if use_scientific_notation_xaxis:
+        plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
+    else:
+        plt.ticklabel_format(axis="x", style="plain", useOffset=False)
+
+    ax = plt.gca()
     if logscale:
-        ax = plt.gca()
         ax.set_xscale('log')
     if ylogscale:
-        ax = plt.gca()
         ax.set_yscale('log')
+
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.legend(ncol=legend_ncol)
+    if plot_legend:
+        plt.legend(ncol=legend_ncol)
+    if title is not None:
+        ax.set_title(title)
 
     if gridlines:
         plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
-    if aspect is not 'auto':
+    if aspect != 'auto':
         plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
+
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
 
     if show_fig:
         plt.show()
@@ -691,11 +780,14 @@ def plot_multiple_kdes(plot_dict={},
                        plot_style='default',
                        gridlines=True,
                        aspect='auto',
+                       font_size=10,
                        figsize=(6.4, 4.8),
                        legend_ncol=1,
                        show_fig=False):
+
     fig = plt.figure(figsize=figsize)
     plt.style.use(plot_style)
+    plt.rcParams.update(get_plot_params_config(font_size=font_size))
     if logscale:
         ax = plt.gca()
         ax.set_xscale('log')
@@ -712,7 +804,7 @@ def plot_multiple_kdes(plot_dict={},
 
     if gridlines:
         plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
-    if aspect is not 'auto':
+    if aspect != 'auto':
         plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
 
     if show_fig:
@@ -724,14 +816,18 @@ def plot_multiple_kdes(plot_dict={},
 def plot_val_cdf(plot_dict={},
                  xlabel='Random Variable',
                  ylabel='CDF',
+                 title=None,
+                 ghost_classes=[],
                  logscale=False,
                  plot_points=True,
                  complementary_cdf=False,
+                 use_scientific_notation=False,
                  marker_size=40,
                  marker_style='.',
                  linewidth=1,
                  gridlines=True,
                  plot_style='default',
+                 font_size=10,
                  figsize=(6.4, 4.8),
                  aspect='auto',
                  legend_ncol=1,
@@ -741,37 +837,55 @@ def plot_val_cdf(plot_dict={},
     plot_dict= {'class_1': {'rand_vars': [0.1, 0.1, 0.3],
                 'class_2': {'rand_vars': [0.2, 0.2, 0.3]}}
 
+    N.B. ghost classes is useful for where are doing a particular plot where plotting
+    e.g. 2 of the usual 4 classes that you'd plot, but want to keep the class
+    names having the same colours in the plot. E.g. If usually plot classes A, B, C
+    and D, but now plotting A and C but want to keep same class colours, should
+    enter ghost_classes=[B, D].
+
     '''
+
     fig = plt.figure(figsize=figsize)
     plt.style.use(plot_style)
+    plt.rcParams.update(get_plot_params_config(font_size=font_size))
 
     if logscale:
         ax = plt.gca()
         ax.set_xscale('log')
 
     keys = list(plot_dict.keys())
-    class_colours = iter(sns.color_palette(palette='hls', n_colors=len(keys), desat=None))
-    for _class in sorted(plot_dict.keys()):
-        ecdf = ECDF(plot_dict[_class]['rand_vars'])
+    colour_keys = copy.deepcopy(keys)
+    for ghost in ghost_classes:
+        colour_keys.append(ghost)
+    class_colours = iter(sns.color_palette(palette='hls', n_colors=len(colour_keys), desat=None))
+    for _class in sorted(colour_keys):
         colour = next(class_colours)
-        if complementary_cdf:
-            ylabel = 'Complementary CDF'
-            plt.plot(ecdf.x, 1-ecdf.y, linewidth=linewidth, c=colour, label=str(_class))
-            if plot_points: 
-                plt.scatter(ecdf.x, 1-ecdf.y, marker=marker_style, s=marker_size, c=colour)
-        else:
-            plt.plot(ecdf.x, ecdf.y, c=colour, linewidth=linewidth, label=str(_class))
-            if plot_points:
-                plt.scatter(ecdf.x, ecdf.y, marker=marker_style, s=marker_size, c=colour)
+        if _class in keys:
+            ecdf = ECDF(plot_dict[_class]['rand_vars'])
+            if complementary_cdf:
+                plt.plot(ecdf.x, 1-ecdf.y, linewidth=linewidth, color=colour, label=str(_class))
+                if plot_points: 
+                    plt.scatter(ecdf.x, 1-ecdf.y, marker=marker_style, s=marker_size, color=colour)
+            else:
+                plt.plot(ecdf.x, ecdf.y, color=colour, linewidth=linewidth, label=str(_class))
+                if plot_points:
+                    plt.scatter(ecdf.x, ecdf.y, marker=marker_style, s=marker_size, color=colour)
+    if use_scientific_notation:
+        plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
+    else:
+        plt.ticklabel_format(axis="y", style="plain")
     plt.ylim(top=1, bottom=0)
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.legend(ncol=legend_ncol)
+    if title is not None:
+        ax = plt.gca()
+        ax.set_title(title)
 
     if gridlines:
         plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
-    if aspect is not 'auto':
+    if aspect != 'auto':
         plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
 
     if show_fig:
@@ -799,6 +913,7 @@ def plot_val_stacked_bar(plot_dict={},
                          plot_style='default',
                          gridlines=True,
                          aspect='auto',
+                         font_size=10,
                          figsize=(6.4, 4.8),
                          legend_ncol=1,
                          show_fig=False):
@@ -824,6 +939,7 @@ def plot_val_stacked_bar(plot_dict={},
 
     fig = plt.figure(figsize=figsize)
     plt.style.use(plot_style)
+    plt.rcParams.update(get_plot_params_config(font_size=font_size))
 
     plots = {}
     curr_bottom = None # init bottom y coords of bar to plot
@@ -838,7 +954,7 @@ def plot_val_stacked_bar(plot_dict={},
 
     if gridlines:
         plt.grid(which='both', axis='both', color='gray', linestyle='dashed', alpha=0.3)
-    if aspect is not 'auto':
+    if aspect != 'auto':
         plt.gca().set_aspect(aspect=_get_matplotlib_aspect_ratio(fig, aspect_ratio=aspect))
 
     try:
@@ -856,7 +972,10 @@ def plot_val_stacked_bar(plot_dict={},
 def plot_demand_slot_colour_grid(grid_demands, 
                                  title=None, 
                                  xlim=None, 
+                                 font_size=10,
                                  show_fig=False):
+    plt.rcParams.update(get_plot_params_config(font_size=font_size))
+
     # set colours
     # class_colours = sns.color_palette(palette='hls', n_colors=None, desat=None)
     # cmap = colors.ListedColormap(class_colours

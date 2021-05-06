@@ -361,7 +361,8 @@ if __name__ == '__main__':
         # LOADS = 'all' # 'all' [0.1, 0.2]
         # LOADS = [0.1]
         # LOADS = [0.1, 0.2, 0.3, 0.4, 0.5]
-        LOADS = [0.6, 0.7, 0.8, 0.9]
+        # LOADS = [0.6, 0.7, 0.8, 0.9]
+        LOADS = [0.7, 0.8, 0.9]
         # LOADS = [0.1, 0.3, 0.4, 0.5]
         # LOADS = [0.7, 0.8, 0.9]
         # LOADS = [0.9]
@@ -371,7 +372,7 @@ if __name__ == '__main__':
 
         # dcn
         # MAX_TIME = 1e4 # None
-        # MAX_TIME = 300 # None 'last_demand_arrival_time'
+        # MAX_TIME = 3000 # None 'last_demand_arrival_time'
         MAX_TIME = 'last_demand_arrival_time' # None 'last_demand_arrival_time'
         MAX_FLOWS = 50 # 10 50 100 500
 
