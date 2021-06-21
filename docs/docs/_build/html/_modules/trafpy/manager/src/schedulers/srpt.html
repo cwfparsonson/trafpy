@@ -150,7 +150,7 @@
            <div itemprop="articleBody">
             
   <h1>Source code for trafpy.manager.src.schedulers.srpt</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">trafpy.manager.src.schedulers.schedulertoolbox</span> <span class="kn">import</span> <span class="n">SchedulerToolbox</span>
+<span></span><span class="kn">from</span> <span class="nn">trafpy.manager.src.schedulers.schedulertoolbox</span> <span class="kn">import</span> <span class="n">SchedulerToolbox</span><span class="p">,</span> <span class="n">SchedulerToolbox_v2</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
@@ -164,6 +164,7 @@
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">tabulate</span> <span class="kn">import</span> <span class="n">tabulate</span>
+<span class="kn">import</span> <span class="nn">json</span>
 
 
 <div class="viewcode-block" id="SRPT"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT">[docs]</a><span class="k">class</span> <span class="nc">SRPT</span><span class="p">(</span><span class="n">SchedulerToolbox</span><span class="p">):</span>
@@ -327,6 +328,145 @@
         <span class="k">return</span> <span class="n">contending_flows_list</span><span class="p">,</span> <span class="n">contending_flow</span><span class="p">,</span> <span class="n">contending_flow_cost</span><span class="p">,</span> <span class="n">chosen_path</span><span class="p">,</span> <span class="n">chosen_channel</span><span class="p">,</span> <span class="n">num_packets_this_slot</span> </div></div>
 
         
+
+
+
+
+<div class="viewcode-block" id="SRPT_v2"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT_v2">[docs]</a><span class="k">class</span> <span class="nc">SRPT_v2</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">Graph</span><span class="p">,</span>
+                 <span class="n">RWA</span><span class="p">,</span>
+                 <span class="n">slot_size</span><span class="p">,</span>
+                 <span class="n">packet_size</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+                 <span class="n">time_multiplexing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">debug_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">scheduler_name</span><span class="o">=</span><span class="s1">&#39;SRPT&#39;</span><span class="p">):</span>
+        <span class="c1"># DEBUG</span>
+        <span class="c1"># debug_mode = True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug_mode</span> <span class="o">=</span> <span class="n">debug_mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span> <span class="o">=</span> <span class="n">SchedulerToolbox_v2</span><span class="p">(</span><span class="n">Graph</span><span class="o">=</span><span class="n">Graph</span><span class="p">,</span> 
+                                           <span class="n">RWA</span><span class="o">=</span><span class="n">RWA</span><span class="p">,</span> 
+                                           <span class="n">slot_size</span><span class="o">=</span><span class="n">slot_size</span><span class="p">,</span> 
+                                           <span class="n">packet_size</span><span class="o">=</span><span class="n">packet_size</span><span class="p">,</span>
+                                           <span class="n">time_multiplexing</span><span class="o">=</span><span class="n">time_multiplexing</span><span class="p">,</span> 
+                                           <span class="n">debug_mode</span><span class="o">=</span><span class="n">debug_mode</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scheduler_name</span> <span class="o">=</span> <span class="n">scheduler_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolution_strategy</span> <span class="o">=</span> <span class="s1">&#39;cost&#39;</span>
+
+
+<div class="viewcode-block" id="SRPT_v2.get_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT_v2.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">,</span> <span class="n">print_processing_time</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">chosen_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduler_action</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;chosen_flows&#39;</span><span class="p">:</span> <span class="n">chosen_flows</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="SRPT_v2.cost_function"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT_v2.cost_function">[docs]</a>    <span class="k">def</span> <span class="nf">cost_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;SRPT cost function.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">estimate_time_to_completion</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SRPT_v2.get_scheduler_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.srpt.SRPT_v2.get_scheduler_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_scheduler_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">,</span> <span class="n">reset_channel_capacities</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">path_channel_assignment_strategy</span><span class="o">=</span><span class="s1">&#39;fair_share_num_flows&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug_mode</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1">---------------- GET SCHEDULER ACTION -------------------&#39;</span><span class="p">)</span>
+
+        <span class="c1"># update network state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">update_network_state</span><span class="p">(</span><span class="n">observation</span><span class="p">,</span> <span class="n">reset_channel_capacities</span><span class="o">=</span><span class="n">reset_channel_capacities</span><span class="p">,</span> <span class="n">hide_child_dependency_flows</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># collect useful flow info dicts for making scheduling decisions</span>
+        <span class="n">flow_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">collect_flow_info_dicts</span><span class="p">(</span><span class="n">path_channel_assignment_strategy</span><span class="o">=</span><span class="n">path_channel_assignment_strategy</span><span class="p">,</span> <span class="n">cost_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cost_function</span><span class="p">)</span>
+
+        <span class="c1"># allocate flows by order of cost (lowest cost flows prioritised first)</span>
+        <span class="n">scheduling_info</span><span class="p">,</span> <span class="n">cost_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">allocate_available_bandwidth</span><span class="p">(</span><span class="n">flow_info</span><span class="p">,</span> <span class="n">resolution_strategy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">resolution_strategy</span><span class="p">)</span>
+
+        <span class="c1"># collect chosen flows and corresponding packets to schedule for the chosen flows</span>
+        <span class="n">chosen_flows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">flow_id</span> <span class="ow">in</span> <span class="n">flow_info</span><span class="p">[</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">flow_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">scheduling_info</span><span class="p">[</span><span class="s1">&#39;flow_id_to_packets_to_schedule_per_edge&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">scheduling_info</span><span class="p">[</span><span class="s1">&#39;flow_id_to_packets_to_schedule_per_edge&#39;</span><span class="p">][</span><span class="n">flow_id</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># flow was not chosen to be scheduled on any edge</span>
+                <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># flow was chosen to be scheduled on an edge</span>
+                <span class="n">flow</span> <span class="o">=</span> <span class="n">flow_info</span><span class="p">[</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">][</span><span class="n">flow_id</span><span class="p">]</span>
+
+                <span class="c1"># packets to schedule for each flow limited by the edge in their path with lowest number of schedulable packets</span>
+                <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;packets_this_slot&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">scheduling_info</span><span class="p">[</span><span class="s1">&#39;flow_id_to_packets_to_schedule_per_edge&#39;</span><span class="p">][</span><span class="n">flow_id</span><span class="p">])</span>
+
+                <span class="c1"># check that flow was also selected to be scheduled on a bandwidth-limited end point link (if it wasn&#39;t, cannot schedule this flow)</span>
+                <span class="n">lowest_edge_bandwidth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">get_lowest_edge_bandwidth</span><span class="p">(</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">])</span>
+                <span class="n">info_to_transfer_this_slot</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;packets_this_slot&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;packet_size&#39;</span><span class="p">]</span>
+                <span class="n">bandwidth_requested</span> <span class="o">=</span> <span class="n">info_to_transfer_this_slot</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">slot_size</span> <span class="c1"># info units of this flow transferred this time slot == capacity used on each channel in flow&#39;s path this time slot</span>
+                <span class="k">if</span> <span class="n">bandwidth_requested</span> <span class="o">&gt;</span> <span class="n">lowest_edge_bandwidth</span><span class="p">:</span>
+                    <span class="c1"># flow must only have been selected for bandwidth-limiting links and not been given any bandwidth-limited capacity, do not schedule flow</span>
+                    <span class="k">pass</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># flow must have been allocated bandwidth on at least one end point link, check for contentions and try to establish flow </span>
+                    <span class="n">chosen_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">resolve_contentions_and_set_up_flow</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">,</span> <span class="n">flow_info</span><span class="p">,</span> <span class="n">scheduling_info</span><span class="p">,</span> <span class="n">cost_info</span><span class="p">,</span> <span class="n">resolution_strategy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">resolution_strategy</span><span class="p">)</span>
+        <span class="c1"># DEBUG </span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug_mode</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;~~~ Final Choices ~~~&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;chosen flows:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chosen_flows</span><span class="p">))</span>
+            <span class="n">edge_to_chosen_flows</span> <span class="o">=</span> <span class="p">{</span><span class="n">edge</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">flow_info</span><span class="p">[</span><span class="s1">&#39;requested_edges&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+            <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">chosen_flows</span><span class="p">:</span>
+                <span class="n">edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">get_path_edges</span><span class="p">(</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+                    <span class="n">edge_to_chosen_flows</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">edge</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">rwa</span><span class="o">.</span><span class="n">channel_names</span><span class="p">:</span>
+                    <span class="c1"># src-dst</span>
+                    <span class="n">bw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">get_channel_bandwidth</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;edge: </span><span class="si">{}</span><span class="s1"> | channel: </span><span class="si">{}</span><span class="s1"> | chosen flows: </span><span class="si">{}</span><span class="s1"> | bandwidth remaining: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">edge_to_chosen_flows</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">edge</span><span class="p">)],</span> <span class="n">bw</span><span class="p">))</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="c1"># no flows chosen on this edge</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;edge: </span><span class="si">{}</span><span class="s1"> | channel: </span><span class="si">{}</span><span class="s1"> | bandwidth remaining: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">bw</span><span class="p">))</span>
+
+                    <span class="c1"># dst-src</span>
+                    <span class="n">edge</span> <span class="o">=</span> <span class="n">edge</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">bw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">get_channel_bandwidth</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;edge: </span><span class="si">{}</span><span class="s1"> | channel: </span><span class="si">{}</span><span class="s1"> | chosen flows: </span><span class="si">{}</span><span class="s1"> | bandwidth remaining: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">edge_to_chosen_flows</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">edge</span><span class="p">)],</span> <span class="n">bw</span><span class="p">))</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="c1"># no flows chosen on this edge</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;edge: </span><span class="si">{}</span><span class="s1"> | channel: </span><span class="si">{}</span><span class="s1"> | bandwidth remaining: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">bw</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">chosen_flows</span></div></div>
+
+                
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 </pre></div>
 

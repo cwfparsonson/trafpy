@@ -106,6 +106,8 @@
 <li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
 <li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">setup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trafpy.html">trafpy package</a></li>
 </ul>
 
             
@@ -186,6 +188,8 @@ is required).</p>
 <h2>TrafPy Generator<a class="headerlink" href="#trafpy-generator" title="Permalink to this headline">¶</a></h2>
 <p>Import the <code class="docutils literal notranslate"><span class="pre">trafpy.generator</span></code> package.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span>
 </pre></div>
 </div>
 <p>Network traffic patterns can be characterised by probability distributions. By
@@ -199,12 +203,9 @@ of occurring</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">101</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//Tutorial-2.png">png</a>, <a class="reference external" href=".//Tutorial-2.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-2.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-2.png" src="_images/Tutorial-2.png" />
-</div>
-<p>TrafPy probability distributions are defined as Python dictionaries with
-value-probability key-value pairs</p>
+<p>TrafPy probability distributions are defined as hashtables (Python dictionaries).
+These tables map each possible value taken by the random variable to some fractional
+value between 0 and 1 (where this value could be e.g. probability)</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Uniform probability distribution:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prob_dist</span><span class="p">))</span>
 <span class="go">Uniform probability distribution:</span>
 <span class="go">{1: 0.01, 2: 0.01, 3: 0.01, 4: 0.01, 5: 0.01, 6: 0.01, 7: 0.01, 8: 0.01, 9: 0.01, 10: 0.01, 11: 0.01, 12: 0.01, 13: 0.01, 14: 0.01, 15: 0.01, 16: 0.01, 17: 0.01, 18: 0.01, 19: 0.01, 20: 0.01, 21: 0.01, 22: 0.01, 23: 0.01, 24: 0.01, 25: 0.01, 26: 0.01, 27: 0.01, 28: 0.01, 29: 0.01, 30: 0.01, 31: 0.01, 32: 0.01, 33: 0.01, 34: 0.01, 35: 0.01, 36: 0.01, 37: 0.01, 38: 0.01, 39: 0.01, 40: 0.01, 41: 0.01, 42: 0.01, 43: 0.01, 44: 0.01, 45: 0.01, 46: 0.01, 47: 0.01, 48: 0.01, 49: 0.01, 50: 0.01, 51: 0.01, 52: 0.01, 53: 0.01, 54: 0.01, 55: 0.01, 56: 0.01, 57: 0.01, 58: 0.01, 59: 0.01, 60: 0.01, 61: 0.01, 62: 0.01, 63: 0.01, 64: 0.01, 65: 0.01, 66: 0.01, 67: 0.01, 68: 0.01, 69: 0.01, 70: 0.01, 71: 0.01, 72: 0.01, 73: 0.01, 74: 0.01, 75: 0.01, 76: 0.01, 77: 0.01, 78: 0.01, 79: 0.01, 80: 0.01, 81: 0.01, 82: 0.01, 83: 0.01, 84: 0.01, 85: 0.01, 86: 0.01, 87: 0.01, 88: 0.01, 89: 0.01, 90: 0.01, 91: 0.01, 92: 0.01, 93: 0.01, 94: 0.01, 95: 0.01, 96: 0.01, 97: 0.01, 98: 0.01, 99: 0.01, 100: 0.01}</span>
@@ -219,36 +220,20 @@ easy to reproduce.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;exponential&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_beta&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//Tutorial-4.png">png</a>, <a class="reference external" href=".//Tutorial-4.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-4.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-4.png" src="_images/Tutorial-4.png" />
-</div>
 <img alt="_images/exponential_dist_param_composite.png" class="align-center" src="_images/exponential_dist_param_composite.png" />
 <p>the <em>log-normal distribution</em></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;lognormal&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_mu&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;_sigma&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
 </pre></div>
-</div>
-<p>(<a class="reference external" href=".//Tutorial-5.png">png</a>, <a class="reference external" href=".//Tutorial-5.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-5.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-5.png" src="_images/Tutorial-5.png" />
 </div>
 <img alt="_images/lognormal_dist_param_composite.png" class="align-center" src="_images/lognormal_dist_param_composite.png" />
 <p>the <em>Weibull distribution</em></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;weibull&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_alpha&#39;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="s1">&#39;_lambda&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">3.5</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//Tutorial-6.png">png</a>, <a class="reference external" href=".//Tutorial-6.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-6.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-6.png" src="_images/Tutorial-6.png" />
-</div>
 <img alt="_images/weibull_dist_param_composite.png" class="align-center" src="_images/weibull_dist_param_composite.png" />
 <p>and the <em>Pareto distribution</em></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;pareto&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_alpha&#39;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s1">&#39;_mode&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
 </pre></div>
-</div>
-<p>(<a class="reference external" href=".//Tutorial-7.png">png</a>, <a class="reference external" href=".//Tutorial-7.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-7.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-7.png" src="_images/Tutorial-7.png" />
 </div>
 <img alt="_images/pareto_dist_param_composite.png" class="align-center" src="_images/pareto_dist_param_composite.png" />
 <p>However, some demand characteristics cannot be accurately described by these named
@@ -257,10 +242,6 @@ which are distributions with more than one <strong>mode</strong> which may or ma
 of <strong>skewness</strong> and/or <strong>kurtosis</strong></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">max_val</span><span class="o">=</span><span class="mi">7000</span><span class="p">,</span><span class="n">locations</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="mi">4000</span><span class="p">],</span><span class="n">skews</span><span class="o">=</span><span class="p">[</span><span class="mi">6</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="n">scales</span><span class="o">=</span><span class="p">[</span><span class="mi">150</span><span class="p">,</span><span class="mi">1500</span><span class="p">],</span><span class="n">num_skew_samples</span><span class="o">=</span><span class="p">[</span><span class="mi">10000</span><span class="p">,</span><span class="mi">650</span><span class="p">],</span><span class="n">bg_factor</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span><span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">10000</span><span class="p">],</span><span class="n">num_bins</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
 </pre></div>
-</div>
-<p>(<a class="reference external" href=".//Tutorial-8.png">png</a>, <a class="reference external" href=".//Tutorial-8.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-8.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-8.png" src="_images/Tutorial-8.png" />
 </div>
 <p>Later in this tutorial, you will see how to visually shape a multimodal distribution
 using TrafPy, allowing for almost any distribution to be generated.</p>
@@ -283,10 +264,6 @@ is the <strong>uniform distribution</strong></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//Tutorial-11.png">png</a>, <a class="reference external" href=".//Tutorial-11.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-11.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-11.png" src="_images/Tutorial-11.png" />
-</div>
 <p>Since different endpoint nodes in a network likely have different hardware
 capabilities, network node distributions are rarely uniform. Instead, some nodes
 become ‘hot nodes’ and are requested more than others, forming a <strong>multimodal
@@ -294,19 +271,11 @@ node distribution</strong></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">skewed_nodes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;server_2&#39;</span><span class="p">],</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//Tutorial-12.png">png</a>, <a class="reference external" href=".//Tutorial-12.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-12.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-12.png" src="_images/Tutorial-12.png" />
-</div>
 <p>Instead of certain <em>nodes</em> being requested more regularly, sometimes certain
 <em>node pairs</em> in the network might be skewed, forming a <strong>multimodal node pair</strong>
 distribution</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">skewed_pairs</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;server_1&#39;</span><span class="p">,</span><span class="s1">&#39;server_3&#39;</span><span class="p">],[</span><span class="s1">&#39;server_4&#39;</span><span class="p">,</span><span class="s1">&#39;server_2&#39;</span><span class="p">]],</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-</div>
-<p>(<a class="reference external" href=".//Tutorial-13.png">png</a>, <a class="reference external" href=".//Tutorial-13.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-13.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-13.png" src="_images/Tutorial-13.png" />
 </div>
 <p>Different networks have different node distributions. Sometimes you may want a
 simple uniform distribution, or a slightly skewed distribution, or certain nodes
@@ -320,10 +289,6 @@ for further details.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">endpoints</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;server_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">)]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-</div>
-<p>(<a class="reference external" href=".//Tutorial-14.png">png</a>, <a class="reference external" href=".//Tutorial-14.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-14.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-14.png" src="_images/Tutorial-14.png" />
 </div>
 <p>Once you have your node probability distribution, you can use it to generate
 as many source-destination node pairs as you like</p>
@@ -342,25 +307,13 @@ multiple links and nodes, some of which may be endpoints and some not.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//Tutorial-16.png">png</a>, <a class="reference external" href=".//Tutorial-16.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-16.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-16.png" src="_images/Tutorial-16.png" />
-</div>
 <p>or the 14-node NSFNET network</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_nsfnet_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//Tutorial-17.png">png</a>, <a class="reference external" href=".//Tutorial-17.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-17.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-17.png" src="_images/Tutorial-17.png" />
-</div>
 <p>or a fat-tree network</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_fat_tree</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-</div>
-<p>(<a class="reference external" href=".//Tutorial-18.png">png</a>, <a class="reference external" href=".//Tutorial-18.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-18.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-18.png" src="_images/Tutorial-18.png" />
 </div>
 <p>A single demand in a network can be considered as either a <strong>flow</strong> or a computation
 graph (a <strong>job</strong>) whose dependencies (edges) may form flows. Both flow-centric
@@ -388,34 +341,18 @@ network</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;endpoint&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//Tutorial-19.png">png</a>, <a class="reference external" href=".//Tutorial-19.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-19.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-19.png" src="_images/Tutorial-19.png" />
-</div>
 <p>You could start by defining the flow size distribution</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flow_size_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;weibull&#39;</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_alpha&#39;</span><span class="p">:</span> <span class="mf">1.4</span><span class="p">,</span> <span class="s1">&#39;_lambda&#39;</span><span class="p">:</span> <span class="mi">7000</span><span class="p">},</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">rand_var_name</span><span class="o">=</span><span class="s1">&#39;Flow Size&#39;</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mf">1e2</span><span class="p">,</span><span class="mf">1e12</span><span class="p">])</span>
 </pre></div>
-</div>
-<p>(<a class="reference external" href=".//Tutorial-20.png">png</a>, <a class="reference external" href=".//Tutorial-20.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-20.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-20.png" src="_images/Tutorial-20.png" />
 </div>
 <p>then the flow interarrival time distribution</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">interarrival_time_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;lognormal&#39;</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_mu&#39;</span><span class="p">:</span> <span class="mf">7.4</span><span class="p">,</span> <span class="s1">&#39;_sigma&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">rand_var_name</span><span class="o">=</span><span class="s1">&#39;Interarrival Time&#39;</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mf">1e1</span><span class="p">,</span><span class="mf">1e6</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//Tutorial-21.png">png</a>, <a class="reference external" href=".//Tutorial-21.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-21.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-21.png" src="_images/Tutorial-21.png" />
-</div>
 <p>and then the source-destination node distribution</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">endpoints</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">num_skewed_nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-</div>
-<p>(<a class="reference external" href=".//Tutorial-22.png">png</a>, <a class="reference external" href=".//Tutorial-22.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-22.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-22.png" src="_images/Tutorial-22.png" />
 </div>
 <p>You can then use your distributions to generate flow-centric demand data formatted
 neatly into a single dictionary</p>
@@ -597,22 +534,10 @@ fat-tree topology:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">],</span> <span class="n">rack_prob_config</span><span class="o">=</span><span class="n">rack_prob_config</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="figure align-default" id="id1">
-<img alt="_images/Tutorial-30_00.png" src="_images/Tutorial-30_00.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-30_00.png">png</a>, <a class="reference external" href=".//Tutorial-30_00.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-30_00.pdf">pdf</a>)</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
-</div>
-<div class="figure align-default" id="id2">
-<img alt="_images/Tutorial-30_01.png" src="_images/Tutorial-30_01.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//Tutorial-30_01.png">png</a>, <a class="reference external" href=".//Tutorial-30_01.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-30_01.pdf">pdf</a>)</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
-</div>
 <p>Making 90% of traffic inter-rack:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rack_prob_config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;racks_dict&#39;</span><span class="p">:</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;rack_to_ep_dict&#39;</span><span class="p">],</span> <span class="s1">&#39;prob_inter_rack&#39;</span><span class="p">:</span> <span class="mf">0.90</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">],</span> <span class="n">rack_prob_config</span><span class="o">=</span><span class="n">rack_prob_config</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
-</div>
-<p>(<a class="reference external" href=".//Tutorial-31.png">png</a>, <a class="reference external" href=".//Tutorial-31.hires.png">hires.png</a>, <a class="reference external" href=".//Tutorial-31.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/Tutorial-31.png" src="_images/Tutorial-31.png" />
 </div>
 </div>
 </div>

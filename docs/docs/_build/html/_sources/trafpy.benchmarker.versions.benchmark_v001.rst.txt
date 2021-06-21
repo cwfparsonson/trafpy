@@ -4,6 +4,14 @@ trafpy.benchmarker.versions.benchmark\_v001 package
 Submodules
 ----------
 
+trafpy.benchmarker.versions.benchmark\_v001 module
+--------------------------------------------------
+
+.. automodule:: trafpy.benchmarker.versions.benchmark_v001
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 trafpy.benchmarker.versions.benchmark\_v001.benchmark\_plot\_script module
 --------------------------------------------------------------------------
 

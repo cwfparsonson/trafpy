@@ -2,3 +2,4 @@ sphinx
 nb2plots
 sphinx_rtd_theme
 rst2pdf
+PyQt5

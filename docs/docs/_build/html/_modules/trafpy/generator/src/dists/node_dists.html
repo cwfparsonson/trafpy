@@ -206,7 +206,24 @@
                     <span class="n">matrix</span><span class="p">[</span><span class="n">src_idx</span><span class="p">,</span><span class="n">dst_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">prob</span>
                     <span class="n">matrix</span><span class="p">[</span><span class="n">dst_idx</span><span class="p">,</span><span class="n">src_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">prob</span>
 
+
     <span class="k">return</span> <span class="n">matrix</span></div>
+
+<div class="viewcode-block" id="assign_matrix_to_probs"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.assign_matrix_to_probs">[docs]</a><span class="k">def</span> <span class="nf">assign_matrix_to_probs</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">node_dist</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Assigns probabilities in 2D matrix to a src-dst pair prob dist dict.&#39;&#39;&#39;</span>
+    <span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_pairs</span><span class="p">,</span> <span class="n">node_to_index</span><span class="p">,</span> <span class="n">index_to_node</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">get_network_params</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
+    <span class="n">node_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">node_dist</span><span class="p">)</span>
+    <span class="n">pair_prob_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">dst</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">src</span> <span class="o">==</span> <span class="n">dst</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">src_idx</span><span class="p">,</span> <span class="n">dst_idx</span> <span class="o">=</span> <span class="n">node_to_index</span><span class="p">[</span><span class="n">src</span><span class="p">],</span> <span class="n">node_to_index</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span>
+                <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">src_idx</span><span class="p">,</span> <span class="n">dst_idx</span><span class="p">])</span>
+                <span class="n">pair_prob_dict</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_dist</span><span class="p">[</span><span class="n">src_idx</span><span class="p">,</span> <span class="n">dst_idx</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">pair_prob_dict</span></div>
+                
 
 
 <div class="viewcode-block" id="gen_uniform_node_dist"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.gen_uniform_node_dist">[docs]</a><span class="k">def</span> <span class="nf">gen_uniform_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> 
@@ -215,8 +232,7 @@
                           <span class="n">plot_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
                           <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                           <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Generates a uniform node distribution.</span>
+    <span class="sd">&#39;&#39;&#39;Generates a uniform node distribution.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        eps (list): List of network node endpoints that can act as sources</span>
@@ -301,8 +317,7 @@
                                           <span class="n">plot_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                           <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                           <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Runs multinomial exp with uniform initial probability to generate slight skew.</span>
+    <span class="sd">&#39;&#39;&#39;Runs multinomial exp with uniform initial probability to generate slight skew.</span>
 
 <span class="sd">    Runs a multinomial experiment where each node pair has same (uniform)</span>
 <span class="sd">    probability of being chosen. Will generate a node demand distribution</span>
@@ -487,7 +502,8 @@
     <span class="n">prob_pair_chosen</span> <span class="o">=</span> <span class="p">{</span><span class="n">pair</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">pair_to_index</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
     <span class="n">unskewed_pairs</span> <span class="o">=</span> <span class="p">{</span><span class="n">pair</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">pair_to_index</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span> <span class="c1"># maintain for efficient hashing</span>
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">probs_per_skewed_pair</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="k">for</span> <span class="n">pair_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pairs_per_node</span><span class="p">):</span>
+        <span class="c1"># for pair_idx in range(pairs_per_node):</span>
+        <span class="k">for</span> <span class="n">pair_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">index_to_node</span><span class="p">[</span><span class="n">pair_idx</span><span class="p">]</span> <span class="o">!=</span> <span class="n">node</span><span class="p">:</span>
                 <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">node</span><span class="p">,</span> <span class="n">index_to_node</span><span class="p">[</span><span class="n">pair_idx</span><span class="p">]])</span>
                 <span class="k">try</span><span class="p">:</span>
@@ -936,23 +952,7 @@
                 <span class="n">sampled_pair_prob_dist</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">index_to_pair</span><span class="p">[</span><span class="n">index</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">0</span>
     
     <span class="c1"># convert prob dist into dict whose keys are node dist matrix indices</span>
-    <span class="n">index_to_pair</span><span class="p">,</span> <span class="n">pair_to_index</span> <span class="o">=</span> <span class="n">get_network_pair_mapper</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
-    <span class="n">matrix_pair_prob_dist</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">sampled_pair_prob_dist</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">matrix_index</span> <span class="o">=</span> <span class="n">pair_to_index</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="c1"># switch src and dst</span>
-            <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
-            <span class="n">matrix_index</span> <span class="o">=</span> <span class="n">pair_to_index</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">matrix_pair_prob_dist</span><span class="p">[</span><span class="n">matrix_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">sampled_pair_prob_dist</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="c1"># switch src and dst back for sampled pair prob dist</span>
-            <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
-            <span class="n">matrix_pair_prob_dist</span><span class="p">[</span><span class="n">matrix_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">sampled_pair_prob_dist</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">matrix_pair_prob_dist</span> <span class="o">=</span> <span class="n">convert_pair_prob_dist_dict_to_matrix_pair_prob_dist_dict</span><span class="p">(</span><span class="n">sampled_pair_prob_dist</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
 
     <span class="c1"># sort so that get correct ordering of pair probs when assign to node matrix</span>
     <span class="n">sorted_matrix_pair_prob_dist_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">matrix_pair_prob_dist</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
@@ -969,6 +969,38 @@
 
     <span class="k">return</span> <span class="n">node_dist</span></div>
 
+<div class="viewcode-block" id="convert_pair_prob_dist_dict_to_matrix_pair_prob_dist_dict"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.convert_pair_prob_dist_dict_to_matrix_pair_prob_dist_dict">[docs]</a><span class="k">def</span> <span class="nf">convert_pair_prob_dist_dict_to_matrix_pair_prob_dist_dict</span><span class="p">(</span><span class="n">pair_prob_dist</span><span class="p">,</span> <span class="n">eps</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        pair_prob_dist (dict): Dict whose keys are node pairs and whose values are </span>
+<span class="sd">            probabilities or fractions.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        matrix_pair_prob_dist (dict): Dict whose keys are matrix indices of the node</span>
+<span class="sd">            pairs and whose values are the pairs&#39; corresponding probabilities or fractions.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># convert prob dist into dict whose keys are node dist matrix indices</span>
+    <span class="n">index_to_pair</span><span class="p">,</span> <span class="n">pair_to_index</span> <span class="o">=</span> <span class="n">get_network_pair_mapper</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
+    <span class="n">matrix_pair_prob_dist</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">pair_prob_dist</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">matrix_index</span> <span class="o">=</span> <span class="n">pair_to_index</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c1"># switch src and dst</span>
+            <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+            <span class="n">matrix_index</span> <span class="o">=</span> <span class="n">pair_to_index</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">matrix_pair_prob_dist</span><span class="p">[</span><span class="n">matrix_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">pair_prob_dist</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c1"># switch src and dst back for pair prob dist</span>
+            <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+            <span class="n">matrix_pair_prob_dist</span><span class="p">[</span><span class="n">matrix_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">pair_prob_dist</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">matrix_pair_prob_dist</span></div>
+
 
 
 
@@ -977,8 +1009,7 @@
                                               <span class="n">node_dist</span><span class="p">,</span>
                                               <span class="n">num_exps_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                                               <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Unlike the other adjust_node_dist_for_rack_prob_config function,</span>
+    <span class="sd">&#39;&#39;&#39;Unlike the other adjust_node_dist_for_rack_prob_config function,</span>
 <span class="sd">    this function adjusts the node dist by running multinomial experiments </span>
 <span class="sd">    on the initial node distribution to sample from it. It therefore takes</span>
 <span class="sd">    much much longer than the other function, especially for networks with &gt;1,000 nodes.</span>
@@ -1180,8 +1211,7 @@
                                   <span class="n">plot_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                   <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                   <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Generates a multimodal node pair distribution.</span>
+    <span class="sd">&#39;&#39;&#39;Generates a multimodal node pair distribution.</span>
 
 <span class="sd">    Generates a multimodal node pair demand distribution i.e. certain node</span>
 <span class="sd">    pairs have a certain specified probability of being chosen. If no</span>
@@ -1305,13 +1335,13 @@
     <span class="c1"># find prob of each skewed node pair being chosen</span>
     <span class="n">pairs_per_node</span> <span class="o">=</span> <span class="n">num_nodes</span> <span class="o">-</span> <span class="mi">1</span>
     <span class="n">probs_per_skewed_pair</span> <span class="o">=</span> <span class="p">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pair</span><span class="p">):</span> <span class="n">prob</span> <span class="k">for</span> <span class="n">pair</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">skewed_pairs</span><span class="p">,</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">skewed_pair_probs</span><span class="p">])}</span>
-    <span class="c1"># keep src &lt; dst</span>
-    <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">probs_per_skewed_pair</span><span class="p">:</span>
-        <span class="n">unpacked_pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pair</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">node_to_index</span><span class="p">[</span><span class="n">unpacked_pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">&gt;</span> <span class="n">node_to_index</span><span class="p">[</span><span class="n">unpacked_pair</span><span class="p">[</span><span class="mi">1</span><span class="p">]]:</span>
-            <span class="n">flipped_pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">unpacked_pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">unpacked_pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
-            <span class="n">probs_per_skewed_pair</span><span class="p">[</span><span class="n">flipped_pair</span><span class="p">]</span> <span class="o">=</span> <span class="n">probs_per_skewed_pair</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span>
-            <span class="k">del</span> <span class="n">probs_per_skewed_pair</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span>
+    <span class="c1"># # keep src &lt; dst</span>
+    <span class="c1"># for pair in probs_per_skewed_pair.keys():</span>
+        <span class="c1"># unpacked_pair = json.loads(pair)</span>
+        <span class="c1"># if node_to_index[unpacked_pair[0]] &gt; node_to_index[unpacked_pair[1]]:</span>
+            <span class="c1"># flipped_pair = json.dumps([unpacked_pair[1], unpacked_pair[0]])</span>
+            <span class="c1"># probs_per_skewed_pair[flipped_pair] = probs_per_skewed_pair[pair]</span>
+            <span class="c1"># del probs_per_skewed_pair[pair]</span>
 
     <span class="c1"># update prob pair chosen for each pair with a skewed node</span>
     <span class="n">prob_pair_chosen</span> <span class="o">=</span> <span class="p">{</span><span class="n">pair</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">pair_to_index</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
@@ -1794,10 +1824,17 @@
     <span class="k">return</span> <span class="n">adjusted_probs</span></div>
 
 
-<div class="viewcode-block" id="get_pair_prob_dict_of_node_dist_matrix"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.get_pair_prob_dict_of_node_dist_matrix">[docs]</a><span class="k">def</span> <span class="nf">get_pair_prob_dict_of_node_dist_matrix</span><span class="p">(</span><span class="n">node_dist</span><span class="p">,</span> <span class="n">eps</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Gets prob dict of each pair being chosen given node dist of probabilities.&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="get_pair_prob_dict_of_node_dist_matrix"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.node_dists.get_pair_prob_dict_of_node_dist_matrix">[docs]</a><span class="k">def</span> <span class="nf">get_pair_prob_dict_of_node_dist_matrix</span><span class="p">(</span><span class="n">node_dist</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">all_combinations</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bidirectional</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Gets prob dict of each pair being chosen given node dist of probabilities.</span>
+
+<span class="sd">    If all_combinations, will record pair probabilities for all possible pair combinations</span>
+<span class="sd">    i.e. src-dst and dst-src. If False, assumes src-dst==dst-src.</span>
+
+<span class="sd">    If bidirectional, will multiply probabilities by 2 as pair can be src-dst or dst-src.</span>
+<span class="sd">    If bidirectional=True -&gt; values sum to 1, if bidirectional=False -&gt; values sum to 0.5.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">index_to_pair</span><span class="p">,</span> <span class="n">pair_to_index</span> <span class="o">=</span> <span class="n">get_network_pair_mapper</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
-    <span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_pairs</span><span class="p">,</span> <span class="n">node_to_index</span><span class="p">,</span> <span class="n">index_to_node</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">get_network_params</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
+    <span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_pairs</span><span class="p">,</span> <span class="n">node_to_index</span><span class="p">,</span> <span class="n">index_to_node</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">get_network_params</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">all_combinations</span><span class="o">=</span><span class="n">all_combinations</span><span class="p">)</span>
 
     <span class="n">pair_prob_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">pair</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">pair_to_index</span><span class="o">.</span><span class="n">keys</span><span class="p">())}</span>
     <span class="k">for</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">:</span>
@@ -1806,18 +1843,38 @@
             <span class="n">dst_idx</span> <span class="o">=</span> <span class="n">node_to_index</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">src_idx</span> <span class="o">==</span> <span class="n">dst_idx</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="k">elif</span> <span class="n">src_idx</span> <span class="o">&gt;</span> <span class="n">dst_idx</span><span class="p">:</span>
-                <span class="c1"># making symmetric so skip this side of diagonal</span>
-                <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">all_combinations</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">src_idx</span> <span class="o">&gt;</span> <span class="n">dst_idx</span><span class="p">:</span>
+                    <span class="c1"># making symmetric so skip this side of diagonal</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">])</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">pair_prob_dict</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_dist</span><span class="p">[</span><span class="n">src_idx</span><span class="p">,</span> <span class="n">dst_idx</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">bidirectional</span><span class="p">:</span>
+                            <span class="n">pair_prob_dict</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">+=</span> <span class="n">node_dist</span><span class="p">[</span><span class="n">dst_idx</span><span class="p">,</span> <span class="n">src_idx</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pair</span><span class="p">)</span>
+                        <span class="n">pair</span> <span class="o">=</span> <span class="p">[</span><span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                        <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pair</span><span class="p">)</span>
+                        <span class="n">pair_prob_dict</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_dist</span><span class="p">[</span><span class="n">src_idx</span><span class="p">,</span> <span class="n">dst_idx</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">bidirectional</span><span class="p">:</span>
+                            <span class="n">pair_prob_dict</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">+=</span> <span class="n">node_dist</span><span class="p">[</span><span class="n">dst_idx</span><span class="p">,</span> <span class="n">src_idx</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># not making symmetric since src-dst != dst-src, do not skip any side of diagonal</span>
                 <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">])</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">pair_prob_dict</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_dist</span><span class="p">[</span><span class="n">src_idx</span><span class="p">,</span> <span class="n">dst_idx</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">bidirectional</span><span class="p">:</span>
+                        <span class="n">pair_prob_dict</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">+=</span> <span class="n">node_dist</span><span class="p">[</span><span class="n">dst_idx</span><span class="p">,</span> <span class="n">src_idx</span><span class="p">]</span>
                 <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
                     <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pair</span><span class="p">)</span>
                     <span class="n">pair</span> <span class="o">=</span> <span class="p">[</span><span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
                     <span class="n">pair</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pair</span><span class="p">)</span>
                     <span class="n">pair_prob_dict</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_dist</span><span class="p">[</span><span class="n">src_idx</span><span class="p">,</span> <span class="n">dst_idx</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">bidirectional</span><span class="p">:</span>
+                        <span class="n">pair_prob_dict</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">+=</span> <span class="n">node_dist</span><span class="p">[</span><span class="n">dst_idx</span><span class="p">,</span> <span class="n">src_idx</span><span class="p">]</span>
+
 
 
 

@@ -20,6 +20,9 @@ Import the ``trafpy.generator`` package.
 .. nbplot::
 
     >>> import trafpy.generator as tpg 
+    >>> a = 1
+    >>> a
+
 
 Network traffic patterns can be characterised by probability distributions. By
 accurately describing a probability distribution, one can sample from it to generate
@@ -36,8 +39,9 @@ of occurring
     
     >>> prob_dist, rand_vars, fig = tpg.gen_uniform_val_dist(min_val=0, max_val=100, round_to_nearest=1, return_data=True, show_fig=True, num_bins=101)
 
-TrafPy probability distributions are defined as Python dictionaries with
-value-probability key-value pairs
+TrafPy probability distributions are defined as hashtables (Python dictionaries).
+These tables map each possible value taken by the random variable to some fractional
+value between 0 and 1 (where this value could be e.g. probability)
 
 .. nbplot::
 

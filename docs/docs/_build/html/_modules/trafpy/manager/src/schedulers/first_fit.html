@@ -1,0 +1,335 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trafpy.manager.src.schedulers.first_fit &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/underscore.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../../index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Contribute.html">Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../setup.html">setup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../trafpy.html">trafpy package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trafpy.manager.src.schedulers.first_fit</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trafpy.manager.src.schedulers.first_fit</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">trafpy.manager.src.schedulers.schedulertoolbox</span> <span class="kn">import</span> <span class="n">SchedulerToolbox_v2</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+
+
+
+
+<div class="viewcode-block" id="FirstFit"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.first_fit.FirstFit">[docs]</a><span class="k">class</span> <span class="nc">FirstFit</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                 <span class="n">Graph</span><span class="p">,</span> 
+                 <span class="n">RWA</span><span class="p">,</span> 
+                 <span class="n">slot_size</span><span class="p">,</span> 
+                 <span class="n">packet_size</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> 
+                 <span class="n">time_multiplexing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                 <span class="n">debug_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                 <span class="n">scheduler_name</span><span class="o">=</span><span class="s1">&#39;FF&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug_mode</span> <span class="o">=</span> <span class="n">debug_mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span> <span class="o">=</span> <span class="n">SchedulerToolbox_v2</span><span class="p">(</span><span class="n">Graph</span><span class="o">=</span><span class="n">Graph</span><span class="p">,</span> 
+                                           <span class="n">RWA</span><span class="o">=</span><span class="n">RWA</span><span class="p">,</span> 
+                                           <span class="n">slot_size</span><span class="o">=</span><span class="n">slot_size</span><span class="p">,</span> 
+                                           <span class="n">packet_size</span><span class="o">=</span><span class="n">packet_size</span><span class="p">,</span>
+                                           <span class="n">time_multiplexing</span><span class="o">=</span><span class="n">time_multiplexing</span><span class="p">,</span> 
+                                           <span class="n">debug_mode</span><span class="o">=</span><span class="n">debug_mode</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scheduler_name</span> <span class="o">=</span> <span class="n">scheduler_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolution_strategy</span> <span class="o">=</span> <span class="s1">&#39;first_fit&#39;</span>
+
+
+<div class="viewcode-block" id="FirstFit.get_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.first_fit.FirstFit.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">,</span> <span class="n">print_processing_time</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">chosen_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduler_action</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;chosen_flows&#39;</span><span class="p">:</span> <span class="n">chosen_flows</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="FirstFit.get_scheduler_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.first_fit.FirstFit.get_scheduler_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_scheduler_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+        <span class="c1"># update network state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">update_network_state</span><span class="p">(</span><span class="n">observation</span><span class="p">,</span> <span class="n">hide_child_dependency_flows</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># collect useful flow info dicts for making scheduling decisions</span>
+        <span class="n">flow_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">collect_flow_info_dicts</span><span class="p">(</span><span class="n">path_channel_assignment_strategy</span><span class="o">=</span><span class="s1">&#39;fair_share_num_flows&#39;</span><span class="p">,</span> <span class="n">cost_function</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># allocate flows by order of cost (lowest cost flows prioritised first)</span>
+        <span class="n">scheduling_info</span><span class="p">,</span> <span class="n">cost_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">allocate_available_bandwidth</span><span class="p">(</span><span class="n">flow_info</span><span class="p">,</span> <span class="n">resolution_strategy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">resolution_strategy</span><span class="p">)</span>
+
+        <span class="c1"># collect chosen flows and corresponding packets to schedule for the chosen flows</span>
+        <span class="n">chosen_flows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">flow_id</span> <span class="ow">in</span> <span class="n">flow_info</span><span class="p">[</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">flow_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">scheduling_info</span><span class="p">[</span><span class="s1">&#39;flow_id_to_packets_to_schedule_per_edge&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">scheduling_info</span><span class="p">[</span><span class="s1">&#39;flow_id_to_packets_to_schedule_per_edge&#39;</span><span class="p">][</span><span class="n">flow_id</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># flow was not chosen to be scheduled on any edge</span>
+                <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># flow was chosen to be scheduled on an edge</span>
+                <span class="n">flow</span> <span class="o">=</span> <span class="n">flow_info</span><span class="p">[</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">][</span><span class="n">flow_id</span><span class="p">]</span>
+
+                <span class="c1"># packets to schedule for each flow limited by the edge in their path with lowest number of schedulable packets</span>
+                <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;packets_this_slot&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">scheduling_info</span><span class="p">[</span><span class="s1">&#39;flow_id_to_packets_to_schedule_per_edge&#39;</span><span class="p">][</span><span class="n">flow_id</span><span class="p">])</span>
+
+                <span class="c1"># check that flow was also selected to be scheduled on a bandwidth-limited end point link (if it wasn&#39;t, cannot schedule this flow)</span>
+                <span class="n">info_to_transfer_this_slot</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;packets_this_slot&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;packet_size&#39;</span><span class="p">]</span>
+                <span class="n">lowest_edge_bandwidth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">get_lowest_edge_bandwidth</span><span class="p">(</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">])</span>
+                <span class="n">bandwidth_requested</span> <span class="o">=</span> <span class="n">info_to_transfer_this_slot</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">slot_size</span> <span class="c1"># info units of this flow transferred this time slot == capacity used on each channel in flow&#39;s path this time slot</span>
+                <span class="k">if</span> <span class="n">bandwidth_requested</span> <span class="o">&gt;</span> <span class="n">lowest_edge_bandwidth</span><span class="p">:</span>
+                    <span class="c1"># flow must only have been selected for bandwidth-limiting links and not been given any bandwidth-limited capacity, do not schedule flow</span>
+                    <span class="k">pass</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># flow must have been allocated bandwidth on at least one end point link, check for contentions and try to establish flow </span>
+                    <span class="n">chosen_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">resolve_contentions_and_set_up_flow</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">chosen_flows</span><span class="p">,</span> <span class="n">flow_info</span><span class="p">,</span> <span class="n">scheduling_info</span><span class="p">,</span> <span class="n">cost_info</span><span class="p">,</span> <span class="n">resolution_strategy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">resolution_strategy</span><span class="p">)</span>
+
+        <span class="c1"># DEBUG </span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug_mode</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;~~~ Final Choices ~~~&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;chosen flows:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chosen_flows</span><span class="p">))</span>
+            <span class="n">edge_to_chosen_flows</span> <span class="o">=</span> <span class="p">{</span><span class="n">edge</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">flow_info</span><span class="p">[</span><span class="s1">&#39;requested_edges&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+            <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">chosen_flows</span><span class="p">:</span>
+                <span class="n">edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">get_path_edges</span><span class="p">(</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+                    <span class="n">edge_to_chosen_flows</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">edge</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">rwa</span><span class="o">.</span><span class="n">channel_names</span><span class="p">:</span>
+                    <span class="c1"># src-dst</span>
+                    <span class="n">bw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">get_channel_bandwidth</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;edge: </span><span class="si">{}</span><span class="s1"> | channel: </span><span class="si">{}</span><span class="s1"> | chosen flows: </span><span class="si">{}</span><span class="s1"> | bandwidth remaining: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">edge_to_chosen_flows</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">edge</span><span class="p">)],</span> <span class="n">bw</span><span class="p">))</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="c1"># no flows chosen on this edge</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;edge: </span><span class="si">{}</span><span class="s1"> | channel: </span><span class="si">{}</span><span class="s1"> | bandwidth remaining: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">bw</span><span class="p">))</span>
+
+                    <span class="c1"># dst-src</span>
+                    <span class="n">edge</span> <span class="o">=</span> <span class="n">edge</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">bw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">get_channel_bandwidth</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;edge: </span><span class="si">{}</span><span class="s1"> | channel: </span><span class="si">{}</span><span class="s1"> | chosen flows: </span><span class="si">{}</span><span class="s1"> | bandwidth remaining: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">edge_to_chosen_flows</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">edge</span><span class="p">)],</span> <span class="n">bw</span><span class="p">))</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="c1"># no flows chosen on this edge</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;edge: </span><span class="si">{}</span><span class="s1"> | channel: </span><span class="si">{}</span><span class="s1"> | bandwidth remaining: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">bw</span><span class="p">))</span>
+
+
+        <span class="k">return</span> <span class="n">chosen_flows</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

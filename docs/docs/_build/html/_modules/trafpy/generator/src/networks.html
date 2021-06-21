@@ -159,7 +159,11 @@
 <span class="kn">import</span> <span class="nn">json</span>
 
 
-<div class="viewcode-block" id="gen_arbitrary_network"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.networks.gen_arbitrary_network">[docs]</a><span class="k">def</span> <span class="nf">gen_arbitrary_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">server_to_rack_channel_capacity</span><span class="o">=</span><span class="mi">12500</span><span class="p">,</span> <span class="n">num_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_eps</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+<div class="viewcode-block" id="gen_arbitrary_network"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.networks.gen_arbitrary_network">[docs]</a><span class="k">def</span> <span class="nf">gen_arbitrary_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                          <span class="n">server_to_rack_channel_capacity</span><span class="o">=</span><span class="mi">12500</span><span class="p">,</span> 
+                          <span class="n">num_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
+                          <span class="n">num_eps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                          <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Generates an arbitrary network with num_eps nodes labelled as ep_label.</span>
 
 <span class="sd">    Note that no edges are formed in this network; it is purely for ep name </span>
@@ -195,7 +199,11 @@
             <span class="n">eps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">eps</span>
 
-    <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_eps</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span> <span class="o">*</span> <span class="n">num_channels</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="c1"># /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)</span>
+    <span class="k">if</span> <span class="n">bidirectional_links</span><span class="p">:</span>
+        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_eps</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span> <span class="o">*</span> <span class="n">num_channels</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="n">num_eps</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span> <span class="o">*</span> <span class="n">num_channels</span>
 
     <span class="n">init_global_network_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span>
                               <span class="n">max_nw_capacity</span><span class="p">,</span>
@@ -215,6 +223,7 @@
                        <span class="n">num_channels</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> 
                        <span class="n">server_to_rack_channel_capacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                        <span class="n">rack_to_rack_channel_capacity</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                       <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                        <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Generates the standard 14-node NSFNET topology (a U.S. core network).</span>
 <span class="sd">    </span>
@@ -289,11 +298,18 @@
     
     <span class="n">channel_names</span> <span class="o">=</span> <span class="n">gen_channel_names</span><span class="p">(</span><span class="n">num_channels</span><span class="p">)</span>
     <span class="n">edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">edge</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">]</span>
-    <span class="n">add_edges_capacity_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel_names</span><span class="p">,</span> <span class="n">rack_to_rack_channel_capacity</span><span class="p">)</span>
+    <span class="n">add_edges_capacity_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel_names</span><span class="p">,</span> <span class="n">rack_to_rack_channel_capacity</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="p">)</span>
 
     <span class="c1"># set gloabl network attrs</span>
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_endpoints</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">ep_label</span><span class="p">)</span>
-    <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">rack_to_rack_channel_capacity</span>
+
+    <span class="c1"># /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)</span>
+    <span class="k">if</span> <span class="n">bidirectional_links</span><span class="p">:</span>
+        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">rack_to_rack_channel_capacity</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">rack_to_rack_channel_capacity</span><span class="p">)</span>
+
+
     <span class="n">init_global_network_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> 
                             <span class="n">max_nw_capacity</span><span class="p">,</span> 
                             <span class="n">num_channels</span><span class="p">,</span> 
@@ -310,6 +326,7 @@
 <div class="viewcode-block" id="gen_simple_network"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.networks.gen_simple_network">[docs]</a><span class="k">def</span> <span class="nf">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> 
                        <span class="n">num_channels</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> 
                        <span class="n">server_to_rack_channel_capacity</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+                       <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                        <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Generates very simple 5-node topology.</span>
 
@@ -339,11 +356,17 @@
 
     <span class="n">channel_names</span> <span class="o">=</span> <span class="n">gen_channel_names</span><span class="p">(</span><span class="n">num_channels</span><span class="p">)</span>
     <span class="n">edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">edge</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">]</span>
-    <span class="n">add_edges_capacity_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel_names</span><span class="p">,</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span>
+    <span class="n">add_edges_capacity_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel_names</span><span class="p">,</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="p">)</span>
 
     <span class="c1"># set gloabl network attrs</span>
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_endpoints</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">ep_label</span><span class="p">)</span>
-    <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span> 
+
+    <span class="c1"># /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)</span>
+    <span class="k">if</span> <span class="n">bidirectional_links</span><span class="p">:</span>
+        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span>
+
     <span class="n">init_global_network_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> 
                             <span class="n">max_nw_capacity</span><span class="p">,</span> 
                             <span class="n">num_channels</span><span class="p">,</span> 
@@ -377,36 +400,53 @@
 
     <span class="k">return</span> <span class="n">eps</span></div>
 
-
 <div class="viewcode-block" id="gen_fat_tree"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.networks.gen_fat_tree">[docs]</a><span class="k">def</span> <span class="nf">gen_fat_tree</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-                 <span class="n">N</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-                 <span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span>
-                 <span class="n">rack_label</span><span class="o">=</span><span class="s1">&#39;rack&#39;</span><span class="p">,</span>
-                 <span class="n">edge_label</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">,</span>
-                 <span class="n">aggregate_label</span><span class="o">=</span><span class="s1">&#39;agg&#39;</span><span class="p">,</span>
-                 <span class="n">core_label</span><span class="o">=</span><span class="s1">&#39;core&#39;</span><span class="p">,</span>
-                 <span class="n">num_channels</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-                 <span class="n">server_to_rack_channel_capacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                 <span class="n">rack_to_edge_channel_capacity</span><span class="o">=</span><span class="mi">10000000000</span><span class="p">,</span>
-                 <span class="n">edge_to_agg_channel_capacity</span><span class="o">=</span><span class="mi">40000000000</span><span class="p">,</span>
-                 <span class="n">agg_to_core_channel_capacity</span><span class="o">=</span><span class="mi">40000000000</span><span class="p">,</span>
-                 <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generates a data centre network with a 3-layer fat tree topology.</span>
-<span class="sd">    </span>
-<span class="sd">    Resource for building: https://blogchinmaya.blogspot.com/2017/04/what-is-fat-tree</span>
-<span class="sd">    </span>
+                  <span class="n">L</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                  <span class="n">n</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                  <span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span>
+                  <span class="n">rack_label</span><span class="o">=</span><span class="s1">&#39;rack&#39;</span><span class="p">,</span>
+                  <span class="n">edge_label</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">,</span>
+                  <span class="n">aggregate_label</span><span class="o">=</span><span class="s1">&#39;agg&#39;</span><span class="p">,</span>
+                  <span class="n">core_label</span><span class="o">=</span><span class="s1">&#39;core&#39;</span><span class="p">,</span>
+                  <span class="n">num_channels</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+                  <span class="n">server_to_rack_channel_capacity</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+                  <span class="n">rack_to_edge_channel_capacity</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                  <span class="n">edge_to_agg_channel_capacity</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                  <span class="n">agg_to_core_channel_capacity</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
+                  <span class="n">rack_to_core_channel_capacity</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
+                  <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                  <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Generates a perfect fat tree (i.e. all layers have switches with same radix/number of ports).</span>
+
+<span class="sd">    Top layer is always core (spine) switch layer, bottom layer is always</span>
+<span class="sd">    ToR (leaf) layer.</span>
+
+<span class="sd">    L must be either 2 (core, ToR) or 4 (core, agg, edge, ToR)</span>
+
+<span class="sd">    N.B. L=2 is commonly referred to as &#39;2-layer Clos&#39; or &#39;Clos&#39; or &#39;spine-leaf&#39; topology</span>
+
+<span class="sd">    Resource for building (scroll down to summary table with equations):</span>
+
+<span class="sd">    https://packetpushers.net/demystifying-dcn-topologies-clos-fat-trees-part2/</span>
+
+<span class="sd">    Another good resource for data centre topologies etc. in general:</span>
+
+<span class="sd">    https://www.oreilly.com/library/view/bgp-in-the/9781491983416/ch01.html#:~:text=The%20most%20common%20routing%20protocol,single%20data%20center%2C%20as%20well.</span>
+
 <span class="sd">    Parameters of network:</span>
 
-<span class="sd">    - number of core switches = (k/2)^2</span>
-<span class="sd">    - number of pods = k</span>
-<span class="sd">    - number of aggregate switches = (k^2)/2</span>
-<span class="sd">    - number of edge switches = (k^2)/2</span>
-<span class="sd">    - number of racks = (k^3)/4</span>
-<span class="sd">    - number of servers = N*(k^3)/4</span>
+<span class="sd">    - number of core (spine) switches = (k/2)^(L/2) (top layer)</span>
+<span class="sd">    - number of edge switches (if L=4) = (k^2)/2</span>
+<span class="sd">    - number of agg switches (if L=4) = (k^2)/2</span>
+<span class="sd">    - number of pods (if L=4) (pod is a group of agg and/or edge switches) = 2*(k/2)^(L-2)</span>
+<span class="sd">    - number of ToR (leaf) switches (racks) = 2*(k/2)^(L-1) (bottom layer)</span>
+<span class="sd">    - number of server-facing ToR &#39;host&#39; ports = 2*(k/2)^2 (can have multiple servers connected to same host port, &amp; can oversubscribe)</span>
+<span class="sd">    - number of servers = number ToR switches * n</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        k (int): Number of ports/links on each switch</span>
-<span class="sd">        N (int): Number of servers per rack</span>
+<span class="sd">        k (int): Number of ports (links) on each switch (both up and down).</span>
+<span class="sd">        L (int): Number of layers in the fat tree.</span>
+<span class="sd">        n (int): Number of server per rack.</span>
 <span class="sd">        ep_label (str,int,float): Endpoint label (e.g. &#39;server&#39;). All endpoints will have</span>
 <span class="sd">            ep_label appended to the start of their label (e.g. &#39;server_0&#39;, &#39;server_1&#39;, ...).</span>
 <span class="sd">        edge_label (str,int): Label to assign to edge switch nodes</span>
@@ -414,140 +454,162 @@
 <span class="sd">        core_label (str,int): Label to assign to core switch nodes</span>
 <span class="sd">        num_channels (int, float): Number of channels on each link in network</span>
 <span class="sd">        server_to_edge_channel_capacity (int,float): Byte capacity per channel</span>
-<span class="sd">        edge_to_agg_channel_capacity (int,float): Byte capacity per channel</span>
-<span class="sd">        agg_to_core_channel_capacity (int,float): Byte capacity per channel</span>
+<span class="sd">        edge_to_agg_channel_capacity (int,float): (if L==4) Byte capacity per channel</span>
+<span class="sd">        agg_to_core_channel_capacity (int,float): (if L==4) Byte capacity per channel</span>
+<span class="sd">        rack_to_core_channel_capacity (int,float): (if L==2) Byte capacity per channel</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        networkx graph: network object</span>
 
 <span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">L</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">L</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;L must be 2 (ToR layer, core layer) or 4 (ToR layer, edge layer, agg layer, core layer), but is </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">L</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;k must be even since, in perfect fat tree, have equal number of up and down ports on each switch, but is </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+
     <span class="n">channel_names</span> <span class="o">=</span> <span class="n">gen_channel_names</span><span class="p">(</span><span class="n">num_channels</span><span class="p">)</span>
 
     <span class="c1"># initialise network nodes</span>
-    <span class="n">num_cores</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">L</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">node_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">ep_label</span><span class="p">,</span> <span class="n">rack_label</span><span class="p">,</span> <span class="n">core_label</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">node_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">ep_label</span><span class="p">,</span> <span class="n">rack_label</span><span class="p">,</span> <span class="n">edge_label</span><span class="p">,</span> <span class="n">aggregate_label</span><span class="p">,</span> <span class="n">core_label</span><span class="p">]</span>
+
+    <span class="c1">#num_cores = int((k/2)**(L-1))</span>
+    <span class="c1">#num_cores = int((k/2)**2)</span>
+    <span class="n">num_cores</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="n">L</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span>
     <span class="n">num_aggs</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">k</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
     <span class="n">num_edges</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">k</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">num_racks</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">k</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span>
-    <span class="n">num_servers</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">N</span> <span class="o">*</span> <span class="n">num_racks</span><span class="p">)</span>
+    <span class="n">num_pods</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="n">L</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">num_racks</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="n">L</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">num_servers</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_racks</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
 
     <span class="n">cores</span> <span class="o">=</span> <span class="p">[</span><span class="n">core_label</span><span class="o">+</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_cores</span><span class="p">)]</span>
     <span class="n">aggs</span> <span class="o">=</span> <span class="p">[</span><span class="n">aggregate_label</span><span class="o">+</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_aggs</span><span class="p">)]</span>
     <span class="n">edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">edge_label</span><span class="o">+</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_edges</span><span class="p">)]</span>
     <span class="n">racks</span> <span class="o">=</span> <span class="p">[</span><span class="n">rack_label</span><span class="o">+</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_racks</span><span class="p">)]</span>
     <span class="n">servers</span> <span class="o">=</span> <span class="p">[</span><span class="n">ep_label</span><span class="o">+</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_servers</span><span class="p">)]</span>
-   
+
     <span class="c1"># create core and rack layer networks</span>
     <span class="n">core_layer</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
     <span class="n">rack_layer</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
     <span class="n">core_layer</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span>
     <span class="n">rack_layer</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="n">racks</span><span class="p">)</span>
-    
-    <span class="c1"># group edges and aggregates into pods</span>
-    <span class="n">num_pods</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-    <span class="n">pods</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">)]</span>
-    <span class="n">prev_iter</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">for</span> <span class="n">pod_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pods</span><span class="p">)):</span>
-        <span class="n">curr_iter</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">prev_iter</span> <span class="o">+</span> <span class="p">(</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span>
-        <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edges</span><span class="p">[</span><span class="n">prev_iter</span><span class="p">:</span><span class="n">curr_iter</span><span class="p">])</span>
-        <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aggs</span><span class="p">[</span><span class="n">prev_iter</span><span class="p">:</span><span class="n">curr_iter</span><span class="p">])</span>
-        <span class="n">prev_iter</span> <span class="o">=</span> <span class="n">curr_iter</span>
 
-    <span class="c1"># create dict of pod networks</span>
-    <span class="n">pod_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;pod_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">)]</span>
-    <span class="n">pods_dict</span> <span class="o">=</span> <span class="p">{</span><span class="nb">tuple</span><span class="p">([</span><span class="n">pod</span><span class="p">]):</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span> <span class="k">for</span> <span class="n">pod</span> <span class="ow">in</span> <span class="n">pod_labels</span><span class="p">}</span>
-    <span class="k">for</span> <span class="n">pod_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">):</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;pod_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">pod_iter</span><span class="p">),)</span>
-        <span class="n">pod_edges</span> <span class="o">=</span> <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">pod_aggs</span> <span class="o">=</span> <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">pods_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="n">pod_edges</span><span class="p">)</span>
-        <span class="n">pods_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="n">pod_aggs</span><span class="p">)</span>
-        <span class="c1"># connect edge and aggregate switches within pod, add link attributes</span>
-        <span class="k">for</span> <span class="n">pod_edge</span> <span class="ow">in</span> <span class="n">pod_edges</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">pod_agg</span> <span class="ow">in</span> <span class="n">pod_aggs</span><span class="p">:</span>
-                <span class="n">pods_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">pod_agg</span><span class="p">,</span> <span class="n">pod_edge</span><span class="p">)</span>
-                <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">pods_dict</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> 
-                                 <span class="p">(</span><span class="n">pod_agg</span><span class="p">,</span><span class="n">pod_edge</span><span class="p">),</span> 
-                                 <span class="n">channel_names</span><span class="p">,</span> 
-                                 <span class="n">edge_to_agg_channel_capacity</span><span class="p">)</span> 
-
-    <span class="c1"># combine cores, pods and racks into single network</span>
-    <span class="n">pod_networks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pods_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="c1"># combine cores and racks into single network</span>
     <span class="n">fat_tree_network</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">compose</span><span class="p">(</span><span class="n">core_layer</span><span class="p">,</span> <span class="n">rack_layer</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">pod_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">):</span>
-        <span class="n">fat_tree_network</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">compose</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span> <span class="n">pod_networks</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">])</span>
-
-    <span class="c1"># link aggregate switches in pods to core switches, add link attributes</span>
-    <span class="k">for</span> <span class="n">pod_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">):</span>
-        <span class="n">pod_aggs</span> <span class="o">=</span> <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">core_iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">pod_agg</span> <span class="ow">in</span> <span class="n">pod_aggs</span><span class="p">:</span>
-            <span class="k">while</span> <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">degree</span><span class="p">[</span><span class="n">pod_agg</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">:</span>
-                <span class="n">core</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">core_iterator</span><span class="p">)</span>
-                <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">core</span><span class="p">,</span> <span class="n">pod_agg</span><span class="p">)</span>
-                <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span>
-                                 <span class="p">(</span><span class="n">core</span><span class="p">,</span><span class="n">pod_agg</span><span class="p">),</span>
-                                 <span class="n">channel_names</span><span class="p">,</span>
-                                 <span class="n">agg_to_core_channel_capacity</span><span class="p">)</span>
-
-    <span class="c1"># link edge switches in pods to racks, add link attributes</span>
-    <span class="n">rack_iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">racks</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">pod_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">):</span>
-        <span class="n">pod_edges</span> <span class="o">=</span> <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">pod_edge</span> <span class="ow">in</span> <span class="n">pod_edges</span><span class="p">:</span>
-            <span class="k">while</span> <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">degree</span><span class="p">[</span><span class="n">pod_edge</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">:</span>
-                <span class="n">rack</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">rack_iterator</span><span class="p">)</span>
-                <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">pod_edge</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
-                <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span>
-                                 <span class="p">(</span><span class="n">pod_edge</span><span class="p">,</span><span class="n">rack</span><span class="p">),</span>
-                                 <span class="n">channel_names</span><span class="p">,</span>
-                                 <span class="n">rack_to_edge_channel_capacity</span><span class="p">)</span>
     
+    <span class="k">if</span> <span class="n">L</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1"># 2 layers: Core, ToR</span>
+        <span class="c1"># link racks to cores, add link attributes</span>
+        <span class="n">rack_iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">racks</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rack</span> <span class="ow">in</span> <span class="n">racks</span><span class="p">:</span>
+            <span class="n">core_iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span>
+            <span class="c1"># have k/2 up-ports on each switch</span>
+            <span class="k">for</span> <span class="n">up_port</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">)):</span>
+                <span class="n">core</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">core_iterator</span><span class="p">)</span>
+                <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">rack</span><span class="p">,</span> <span class="n">core</span><span class="p">)</span>
+                <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span>
+                                        <span class="p">(</span><span class="n">rack</span><span class="p">,</span> <span class="n">core</span><span class="p">),</span>
+                                        <span class="n">channel_names</span><span class="p">,</span>
+                                        <span class="n">rack_to_core_channel_capacity</span><span class="p">,</span>
+                                        <span class="n">bidirectional_links</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># 4 layers: Core, Agg, Edge, ToR. Agg and Edge switches grouped into pods.</span>
+        <span class="c1"># group edges and aggregates into pods</span>
+        <span class="n">num_pods</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">pods</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">)]</span>
+        <span class="n">prev_iter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">pod_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pods</span><span class="p">)):</span>
+            <span class="n">curr_iter</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">prev_iter</span> <span class="o">+</span> <span class="p">(</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span>
+            <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edges</span><span class="p">[</span><span class="n">prev_iter</span><span class="p">:</span><span class="n">curr_iter</span><span class="p">])</span>
+            <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aggs</span><span class="p">[</span><span class="n">prev_iter</span><span class="p">:</span><span class="n">curr_iter</span><span class="p">])</span>
+            <span class="n">prev_iter</span> <span class="o">=</span> <span class="n">curr_iter</span>
+
+        <span class="c1"># create dict of pod networks</span>
+        <span class="n">pod_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;pod_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">)]</span>
+        <span class="n">pods_dict</span> <span class="o">=</span> <span class="p">{</span><span class="nb">tuple</span><span class="p">([</span><span class="n">pod</span><span class="p">]):</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span> <span class="k">for</span> <span class="n">pod</span> <span class="ow">in</span> <span class="n">pod_labels</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">pod_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;pod_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">pod_iter</span><span class="p">),)</span>
+            <span class="n">pod_edges</span> <span class="o">=</span> <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="n">pod_aggs</span> <span class="o">=</span> <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">pods_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="n">pod_edges</span><span class="p">)</span>
+            <span class="n">pods_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="n">pod_aggs</span><span class="p">)</span>
+
+            <span class="c1"># connect edge and aggregate switches within pod, add link attributes</span>
+            <span class="k">for</span> <span class="n">pod_edge</span> <span class="ow">in</span> <span class="n">pod_edges</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">pod_agg</span> <span class="ow">in</span> <span class="n">pod_aggs</span><span class="p">:</span>
+                    <span class="n">pods_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">pod_agg</span><span class="p">,</span> <span class="n">pod_edge</span><span class="p">)</span>
+                    <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">pods_dict</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> 
+                                     <span class="p">(</span><span class="n">pod_agg</span><span class="p">,</span><span class="n">pod_edge</span><span class="p">),</span> 
+                                     <span class="n">channel_names</span><span class="p">,</span> 
+                                     <span class="n">edge_to_agg_channel_capacity</span><span class="p">,</span>
+                                     <span class="n">bidirectional_links</span><span class="p">)</span> 
+
+        <span class="c1"># add pods (agg + edge) layer to fat-tree</span>
+        <span class="n">pod_networks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pods_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">pod_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">):</span>
+            <span class="n">fat_tree_network</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">compose</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span> <span class="n">pod_networks</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">])</span>
+
+        <span class="c1"># link aggregate switches in pods to core switches, add link attributes</span>
+        <span class="k">for</span> <span class="n">pod_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">):</span>
+            <span class="n">pod_aggs</span> <span class="o">=</span> <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">core_iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">pod_agg</span> <span class="ow">in</span> <span class="n">pod_aggs</span><span class="p">:</span>
+                <span class="k">while</span> <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">degree</span><span class="p">[</span><span class="n">pod_agg</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">:</span>
+                    <span class="n">core</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">core_iterator</span><span class="p">)</span>
+                    <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">core</span><span class="p">,</span> <span class="n">pod_agg</span><span class="p">)</span>
+                    <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span>
+                                     <span class="p">(</span><span class="n">core</span><span class="p">,</span><span class="n">pod_agg</span><span class="p">),</span>
+                                     <span class="n">channel_names</span><span class="p">,</span>
+                                     <span class="n">agg_to_core_channel_capacity</span><span class="p">,</span>
+                                     <span class="n">bidirectional_links</span><span class="p">)</span>
+
+        <span class="c1"># link edge switches in pods to racks, add link attributes</span>
+        <span class="n">rack_iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">racks</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pod_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pods</span><span class="p">):</span>
+            <span class="n">pod_edges</span> <span class="o">=</span> <span class="n">pods</span><span class="p">[</span><span class="n">pod_iter</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">pod_edge</span> <span class="ow">in</span> <span class="n">pod_edges</span><span class="p">:</span>
+                <span class="k">while</span> <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">degree</span><span class="p">[</span><span class="n">pod_edge</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">:</span>
+                    <span class="n">rack</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">rack_iterator</span><span class="p">)</span>
+                    <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">pod_edge</span><span class="p">,</span> <span class="n">rack</span><span class="p">)</span>
+                    <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span>
+                                     <span class="p">(</span><span class="n">pod_edge</span><span class="p">,</span><span class="n">rack</span><span class="p">),</span>
+                                     <span class="n">channel_names</span><span class="p">,</span>
+                                     <span class="n">rack_to_edge_channel_capacity</span><span class="p">,</span>
+                                     <span class="n">bidirectional_links</span><span class="p">)</span>
+
     <span class="c1"># link servers to racks, add link attributes</span>
     <span class="n">racks_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">rack</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">rack</span> <span class="ow">in</span> <span class="n">racks</span><span class="p">}</span> <span class="c1"># track which endpoints in which rack</span>
     <span class="n">server_iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">servers</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">rack</span> <span class="ow">in</span> <span class="n">racks</span><span class="p">:</span>
-        <span class="n">servers_added</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">while</span> <span class="n">servers_added</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
             <span class="n">server</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">server_iterator</span><span class="p">)</span>
             <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">rack</span><span class="p">,</span> <span class="n">server</span><span class="p">)</span>
             <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span>
                                     <span class="p">(</span><span class="n">rack</span><span class="p">,</span> <span class="n">server</span><span class="p">),</span>
                                     <span class="n">channel_names</span><span class="p">,</span>
-                                    <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span>
+                                    <span class="n">server_to_rack_channel_capacity</span><span class="p">,</span>
+                                    <span class="n">bidirectional_links</span><span class="p">)</span>
             <span class="n">racks_dict</span><span class="p">[</span><span class="n">rack</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
-            <span class="n">servers_added</span> <span class="o">+=</span> <span class="mi">1</span>
 
-    <span class="c1"># add end points as global network property</span>
-    <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_endpoints</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span> <span class="n">ep_label</span><span class="p">)</span>
-
-    <span class="c1"># calc total network byte capacity</span>
-    <span class="n">num_agg_core_links</span> <span class="o">=</span> <span class="n">num_cores</span> <span class="o">*</span> <span class="n">k</span>
-    <span class="k">if</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
-        <span class="n">num_edge_agg_links</span> <span class="o">=</span> <span class="n">num_pods</span> <span class="o">*</span> <span class="n">k</span>
+    <span class="c1"># calc total network capacity</span>
+    <span class="c1"># /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)</span>
+    <span class="k">if</span> <span class="n">bidirectional_links</span><span class="p">:</span>
+        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_servers</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># not high enough k to have inter pod links</span>
-        <span class="n">num_edge_agg_links</span> <span class="o">=</span> <span class="n">num_pods</span>
-    <span class="n">num_rack_edge_links</span> <span class="o">=</span> <span class="n">num_edges</span> <span class="o">*</span> <span class="p">(</span><span class="n">k</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">num_server_rack_links</span> <span class="o">=</span> <span class="n">num_racks</span> <span class="o">*</span> <span class="n">N</span>
-    <span class="c1"># agg_core_capacity = num_agg_core_links * agg_to_core_channel_capacity * num_channels</span>
-    <span class="c1"># edge_agg_capacity = num_edge_agg_links * edge_to_agg_channel_capacity * num_channels</span>
-    <span class="c1"># rack_edge_capacity = num_rack_edge_links * rack_to_edge_channel_capacity * num_channels</span>
-    <span class="c1"># server_rack_capacity = num_server_rack_links * server_to_rack_channel_capacity * num_channels</span>
-    <span class="c1"># max_nw_capacity = server_rack_capacity + rack_edge_capacity + edge_agg_capacity + agg_core_capacity</span>
-    <span class="n">server_rack_capacity</span> <span class="o">=</span> <span class="n">num_server_rack_links</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span> <span class="o">*</span> <span class="n">num_channels</span>
-    <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="n">server_rack_capacity</span> 
+        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_servers</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span>
+
 
     <span class="c1"># init global network attrs</span>
+    <span class="n">fat_tree_network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">servers</span>
     <span class="n">init_global_network_attrs</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span> 
                               <span class="n">max_nw_capacity</span><span class="p">,</span> 
                               <span class="n">num_channels</span><span class="p">,</span> 
                               <span class="n">ep_link_capacity</span><span class="o">=</span><span class="n">server_to_rack_channel_capacity</span><span class="o">*</span><span class="n">num_channels</span><span class="p">,</span>
                               <span class="n">endpoint_label</span><span class="o">=</span><span class="n">ep_label</span><span class="p">,</span>
-                              <span class="n">node_labels</span><span class="o">=</span><span class="p">[</span><span class="n">ep_label</span><span class="p">,</span>
-                                           <span class="n">rack_label</span><span class="p">,</span>
-                                           <span class="n">edge_label</span><span class="p">,</span>
-                                           <span class="n">aggregate_label</span><span class="p">,</span>
-                                           <span class="n">core_label</span><span class="p">],</span>
+                              <span class="n">node_labels</span><span class="o">=</span><span class="n">node_labels</span><span class="p">,</span>
                               <span class="n">topology_type</span><span class="o">=</span><span class="s1">&#39;fat_tree&#39;</span><span class="p">,</span>
                               <span class="n">racks_dict</span><span class="o">=</span><span class="n">racks_dict</span><span class="p">)</span>
 
@@ -555,6 +617,8 @@
         <span class="n">plot_network</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">fat_tree_network</span></div>
+
+    
 
 
 <div class="viewcode-block" id="init_global_network_attrs"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.networks.init_global_network_attrs">[docs]</a><span class="k">def</span> <span class="nf">init_global_network_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> 
@@ -583,6 +647,7 @@
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoint_label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoint_label</span>
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;num_channels_per_link&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_channels</span>
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;ep_link_capacity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ep_link_capacity</span>
+    <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;ep_link_port_capacity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ep_link_capacity</span> <span class="o">/</span> <span class="mi">2</span> <span class="c1"># all eps have a src &amp; a dst port</span>
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;max_nw_capacity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_nw_capacity</span>
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;curr_nw_capacity_used&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;num_active_connections&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
@@ -611,7 +676,11 @@
     
     <span class="k">return</span> <span class="n">channel_names</span></div>
 
-<div class="viewcode-block" id="add_edge_capacity_attrs"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.networks.add_edge_capacity_attrs">[docs]</a><span class="k">def</span> <span class="nf">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">edge</span><span class="p">,</span> <span class="n">channel_names</span><span class="p">,</span> <span class="n">channel_capacity</span><span class="p">):</span>
+<div class="viewcode-block" id="add_edge_capacity_attrs"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.networks.add_edge_capacity_attrs">[docs]</a><span class="k">def</span> <span class="nf">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> 
+                            <span class="n">edge</span><span class="p">,</span> 
+                            <span class="n">channel_names</span><span class="p">,</span> 
+                            <span class="n">channel_capacity</span><span class="p">,</span> 
+                            <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Adds channels and corresponding max channel bytes to single edge in network.</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
@@ -620,11 +689,31 @@
 <span class="sd">        edge (tuple): Node-node edge pair.</span>
 <span class="sd">        channel_names (list): List of channel names to add to edge.</span>
 <span class="sd">        channel_capacity (int,float): Capacity to allocate to each channel.</span>
+<span class="sd">        bidirectional_links (bool): If True, each link has capacity split equally</span>
+<span class="sd">            between src and dst port. I.e. all links have a src and dst port</span>
+<span class="sd">            which are treated separately to incoming and outgoing traffic to and</span>
+<span class="sd">            from given node (switch or server).</span>
 
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span><span class="n">edge</span><span class="p">:</span>
-                <span class="p">{</span><span class="s1">&#39;channels&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">channel</span><span class="p">:</span> <span class="n">channel_capacity</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_names</span><span class="p">},</span>
-                 <span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">:</span> <span class="n">channel_capacity</span><span class="p">}}</span>
+    <span class="k">if</span> <span class="n">bidirectional_links</span><span class="p">:</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span><span class="n">edge</span><span class="p">:</span>
+                    <span class="p">{</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                        <span class="p">{</span><span class="s1">&#39;channels&#39;</span><span class="p">:</span>
+                            <span class="p">{</span><span class="n">channel</span><span class="p">:</span> <span class="n">channel_capacity</span><span class="o">/</span><span class="mi">2</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_names</span><span class="p">},</span>
+                         <span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">:</span> <span class="n">channel_capacity</span><span class="o">/</span><span class="mi">2</span>
+                         <span class="p">},</span>
+                     <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                        <span class="p">{</span><span class="s1">&#39;channels&#39;</span><span class="p">:</span>
+                            <span class="p">{</span><span class="n">channel</span><span class="p">:</span> <span class="n">channel_capacity</span><span class="o">/</span><span class="mi">2</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_names</span><span class="p">},</span>
+                         <span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">:</span> <span class="n">channel_capacity</span><span class="o">/</span><span class="mi">2</span>
+                         <span class="p">}</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+                    
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span><span class="n">edge</span><span class="p">:</span>
+                    <span class="p">{</span><span class="s1">&#39;channels&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">channel</span><span class="p">:</span> <span class="n">channel_capacity</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_names</span><span class="p">},</span>
+                     <span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">:</span> <span class="n">channel_capacity</span><span class="p">}}</span>
     
     <span class="n">nx</span><span class="o">.</span><span class="n">set_edge_attributes</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span></div>
 
@@ -634,7 +723,8 @@
 <div class="viewcode-block" id="add_edges_capacity_attrs"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.networks.add_edges_capacity_attrs">[docs]</a><span class="k">def</span> <span class="nf">add_edges_capacity_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> 
                              <span class="n">edges</span><span class="p">,</span>
                              <span class="n">channel_names</span><span class="p">,</span>
-                             <span class="n">channel_capacity</span><span class="p">):</span>
+                             <span class="n">channel_capacity</span><span class="p">,</span>
+                             <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Adds channels &amp; max channel capacitys to single edge in network.</span>
 <span class="sd">    </span>
 <span class="sd">    To access e.g. the edge going from node 0 to node 1 (edge (0, 1)), you</span>
@@ -642,6 +732,10 @@
 
 <span class="sd">    To access e.g. the channel_1 attribute of this particular (0, 1) edge, you</span>
 <span class="sd">    would do network[0][1][&#39;channels&#39;][&#39;channel_1&#39;]</span>
+<span class="sd">    OR</span>
+<span class="sd">    if bidirectional_links, you do network[0][1][&#39;0_to_1_port&#39;][&#39;channels&#39;][&#39;channel_1&#39;]</span>
+<span class="sd">    or network[0][1][&#39;1_to_0_port&#39;][&#39;channels&#39;][&#39;channel_1] depending on which direction</span>
+<span class="sd">    of the link you want to access.</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
 <span class="sd">        network (networkx graph): Network containing edges to which attrs will</span>
@@ -649,14 +743,33 @@
 <span class="sd">        edges (list): List of node pairs in tuples.</span>
 <span class="sd">        channel_names (list of str): List of channel names to add to edge.</span>
 <span class="sd">        channel_capacity (int, float): Capacity to allocate to each channel.</span>
+<span class="sd">        bidirectional_links (bool): If True, each link has capacity split equally</span>
+<span class="sd">            between src and dst port. I.e. all links have a src and dst port</span>
+<span class="sd">            which are treated separately to incoming and outgoing traffic to and</span>
+<span class="sd">            from given node (switch or server).</span>
 
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span><span class="n">edge</span><span class="p">:</span> 
-                <span class="p">{</span><span class="s1">&#39;channels&#39;</span><span class="p">:</span> 
-                    <span class="p">{</span><span class="n">channel</span><span class="p">:</span> <span class="n">channel_capacity</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_names</span><span class="p">},</span>
-                 <span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">:</span> 
-                    <span class="n">channel_capacity</span>
-                 <span class="p">}</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">bidirectional_links</span><span class="p">:</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span><span class="n">edge</span><span class="p">:</span>
+                    <span class="p">{</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                        <span class="p">{</span><span class="s1">&#39;channels&#39;</span><span class="p">:</span>
+                            <span class="p">{</span><span class="n">channel</span><span class="p">:</span> <span class="n">channel_capacity</span><span class="o">/</span><span class="mi">2</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_names</span><span class="p">},</span>
+                         <span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">:</span> <span class="n">channel_capacity</span><span class="o">/</span><span class="mi">2</span>
+                         <span class="p">},</span>
+                     <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                        <span class="p">{</span><span class="s1">&#39;channels&#39;</span><span class="p">:</span>
+                            <span class="p">{</span><span class="n">channel</span><span class="p">:</span> <span class="n">channel_capacity</span><span class="o">/</span><span class="mi">2</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_names</span><span class="p">},</span>
+                         <span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">:</span> <span class="n">channel_capacity</span><span class="o">/</span><span class="mi">2</span>
+                         <span class="p">}</span>
+                        <span class="p">}</span>
+                    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span><span class="n">edge</span><span class="p">:</span> 
+                    <span class="p">{</span><span class="s1">&#39;channels&#39;</span><span class="p">:</span> 
+                        <span class="p">{</span><span class="n">channel</span><span class="p">:</span> <span class="n">channel_capacity</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_names</span><span class="p">},</span>
+                     <span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">:</span> 
+                        <span class="n">channel_capacity</span>
+                     <span class="p">}</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">}</span>
 
     <span class="n">nx</span><span class="o">.</span><span class="n">set_edge_attributes</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span></div>
   

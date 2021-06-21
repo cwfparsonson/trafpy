@@ -12,6 +12,94 @@ Subpackages
 Submodules
 ----------
 
+trafpy.generator.src module
+---------------------------
+
+.. automodule:: trafpy.generator.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.generator.src module
+---------------------------
+
+.. automodule:: trafpy.generator.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.generator.src module
+---------------------------
+
+.. automodule:: trafpy.generator.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.generator.src module
+---------------------------
+
+.. automodule:: trafpy.generator.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.generator.src module
+---------------------------
+
+.. automodule:: trafpy.generator.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.generator.src module
+---------------------------
+
+.. automodule:: trafpy.generator.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.generator.src module
+---------------------------
+
+.. automodule:: trafpy.generator.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.generator.src module
+---------------------------
+
+.. automodule:: trafpy.generator.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.generator.src module
+---------------------------
+
+.. automodule:: trafpy.generator.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.generator.src module
+---------------------------
+
+.. automodule:: trafpy.generator.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.generator.src module
+---------------------------
+
+.. automodule:: trafpy.generator.src
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 trafpy.generator.src.builder module
 -----------------------------------
 
