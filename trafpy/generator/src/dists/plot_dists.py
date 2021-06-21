@@ -14,6 +14,7 @@ from matplotlib.ticker import ScalarFormatter
 import seaborn as sns
 from statsmodels.distributions.empirical_distribution import ECDF
 from scipy import stats
+from scipy import interpolate
 import networkx as nx
 from nxviz.plots import CircosPlot
 import json
@@ -30,6 +31,137 @@ def get_plot_params_config(font_size):
               'ytick.labelsize': font_size*0.75}
     return params
 
+
+def plot_heat_map(proportion_nodes_skewed, 
+                  skewed_nodes_traffic_requested, 
+                  _heat_map, 
+                  roof_skew_factor, 
+                  **kwargs):
+    heat_map = copy.deepcopy(_heat_map)
+
+    if 'title' not in kwargs:
+        kwargs['title'] = None
+    if 'font_size' not in kwargs:
+        kwargs['font_size'] = 10
+    if 'figsize' not in kwargs:
+        kwargs['figsize'] = (4, 4)
+    if 'path_to_save' not in kwargs:
+        kwargs['path_to_save'] = None
+
+    plt.rcParams.update(get_plot_params_config(font_size=kwargs['font_size']))
+
+    # cap cals at roof val for plotting
+    for row_idx in range(len(heat_map[:, 0])):
+        for col_idx in range(len(heat_map[0, :])):
+            heat_map[row_idx, col_idx] = min(heat_map[row_idx, col_idx], roof_skew_factor)
+
+    fig = plt.figure(figsize=kwargs['figsize'])
+    cmap = matplotlib.cm.get_cmap('coolwarm')
+    # plt.pcolormesh(proportion_nodes_skewed*100, skewed_nodes_traffic_requested*100, heat_map, cmap=cmap, vmin=0, vmax=1)
+    # plt.pcolormesh(proportion_nodes_skewed*100, skewed_nodes_traffic_requested*100, heat_map, cmap=cmap)
+    plt.pcolormesh(proportion_nodes_skewed*100, skewed_nodes_traffic_requested*100, heat_map, cmap=cmap, vmin=1, vmax=roof_skew_factor)
+    plt.xlabel('% of Overall Traffic Requested')
+    plt.ylabel('% Skewed Nodes')
+    if kwargs['title'] is not None:
+        plt.title(kwargs['title'])
+    cbar=plt.colorbar()
+    cbar.ax.set_ylabel('Skew Factor')
+    if kwargs['path_to_save'] is not None:
+        plt.savefig(kwargs['path_to_save'])
+    if kwargs['show_fig']:
+        plt.show()
+
+    return fig
+
+def get_val_idx_in_matrix(matrix, val, axis=None, axis_vals=None):  
+    '''
+    Find indices of values in 2D numpy matrix.
+
+    Args:
+        - matrix (2D numpy array): Matrix to find values and return indices of.
+        - val (int, float): Value to find indices of in matrix.
+        - axis (None, str): If None, will return [row_idx, col_idx] of element in matrix
+            which is closest to val being searched for. If 'x' or 'y', will return col_idx
+            of x- or y-value being searched for respectively.
+        - axis_vals (None, list): Must specify axis values is axis is not None. 
+            Are the x- or y-axis label values of the matrix to search in and return the idx of
+            the element in axis_vals closest to val.
+    '''
+    val_to_diff = {} # store how close each element in matrix or axis_vals is to val being searched for
+    for x_idx in range(len(matrix[0, :])): # columns
+        for y_idx in range(len(matrix[:, 0])): # rows
+            if axis is None:
+                val_to_diff[matrix[y_idx, x_idx]] = abs(val - matrix[y_idx, x_idx])
+            else:
+                if axis_vals is None:
+                    raise Exception('Must provide axis vals if want to find val idx of matrix for specific axis.')
+                if axis == 'x':
+                    val_to_diff[x_idx] = abs(val - axis_vals[x_idx])
+                elif axis == 'y':
+                    val_to_diff[y_idx] = abs(val - axis_vals[y_idx])
+                else:
+                    raise Exception('axis must be one of \'x\' or \'y\'.')
+
+    return min(val_to_diff, key=val_to_diff.get)
+
+def plot_labeled_heat_map(proportion_nodes_skewed, skewed_nodes_traffic_requested, _heat_map, resolution, **kwargs):
+    heat_map = copy.deepcopy(_heat_map)
+    if heat_map.shape != (101, 102):
+        raise Exception('Heat map must have shape (101, 102) for labeled heat map plotting, but has shape {}.'.format(heat_map.shape))
+
+    if 'title' not in kwargs:
+        kwargs['title'] = None
+    if 'font_size' not in kwargs:
+        kwargs['font_size'] = 10
+    if 'path_to_save' not in kwargs:
+        kwargs['path_to_save'] = None
+    kwargs['figsize'] = (8, 8)
+
+    plt.rcParams.update(get_plot_params_config(font_size=kwargs['font_size']))
+
+    fig, ax = plt.subplots(figsize=kwargs['figsize'])
+    nodes_skewed_to_plot = np.arange(proportion_nodes_skewed[0], proportion_nodes_skewed[-1], resolution)
+    traffic_requested_to_plot = np.arange(skewed_nodes_traffic_requested[0], skewed_nodes_traffic_requested[-1], resolution)
+    _heat_map = np.zeros((len(heat_map[:, 0]), len(heat_map[0, :])))
+    ax.matshow(_heat_map, cmap=plt.cm.Blues)
+    for nodes_skewed in nodes_skewed_to_plot:
+        for traffic_requested in traffic_requested_to_plot:
+            row_idx = get_val_idx_in_matrix(heat_map, axis='y', val=nodes_skewed, axis_vals=proportion_nodes_skewed)
+            col_idx = get_val_idx_in_matrix(heat_map, axis='x', val=traffic_requested, axis_vals=skewed_nodes_traffic_requested)
+            # print('original heatmap val: {}'.format(heat_map[col_idx, row_idx]))
+            if heat_map[col_idx, row_idx] > 1e9:
+                # tending to infinity
+                heat_map[col_idx, row_idx] = float('inf')
+                ax.text(row_idx, col_idx, str(heat_map[col_idx, row_idx]), va='center', ha='center')
+            elif heat_map[col_idx, row_idx] < 10 and round(heat_map[col_idx, row_idx], 1) % 1 != 0:
+                # save space on grid by only letting vals <10 and != int being a float
+                heat_map[col_idx, row_idx] = round(heat_map[col_idx, row_idx], 1)
+                ax.text(row_idx, col_idx, str(heat_map[col_idx, row_idx]), va='center', ha='center')
+            else:
+                # val is an int and/or > 10 -> make int to save space on grid
+                heat_map[col_idx, row_idx] = int(heat_map[col_idx, row_idx])
+                ax.text(row_idx, col_idx, str(int(heat_map[col_idx, row_idx])), va='center', ha='center')
+
+    ax.set_xlim(traffic_requested_to_plot[0]*100, traffic_requested_to_plot[-1]*100)
+    ax.set_ylim(nodes_skewed_to_plot[0]*100, nodes_skewed_to_plot[-1]*100)
+    major_tick_res = int(len(traffic_requested_to_plot)/10)
+    ax.set_xticks(traffic_requested_to_plot[::major_tick_res]*100, minor=False)
+    ax.set_yticks(nodes_skewed_to_plot[::major_tick_res]*100, minor=False)
+    ax.set_xticks(traffic_requested_to_plot*100, minor=True)
+    ax.set_yticks(nodes_skewed_to_plot*100, minor=True)
+    ax.grid(which='major', axis='both', linestyle='-', color='gray', alpha=0.3)
+    ax.grid(which='minor', axis='both', linestyle='--', color='gray', alpha=0.3)
+    ax.set_xlabel('% of Overall Traffic Requested')
+    ax.set_ylabel('% Skewed Nodes')
+    ax.set_axisbelow(True)
+    if kwargs['title'] is not None:
+        ax.set_title(kwargs['title'])
+    if kwargs['show_fig']:
+        plt.show()
+    if kwargs['path_to_save'] is not None:
+        plt.savefig(kwargs['path_to_save'])
+
+    return fig
 
 
 def plot_node_dist(node_dist, 
@@ -248,7 +380,7 @@ def plot_val_dist(rand_vars,
                   plot_cdf=True,
                   plot_horizontally=True,
                   fig_scale=1,
-                  font_size=10,
+                  font_size=20,
                   gridlines=True,
                   figsize=(12.4, 2),
                   aspect='auto',
@@ -623,6 +755,7 @@ def plot_val_line(plot_dict={},
                  ylim=None,
                  linewidth=1,
                  alpha=1,
+                 ylogscale=False,
                  title=None,
                  vertical_lines=[],
                  gridlines=True,
@@ -654,6 +787,9 @@ def plot_val_line(plot_dict={},
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+    ax = plt.gca()
+    if ylogscale:
+        ax.set_yscale('log')
     if ylim is not None:
         plt.ylim(bottom=ylim[0], top=ylim[1])
     if plot_legend:
@@ -682,12 +818,15 @@ def plot_val_scatter(plot_dict={},
                      marker_size=40,
                      marker_style='.',
                      plot_line=False,
+                     horizontal_lines=[],
                      linewidth=1,
                      logscale=False,
                      ylogscale=False,
                      gridlines=True,
                      xlim=None,
                      ylim=None,
+                     error_bar_axis=None,
+                     apply_smoothing=False,
                      use_scientific_notation_yaxis=False,
                      use_scientific_notation_xaxis=False,
                      font_size=10,
@@ -699,8 +838,14 @@ def plot_val_scatter(plot_dict={},
                      show_fig=False):
     '''Plots scatter plot.
 
-    plot_dict= {'class_1': {'x_values': [0.1, 0.2, 0.3], 'y_values': [20, 40, 80]},
-                'class_2': {'x_values': [0.1, 0.2, 0.3], 'y_values': [80, 60, 20]}}
+    plot_dict = {'class_1': {'x_values': [0.1, 0.2, 0.3], 'y_values': [20, 40, 80]},
+                 'class_2': {'x_values': [0.1, 0.2, 0.3], 'y_values': [80, 60, 20]}}
+
+    OPTIONAL: Can also include error bars: 
+    plot_dict = {'class_1': {'x_values': [0.1, 0.2, 0.3], 'y_values': [20, 40, 80], 'errors': [0.001, 0.001, 0.003]}}
+    error_bar_axis = 'yerr' (set to 'xerr' or 'yerr' to have error bars on x or y axis respectively)
+
+    if alpha is a list, will assign each class an alpha value correponding to list
 
     N.B. ghost classes is useful for where are doing a particular plot where plotting
     e.g. 2 of the usual 4 classes that you'd plot, but want to keep the class
@@ -716,6 +861,12 @@ def plot_val_scatter(plot_dict={},
         # if len(plot_dict[key]['x_values']) != num_vals or len(plot_dict[key]['y_values']) != num_vals:
             # raise Exception('Must have equal number of x and y values to plot.')
 
+    if type(alpha) == list:
+        multiple_alphas = True
+        alphas = iter(alpha)
+    else:
+        multiple_alphas = False
+
     fig = plt.figure(figsize=figsize)
     plt.style.use(plot_style)
     plt.rcParams.update(get_plot_params_config(font_size=font_size))
@@ -724,14 +875,55 @@ def plot_val_scatter(plot_dict={},
     for ghost in ghost_classes:
         colour_keys.append(ghost)
     class_colours = iter(sns.color_palette(palette='hls', n_colors=len(colour_keys), desat=None))
+
+    printed_warning = False
     for _class in sorted(colour_keys):
         colour = next(class_colours)
         # sort in order of x-values
         if _class in keys:
             sorted_indices = np.argsort(plot_dict[_class]['x_values'])
-            plt.scatter(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], color=colour, s=marker_size, alpha=alpha, marker=marker_style, label=str(_class))
-            if plot_line:
-                plt.plot(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], linewidth=linewidth, color=colour, alpha=alpha)
+            if multiple_alphas:
+                alpha = next(alphas)
+            # OLD
+            # plt.scatter(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], color=colour, s=marker_size, alpha=alpha, marker=marker_style, label=str(_class))
+            # if plot_line:
+                # plt.plot(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], linewidth=linewidth, color=colour, alpha=1)
+
+            if error_bar_axis is None and 'errors' in plot_dict[_class] and not printed_warning:
+                print('WARNING: If provide \'errors\' in plot_dict, must specify error_bar_axis arg as either \'yerr\' or \'xerr\' if you still want your error bars to be plotted.')
+                printed_warning = True
+            if error_bar_axis is not None and 'errors' not in plot_dict[_class]:
+                raise Exception('Must provide \'errors\' in plot_dict if error_bar_axis is not None.')
+
+            # NEW
+            x_vals = np.asarray(plot_dict[_class]['x_values'])[sorted_indices]
+            y_vals = np.asarray(plot_dict[_class]['y_values'])[sorted_indices]
+            if error_bar_axis is not None:
+                errors = np.asarray(plot_dict[_class]['errors'])[sorted_indices]
+            if apply_smoothing:
+                x_new = np.linspace(min(x_vals), max(x_vals), 300)
+                a_BSpline = interpolate.make_interp_spline(x_vals, y_vals)
+                x_vals = x_new
+                y_vals = a_BSpline(x_vals)
+                plt.plot(x_vals, y_vals, color=colour, linewidth=linewidth, alpha=alpha, label=str(_class))
+                plt.scatter(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], color=colour, s=marker_size, alpha=alpha, marker=marker_style)
+            else:
+                if error_bar_axis is not None:
+                    # plot scatter with error bars
+                    scatter_size_factor = 0.15 # need to re-size to keep consistent with plt.scatter()
+                    if error_bar_axis == 'yerr':
+                        plt.errorbar(x_vals, y_vals, yerr=errors, fmt=marker_style, color=colour, ms=marker_size*scatter_size_factor, alpha=alpha, label=str(_class))
+                    else:
+                        plt.errorbar(x_vals, y_vals, xerr=errors, fmt=marker_style, color=colour, ms=marker_size*scatter_size_factor, alpha=alpha, label=str(_class))
+                else:
+                    # no error bars, normal scatter
+                    plt.scatter(x_vals, y_vals, color=colour, s=marker_size, alpha=alpha, marker=marker_style, label=str(_class))
+                if plot_line:
+                    plt.plot(np.asarray(plot_dict[_class]['x_values'])[sorted_indices], np.asarray(plot_dict[_class]['y_values'])[sorted_indices], linewidth=linewidth, color=colour, alpha=1)
+
+    for hline in horizontal_lines:
+        plt.axhline(y=hline, color='tab:red', linestyle='--')
+
 
     if use_scientific_notation_yaxis:
         plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
@@ -837,6 +1029,9 @@ def plot_val_cdf(plot_dict={},
     plot_dict= {'class_1': {'rand_vars': [0.1, 0.1, 0.3],
                 'class_2': {'rand_vars': [0.2, 0.2, 0.3]}}
 
+    OPTIONAL: Can also include error bars: 
+    plot_dict = {'class_1': {'rand_vars': [0.1, 0.2, 0.3], 'errors': [0.001, 0.001, 0.003]}}
+
     N.B. ghost classes is useful for where are doing a particular plot where plotting
     e.g. 2 of the usual 4 classes that you'd plot, but want to keep the class
     names having the same colours in the plot. E.g. If usually plot classes A, B, C
@@ -865,15 +1060,26 @@ def plot_val_cdf(plot_dict={},
             if complementary_cdf:
                 plt.plot(ecdf.x, 1-ecdf.y, linewidth=linewidth, color=colour, label=str(_class))
                 if plot_points: 
-                    plt.scatter(ecdf.x, 1-ecdf.y, marker=marker_style, s=marker_size, color=colour)
+                    if 'errors' in plot_dict[_class]:
+                        scatter_size_factor = 0.15 # need to re-size to keep consistent with plt.scatter()
+                        plot_dict[_class]['errors'].insert(0,0) # need to insert to be compatible with ecdf
+                        plt.errorbar(list(ecdf.x), list(1-ecdf.y), xerr=plot_dict[_class]['errors'], fmt=marker_style, ms=marker_size*scatter_size_factor, color=colour)
+                    else:
+                        plt.scatter(ecdf.x, 1-ecdf.y, marker=marker_style, s=marker_size, color=colour)
             else:
                 plt.plot(ecdf.x, ecdf.y, color=colour, linewidth=linewidth, label=str(_class))
                 if plot_points:
-                    plt.scatter(ecdf.x, ecdf.y, marker=marker_style, s=marker_size, color=colour)
-    if use_scientific_notation:
-        plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
-    else:
-        plt.ticklabel_format(axis="y", style="plain")
+                    if 'errors' in plot_dict[_class]:
+                        plot_dict[_class]['errors'].insert(0,0) # need to insert to be compatible with ecdf
+                        scatter_size_factor = 0.15 # need to re-size to keep consistent with plt.scatter()
+                        plt.errorbar(ecdf.x, ecdf.y, xerr=plot_dict[_class]['errors'].insert(0,0), fmt=marker_style, ms=marker_size*scatter_size_factor, color=colour)
+                    else:
+                        plt.scatter(ecdf.x, ecdf.y, marker=marker_style, s=marker_size, color=colour)
+    if not logscale:
+        if use_scientific_notation:
+            plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
+        else:
+            plt.ticklabel_format(axis="x", style="plain")
     plt.ylim(top=1, bottom=0)
 
     plt.xlabel(xlabel)

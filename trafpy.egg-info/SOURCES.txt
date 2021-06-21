@@ -11,7 +11,6 @@ trafpy/benchmarker/config.py
 trafpy/benchmarker/gen_new_slots_dict.py
 trafpy/benchmarker/main_gen_benchmark_data.py
 trafpy/benchmarker/ray_main_testbed_benchmark_data.py
-trafpy/benchmarker/speed_test.py
 trafpy/benchmarker/test.py
 trafpy/benchmarker/tools.py
 trafpy/benchmarker/v2_ray_main_testbed_benchmark_data.py

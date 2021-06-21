@@ -289,9 +289,10 @@ class EnvAnalyser:
         return mean_fct, ninetyninth_percentile_fct, max_fct, standard_deviation_fct
 
     def _init_flow_arrival_metrics(self):
-        if self.env_analyser_database_path:
+        if self.env_analyser_database_path is not None:
             # init database
             self.arrived_flow_dicts = self.env_analyser_database_path + '/arrived_flow_dicts.sqlite'
+            # print('arrived dicts:\n{}'.format(self.arrived_flow_dicts))
             if os.path.exists(self.arrived_flow_dicts):
                 os.remove(self.arrived_flow_dicts)
             times_arrived = []
@@ -307,6 +308,8 @@ class EnvAnalyser:
             self.arrived_flow_dicts = self._get_flows_arrived_in_measurement_period() 
             arrived_flows = list(self.arrived_flow_dicts.values())
             times_arrived = [arrived_flows[i]['time_arrived'] for i in range(len(arrived_flows))]
+
+        # print(times_arrived)
 
         self.num_arrived_flows = len(times_arrived)
         self.time_first_flow_arrived = min(times_arrived)
@@ -333,7 +336,7 @@ class EnvAnalyser:
         print('Computing flow completion metrics for env {}...'.format(self.env.sim_name))
         start = time.time()
 
-        if self.env_analyser_database_path:
+        if self.env_analyser_database_path is not None:
             # init database
             self.completed_flow_dicts = self.env_analyser_database_path + '/completed_flow_dicts.sqlite'
             fcts = []
@@ -739,7 +742,7 @@ class EnvAnalyser:
         print('Computing job completion metrics for env {}...'.format(self.env.sim_name))
         start = time.time()
 
-        if self.env_analyser_database_path:
+        if self.env_analyser_database_path is not None:
             # init database
             self.completed_job_dicts = self.env_analyser_database_path + '/completed_job_dicts.sqlite'
             jcts = []
@@ -1043,7 +1046,7 @@ class EnvAnalyser:
 
 
     def _init_job_arrival_metrics(self):
-        if self.env_analyser_database_path:
+        if self.env_analyser_database_path is not None:
             # init database
             self.arrived_job_dicts = self.env_analyser_database_path + '/arrived_job_dicts.sqlite'
             if os.path.exists(self.arrived_job_dicts):

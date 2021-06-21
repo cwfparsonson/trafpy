@@ -1,5 +1,5 @@
 from trafpy.generator.src import tools
-from trafpy.generator.src.dists import val_dists, node_dists
+from trafpy.generator.src.dists import val_dists, node_dists, plot_dists
 
 import numpy as np
 import time
@@ -12,6 +12,9 @@ import multiprocessing
 from tqdm import tqdm # progress bar
 from tqdm import trange
 from tqdm.contrib.concurrent import process_map
+import warnings
+import matplotlib
+import matplotlib.pyplot as plt
 
 
 
@@ -1016,6 +1019,152 @@ def duplicate_demand(job,
 
 
 
+
+
+
+
+def gen_network_skewness_heat_maps(network, 
+                                   num_skewed_nodes=[], 
+                                   loads=[], 
+                                   roof_skew_factor=2,
+                                   labeled_grid_resolution=0.05,
+                                   min_skewed_traffic_requested=0.0, 
+                                   max_skewed_traffic_requested=1.0,
+                                   print_data=False,
+                                   path_to_save=None,
+                                   **kwargs):
+    '''
+
+    Assumptions:
+        - All endpoints in network have equal bandwidth capacity, and this
+            capacity is 1/n of the overall network capacity, where n is the
+            number of endpoints in the network.
+        - Skewness is simply a skew factor, which is the fractional difference 
+            between traffic_per_skewed_node and traffic_per_non_skewed_node
+        - All nodes are either skewed (by the same amount) or not skewed (by the same amount)
+
+    Args:
+        network (object)
+        num_skewed_nodes (list): List of number of nodes to skew. Forms y-axis
+            on heat map.
+        loads (list): List of overall loads to apply to network (length of loads
+            list determines the number of heat maps generated).
+        min_skewed_traffic_requested (float): Minimum proportion of overall traffic
+            requested by skewed nodes. Must be between 0 and 1. Forms minimum of
+            heat map x-axis (matrix rows).
+        max_skewed_traffic_requested (float): Maximum proportion of overall traffic
+            requested by skewed nodes. Must be between 0 and 1. Forms maximum of
+            heat map x-axis (matrix columns).
+        show_fig (bool): Whether or not to display colour map.
+
+    Returns skewed_nodes_traffic_requested (y-axis coords), proportion_nodes_skewed
+    (x-axis coords), heat_maps (2D matrix of skewness values for x-y coords), and
+    list of colour map matplotlib figures.
+
+    '''
+    if len(num_skewed_nodes) == 0:
+        num_skewed_nodes = np.arange(0, len(network.graph['endpoints'])+1)
+    proportion_nodes_skewed = np.asarray([num_skewed/len(network.graph['endpoints']) for num_skewed in num_skewed_nodes])
+
+    step_size = (max_skewed_traffic_requested-min_skewed_traffic_requested)/(len(num_skewed_nodes)-1)
+    skewed_nodes_traffic_requested = np.arange(min_skewed_traffic_requested, max_skewed_traffic_requested+step_size, step_size)
+    max_idx = len(skewed_nodes_traffic_requested) - 1
+
+    # pcolormesh requires X and Y to be 1 larger dimension than Z or will cut out values
+    skewed_nodes_traffic_requested = np.append(skewed_nodes_traffic_requested, (skewed_nodes_traffic_requested[1]-skewed_nodes_traffic_requested[0])+skewed_nodes_traffic_requested[-1])
+    proportion_nodes_skewed = np.append(proportion_nodes_skewed, (proportion_nodes_skewed[1]-proportion_nodes_skewed[0])+proportion_nodes_skewed[-1])
+
+    if len(loads) == 0:
+        loads = np.arange(0.1, 1.0, 0.1)
+        loads = [round(load, 2) for load in loads]
+
+    max_traffic_per_ep = 1/len(network.graph['endpoints'])
+    if print_data:
+        print('max traffic per ep: {}'.format(max_traffic_per_ep))
+
+    # max possible node skew is where have highest network load w/ lowest no. skewed nodes w/ highest traffic per skew
+    # max_node_skew = max(x for x in skewed_nodes_traffic_requested if x != 0) * max(x for x in loads if x != 0) * min(x for x in num_skewed_nodes if x != 0)
+    # min_node_skew = min(x for x in skewed_nodes_traffic_requested if x != 0) * min(x for x in loads if x != 0) * max(x for x in num_skewed_nodes if x != 0)
+    # print(min_node_skew, max_node_skew)
+
+    figs = []
+    heat_maps = {load: None for load in loads}
+    for load in loads:
+        if print_data:
+            print('\n\nload {}'.format(load))
+        # rows (y) -> skewed nodes, columns (x) -> traffic requested
+        heat_map = np.zeros((len(num_skewed_nodes), len(skewed_nodes_traffic_requested)))
+        for node_idx, num_skewed in enumerate(num_skewed_nodes):
+            for traffic_idx, traffic_all_skewed_nodes in enumerate(skewed_nodes_traffic_requested):
+                traffic_per_skewed_node = (traffic_all_skewed_nodes / num_skewed) * load
+                traffic_per_non_skewed_node = ((1-traffic_all_skewed_nodes) / (len(network.graph['endpoints'])-num_skewed)) * load
+                if print_data:
+                    print('num skewed nodes: {} | traffic all skewed nodes: {}'.format(num_skewed, traffic_all_skewed_nodes))
+                    print('traffic per skewed node: {} | traffic per non skewed node: {}'.format(traffic_per_skewed_node, traffic_per_non_skewed_node))
+                if traffic_per_skewed_node > max_traffic_per_ep:
+                    if print_data:
+                        print('skewed nodes excess! distribute excess amongst non-skewed nodes')
+                    # distribute excess amongst non-skewed nodes
+                    excess_per_node = traffic_per_skewed_node - max_traffic_per_ep
+                    total_excess = excess_per_node * num_skewed
+                    if print_data:
+                        print('excess per node: {} | total excess: {}'.format(excess_per_node, total_excess))
+                    traffic_per_non_skewed_node += (total_excess/(len(network.graph['endpoints'])-num_skewed))
+                    traffic_per_skewed_node = max_traffic_per_ep
+                    if print_data:
+                        print('traffic per skewed node: {} | traffic per non skewed node: {}'.format(traffic_per_skewed_node, traffic_per_non_skewed_node))
+                if traffic_per_non_skewed_node > max_traffic_per_ep:
+                    if print_data:
+                        print('non-skewed nodes excess! distribute excess amongst skewed nodes')
+                    # distribute excess amongst skewed nodes:
+                    excess_per_node = traffic_per_non_skewed_node - max_traffic_per_ep
+                    total_excess = excess_per_node * (len(network.graph['endpoints'])-num_skewed)
+                    if print_data:
+                        print('excess per node: {} | total excess: {}'.format(excess_per_node, total_excess))
+                    traffic_per_skewed_node += (total_excess/num_skewed)
+                    traffic_per_non_skewed_node = max_traffic_per_ep
+                    if print_data:
+                        print('traffic per skewed node: {} | traffic per non skewed node: {}'.format(traffic_per_skewed_node, traffic_per_non_skewed_node))
+                # skew = abs(traffic_per_skewed_node - traffic_per_non_skewed_node) / (max_traffic_per_ep)
+
+                # roof = 2 # factor beyond which we say the traffic is 'very skewed'
+                # skew = min(max([traffic_per_skewed_node, traffic_per_non_skewed_node]) / min([traffic_per_skewed_node, traffic_per_non_skewed_node]), roof)
+
+                skew = max([traffic_per_skewed_node, traffic_per_non_skewed_node]) / min([traffic_per_skewed_node, traffic_per_non_skewed_node])
+                # if np.isnan(skew) or np.isinf(skew):
+                if np.isnan(skew):
+                    skew = 1
+                if print_data:
+                    print('skew: {} (node idx {} traff idx {} load {})\n'.format(skew, node_idx, traffic_idx, load))
+                heat_map[max_idx-node_idx, max_idx-traffic_idx] = skew
+
+        # store heat map
+        heat_maps[load] = heat_map
+        if path_to_save is not None:
+            tools.pickle_data(path_to_save+'heat_map_load_{}'.format(load), heat_map)
+
+        # plot heat map
+        kwargs['title'] = 'Load {}'.format(load)
+        kwargs['path_to_save'] = path_to_save+'heat_map_load_{}.png'.format(load)
+        figs.append(plot_dists.plot_heat_map(proportion_nodes_skewed, skewed_nodes_traffic_requested, heat_map, roof_skew_factor, **kwargs))
+
+        if kwargs['plot_labeled_heat_map']:
+            # plot annotated grid of skew values
+            kwargs['path_to_save'] = path_to_save+'labeled_heat_map_load_{}.png'.format(load)
+            figs.append(plot_dists.plot_labeled_heat_map(proportion_nodes_skewed, skewed_nodes_traffic_requested, heat_map, labeled_grid_resolution, **kwargs))
+
+
+    return skewed_nodes_traffic_requested, proportion_nodes_skewed, heat_maps, figs
+
+
+
+
+
+            
+
+
+
+    
 
 
 

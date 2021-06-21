@@ -40,15 +40,16 @@ def get_summary_dict(analysers, headers, time_units='', info_units=''):
         summary_dict['Mean FCT ({})'.format(time_units)].append(round(analyser.mean_fct, 1))
         summary_dict['p99 FCT ({})'.format(time_units)].append(round(analyser.nn_fct, 1))
         summary_dict['Max FCT ({})'.format(time_units)].append(round(analyser.max_fct, 1))
-        summary_dict['Throughput Frac'].append(sigfig.round(float(analyser.throughput_frac), sigfigs=6))
-        summary_dict['Frac Flows Dropped'].append(sigfig.round(float(analyser.dropped_flow_frac), sigfigs=3))
-        summary_dict['Frac Info Dropped'].append(sigfig.round(float(analyser.dropped_info_frac), sigfigs=3))
+        summary_dict['Throughput'].append(sigfig.round(float(analyser.throughput_frac), sigfigs=6))
+        summary_dict['Throughput ({}/{})'.format(info_units, time_units)].append(sigfig.round(float(analyser.throughput_abs), sigfigs=6))
+        summary_dict['Frac Flows Accepted'].append(sigfig.round(float(1-analyser.dropped_flow_frac), sigfigs=6))
+        summary_dict['Frac Info Accepted'].append(sigfig.round(float(1-analyser.dropped_info_frac), sigfigs=6))
 
         if analyser.env.job_centric:
             summary_dict['Mean JCT ({})'.format(time_units)].append(round(analyser.mean_jct, 1))
             summary_dict['p99 JCT ({})'.format(time_units)].append(round(analyser.nn_jct, 1))
             summary_dict['Max JCT ({})'.format(time_units)].append(round(analyser.max_jct, 1))
-            summary_dict['Frac Jobs Dropped'].append(sigfig.round(float(analyser.dropped_job_frac), sigfigs=3))
+            summary_dict['Frac Jobs Accepted'].append(sigfig.round(float(1-analyser.dropped_job_frac), sigfigs=6))
 
     return summary_dict
 
@@ -86,9 +87,15 @@ class EnvsPlotter:
 
     ############################### GENERIC #################################
 
-    def display_t_score_table(self, *analysers, **kwargs):
-        if 'display_table' not in kwargs:
-            kwargs['display_table'] = True
+    def construct_tables(self, *analysers, **kwargs):
+        '''
+        Constructs summary dataframes and tables and (optionally) prints out
+        and displays these tables. Optionally also visualises these summary
+        data with radar plots.
+
+        '''
+        if 'display_tables' not in kwargs:
+            kwargs['display_tables'] = True
         if 'plot_radar' not in kwargs:
             kwargs['plot_radar'] = True
         if 'figsize' not in kwargs:
@@ -106,9 +113,10 @@ class EnvsPlotter:
                    'Mean FCT ({})'.format(self.time_units), 
                    'p99 FCT ({})'.format(self.time_units), 
                    'Max FCT ({})'.format(self.time_units), 
-                   'Throughput Frac', 
-                   'Frac Flows Dropped', 
-                   'Frac Info Dropped']
+                   'Throughput', 
+                   'Throughput ({}/{})'.format(self.info_units, self.time_units),
+                   'Frac Flows Accepted', 
+                   'Frac Info Accepted']
         for analyser in analysers:
             job_centric = analyser.env.job_centric
             break
@@ -116,7 +124,7 @@ class EnvsPlotter:
             headers.append('Mean JCT ({})'.format(self.time_units))
             headers.append('p99 JCT ({})'.format(self.time_units))
             headers.append('Max JCT ({})'.format(self.time_units))
-            headers.append('Frac Jobs Dropped')
+            headers.append('Frac Jobs Accepted')
 
 
         _summary_dict = get_summary_dict(analysers, headers, time_units=self.time_units, info_units=self.info_units)
@@ -128,20 +136,20 @@ class EnvsPlotter:
             summary_dict[key] = np.asarray(_summary_dict[key])[index]
         # print(summary_dict)
 
-        # sort loads by t-score (best first)
+        # sort loads by subject name (alphabetical)
         sorted_summary_dict = {header: [] for header in headers}
         # create winner table
-        winner_table = {header: [] for header in headers if header != 'T-Score' and header != 'Subject'}
+        winner_table = {header: [] for header in headers if header != 'T-Score' and header != 'Subject' and 'Throughput (' not in header}
         winner_table['Load'] = list(np.unique(list(summary_dict['Load'])))
         # create ranking table
-        ranking_table = {header: [] for header in headers if header != 'T-Score' and header != 'Subject'}
+        ranking_table = {header: [] for header in headers if header != 'T-Score' and header != 'Subject' and 'Throughput (' not in header}
         ranking_table['Load'] = list(np.unique(list(summary_dict['Load'])))
         # create excel tables
         # excel_summary_table = {header: {subject: [] for subject in np.unique(list(summary_dict['Subject']))} for header in headers if header != 'T-Score' and header != 'Subject'}
         # excel_summary_table['Load'] = list(np.unique(list(summary_dict['Load'])))
         # excel_ranking_table = {header: {subject: [] for subject in np.unique(list(summary_dict['Subject']))} for header in headers if header != 'T-Score' and header != 'Subject'}
         # excel_ranking_table['Load'] = list(np.unique(list(summary_dict['Load'])))
-        latex_winner_table = {header: [] for header in headers if header != 'T-Score' and header != 'Subject'}
+        latex_winner_table = {header: [] for header in headers if header != 'T-Score' and header != 'Subject' and 'Throughput (' not in header}
         latex_winner_table['Load'] = list(np.unique(list(summary_dict['Load'])))
 
         num_loads = len(np.unique(list(summary_dict['Load'])))
@@ -153,13 +161,13 @@ class EnvsPlotter:
         # determine if higher is better for each header
         is_higher_better = {}
         for header in headers:
-            if header == 'T-Score' or header == 'Throughput Frac':
+            if header == 'T-Score' or 'Throughput' in header or 'Accepted' in header:
                 is_higher_better[header] = True
             else:
                 is_higher_better[header] = False
         # for load_idx in range(num_loads+1):
         for load_idx in range(num_loads):
-            # sort t-scores for this load in descending order
+            # sort subjects for this load 
 
             # find num_subjects for each load
             num_subjects = 0
@@ -173,23 +181,26 @@ class EnvsPlotter:
                     break
             # print('\nloads: {} | num subjects: {}'.format(loads, num_subjects))
 
-            load_t_scores = summary_dict['T-Score'][i2:i2+num_subjects]
-            load_t_score_indices = list(reversed(np.argsort(load_t_scores)))
-            load_t_score_indices = [i2+_i for _i in load_t_score_indices]
+            # load_t_scores = summary_dict['T-Score'][i2:i2+num_subjects]
+            # load_t_score_indices = list(reversed(np.argsort(load_t_scores)))
+            # load_t_score_indices = [i2+_i for _i in load_t_score_indices]
             # print('t scores: {} | t score indices: {}'.format(load_t_scores, load_t_score_indices))
+            subjects = summary_dict['Subject'][i2:i2+num_subjects]
+            load_subject_indices = list(np.argsort(subjects))
+            load_subject_indices = [i2+_i for _i in load_subject_indices]
 
             # index by this order
             for header in headers:
                 # update sorted summary dict
-                sorted_summary_dict[header].extend(summary_dict[header][load_t_score_indices])
+                sorted_summary_dict[header].extend(summary_dict[header][load_subject_indices])
                 
                 # print('sorted summary dict:\n{}'.format(sorted_summary_dict))
 
                 # update radar plot & winner table
-                if header != 'Subject' and header != 'Load' and header != 'T-Score' and load_idx < num_loads:
+                if header != 'Subject' and header != 'Load' and header != 'T-Score' and 'Throughput (' not in header and load_idx < num_loads:
                     # get classes and corresponding rand var values for this rand var
-                    classes = summary_dict['Subject'][load_t_score_indices]
-                    classes_rand_vars = summary_dict[header][load_t_score_indices]
+                    classes = summary_dict['Subject'][load_subject_indices]
+                    classes_rand_vars = summary_dict[header][load_subject_indices]
                     # print('classes: {} | classes rand vars: {}'.format(classes, classes_rand_vars))
 
                     # winner table
@@ -222,7 +233,11 @@ class EnvsPlotter:
                     relative_performance = []
                     for val in ranking_vals[:-1]:
                         diff = val - baseline_val
-                        perf = sigfig.round(float((diff/baseline_val) * 100), sigfigs=4)
+                        if diff != 0:
+                            perf = sigfig.round(float((diff/baseline_val) * 100), sigfigs=4)
+                        else:
+                            # same performance as baseline val
+                            perf = 0
                         relative_performance.append(perf)
                     relative_performance_iterator = iter(relative_performance)
                     ranks = ''
@@ -284,16 +299,18 @@ class EnvsPlotter:
                 new_key = 'p99 FCT'
             elif 'Max' in key:
                 new_key = 'Max FCT'
-            elif 'Throughput' in key:
+            elif 'Throughput Frac' in key:
                 new_key = 'Throughput'
-            elif 'Flows Dropped' in key:
-                new_key = 'Flows Dropped'
-            elif 'Info Dropped' in key:
-                new_key = 'Info Dropped'
+            elif 'Throughput (' in key:
+                new_key = 'Throughput Rate'
+            elif 'Flows Accepted' in key:
+                new_key = 'Flows Accepted'
+            elif 'Info Accepted' in key:
+                new_key = 'Info Accepted'
             else:
                 # don't need to adjust
                 pass
-            if new_key is not None:
+            if new_key is not None and new_key != 'Throughput Rate':
                 latex_winner_table[new_key] = latex_winner_table.pop(key)
 
         # change headers of latex summary table
@@ -309,10 +326,12 @@ class EnvsPlotter:
                 new_key = 'Max FCT ($\mu$s)'
             elif 'Throughput' in key:
                 new_key = 'Throughput (Frac)'
-            elif 'Flows Dropped' in key:
-                new_key = 'Flows Dropped (Frac)'
-            elif 'Info Dropped' in key:
-                new_key = 'Info Dropped (Frac)'
+            elif 'Throughput (' in key:
+                new_key = 'Throughput Rate (B/$\mu$s)'
+            elif 'Flows Accepted' in key:
+                new_key = 'Flows Accepted (Frac)'
+            elif 'Info Accepted' in key:
+                new_key = 'Info Accepted (Frac)'
             else:
                 # don't need to adjust
                 pass
@@ -328,49 +347,21 @@ class EnvsPlotter:
         latex_winner_dataframe = pd.DataFrame(latex_winner_table)
 
 
-        # # excel summary 
-        # multiindex_dict = {}
-        # for header in excel_summary_table.keys():
-            # if header != 'Load':
-                # for subject in excel_summary_table[header].keys():
-                    # multiindex_dict[(header, subject)] = excel_summary_table[header][subject]
-            # else:
-                # multiindex_dict['Load'] = excel_summary_table['Load']
-        # excel_summary_dataframe = pd.DataFrame(multiindex_dict)
-        # if kwargs['path_or_buf'] is not None:
-            # excel_summary_dataframe.to_csv(kwargs['path_or_buf']+'/summary_dataframe_csv')
-            # excel_summary_dataframe.to_latex(kwargs['path_or_buf']+'/summary_dataframe_latex')
-            # print('Saved summary_dataframe to {}.'.format(kwargs['path_or_buf']))
-
-        # # excel ranking
-        # multiindex_dict = {}
-        # for header in excel_ranking_table.keys():
-            # if header != 'Load':
-                # for subject in excel_ranking_table[header].keys():
-                    # multiindex_dict[(header, subject)] = excel_ranking_table[header][subject]
-            # else:
-                # multiindex_dict['Load'] = excel_ranking_table['Load']
-        # excel_ranking_dataframe = pd.DataFrame(multiindex_dict)
-        # if kwargs['path_or_buf'] is not None:
-            # excel_ranking_dataframe.to_csv(kwargs['path_or_buf']+'/ranking_dataframe_csv')
-            # excel_ranking_dataframe.to_latex(kwargs['path_or_buf']+'/ranking_dataframe_latex')
-            # print('Saved ranking_dataframe to {}.'.format(kwargs['path_or_buf']))
-
-
         if kwargs['print_latex_tables']:
             print('\n\nSummary latex table:')
-            print(latex_summary_dataframe.to_latex(index=False, multicolumn=True))
+            print(latex_summary_dataframe.to_latex(index=False, multicolumn=True, escape=False))
             print('\n\nWinner latex table:')
             print(latex_winner_dataframe.to_latex(index=False, multicolumn=True))
 
         if self.path_to_save is not None:
             summary_dataframe.to_pickle(self.path_to_save+'/summary_dataframe.pkl')
-            latex_summary_dataframe.to_latex(index=False, multicolumn=True, buf=self.path_to_save+'/latex_summary_table')
-            latex_winner_dataframe.to_latex(index=False, multicolumn=True, buf=self.path_to_save+'/latex_winner_table')
+            latex_summary_dataframe.to_latex(index=False, multicolumn=True, buf=self.path_to_save+'/latex_summary_table', escape=False)
+            latex_winner_dataframe.to_latex(index=False, multicolumn=True, buf=self.path_to_save+'/latex_winner_table', escape=False)
+            print('Saved tables and dataframes to {}'.format(self.path_to_save))
 
 
 
-        if kwargs['display_table']:
+        if kwargs['display_tables']:
             display(summary_dataframe)
             display(winner_dataframe)
             display(ranking_dataframe)
@@ -773,7 +764,11 @@ class EnvsPlotter:
         for key in plot_dict.keys():
             init_idx = np.argmin(plot_dict[key]['x_values'])
             init_var = plot_dict[key]['y_values'][init_idx]
-            plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+            if init_var != 0: 
+                plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+            else:
+                # was 0 flows dropped and now not -> infinitely worse
+                plot_dict[key]['y_values'] = [-float('inf') for _ in range(len(plot_dict[key]['y_values']))]
         fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
                                            xlabel='Load', 
                                            ylabel='\u0394F Flows Dropped', 
@@ -1836,7 +1831,9 @@ class EnvsPlotter:
 
 # FUNCS
 def plot_summary_dict_params(summary_dicts, 
+                             error_summary_dicts=None,
                               dependent_var_name='Random Variable', 
+                              dependent_var_display_name=None,
                               control_var_name='Param', 
                               loads=[0.1, 0.5, 0.9], 
                               subjects_to_plot='all',
@@ -1859,7 +1856,12 @@ def plot_summary_dict_params(summary_dicts,
 
     The keys of these individual summary dicts will be e.g. 'Load', 'Subject',
     'Mean FCT' etc., and the values will be the corresponding values.
+
+    If error_summary_dicts is not None, should be a summary_dict formatted in same
+    way as summary_dicts but containing the error (e.g. std) for each stat.
     '''
+    if dependent_var_display_name is None:
+        dependent_var_display_name = dependent_var_name
     if 'gridlines' not in kwargs:
         kwargs['gridlines'] = True
     if 'aspect' not in kwargs:
@@ -1890,58 +1892,139 @@ def plot_summary_dict_params(summary_dicts,
         for subject in all_subjects:
             if subject not in subjects_to_plot:
                 ghost_subjects.append(subject)
+
+    if control_var_name != 'Load':
+        # check loads are in summary_dicts, since somtimes get e.g. 0.89 instead of 0.9
+        _loads = []
+        summ_loads =  list(summary_dicts[list(summary_dicts.keys())[0]]['Load'].values())
+        for load in loads:
+            if load not in summ_loads:
+                # load not in summary_dicts
+                # see if +- 0.01 helps
+                load_plus, load_minus = load + 0.01, load - 0.01
+                if load_plus in summ_loads:
+                    _loads.append(load_plus)
+                elif load_minus in summ_loads:
+                    _loads.append(load_minus)
+                else:
+                    raise Exception('Unable to find load {} in summary dict loads {}'.format(load, summ_loads))
+            else:
+                # load in summary_dicts
+                _loads.append(load)
+        # update list of loads to ensure compatible with summary_dicts
+        loads = _loads
+
+
     
-    for load in loads:
+    if control_var_name != 'Load':
+        # plot separate plot for each load
+        num_plots = len(loads)
+    else:
+        # only plot one plot for all loads
+        num_plots = 1
+    counter = 0
+    while counter != num_plots:
         # new plot
-    
-        # num entries for this load
-        num_entries = list(summary_dicts[list(summary_dicts.keys())[0]]['Load'].values()).count(load)
-        # index where entries for this load start
-        starting_idx = list(summary_dicts[list(summary_dicts.keys())[0]]['Load'].values()).index(load)
+
+        if control_var_name != 'Load':
+            # separate plots for each load. Get load
+            load = loads[counter]
 
         # get rand var key
         rand_var_key = None
         for key in summary_dicts[list(summary_dicts.keys())[0]].keys():
-            if dependent_var_name in key:
-                rand_var_key = key
-                break
+            if dependent_var_name != 'Throughput':
+                if dependent_var_name in key:
+                    rand_var_key = copy.deepcopy(key)
+                    break
+            else:
+                # have Throughput and Throughput (xxx), so need to distinguish
+                if key == dependent_var_name:
+                    rand_var_key = copy.deepcopy(key)
+                    break
         if rand_var_key is None:
-            raise Exception('Unable to find {} in {}'.format(dependent_var_name, list(summary_dicts.keys())[0]))
+            raise Exception('Unable to find {} in {}'.format(dependent_var_name, summary_dicts[list(summary_dicts.keys())[0]].keys()))
 
-        # get subjects and rand vars
+        # get subjects, rand vars and (optional) error (e.g. std) for each var 
         subjects = []
         rand_vars = []
-        params = []
-        for param in list(summary_dicts.keys()):
-            all_subjects = list(summary_dicts[param]['Subject'].values())
-            all_rand_vars = list(summary_dicts[param][rand_var_key].values())
+        errors = []
+        if control_var_name != 'Load':
+            # must append control var param values to list
+            params = []
+            params_iterator = list(summary_dicts.keys())
+        else:
+            # control var param values are just the loads
+            params = [load for load in summary_dicts[0]['Load'].values() if round(load, 1) in loads] 
+            params_iterator = copy.deepcopy(np.unique(params))
+        for param in params_iterator:
+            if control_var_name != 'Load':
+                all_subjects = list(summary_dicts[param]['Subject'].values())
+                all_rand_vars = list(summary_dicts[param][rand_var_key].values())
+                # num entries for this load
+                num_entries = list(summary_dicts[list(summary_dicts.keys())[0]]['Load'].values()).count(load)
+                # index where entries for this load start
+                starting_idx = list(summary_dicts[list(summary_dicts.keys())[0]]['Load'].values()).index(load)
+                # get errors
+                if error_summary_dicts is not None:
+                    all_errors = list(error_summary_dicts[param][rand_var_key].values())
+            else:
+                # param is the load
+                all_subjects = list(summary_dicts[0]['Subject'].values())
+                all_rand_vars = list(summary_dicts[0][rand_var_key].values())
+                # num entries for this load
+                num_entries = list(summary_dicts[0]['Load'].values()).count(param)
+                # index where entries for this load start
+                starting_idx = list(summary_dicts[0]['Load'].values()).index(param)
+                # get errors
+                if error_summary_dicts is not None:
+                    all_errors = list(error_summary_dicts[0][rand_var_key].values())
+
             for idx in range(starting_idx, starting_idx+num_entries):
                 subject, rand_var = all_subjects[idx], all_rand_vars[idx]
                 if subject in subjects_to_plot:
                     rand_vars.append(all_rand_vars[idx])
                     subjects.append(all_subjects[idx])
-                    params.append(param)
+                    if error_summary_dicts is not None:
+                        errors.append(all_errors[idx])
+                    if control_var_name != 'Load':
+                        params.append(param)
 
         # organise into plot_dict
-        plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in np.unique(subjects)}
-        for subject, rand_var, param in zip(subjects, rand_vars, params):
-            plot_dict[subject]['x_values'].append(float(param))
-            plot_dict[subject]['y_values'].append(rand_var)
-            plot_dict[subject]['rand_vars'].append(rand_var)
-        
-        
-        if kwargs['replace_summary_dict_dependent_var_name']:
-            rand_var_key = dependent_var_name
+        if error_summary_dicts is None:
+            plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': []} for _class in np.unique(subjects)}
+        else:
+            plot_dict = {_class: {'x_values': [], 'y_values': [], 'rand_vars': [], 'errors': []} for _class in np.unique(subjects)}
+        # for subject, rand_var, param in zip(subjects, rand_vars, params):
+        for idx in range(len(subjects)):
+            plot_dict[subjects[idx]]['x_values'].append(float(params[idx]))
+            plot_dict[subjects[idx]]['y_values'].append(rand_vars[idx])
+            plot_dict[subjects[idx]]['rand_vars'].append(rand_vars[idx])
+            if error_summary_dicts is not None:
+                plot_dict[subjects[idx]]['errors'].append(errors[idx])
 
+        if kwargs['replace_summary_dict_dependent_var_name']:
+            rand_var_key = copy.deepcopy(dependent_var_display_name)
+
+        if control_var_name != 'Load':
+            title = 'Load {}'.format(load)
+        else:
+            title = None
+
+        error_bar_axis = None
+    
         # scatter
+        if error_summary_dicts is not None:
+            error_bar_axis = 'yerr'
         fig1 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
                                            xlabel=control_var_name, 
                                            # ylabel='Load {} '.format(load)+rand_var_key,
-                                           ylabel=rand_var_key,
-                                           title='Load {}'.format(load),
+                                           ylabel=dependent_var_display_name,
+                                           title=title,
                                            ghost_classes=ghost_subjects,
                                            plot_line=True,
                                            aspect=kwargs['aspect'],
+                                           error_bar_axis=error_bar_axis,
                                            gridlines=kwargs['gridlines'],
                                            use_scientific_notation_yaxis=kwargs['use_scientific_notation'],
                                            figsize=kwargs['scatter_figsize'],
@@ -1952,9 +2035,9 @@ def plot_summary_dict_params(summary_dicts,
 
         # complementary cdf
         fig2 = plot_dists.plot_val_cdf(plot_dict=plot_dict, 
-                                       xlabel=rand_var_key, 
+                                       xlabel=dependent_var_display_name, 
                                        ylabel='C-CDF', 
-                                       title='Load {}'.format(load),
+                                       title=title,
                                        ghost_classes=ghost_subjects,
                                        complementary_cdf=True, 
                                        aspect=kwargs['aspect'],
@@ -1971,11 +2054,17 @@ def plot_summary_dict_params(summary_dicts,
             init_idx = np.argmin(plot_dict[key]['x_values'])
             init_var = plot_dict[key]['y_values'][init_idx]
             plot_dict[key]['y_values'] = [plot_dict[key]['y_values'][i]/init_var for i in range(len(plot_dict[key]['y_values']))]
+        if '(' in dependent_var_display_name:
+            # remove units since this y-axis label will be a fraction
+            _dependent_var_display_name = dependent_var_display_name.split(' (')[0]
+        else:
+            _dependent_var_display_name = dependent_var_display_name
         fig3 = plot_dists.plot_val_scatter(plot_dict=plot_dict, 
                                            xlabel=control_var_name, 
                                            # ylabel='Load {} '.format(load)+'\u0394F {}'.format(dependent_var_name), 
-                                           ylabel='\u0394F {}'.format(dependent_var_name), 
-                                           title='Load {}'.format(load),
+                                           ylabel='\u0394F {}'.format(_dependent_var_display_name), 
+                                           title=title,
+                                           error_bar_axis=None, # cant do error for % change since calc from mean
                                            ghost_classes=ghost_subjects,
                                            gridlines=kwargs['gridlines'], 
                                            aspect=kwargs['aspect'], 
@@ -1988,9 +2077,21 @@ def plot_summary_dict_params(summary_dicts,
                                            show_fig=True)
 
         if path_to_save is not None:
-            fig1.savefig(path_to_save+'/{}_vs_{}_load_{}_scatter.png'.format(rand_var_key, control_var_name, load), bbox_inches='tight')
-            fig2.savefig(path_to_save+'/{}_vs_{}_load_{}_complementary_cdf.png'.format(rand_var_key, control_var_name, load), bbox_inches='tight')
-            fig3.savefig(path_to_save+'/{}_vs_{}_load_{}_change.png'.format(rand_var_key, control_var_name, load), bbox_inches='tight')
+            if '/' in rand_var_key:
+                # change so that save name is compatible
+                idx = rand_var_key.index('/')
+                rand_var_key = rand_var_key[:idx] + '_' + rand_var_key [idx+1:]
+            if control_var_name != 'Load':
+                fig1.savefig(path_to_save+'/{}_vs_{}_load_{}_scatter.png'.format(rand_var_key, control_var_name, load), bbox_inches='tight')
+                fig2.savefig(path_to_save+'/{}_vs_{}_load_{}_complementary_cdf.png'.format(rand_var_key, control_var_name, load), bbox_inches='tight')
+                fig3.savefig(path_to_save+'/{}_vs_{}_load_{}_change.png'.format(rand_var_key, control_var_name, load), bbox_inches='tight')
+            else:
+                fig1.savefig(path_to_save+'/{}_vs_{}_scatter.png'.format(rand_var_key, control_var_name), bbox_inches='tight')
+                fig2.savefig(path_to_save+'/{}_vs_{}_complementary_cdf.png'.format(rand_var_key, control_var_name), bbox_inches='tight')
+                fig3.savefig(path_to_save+'/{}_vs_{}_change.png'.format(rand_var_key, control_var_name), bbox_inches='tight')
+            print('Saved figs to {}'.format(path_to_save))
+
+        counter += 1
 
 
     return [fig1, fig2, fig3]

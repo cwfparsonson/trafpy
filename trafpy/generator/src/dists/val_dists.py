@@ -244,7 +244,7 @@ def gen_skew_data(location,
                   num_skew_samples,
                   xlim=None, 
                   logscale=False,
-                  transparent=False,
+                  transparent=True,
                   rand_var_name='Unknown',
                   num_bins=0,
                   round_to_nearest=None,
@@ -344,7 +344,7 @@ def combine_skews(data_dict,
                   bg_factor=0.5,
                   xlim=None,
                   logscale=False,
-                  transparent=False,
+                  transparent=True,
                   rand_var_name='Unknown',
                   num_bins=0,
                   round_to_nearest=None,
@@ -584,7 +584,7 @@ def gen_skewnorm_data(a,
                       num_decimal_places=2,
                       interactive_params=None,
                       logscale=False,
-                      transparent=False):
+                      transparent=True):
     '''Generates skew data.
 
     Args:
@@ -748,7 +748,7 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                        font_size=font_size,
                                        logscale=logscale,
                                        marker_style='+',
-                                       alpha=1,
+                                       alpha=[1, 0.6],
                                        marker_size=marker_size,
                                        use_scientific_notation_yaxis=True,
                                        use_scientific_notation_xaxis=True,
@@ -787,6 +787,7 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
         # distance vs. num demands
         if jensen_shannon_distance_threshold is not None:
             plot_dict = {'sampled': {'x_values': num_demands_list, 'y_values': distance_list}}
+            target = 0.1
             _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
                                            xlabel='Demands',
                                            ylabel='$\sqrt{JSD}$',
@@ -795,6 +796,7 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                            figsize=figsize,
                                            font_size=font_size,
                                            logscale=logscale,
+                                           horizontal_lines=[target],
                                            marker_style='+',
                                            plot_legend=False,
                                            alpha=1,
@@ -810,6 +812,7 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
             # plt.ylabel('Min {}'.format(xlabel))
             # plt.show()
             plot_dict = {'sampled': {'x_values': num_demands_list, 'y_values': min_list}}
+            target = min(unique_vars)
             _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
                                            xlabel='Demands',
                                            ylabel='Min {}'.format(xlabel),
@@ -818,6 +821,7 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                            font_size=font_size,
                                            logscale=logscale,
                                            marker_style='+',
+                                           horizontal_lines=[target],
                                            plot_legend=False,
                                            alpha=1,
                                            marker_size=marker_size,
@@ -832,6 +836,7 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
             # plt.ylabel('Max {}'.format(xlabel))
             # plt.show()
             plot_dict = {'sampled': {'x_values': num_demands_list, 'y_values': max_list}}
+            target = max(unique_vars)
             _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
                                            xlabel='Demands',
                                            ylabel='Max {}'.format(xlabel),
@@ -841,6 +846,8 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                            logscale=logscale,
                                            marker_style='+',
                                            plot_legend=False,
+                                           ylogscale=True,
+                                           horizontal_lines=[target],
                                            alpha=1,
                                            marker_size=marker_size,
                                            use_scientific_notation_yaxis=True,
@@ -854,6 +861,8 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
             # plt.ylabel('Mean {}'.format(xlabel))
             # plt.show()
             plot_dict = {'sampled': {'x_values': num_demands_list, 'y_values': mean_list}}
+            dist = stats.rv_discrete(values=(unique_vars, probabilities))
+            target = dist.mean()
             _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
                                            xlabel='Demands',
                                            ylabel='Mean {}'.format(xlabel),
@@ -862,6 +871,7 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                            font_size=font_size,
                                            logscale=logscale,
                                            marker_style='+',
+                                           horizontal_lines=[target],
                                            plot_legend=False,
                                            alpha=1,
                                            marker_size=marker_size,
@@ -876,6 +886,8 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
             # plt.ylabel('Std {}'.format(xlabel))
             # plt.show()
             plot_dict = {'sampled': {'x_values': num_demands_list, 'y_values': std_list}}
+            dist = stats.rv_discrete(values=(unique_vars, probabilities))
+            target = dist.std()
             _ = plot_dists.plot_val_scatter(plot_dict=plot_dict,
                                            xlabel='Demands',
                                            ylabel='Std {}'.format(xlabel),
@@ -885,6 +897,7 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                            logscale=logscale,
                                            marker_style='+',
                                            plot_legend=False,
+                                           horizontal_lines=[target],    
                                            alpha=1,
                                            marker_size=marker_size,
                                            use_scientific_notation_yaxis=True,
@@ -1014,7 +1027,7 @@ def gen_exponential_dist(_beta,
                          max_val=None,
                          interactive_params=None,
                          logscale=False,
-                         transparent=False):
+                         transparent=True):
     '''Generates an exponential distribution of random variable values.
     
     The exponential distribution often fits scenarios whose events' random 
@@ -1107,7 +1120,7 @@ def gen_lognormal_dist(_mu,
                        max_val=None,
                        interactive_params=None, 
                        logscale=False, 
-                       transparent=False):
+                       transparent=True):
     '''Generates a log-normal distribution of random variable values.
 
     Log-normal distributions often fit scenarios whose random variable values
@@ -1204,7 +1217,7 @@ def gen_normal_dist(loc,
                     max_val=None,
                     interactive_params=None,
                     logscale=False,
-                    transparent=False):
+                    transparent=True):
     '''Generates a normal/gaussian distribution of random variable values.
 
     Args:
@@ -1287,7 +1300,7 @@ def gen_pareto_dist(_alpha,
                     max_val=None,
                     interactive_params=None,
                     logscale=False,
-                    transparent=False):
+                    transparent=True):
     '''Generates a pareto distribution of random variable values.
 
     Pareto distributions often fit scenarios whose random variable values
@@ -1383,7 +1396,7 @@ def gen_weibull_dist(_alpha,
                      max_val=None,
                      interactive_params=None, 
                      logscale=False, 
-                     transparent=False):
+                     transparent=True):
     '''Generates a Weibull distribution of random variable values.
 
     Weibull distributions often fir scenarios whose random variable values 

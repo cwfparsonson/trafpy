@@ -26,6 +26,15 @@ import pympler
 from pympler import tracker
 from sqlitedict import SqliteDict
 
+import ray
+import psutil
+num_cpus = psutil.cpu_count(logical=False)
+try:
+    ray.init(num_cpus=num_cpus)
+except RuntimeError:
+    # already initialised ray in script calling dcn sim, no need to init again
+    pass
+
 
 class DCN(gym.Env):
 
@@ -94,7 +103,6 @@ class DCN(gym.Env):
             print('Snapshotted memory in {} s'.format(end-start))
 
         if env_database_path is not None:
-            # using databases to store in external memory, init database dir
             env_database_path += '/env_database'
             if os.path.exists(env_database_path):
                 # delete dir
@@ -102,6 +110,8 @@ class DCN(gym.Env):
             # create dir
             os.mkdir(env_database_path)
         self.env_database_path = env_database_path
+
+
 
         # init slots dict
         self.slots_dict = slots_dict
@@ -1693,18 +1703,14 @@ class DCN(gym.Env):
 
         # establish chosen flows
         self.time_establish_flows_start = time.time()
+        # if len(chosen_flows) == 0:
+            # # no flows chosen
+            # pass
+        # else:
+            # ray.get([self.set_up_connection.remote(self, flow) for flow in chosen_flows])
         for chosen_flow in chosen_flows:
-            #flow_established, _ = self.check_flow_present(chosen_flow, self.connected_flows)
-            if len(chosen_flows) == 0:
-                # no flows chosen
-                pass
-            #elif flow_established:
-            # elif self.check_flow_present(chosen_flow, self.connected_flows):
-                # # chosen flow already established, leave
-                # pass
-            else:
-                # chosen flow not already established, establish connection
-                self.set_up_connection(chosen_flow)
+            # chosen flow not already established, establish connection
+            self.set_up_connection(chosen_flow)
         self.time_establish_flows_end = time.time()
 
         # take down replaced flows
@@ -1747,8 +1753,8 @@ class DCN(gym.Env):
         # take action
         take_action_time = self.time_take_action_end - self.time_take_action_start
 
-        # check flow validity
-        check_valid_time = self.time_check_valid_end - self.time_check_valid_start
+        # # check flow validity
+        # check_valid_time = self.time_check_valid_end - self.time_check_valid_start
 
         # update flow attrs
         update_flow_attrs_time = self.time_update_flow_attrs_end - self.time_update_flow_attrs_start
@@ -1788,7 +1794,7 @@ class DCN(gym.Env):
         summary_dict = {
                 'Step': [round(step_time, num_decimals)],
                 'Take Action': [round(take_action_time, num_decimals)],
-                'Check Valid': [round(check_valid_time, num_decimals)],
+                # 'Check Valid': [round(check_valid_time, num_decimals)],
                 'Update Attrs': [round(update_flow_attrs_time, num_decimals)],
                 'Establish': [round(establish_flows_time, num_decimals)],
                 'Takedown': [round(takedown_flows_time, num_decimals)],
@@ -1903,8 +1909,6 @@ class DCN(gym.Env):
                     end = time.time()
                     print('Snapshotted in {} s'.format(end-start))
                     self.percent_sim_times_profiled.append(percent_sim_time_completed)
-
-
 
 
         return obs, reward, done, info
@@ -2145,6 +2149,7 @@ class DCN(gym.Env):
 
         return channel_used
         
+    # @ray.remote
     def set_up_connection(self, flow, num_decimals=6):
         '''
         Sets up connection between src-dst node pair by removing capacity from
