@@ -10,3 +10,4 @@ jsonpickle
 nxviz
 tqdm
 sigfig
+pympler

@@ -11,10 +11,12 @@ import pickle
 import sys
 import os
 import tensorflow as tf
-tf.keras.backend.clear_session()
-
 import ray
-ray.init()
+
+if __name__ == '__name__':
+    tf.keras.backend.clear_session()
+    ray.init()
+
 
 
 class TestBed:
