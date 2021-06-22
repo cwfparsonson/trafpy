@@ -152,7 +152,7 @@
   <h1>Source code for trafpy.generator.src.builder</h1><div class="highlight"><pre>
 <span></span><span class="sd">&#39;&#39;&#39;Module for building demand data dictionaries (flow- and job-centric).&#39;&#39;&#39;</span>
 
-<span class="kn">from</span> <span class="nn">trafpy.generator.src</span> <span class="kn">import</span> <span class="n">jobcentric</span><span class="p">,</span> <span class="n">flowcentric</span> 
+<span class="kn">from</span> <span class="nn">trafpy.generator.src</span> <span class="kn">import</span> <span class="n">jobcentric</span><span class="p">,</span> <span class="n">flowcentric</span>
 <span class="kn">from</span> <span class="nn">trafpy.generator.src</span> <span class="kn">import</span> <span class="n">tools</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -166,14 +166,17 @@
                        <span class="n">node_dist</span><span class="p">,</span>
                        <span class="n">flow_size_dist</span><span class="p">,</span>
                        <span class="n">interarrival_time_dist</span><span class="p">,</span>
-                       <span class="n">num_demands</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                       <span class="n">network_load_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                       <span class="n">duration_time_dist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">network_load_config</span><span class="p">,</span>
+                       <span class="n">min_num_demands</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
+                       <span class="n">max_num_demands</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">jensen_shannon_distance_threshold</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                       <span class="n">check_dont_exceed_one_ep_load</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                       <span class="n">min_last_demand_arrival_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">auto_node_dist_correction</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                        <span class="n">num_ops_dist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                        <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                        <span class="n">use_multiprocessing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                       <span class="n">num_demands_factor</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-                       <span class="n">min_last_demand_arrival_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                        <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                        <span class="n">path_to_save</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create demand data dictionary using given distributions.</span>
@@ -189,8 +192,6 @@
 <span class="sd">            flow size value-probability pairs. </span>
 <span class="sd">        interarrival_time_dist (dict): Probability distribution whose key-value pairs are </span>
 <span class="sd">            interarrival time value-probability pairs. </span>
-<span class="sd">        num_demands (int): Number of demands to generate. If None, must specify</span>
-<span class="sd">            network_load_config</span>
 <span class="sd">        network_load_config (dict): Dict of form {&#39;network_rate_capacity&#39;: &lt;int/float&gt;, &#39;target_load_fraction&#39;: &lt;float&gt;, &#39;disable_timeouts&#39;: &lt;bool&gt;, &#39;return_new_interarrival_time_dist&#39;: &lt;bool&gt;},</span>
 <span class="sd">            where network_rate_capacity is the maximum rate (in e.g. Gbps) at which</span>
 <span class="sd">            information can be reliably transmitted over the communication network</span>
@@ -203,11 +204,6 @@
 <span class="sd">            defines whether or not to return the new interarrival time dist which</span>
 <span class="sd">            was adjusted to meet the network node requested.</span>
 <span class="sd">            If network_load_config is None, must specify num_demands</span>
-<span class="sd">        duration_time_dist (dict): Probability distribution whose key-value pairs are </span>
-<span class="sd">            duration time value-probability pairs. If specified, half events</span>
-<span class="sd">            returned will be &#39;take-down&#39; events (establish==0). If left as None,</span>
-<span class="sd">            all returned events will be &#39;connection establishment&#39; events</span>
-<span class="sd">            (establish==1).</span>
 <span class="sd">        num_ops_dist (dict): Probability distribution whose key-value pairs are </span>
 <span class="sd">            number of operations (in a job) value-probability pairs. </span>
 <span class="sd">        c (int/float): Coefficient which determines job graph connectivity and</span>
@@ -220,11 +216,35 @@
 <span class="sd">        use_multiprocessing (bool): Whether or not to use multiprocessing when</span>
 <span class="sd">            generating data. For generating large numbers of big job computation</span>
 <span class="sd">            graphs, it is recommended to use multiprocessing.</span>
-<span class="sd">        num_demands_factor (int): Factor by which to multipl number of </span>
-<span class="sd">            network endpoint pairs by to get the number of demands.</span>
+<span class="sd">        min_num_demands (int): Minimum number of demands to generate (will increase</span>
+<span class="sd">            beyond this if need to meet min_last_demand_arrival_time and/or to</span>
+<span class="sd">            meet specified jensen_shannon_distance_threshold).</span>
+<span class="sd">        max_num_demands (int): If not None, will not exceed this number of demands,</span>
+<span class="sd">            which can help if you find you are exceeding memory limitations in</span>
+<span class="sd">            your simulations. However, this will also mean that the (1) jensen_shannon_distance_threshold</span>
+<span class="sd">            and (2) min_last_demand_arrival_time you specifiy may not be met. To</span>
+<span class="sd">            ensure these are met, you must set max_num_demands to None.</span>
+<span class="sd">        jensen_shannon_distance_threshold (float): Maximum jensen shannon distance</span>
+<span class="sd">            required of generated random variables w.r.t. discretised dist they&#39;re generated from.</span>
+<span class="sd">            Must be between 0 and 1. Distance of 0 -&gt; distributions are exactly the same.</span>
+<span class="sd">            Distance of 1 -&gt; distributions are not at all similar.</span>
+<span class="sd">            https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15</span>
+<span class="sd">            N.B. To meet threshold, this function will keep doubling num_demands</span>
+<span class="sd">        check_dont_exceed_one_ep_load (bool): If True, when packing flows (assigning</span>
+<span class="sd">            src-dst node pairs according to specified node distribution), will ensure</span>
+<span class="sd">            that don&#39;t exceed 1.0 load on any end points. If this is not possible,</span>
+<span class="sd">            will raise an Exception. If False, no exception will be raised, but run</span>
+<span class="sd">            risk of exceeding 1.0 end point load, which for some users might be</span>
+<span class="sd">            detrimental to their system.</span>
 <span class="sd">        min_last_demand_arrival_time (int, float): Minimum last time of arrival</span>
 <span class="sd">            for final demand (helps user specify a minimum simulation time). Will</span>
 <span class="sd">            keep doubling number of demands until get &gt;= min_last_demand_arrival_time.</span>
+<span class="sd">        auto_node_dist_correction (bool): If True, if a node dist and overall load</span>
+<span class="sd">            is specified which is not valid since would lead to at least one endpoint</span>
+<span class="sd">            link&#39;s load exceeding 1.0, TrafPy will automatically adjust the node </span>
+<span class="sd">            dist by distributing the excess load uniformally across all other valid</span>
+<span class="sd">            end points. As such, as the network load tends to 1.0, the node dist</span>
+<span class="sd">            will approach uniform with 1.0 load being requested on all end point links.</span>
 <span class="sd">        print_data (bool): whether or not to print extra information about the</span>
 <span class="sd">            generated data (such as time to generate).</span>
 <span class="sd">        path_to_save (str): Path to directory (with file name included) in which</span>
@@ -240,154 +260,203 @@
 <span class="sd">            </span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># check num demands and load config </span>
-    <span class="k">if</span> <span class="n">num_demands</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">network_load_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Must specify either num_demands or network_load_config.&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">num_demands</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="n">network_load_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> \
-            <span class="s1">&#39;Must define network_load_config if leaving num_demands as None.&#39;</span>
-    <span class="k">if</span> <span class="n">network_load_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="n">num_demands</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> \
-            <span class="s1">&#39;Cannot specify num_demands if network_load_config is not None.&#39;</span>
-
-    <span class="c1"># check if provided dists have tuple with fig as second element</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">node_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">:</span>
-        <span class="n">node_dist</span> <span class="o">=</span> <span class="n">node_dist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">node_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="c1"># loaded from json, convert</span>
-        <span class="n">node_dist</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">node_dist</span><span class="p">)</span>
-        <span class="n">node_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">node_dist</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">node_dist</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="s1">&#39;Invalid dist provided. Must be </span><span class="se">\</span>
-<span class="s1">            dict with var-prob key-value pairs.&#39;</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">flow_size_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">:</span>
-        <span class="n">flow_size_dist</span> <span class="o">=</span> <span class="n">flow_size_dist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">flow_size_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="c1"># loaded from json, convert</span>
-        <span class="n">flow_size_dist</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">flow_size_dist</span><span class="p">)</span>
-        <span class="c1"># convert str keys to float</span>
-        <span class="n">new_dict</span> <span class="o">=</span> <span class="p">{</span><span class="nb">float</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">flow_size_dist</span><span class="o">.</span><span class="n">items</span><span class="p">())}</span>
-        <span class="n">flow_size_dist</span> <span class="o">=</span> <span class="n">new_dict</span>
-    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">flow_size_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">,</span> <span class="s1">&#39;Invalid dist provided. Must be </span><span class="se">\</span>
-<span class="s1">            dict with var-prob key-value pairs.&#39;</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">interarrival_time_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">:</span>
-        <span class="n">interarrival_time_dist</span> <span class="o">=</span> <span class="n">interarrival_time_dist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">interarrival_time_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="c1"># loaded from json, convert</span>
-        <span class="n">interarrival_time_dist</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">interarrival_time_dist</span><span class="p">)</span>
-        <span class="c1"># convert str keys to float</span>
-        <span class="n">new_dict</span> <span class="o">=</span> <span class="p">{</span><span class="nb">float</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">interarrival_time_dist</span><span class="o">.</span><span class="n">items</span><span class="p">())}</span>
-        <span class="n">interarrival_time_dist</span> <span class="o">=</span> <span class="n">new_dict</span>
-    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">interarrival_time_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">,</span> <span class="s1">&#39;Invalid dist provided. Must be </span><span class="se">\</span>
-<span class="s1">            dict with var-prob key-value pairs.&#39;</span>
-    <span class="k">if</span> <span class="n">duration_time_dist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">duration_time_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">:</span>
-            <span class="n">duration_time_dist</span> <span class="o">=</span> <span class="n">duration_time_dist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">duration_time_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">,</span> <span class="s1">&#39;Invalid dist provided. Must be </span><span class="se">\</span>
-<span class="s1">                dict with var-prob key-value pairs.&#39;</span>
-    <span class="k">if</span> <span class="n">num_ops_dist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">num_ops_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">:</span>
-            <span class="n">num_ops_dist</span> <span class="o">=</span> <span class="n">num_ops_dist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">num_ops_dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">,</span> <span class="s1">&#39;Invalid dist provided. Must be </span><span class="se">\</span>
-<span class="s1">                dict with var-prob key-value pairs.&#39;</span>
 
     <span class="k">if</span> <span class="n">num_ops_dist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">job_centric</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">job_centric</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">assert</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;Specify graph connectivity factor c if job centric&#39;</span>
+        <span class="c1"># flowcentric</span>
+        <span class="n">generator</span> <span class="o">=</span> <span class="n">flowcentric</span><span class="o">.</span><span class="n">FlowGenerator</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span>
+                                              <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span>
+                                              <span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span>
+                                              <span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">,</span>
+                                              <span class="n">network_load_config</span><span class="o">=</span><span class="n">network_load_config</span><span class="p">,</span>
+                                              <span class="n">min_num_demands</span><span class="o">=</span><span class="n">min_num_demands</span><span class="p">,</span>
+                                              <span class="n">max_num_demands</span><span class="o">=</span><span class="n">max_num_demands</span><span class="p">,</span>
+                                              <span class="n">jensen_shannon_distance_threshold</span><span class="o">=</span><span class="n">jensen_shannon_distance_threshold</span><span class="p">,</span>
+                                              <span class="n">min_last_demand_arrival_time</span><span class="o">=</span><span class="n">min_last_demand_arrival_time</span><span class="p">,</span>
+                                              <span class="n">bidirectional_links</span><span class="o">=</span><span class="n">bidirectional_links</span><span class="p">,</span>
+                                              <span class="n">auto_node_dist_correction</span><span class="o">=</span><span class="n">auto_node_dist_correction</span><span class="p">,</span>
+                                              <span class="n">check_dont_exceed_one_ep_load</span><span class="o">=</span><span class="n">check_dont_exceed_one_ep_load</span><span class="p">,</span>
+                                              <span class="n">print_data</span><span class="o">=</span><span class="n">print_data</span><span class="p">)</span> 
+        <span class="k">return</span> <span class="n">generator</span><span class="o">.</span><span class="n">create_flow_centric_demand_data</span><span class="p">()</span>
 
-    <span class="n">array_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">flow_size_dist</span><span class="o">.</span><span class="n">values</span><span class="p">())),</span><span class="mi">2</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">array_sum</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> \
-        <span class="s1">&#39;array must sum to 1, but is </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">array_sum</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># jobcentric</span>
+        <span class="n">generator</span> <span class="o">=</span> <span class="n">jobcentric</span><span class="o">.</span><span class="n">JobGenerator</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span>
+                                              <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span>
+                                              <span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span>
+                                              <span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">,</span>
+                                              <span class="n">num_ops_dist</span><span class="o">=</span><span class="n">num_ops_dist</span><span class="p">,</span>
+                                              <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
+                                              <span class="n">network_load_config</span><span class="o">=</span><span class="n">network_load_config</span><span class="p">,</span>
+                                              <span class="n">min_num_demands</span><span class="o">=</span><span class="n">min_num_demands</span><span class="p">,</span>
+                                              <span class="n">max_num_demands</span><span class="o">=</span><span class="n">max_num_demands</span><span class="p">,</span>
+                                              <span class="n">jensen_shannon_distance_threshold</span><span class="o">=</span><span class="n">jensen_shannon_distance_threshold</span><span class="p">,</span>
+                                              <span class="n">min_last_demand_arrival_time</span><span class="o">=</span><span class="n">min_last_demand_arrival_time</span><span class="p">,</span>
+                                              <span class="n">bidirectional_links</span><span class="o">=</span><span class="n">bidirectional_links</span><span class="p">,</span>
+                                              <span class="n">use_multiprocessing</span><span class="o">=</span><span class="n">use_multiprocessing</span><span class="p">,</span>
+                                              <span class="n">auto_node_dist_correction</span><span class="o">=</span><span class="n">auto_node_dist_correction</span><span class="p">,</span>
+                                              <span class="n">check_dont_exceed_one_ep_load</span><span class="o">=</span><span class="n">check_dont_exceed_one_ep_load</span><span class="p">,</span>
+                                              <span class="n">print_data</span><span class="o">=</span><span class="n">print_data</span><span class="p">)</span> 
+        <span class="k">return</span> <span class="n">generator</span><span class="o">.</span><span class="n">create_job_centric_demand_data</span><span class="p">()</span>
+
+
+
+
+
+
+
     
-    <span class="n">matrix_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">node_dist</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">matrix_sum</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> \
-        <span class="s1">&#39;demand distribution matrix must sum to 1, but is </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">matrix_sum</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">network_load_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="s1">&#39;disable_timeouts&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">network_load_config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="c1"># assume not disabling timeouts</span>
-            <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;disable_timeouts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="s1">&#39;return_new_interarrival_time_dist&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">network_load_config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="c1"># assume not returning new interarrival_time_dist</span>
-            <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;return_new_interarrival_time_dist&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="c1"># TEMPORARILY COMMENT</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    # check num demands and load config </span>
+<span class="sd">    if num_demands is None and network_load_config is None:</span>
+<span class="sd">        raise Exception(&#39;Must specify either num_demands or network_load_config.&#39;)</span>
+<span class="sd">    if num_demands is None:</span>
+<span class="sd">        assert network_load_config is not None, \</span>
+<span class="sd">            &#39;Must define network_load_config if leaving num_demands as None.&#39;</span>
+<span class="sd">    if network_load_config is not None:</span>
+<span class="sd">        assert num_demands is None, \</span>
+<span class="sd">            &#39;Cannot specify num_demands if network_load_config is not None.&#39;</span>
 
-    <span class="k">if</span> <span class="n">network_load_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># init a guess for number of demands needed to meet desired load</span>
-        <span class="n">num_pairs</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(((</span><span class="nb">len</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">eps</span><span class="p">))</span>
-        <span class="n">num_demands</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_pairs</span> <span class="o">*</span> <span class="n">num_demands_factor</span><span class="p">)</span>
+<span class="sd">    # check if provided dists have tuple with fig as second element</span>
+<span class="sd">    if type(node_dist) == tuple:</span>
+<span class="sd">        node_dist = node_dist[0]</span>
+<span class="sd">    elif type(node_dist) == str:</span>
+<span class="sd">        # loaded from json, convert</span>
+<span class="sd">        node_dist = json.loads(node_dist)</span>
+<span class="sd">        node_dist = np.array(node_dist)</span>
+<span class="sd">    assert type(node_dist) == np.ndarray, &#39;Invalid dist provided. Must be \</span>
+<span class="sd">            dict with var-prob key-value pairs.&#39;</span>
+<span class="sd">    if type(flow_size_dist) == tuple:</span>
+<span class="sd">        flow_size_dist = flow_size_dist[0]</span>
+<span class="sd">    elif type(flow_size_dist) == str:</span>
+<span class="sd">        # loaded from json, convert</span>
+<span class="sd">        flow_size_dist = json.loads(flow_size_dist)</span>
+<span class="sd">        # convert str keys to float</span>
+<span class="sd">        new_dict = {float(k): v for k, v in iter(flow_size_dist.items())}</span>
+<span class="sd">        flow_size_dist = new_dict</span>
+<span class="sd">    assert type(flow_size_dist) == dict, &#39;Invalid dist provided. Must be \</span>
+<span class="sd">            dict with var-prob key-value pairs.&#39;</span>
+<span class="sd">    if type(interarrival_time_dist) == tuple:</span>
+<span class="sd">        interarrival_time_dist = interarrival_time_dist[0]</span>
+<span class="sd">    if type(interarrival_time_dist) == str:</span>
+<span class="sd">        # loaded from json, convert</span>
+<span class="sd">        interarrival_time_dist = json.loads(interarrival_time_dist)</span>
+<span class="sd">        # convert str keys to float</span>
+<span class="sd">        new_dict = {float(k): v for k, v in iter(interarrival_time_dist.items())}</span>
+<span class="sd">        interarrival_time_dist = new_dict</span>
+<span class="sd">    assert type(interarrival_time_dist) == dict, &#39;Invalid dist provided. Must be \</span>
+<span class="sd">            dict with var-prob key-value pairs.&#39;</span>
+<span class="sd">    if duration_time_dist is None:</span>
+<span class="sd">        pass</span>
+<span class="sd">    else:</span>
+<span class="sd">        if type(duration_time_dist) == tuple:</span>
+<span class="sd">            duration_time_dist = duration_time_dist[0]</span>
+<span class="sd">        assert type(duration_time_dist) == dict, &#39;Invalid dist provided. Must be \</span>
+<span class="sd">                dict with var-prob key-value pairs.&#39;</span>
+<span class="sd">    if num_ops_dist is None:</span>
+<span class="sd">        pass</span>
+<span class="sd">    else:</span>
+<span class="sd">        if type(num_ops_dist) == tuple:</span>
+<span class="sd">            num_ops_dist = num_ops_dist[0]</span>
+<span class="sd">        assert type(num_ops_dist) == dict, &#39;Invalid dist provided. Must be \</span>
+<span class="sd">                dict with var-prob key-value pairs.&#39;</span>
+
+<span class="sd">    if num_ops_dist is None:</span>
+<span class="sd">        job_centric = False</span>
+<span class="sd">    else:</span>
+<span class="sd">        job_centric = True</span>
+<span class="sd">        assert c is not None, &#39;Specify graph connectivity factor c if job centric&#39;</span>
+
+<span class="sd">    array_sum = np.round(np.sum(list(flow_size_dist.values())),2)</span>
+<span class="sd">    assert array_sum == 1, \</span>
+<span class="sd">        &#39;array must sum to 1, but is {}&#39;.format(array_sum)</span>
+<span class="sd">    </span>
+<span class="sd">    matrix_sum = np.round(np.sum(node_dist),2)</span>
+<span class="sd">    assert matrix_sum == 1, \</span>
+<span class="sd">        &#39;demand distribution matrix must sum to 1, but is {}&#39;.format(matrix_sum)</span>
+
+<span class="sd">    if network_load_config is not None:</span>
+<span class="sd">        if &#39;disable_timeouts&#39; not in network_load_config.keys():</span>
+<span class="sd">            # assume not disabling timeouts</span>
+<span class="sd">            network_load_config[&#39;disable_timeouts&#39;] = False</span>
+<span class="sd">        if &#39;return_new_interarrival_time_dist&#39; not in network_load_config.keys():</span>
+<span class="sd">            # assume not returning new interarrival_time_dist</span>
+<span class="sd">            network_load_config[&#39;return_new_interarrival_time_dist&#39;] = False</span>
+
+<span class="sd">    if network_load_config is not None:</span>
+<span class="sd">        # init a guess for number of demands needed to meet desired load</span>
+<span class="sd">        num_pairs = int(((len(eps) ** 2)/2) - len(eps))</span>
+<span class="sd">        num_demands = int(num_pairs * num_demands_factor)</span>
 
 
-    <span class="k">if</span> <span class="n">job_centric</span><span class="p">:</span>
-        <span class="n">demand_data</span> <span class="o">=</span> <span class="n">jobcentric</span><span class="o">.</span><span class="n">create_job_centric_demand_data</span><span class="p">(</span><span class="n">num_demands</span><span class="o">=</span><span class="n">num_demands</span><span class="p">,</span>
-                                                                <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
-                                                                <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span> 
-                                                                <span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span>
-                                                                <span class="n">num_ops_dist</span><span class="o">=</span><span class="n">num_ops_dist</span><span class="p">,</span>
-                                                                <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
-                                                                <span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">,</span>
-                                                                <span class="n">duration_time_dist</span><span class="o">=</span><span class="n">duration_time_dist</span><span class="p">,</span>
-                                                                <span class="n">use_multiprocessing</span><span class="o">=</span><span class="n">use_multiprocessing</span><span class="p">,</span>
-                                                                <span class="n">print_data</span><span class="o">=</span><span class="n">print_data</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">demand_data</span> <span class="o">=</span> <span class="n">flowcentric</span><span class="o">.</span><span class="n">create_flow_centric_demand_data</span><span class="p">(</span><span class="n">num_demands</span><span class="o">=</span><span class="n">num_demands</span><span class="p">,</span>
-                                                                  <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
-                                                                  <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span>
-                                                                  <span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span>
-                                                                  <span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">,</span>
-                                                                  <span class="n">duration_time_dist</span><span class="o">=</span><span class="n">duration_time_dist</span><span class="p">,</span>
-                                                                  <span class="n">print_data</span><span class="o">=</span><span class="n">print_data</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">network_load_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reconfiguring interarrival times and number of demands to match requested network load config...&#39;</span><span class="p">)</span>
-            <span class="n">demand_data</span><span class="p">,</span> <span class="n">new_interarrival_time_dist</span> <span class="o">=</span> <span class="n">flowcentric</span><span class="o">.</span><span class="n">adjust_demand_load</span><span class="p">(</span><span class="n">demand_data</span><span class="o">=</span><span class="n">demand_data</span><span class="p">,</span>
-                                                                                     <span class="n">network_load_config</span><span class="o">=</span><span class="n">network_load_config</span><span class="p">,</span>
-                                                                                     <span class="n">num_demands</span><span class="o">=</span><span class="n">num_demands</span><span class="p">,</span>
-                                                                                     <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
-                                                                                     <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span>
-                                                                                     <span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span>
-                                                                                     <span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">,</span>
-                                                                                     <span class="n">duration_time_dist</span><span class="o">=</span><span class="n">duration_time_dist</span><span class="p">,</span>
-                                                                                     <span class="n">print_data</span><span class="o">=</span><span class="n">print_data</span><span class="p">)</span>
+<span class="sd">    if job_centric:</span>
+<span class="sd">        demand_data = jobcentric.create_job_centric_demand_data(num_demands=num_demands,</span>
+<span class="sd">                                                                eps=eps,</span>
+<span class="sd">                                                                node_dist=node_dist, </span>
+<span class="sd">                                                                flow_size_dist=flow_size_dist,</span>
+<span class="sd">                                                                num_ops_dist=num_ops_dist,</span>
+<span class="sd">                                                                c=c,</span>
+<span class="sd">                                                                interarrival_time_dist=interarrival_time_dist,</span>
+<span class="sd">                                                                duration_time_dist=duration_time_dist,</span>
+<span class="sd">                                                                use_multiprocessing=use_multiprocessing,</span>
+<span class="sd">                                                                print_data=print_data)</span>
+<span class="sd">    else:</span>
+<span class="sd">        demand_data = flowcentric.create_flow_centric_demand_data(num_demands=num_demands,</span>
+<span class="sd">                                                                  eps=eps,</span>
+<span class="sd">                                                                  node_dist=node_dist,</span>
+<span class="sd">                                                                  flow_size_dist=flow_size_dist,</span>
+<span class="sd">                                                                  interarrival_time_dist=interarrival_time_dist,</span>
+<span class="sd">                                                                  duration_time_dist=duration_time_dist,</span>
+<span class="sd">                                                                  print_data=print_data)</span>
+<span class="sd">        if network_load_config is not None:</span>
+<span class="sd">            print(&#39;Reconfiguring interarrival times and number of demands to match requested network load config...&#39;)</span>
+<span class="sd">            demand_data, new_interarrival_time_dist = flowcentric.adjust_demand_load(demand_data=demand_data,</span>
+<span class="sd">                                                                                     network_load_config=network_load_config,</span>
+<span class="sd">                                                                                     num_demands=num_demands,</span>
+<span class="sd">                                                                                     eps=eps,</span>
+<span class="sd">                                                                                     node_dist=node_dist,</span>
+<span class="sd">                                                                                     flow_size_dist=flow_size_dist,</span>
+<span class="sd">                                                                                     interarrival_time_dist=interarrival_time_dist,</span>
+<span class="sd">                                                                                     duration_time_dist=duration_time_dist,</span>
+<span class="sd">                                                                                     print_data=print_data)</span>
 
-        <span class="k">if</span> <span class="n">min_last_demand_arrival_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Ensuring last event arrives at time &gt;= min_last_demand_arrival_time...&#39;</span><span class="p">)</span>
-            <span class="k">while</span> <span class="nb">max</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">min_last_demand_arrival_time</span><span class="p">:</span>
-                <span class="c1"># load_rate = flowcentric.get_flow_centric_demand_data_load_rate(demand_data, method=&#39;mean_per_ep&#39;, eps=eps)</span>
-                <span class="n">load_rate</span> <span class="o">=</span> <span class="n">flowcentric</span><span class="o">.</span><span class="n">get_flow_centric_demand_data_overall_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Final event time: </span><span class="si">{}</span><span class="s1"> | Target final event time: </span><span class="si">{}</span><span class="s1"> | load rate: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]),</span> <span class="n">min_last_demand_arrival_time</span><span class="p">,</span> <span class="n">load_rate</span><span class="p">))</span>
-                <span class="n">total_info</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_size&#39;</span><span class="p">])</span>
-                <span class="n">time_last_flow_arrived</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">])</span>
-                <span class="n">rate</span> <span class="o">=</span> <span class="n">total_info</span> <span class="o">/</span> <span class="n">time_last_flow_arrived</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;total info: </span><span class="si">{}</span><span class="s1"> | last flow: </span><span class="si">{}</span><span class="s1"> | rate: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">total_info</span><span class="p">,</span> <span class="n">time_last_flow_arrived</span><span class="p">,</span> <span class="n">rate</span><span class="p">))</span>
-                <span class="n">demand_data</span> <span class="o">=</span> <span class="n">flowcentric</span><span class="o">.</span><span class="n">duplicate_demands_in_demand_data_dict</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;all_eps&#39;</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">)</span>
+<span class="sd">        if min_last_demand_arrival_time is not None:</span>
+<span class="sd">            print(&#39;Ensuring last event arrives at time &gt;= min_last_demand_arrival_time...&#39;)</span>
+<span class="sd">            while max(demand_data[&#39;event_time&#39;]) &lt; min_last_demand_arrival_time:</span>
+<span class="sd">                # load_rate = flowcentric.get_flow_centric_demand_data_load_rate(demand_data, method=&#39;mean_per_ep&#39;, eps=eps)</span>
+<span class="sd">                load_rate = flowcentric.get_flow_centric_demand_data_overall_load_rate(demand_data, bidirectional_links=True)</span>
+<span class="sd">                print(&#39;\nFinal event time: {} | Target final event time: {} | load rate: {}&#39;.format(max(demand_data[&#39;event_time&#39;]), min_last_demand_arrival_time, load_rate))</span>
+<span class="sd">                total_info = sum(demand_data[&#39;flow_size&#39;])</span>
+<span class="sd">                time_last_flow_arrived = max(demand_data[&#39;event_time&#39;])</span>
+<span class="sd">                rate = total_info / time_last_flow_arrived</span>
+<span class="sd">                print(&#39;total info: {} | last flow: {} | rate: {}&#39;.format(total_info, time_last_flow_arrived, rate))</span>
+<span class="sd">                demand_data = flowcentric.duplicate_demands_in_demand_data_dict(demand_data, method=&#39;all_eps&#39;, eps=eps)</span>
 
-            
-
-
+<span class="sd">            </span>
 
 
 
-    <span class="k">if</span> <span class="n">path_to_save</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">tools</span><span class="o">.</span><span class="n">pickle_data</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">,</span> <span class="n">demand_data</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">network_load_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;return_new_interarrival_time_dist&#39;</span><span class="p">]:</span>
-            <span class="k">return</span> <span class="n">demand_data</span><span class="p">,</span> <span class="n">new_interarrival_time_dist</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">demand_data</span>
 
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">demand_data</span></div>
+<span class="sd">    if path_to_save is not None:</span>
+<span class="sd">        tools.pickle_data(path_to_save, demand_data)</span>
+
+<span class="sd">    if network_load_config is not None:</span>
+<span class="sd">        if network_load_config[&#39;return_new_interarrival_time_dist&#39;]:</span>
+<span class="sd">            return demand_data, new_interarrival_time_dist</span>
+<span class="sd">        else:</span>
+<span class="sd">            return demand_data</span>
+
+<span class="sd">    else:</span>
+<span class="sd">        return demand_data</span>
+<span class="sd">    &#39;&#39;&#39;</span></div>
 
 
 
 <div class="viewcode-block" id="construct_demand_slots_dict"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.builder.construct_demand_slots_dict">[docs]</a><span class="k">def</span> <span class="nf">construct_demand_slots_dict</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span>
                                 <span class="n">slot_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                                <span class="n">include_empty_slots</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                <span class="n">include_empty_slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                                 <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Takes demand data (job-centric or flow-centric) and generates time-slot demand dictionaries.</span>
 
@@ -404,7 +473,7 @@
 <span class="sd">        slot_size (float): Time period of each time slot. MUST BE FLOAT!!</span>
 <span class="sd">        include_empty_slots (bool): Whether or not to include empty (i.e. no flows arriving)</span>
 <span class="sd">            slots in slots_dict values. If True, will have keys for all slots of simulation,</span>
-<span class="sd">            but will larger memory usage, making the slots_dict less scalable.</span>
+<span class="sd">            but will have larger memory usage, making the slots_dict less scalable.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        dict: Dictionary containing the original demand data organised into time </span>
@@ -413,6 +482,7 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
+    <span class="n">slot_size</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">slot_size</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">slot_size</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;slot_size must be float (e.g. 1.0), but is </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">slot_size</span><span class="p">))</span>
 
@@ -426,26 +496,31 @@
     <span class="n">total_session_time</span> <span class="o">=</span> <span class="n">session_end_time</span> <span class="o">-</span> <span class="n">session_start_time</span>
 
     <span class="n">total_num_time_slots</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_session_time</span><span class="o">/</span><span class="n">slot_size</span><span class="p">)</span>
-
-    <span class="n">slot_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">session_start_time</span><span class="p">,</span><span class="n">session_end_time</span><span class="p">,</span><span class="n">slot_size</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">slot_times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">session_end_time</span><span class="p">:</span>
-        <span class="c1"># add extra time slot</span>
-        <span class="n">total_num_time_slots</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">slot_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">slot_times</span><span class="p">,</span><span class="n">slot_times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">slot_size</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">total_num_time_slots</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">slot_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">session_start_time</span><span class="p">,</span><span class="n">session_end_time</span><span class="p">,</span><span class="n">slot_size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">slot_times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">session_end_time</span><span class="p">:</span>
+            <span class="c1"># add extra time slot</span>
+            <span class="n">total_num_time_slots</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">slot_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">slot_times</span><span class="p">,</span><span class="n">slot_times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">slot_size</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># all flows arrived immediately</span>
+        <span class="n">slot_times</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">]</span>
+        <span class="n">total_num_time_slots</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="c1"># ensure slot times have specified number of decimal places</span>
     <span class="n">dummy_slot_size</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">slot_size</span><span class="p">)</span>
     <span class="n">num_decimals</span> <span class="o">=</span> <span class="n">dummy_slot_size</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">num_decimals</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Given slot_size </span><span class="si">{}</span><span class="s1"> has invalid num_decimals of </span><span class="si">{}</span><span class="s1">. Make sure slot_size is given as a float e.g. use slot_size=1.0 rather than slot_size=1&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">slot_size</span><span class="p">,</span> <span class="n">num_decimals</span><span class="p">))</span>
+    <span class="c1"># for slot_iter in range(len(slot_times)):</span>
     <span class="k">for</span> <span class="n">slot_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">slot_times</span><span class="p">)):</span>
         <span class="n">slot_times</span><span class="p">[</span><span class="n">slot_iter</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">slot_times</span><span class="p">[</span><span class="n">slot_iter</span><span class="p">],</span> <span class="n">num_decimals</span><span class="p">)</span>
 
     <span class="c1"># init slot dict</span>
     <span class="n">slot_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">slot_iter</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;lb_time&#39;</span><span class="p">:</span> <span class="n">slot_times</span><span class="p">[</span><span class="n">slot_iter</span><span class="p">],</span>
-                             <span class="s1">&#39;ub_time&#39;</span><span class="p">:</span> <span class="n">slot_times</span><span class="p">[</span><span class="n">slot_iter</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span>
+                             <span class="s1">&#39;ub_time&#39;</span><span class="p">:</span> <span class="n">slot_times</span><span class="p">[</span><span class="n">slot_iter</span><span class="p">]</span><span class="o">+</span><span class="n">slot_size</span><span class="p">,</span>
                              <span class="s1">&#39;new_event_dicts&#39;</span><span class="p">:</span> <span class="p">[]}</span>
-                    <span class="k">for</span> <span class="n">slot_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">total_num_time_slots</span><span class="p">)}</span>
+                         <span class="k">for</span> <span class="n">slot_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">slot_times</span><span class="p">))}</span>
 
     <span class="n">event_iter</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">slot_iter</span> <span class="o">=</span> <span class="mi">0</span>
@@ -469,49 +544,89 @@
         <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
             <span class="k">break</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">include_empty_slots</span> <span class="ow">or</span> <span class="n">print_info</span><span class="p">:</span>
-        <span class="n">original_num_keys</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slot_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-        <span class="c1"># remove any slots which do not contain any new flows</span>
-        <span class="n">new_slot_dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">num_empty_slots</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">num_demands</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">slot_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="n">num_demands_arrived</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slot_dict</span><span class="p">[</span><span class="n">slot</span><span class="p">][</span><span class="s1">&#39;new_event_dicts&#39;</span><span class="p">])</span>
-            <span class="n">num_demands</span> <span class="o">+=</span> <span class="n">num_demands_arrived</span>
-            <span class="k">if</span> <span class="n">num_demands_arrived</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="c1"># no new demands arrived, do not add to new slot dict</span>
-                <span class="n">num_empty_slots</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># new demands arrived this slot, add to new slot dict</span>
+    <span class="n">original_num_keys</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slot_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="c1"># remove any slots which do not contain any new flows</span>
+    <span class="n">new_slot_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">num_empty_slots</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">num_demands</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">slot_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">num_demands_arrived</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slot_dict</span><span class="p">[</span><span class="n">slot</span><span class="p">][</span><span class="s1">&#39;new_event_dicts&#39;</span><span class="p">])</span>
+        <span class="n">num_demands</span> <span class="o">+=</span> <span class="n">num_demands_arrived</span>
+        <span class="k">if</span> <span class="n">num_demands_arrived</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># no new demands arrived, do not add to new slot dict</span>
+            <span class="n">num_empty_slots</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># new demands arrived this slot, add to new slot dict</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">include_empty_slots</span><span class="p">:</span>
                 <span class="n">new_slot_dict</span><span class="p">[</span><span class="n">slot</span><span class="p">]</span> <span class="o">=</span> <span class="n">slot_dict</span><span class="p">[</span><span class="n">slot</span><span class="p">]</span>
-        <span class="c1"># slot_dict = copy.deepcopy(new_slot_dict)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">include_empty_slots</span><span class="p">:</span>
-            <span class="n">slot_dict</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">new_slot_dict</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># just counting</span>
+                <span class="k">pass</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">include_empty_slots</span><span class="p">:</span>
+        <span class="n">slot_dict</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">new_slot_dict</span><span class="p">)</span>
     <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">print_info</span><span class="p">:</span>
-        <span class="n">new_num_keys</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slot_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-        <span class="n">num_redundant_slots</span> <span class="o">=</span> <span class="n">original_num_keys</span> <span class="o">-</span> <span class="n">new_num_keys</span>
-        <span class="n">frac_redundant_slots</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">num_redundant_slots</span><span class="o">/</span><span class="n">original_num_keys</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-        <span class="n">avrg_num_demands_per_slot</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">num_demands</span> <span class="o">/</span> <span class="n">original_num_keys</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">num_slots</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slot_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">num_redundant_slots</span> <span class="o">=</span> <span class="n">num_empty_slots</span>
+        <span class="n">frac_redundant_slots</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">num_redundant_slots</span><span class="o">/</span><span class="n">num_slots</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">avrg_num_demands_per_slot</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">num_demands</span> <span class="o">/</span> <span class="n">num_slots</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Generated slot dict in </span><span class="si">{}</span><span class="s1"> s with slot size </span><span class="si">{}</span><span class="s1"> and total session time </span><span class="si">{}</span><span class="s1"> for </span><span class="si">{}</span><span class="s1"> demands.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">slot_size</span><span class="p">,</span> <span class="n">total_session_time</span><span class="p">,</span> <span class="n">num_demands</span><span class="p">))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Approx memory size of slot dict: </span><span class="si">{}</span><span class="s1"> Bytes&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">getsizeof</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">slot_dict</span><span class="p">))))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Number of slots making up total session time: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">original_num_keys</span><span class="p">))</span>
+        <span class="c1"># print(&#39;Approx memory size of slot dict: {} Bytes (N.B. This is very unreliable and depends on save format)&#39;.format(sys.getsizeof(json.dumps(slot_dict))))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Number of slots making up total session time: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_slots</span><span class="p">))</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Number of these slots in which no new demands arrived: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_empty_slots</span><span class="p">))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Fraction of the </span><span class="si">{}</span><span class="s1"> total time slots from simulation start to finish in which no new demands arrive: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">original_num_keys</span><span class="p">,</span> <span class="n">frac_redundant_slots</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Fraction of the </span><span class="si">{}</span><span class="s1"> total time slots from simulation start to finish in which no new demands arrive: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_slots</span><span class="p">,</span> <span class="n">frac_redundant_slots</span><span class="p">))</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Average number of demands arriving per time slot: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">avrg_num_demands_per_slot</span><span class="p">))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">include_empty_slots</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Number of keys in updated slot dict (after removing empty slots where no new demands arrived): </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">new_num_keys</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Number of keys in updated slot dict (after removing empty slots where no new demands arrived): </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_slots</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">avrg_num_demands_per_slot</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Notice: In simulation, the scheduler makes a decision at every time slot. Therefore the more time slots there are, the more processing overhead there is, and therefore the longer the simulation will take. If many of your slot sizes are redundant (i.e. no new flow information is arriving), it is advisable to increase the slot size -&gt; decrease the number of slots -&gt; decrease the number steps in the simulation -&gt; decrease the simulation time. Conversely, if you have a high number of demands arriving per time slot, your scheduler will have a lower resolution to process the flows which can lead to poorer performance and more flows being perhaps unnecesserily dropped from your network. As a rule of thumb, having an average number of flows arriving per time slot of less than 1 is not needed.&#39;</span><span class="p">)</span>
 
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Notice: In simulation, the scheduler makes a decision at every time slot. Therefore the more time slots there are, the more processing overhead there is, and therefore the longer the simulation will take. If many of your slot sizes are redundant (i.e. no new flow information is arriving), it is advisable to increase the slot size -&gt; decrease the number of slots -&gt; decrease the number steps in the simulation -&gt; decrease the simulation time. Conversely, if you have a high number of demands arriving per time slot, your scheduler will have a lower resolution to process the flows which can lead to poorer performance and more flows being perhaps unnecesserily dropped from your network. As a rule of thumb, having an average number of flows arriving per time slot of less than 1 is not needed.&#39;</span><span class="p">)</span>
 
-
-
+    <span class="c1"># init general slot dict params which are useful for simulations</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">slot_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">slot_dict</span><span class="p">[</span><span class="s1">&#39;slot_keys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">keys</span>
+    <span class="n">slot_dict</span><span class="p">[</span><span class="s1">&#39;slot_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">slot_size</span>
+    <span class="n">slot_dict</span><span class="p">[</span><span class="s1">&#39;time_first_demand_arrived&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">session_start_time</span>
+    <span class="n">slot_dict</span><span class="p">[</span><span class="s1">&#39;time_last_demand_arrived&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">session_end_time</span>
+    <span class="n">slot_dict</span><span class="p">[</span><span class="s1">&#39;job_centric&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_centric</span>
+    <span class="n">slot_dict</span><span class="p">[</span><span class="s1">&#39;num_control_deps&#39;</span><span class="p">],</span> <span class="n">slot_dict</span><span class="p">[</span><span class="s1">&#39;num_data_deps&#39;</span><span class="p">],</span> <span class="n">slot_dict</span><span class="p">[</span><span class="s1">&#39;num_flows&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_num_deps</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">job_centric</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">job_centric</span><span class="p">:</span>
+        <span class="n">slot_dict</span><span class="p">[</span><span class="s1">&#39;num_demands&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">slot_dict</span><span class="p">[</span><span class="s1">&#39;num_demands&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;job_id&#39;</span><span class="p">])</span>
 
     
     <span class="k">return</span> <span class="n">slot_dict</span></div>
 
 
+<div class="viewcode-block" id="get_num_deps"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.builder.get_num_deps">[docs]</a><span class="k">def</span> <span class="nf">get_num_deps</span><span class="p">(</span><span class="n">demand_data</span><span class="p">,</span> <span class="n">job_centric</span><span class="p">):</span>
+    <span class="n">num_control_deps</span><span class="p">,</span><span class="n">num_data_deps</span><span class="p">,</span><span class="n">num_flows</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">job_centric</span><span class="p">:</span>
+        <span class="c1"># calc deps</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;job&#39;</span><span class="p">]:</span>
+            <span class="n">num_control_deps</span> <span class="o">+=</span> <span class="n">job</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;num_control_deps&#39;</span><span class="p">]</span>
+            <span class="n">num_data_deps</span> <span class="o">+=</span> <span class="n">job</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;num_data_deps&#39;</span><span class="p">]</span>
+            <span class="c1"># for op in job.nodes:</span>
+                <span class="c1"># flows = job.out_edges(op)</span>
+                <span class="c1"># for flow in flows:</span>
+                    <span class="c1"># flow_stats = job.get_edge_data(flow[0],flow[1])</span>
+                    <span class="c1"># src = job.nodes[flow[0]][&#39;attr_dict&#39;][&#39;machine&#39;]</span>
+                    <span class="c1"># dst = job.nodes[flow[1]][&#39;attr_dict&#39;][&#39;machine&#39;]</span>
+                    <span class="c1"># if flow_stats[&#39;attr_dict&#39;][&#39;dependency_type&#39;] == &#39;data_dep&#39;:</span>
+                        <span class="c1"># num_data_deps+=1</span>
+                        <span class="c1"># if src != dst:</span>
+                            <span class="c1"># num_flows+=1</span>
+                    <span class="c1"># else:</span>
+                        <span class="c1"># num_control_deps+=1</span>
+        <span class="n">num_flows</span> <span class="o">=</span> <span class="n">num_data_deps</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># 1 demand == 1 flow, therefore no dependencies &amp; each demand == flow</span>
+        <span class="n">num_flows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">num_control_deps</span><span class="p">,</span> <span class="n">num_data_deps</span><span class="p">,</span> <span class="n">num_flows</span></div>
 
 
 

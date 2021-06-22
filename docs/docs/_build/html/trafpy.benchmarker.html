@@ -110,14 +110,14 @@
 <li class="toctree-l4"><a class="reference internal" href="#id14">trafpy.benchmarker module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id15">trafpy.benchmarker module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id16">trafpy.benchmarker module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#trafpy-benchmarker-config-module">trafpy.benchmarker.config module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#trafpy-benchmarker-gen-new-slots-dict-module">trafpy.benchmarker.gen_new_slots_dict module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trafpy.benchmarker.config">trafpy.benchmarker.config module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trafpy.benchmarker.gen_new_slots_dict">trafpy.benchmarker.gen_new_slots_dict module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-trafpy.benchmarker.main_gen_benchmark_data">trafpy.benchmarker.main_gen_benchmark_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#trafpy-benchmarker-main-testbed-benchmark-data-module">trafpy.benchmarker.main_testbed_benchmark_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#trafpy-benchmarker-ray-main-testbed-benchmark-data-module">trafpy.benchmarker.ray_main_testbed_benchmark_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-trafpy.benchmarker.speed_test">trafpy.benchmarker.speed_test module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#trafpy-benchmarker-test-module">trafpy.benchmarker.test module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#trafpy-benchmarker-tools-module">trafpy.benchmarker.tools module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trafpy.benchmarker.tools">trafpy.benchmarker.tools module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#trafpy-benchmarker-v2-ray-main-testbed-benchmark-data-module">trafpy.benchmarker.v2_ray_main_testbed_benchmark_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-16">Module contents</a></li>
 </ul>
@@ -277,11 +277,11 @@
 <div class="section" id="id16">
 <h2>trafpy.benchmarker module<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="module-15"></span></div>
-<div class="section" id="trafpy-benchmarker-config-module">
-<h2>trafpy.benchmarker.config module<a class="headerlink" href="#trafpy-benchmarker-config-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-trafpy.benchmarker.config">
+<span id="trafpy-benchmarker-config-module"></span><h2>trafpy.benchmarker.config module<a class="headerlink" href="#module-trafpy.benchmarker.config" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="trafpy-benchmarker-gen-new-slots-dict-module">
-<h2>trafpy.benchmarker.gen_new_slots_dict module<a class="headerlink" href="#trafpy-benchmarker-gen-new-slots-dict-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-trafpy.benchmarker.gen_new_slots_dict">
+<span id="trafpy-benchmarker-gen-new-slots-dict-module"></span><h2>trafpy.benchmarker.gen_new_slots_dict module<a class="headerlink" href="#module-trafpy.benchmarker.gen_new_slots_dict" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-trafpy.benchmarker.main_gen_benchmark_data">
 <span id="trafpy-benchmarker-main-gen-benchmark-data-module"></span><h2>trafpy.benchmarker.main_gen_benchmark_data module<a class="headerlink" href="#module-trafpy.benchmarker.main_gen_benchmark_data" title="Permalink to this headline">¶</a></h2>
@@ -298,8 +298,19 @@
 <div class="section" id="trafpy-benchmarker-test-module">
 <h2>trafpy.benchmarker.test module<a class="headerlink" href="#trafpy-benchmarker-test-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="trafpy-benchmarker-tools-module">
-<h2>trafpy.benchmarker.tools module<a class="headerlink" href="#trafpy-benchmarker-tools-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-trafpy.benchmarker.tools">
+<span id="trafpy-benchmarker-tools-module"></span><h2>trafpy.benchmarker.tools module<a class="headerlink" href="#module-trafpy.benchmarker.tools" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="trafpy.benchmarker.tools.gen_benchmark_demands">
+<code class="sig-prename descclassname">trafpy.benchmarker.tools.</code><code class="sig-name descname">gen_benchmark_demands</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">save_format</span><span class="o">=</span><span class="default_value">'json'</span></em>, <em class="sig-param"><span class="n">separate_files</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">load_prev_dists</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">overwrite</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/benchmarker/tools.html#gen_benchmark_demands"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.benchmarker.tools.gen_benchmark_demands" title="Permalink to this definition">¶</a></dt>
+<dd><p>If separate_files, will save each load, repeat and, and benchmark to separate
+files in a common folder. This can help with memory since not storing everything
+in one large file.</p>
+<p>If slot size is not None, will also generate an sqlite database for the slots_dict
+dictionary. This is useful if later during simulations want to have pre-computed
+slots_dict rather than computing &amp; storing them in memory.</p>
+</dd></dl>
+
 </div>
 <div class="section" id="trafpy-benchmarker-v2-ray-main-testbed-benchmark-data-module">
 <h2>trafpy.benchmarker.v2_ray_main_testbed_benchmark_data module<a class="headerlink" href="#trafpy-benchmarker-v2-ray-main-testbed-benchmark-data-module" title="Permalink to this headline">¶</a></h2>

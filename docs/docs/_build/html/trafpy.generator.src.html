@@ -83,7 +83,6 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
 <li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
@@ -93,7 +92,7 @@
 <li class="toctree-l3"><a class="reference internal" href="trafpy.benchmarker.html">trafpy.benchmarker package</a></li>
 <li class="toctree-l3 current"><a class="reference internal" href="trafpy.generator.html">trafpy.generator package</a><ul class="current">
 <li class="toctree-l4 current"><a class="reference internal" href="trafpy.generator.html#subpackages">Subpackages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="trafpy.generator.html#module-contents">Module contents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trafpy.generator.html#module-trafpy.generator">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="trafpy.manager.html">trafpy.manager package</a></li>
@@ -223,20 +222,446 @@
 <div class="section" id="id10">
 <h2>trafpy.generator.src module<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="module-9"></span></div>
-<div class="section" id="trafpy-generator-src-builder-module">
-<h2>trafpy.generator.src.builder module<a class="headerlink" href="#trafpy-generator-src-builder-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-trafpy.generator.src.builder">
+<span id="trafpy-generator-src-builder-module"></span><h2>trafpy.generator.src.builder module<a class="headerlink" href="#module-trafpy.generator.src.builder" title="Permalink to this headline">¶</a></h2>
+<p>Module for building demand data dictionaries (flow- and job-centric).</p>
+<dl class="py function">
+<dt id="trafpy.generator.src.builder.construct_demand_slots_dict">
+<code class="sig-prename descclassname">trafpy.generator.src.builder.</code><code class="sig-name descname">construct_demand_slots_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em>, <em class="sig-param"><span class="n">slot_size</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">include_empty_slots</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">print_info</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/builder.html#construct_demand_slots_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.builder.construct_demand_slots_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes demand data (job-centric or flow-centric) and generates time-slot demand dictionaries.</p>
+<p>Often when simulating networks, it is useful to divide the arriving demands
+into time slots. This function uses the generated demand data event times
+and the specified slot size to divide when each demand arrives in the simulation
+into specific time slots.</p>
+<p>Returned dict keys are time slot boundary times and values are any demands
+which arrive in the time slot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>demand_data</strong> (<em>dict</em>) – Generated demand data (either flow-centric or job-centric).</p></li>
+<li><p><strong>slot_size</strong> (<em>float</em>) – Time period of each time slot. MUST BE FLOAT!!</p></li>
+<li><p><strong>include_empty_slots</strong> (<em>bool</em>) – Whether or not to include empty (i.e. no flows arriving)
+slots in slots_dict values. If True, will have keys for all slots of simulation,
+but will have larger memory usage, making the slots_dict less scalable.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Dictionary containing the original demand data organised into time
+slots.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.builder.create_demand_data">
+<code class="sig-prename descclassname">trafpy.generator.src.builder.</code><code class="sig-name descname">create_demand_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">flow_size_dist</span></em>, <em class="sig-param"><span class="n">interarrival_time_dist</span></em>, <em class="sig-param"><span class="n">network_load_config</span></em>, <em class="sig-param"><span class="n">min_num_demands</span><span class="o">=</span><span class="default_value">6000</span></em>, <em class="sig-param"><span class="n">max_num_demands</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">jensen_shannon_distance_threshold</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">check_dont_exceed_one_ep_load</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">min_last_demand_arrival_time</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">auto_node_dist_correction</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bidirectional_links</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">num_ops_dist</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_multiprocessing</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/builder.html#create_demand_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.builder.create_demand_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create demand data dictionary using given distributions.</p>
+<p>If num_ops_dist and c are left as None, return flow-centric demand data.
+Otherwise, return job-centric demand data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eps</strong> (<em>list</em>) – List of network endpoints.</p></li>
+<li><p><strong>node_dist</strong> (<em>numpy array</em>) – 2d matrix of source-destination probabilities
+of occurring</p></li>
+<li><p><strong>flow_size_dist</strong> (<em>dict</em>) – Probability distribution whose key-value pairs are
+flow size value-probability pairs.</p></li>
+<li><p><strong>interarrival_time_dist</strong> (<em>dict</em>) – Probability distribution whose key-value pairs are
+interarrival time value-probability pairs.</p></li>
+<li><p><strong>network_load_config</strong> (<em>dict</em>) – Dict of form {‘network_rate_capacity’: &lt;int/float&gt;, ‘target_load_fraction’: &lt;float&gt;, ‘disable_timeouts’: &lt;bool&gt;, ‘return_new_interarrival_time_dist’: &lt;bool&gt;},
+where network_rate_capacity is the maximum rate (in e.g. Gbps) at which
+information can be reliably transmitted over the communication network
+which the demand data will be inserted into, and where target_load_fraction
+is the fraction of the network rate capacity being requested by the demands
+(e.g. target_load_fraction=0.75 would generate demands which request
+a load that is 75% of the network rate capacity from the first to
+the last demand arriving). disable_timeouts defines whether or not
+to stop looping when trying to meet specified network load. return_new_interarrival_time_dist
+defines whether or not to return the new interarrival time dist which
+was adjusted to meet the network node requested.
+If network_load_config is None, must specify num_demands</p></li>
+<li><p><strong>num_ops_dist</strong> (<em>dict</em>) – Probability distribution whose key-value pairs are
+number of operations (in a job) value-probability pairs.</p></li>
+<li><p><strong>c</strong> (<em>int/float</em>) – Coefficient which determines job graph connectivity and
+therefore the number of edges in the job graph. Use this because, for
+large enough c and n (number of nodes), edge formation probability
+when using Erdos-Renyi random graph creation scales with the
+number of edges such that p=c*ln(n)/n, where graph diameter (and
+number of edges) scales with O(ln(n)). See
+<a class="reference external" href="https://www.cs.cmu.edu/~avrim/598/chap4only.pdf">https://www.cs.cmu.edu/~avrim/598/chap4only.pdf</a> for more information.</p></li>
+<li><p><strong>use_multiprocessing</strong> (<em>bool</em>) – Whether or not to use multiprocessing when
+generating data. For generating large numbers of big job computation
+graphs, it is recommended to use multiprocessing.</p></li>
+<li><p><strong>min_num_demands</strong> (<em>int</em>) – Minimum number of demands to generate (will increase
+beyond this if need to meet min_last_demand_arrival_time and/or to
+meet specified jensen_shannon_distance_threshold).</p></li>
+<li><p><strong>max_num_demands</strong> (<em>int</em>) – If not None, will not exceed this number of demands,
+which can help if you find you are exceeding memory limitations in
+your simulations. However, this will also mean that the (1) jensen_shannon_distance_threshold
+and (2) min_last_demand_arrival_time you specifiy may not be met. To
+ensure these are met, you must set max_num_demands to None.</p></li>
+<li><p><strong>jensen_shannon_distance_threshold</strong> (<em>float</em>) – Maximum jensen shannon distance
+required of generated random variables w.r.t. discretised dist they’re generated from.
+Must be between 0 and 1. Distance of 0 -&gt; distributions are exactly the same.
+Distance of 1 -&gt; distributions are not at all similar.
+<a class="reference external" href="https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15">https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15</a>
+N.B. To meet threshold, this function will keep doubling num_demands</p></li>
+<li><p><strong>check_dont_exceed_one_ep_load</strong> (<em>bool</em>) – If True, when packing flows (assigning
+src-dst node pairs according to specified node distribution), will ensure
+that don’t exceed 1.0 load on any end points. If this is not possible,
+will raise an Exception. If False, no exception will be raised, but run
+risk of exceeding 1.0 end point load, which for some users might be
+detrimental to their system.</p></li>
+<li><p><strong>min_last_demand_arrival_time</strong> (<em>int</em><em>, </em><em>float</em>) – Minimum last time of arrival
+for final demand (helps user specify a minimum simulation time). Will
+keep doubling number of demands until get &gt;= min_last_demand_arrival_time.</p></li>
+<li><p><strong>auto_node_dist_correction</strong> (<em>bool</em>) – If True, if a node dist and overall load
+is specified which is not valid since would lead to at least one endpoint
+link’s load exceeding 1.0, TrafPy will automatically adjust the node
+dist by distributing the excess load uniformally across all other valid
+end points. As such, as the network load tends to 1.0, the node dist
+will approach uniform with 1.0 load being requested on all end point links.</p></li>
+<li><p><strong>print_data</strong> (<em>bool</em>) – whether or not to print extra information about the
+generated data (such as time to generate).</p></li>
+<li><p><strong>path_to_save</strong> (<em>str</em>) – Path to directory (with file name included) in which
+to save generated distribution. E.g. path_to_save=’data/dists/my_dist’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Generated demand data (either flow-centric or job-centric demand</dt><dd><p>demand data depending on the args given to the function).</p>
+</dd>
+</dl>
+<p>N.B. If network_load_config is not None, will return tuple of
+(demand_data, interarrival_time_dist) to give updated interarrival time dist
+needed to meet network_load_config requested.</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.builder.get_num_deps">
+<code class="sig-prename descclassname">trafpy.generator.src.builder.</code><code class="sig-name descname">get_num_deps</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em>, <em class="sig-param"><span class="n">job_centric</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/builder.html#get_num_deps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.builder.get_num_deps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
-<div class="section" id="trafpy-generator-src-demand-module">
-<h2>trafpy.generator.src.demand module<a class="headerlink" href="#trafpy-generator-src-demand-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-trafpy.generator.src.demand">
+<span id="trafpy-generator-src-demand-module"></span><h2>trafpy.generator.src.demand module<a class="headerlink" href="#module-trafpy.generator.src.demand" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trafpy.generator.src.demand.Demand">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.generator.src.demand.</code><code class="sig-name descname">Demand</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em>, <em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'demand'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#Demand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.Demand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.Demand.get_num_demands">
+<code class="sig-name descname">get_num_demands</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#Demand.get_num_demands"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.Demand.get_num_demands" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.Demand.get_num_deps">
+<code class="sig-name descname">get_num_deps</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#Demand.get_num_deps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.Demand.get_num_deps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.Demand.get_slots_dict">
+<code class="sig-name descname">get_slots_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">slot_size</span></em>, <em class="sig-param"><span class="n">include_empty_slots</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">print_info</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#Demand.get_slots_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.Demand.get_slots_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.Demand.reset">
+<code class="sig-name descname">reset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#Demand.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.Demand.reset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trafpy.generator.src.demand.DemandAnalyser">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.generator.src.demand.</code><code class="sig-name descname">DemandAnalyser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand</span></em>, <em class="sig-param"><span class="n">subject_class_name</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandAnalyser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandAnalyser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandAnalyser.compute_metrics">
+<code class="sig-name descname">compute_metrics</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">print_summary</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandAnalyser.compute_metrics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandAnalyser.compute_metrics" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trafpy.generator.src.demand.DemandPlotter">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.generator.src.demand.</code><code class="sig-name descname">DemandPlotter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandPlotter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandPlotter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandPlotter.find_index_of_int_in_str">
+<code class="sig-name descname">find_index_of_int_in_str</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandPlotter.find_index_of_int_in_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandPlotter.find_index_of_int_in_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandPlotter.plot_flow_size_dist">
+<code class="sig-name descname">plot_flow_size_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">num_bins</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">font_size</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">figsize</span><span class="o">=</span><span class="default_value">4, 3</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandPlotter.plot_flow_size_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandPlotter.plot_flow_size_dist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandPlotter.plot_graph_diameter_dist">
+<code class="sig-name descname">plot_graph_diameter_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">num_bins</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandPlotter.plot_graph_diameter_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandPlotter.plot_graph_diameter_dist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandPlotter.plot_interarrival_time_dist">
+<code class="sig-name descname">plot_interarrival_time_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">num_bins</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">font_size</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">figsize</span><span class="o">=</span><span class="default_value">4, 3</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandPlotter.plot_interarrival_time_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandPlotter.plot_interarrival_time_dist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandPlotter.plot_link_loads_vs_time">
+<code class="sig-name descname">plot_link_loads_vs_time</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net</span></em>, <em class="sig-param"><span class="n">slot_size</span></em>, <em class="sig-param"><span class="n">demand</span></em>, <em class="sig-param"><span class="n">mean_period</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandPlotter.plot_link_loads_vs_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandPlotter.plot_link_loads_vs_time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandPlotter.plot_node_dist">
+<code class="sig-name descname">plot_node_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">chord_edge_width_range</span><span class="o">=</span><span class="default_value">[1, 25]</span></em>, <em class="sig-param"><span class="n">chord_edge_display_threshold</span><span class="o">=</span><span class="default_value">0.3</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">font_size</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">plot_chord</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandPlotter.plot_node_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandPlotter.plot_node_dist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandPlotter.plot_node_load_dists">
+<code class="sig-name descname">plot_node_load_dists</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">ep_link_bandwidth</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_extras</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">figsize</span><span class="o">=</span><span class="default_value">6.4, 4.8</span></em>, <em class="sig-param"><span class="n">font_size</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">bar_width</span><span class="o">=</span><span class="default_value">0.8</span></em>, <em class="sig-param"><span class="n">plot_all_x_ticks</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandPlotter.plot_node_load_dists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandPlotter.plot_node_load_dists" title="Permalink to this definition">¶</a></dt>
+<dd><p>1. Returns bar chart of end point links on x-axis and corresponding load on
+y-axis. If ep_link_bandwidth not given, y-axis will be absolute info units
+per unit time (load rate). If given, y-axis will be load (fraction).</p>
+<p>2. Returns same bar chart but y-axis is fraction of overall network load
+being requested by each end point link.</p>
+<p>3. (if ep_link_bandwidth not None) Returns same bar chart by y-axis is
+fraction of overall network capacity being requested by each end point link</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandPlotter.plot_num_deps_dist">
+<code class="sig-name descname">plot_num_deps_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">xlim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_bins</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandPlotter.plot_num_deps_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandPlotter.plot_num_deps_dist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandPlotter.plot_num_ops_dist">
+<code class="sig-name descname">plot_num_ops_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">xlim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_bins</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandPlotter.plot_num_ops_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandPlotter.plot_num_ops_dist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandPlotter.plot_op_run_times_dist">
+<code class="sig-name descname">plot_op_run_times_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">num_bins</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandPlotter.plot_op_run_times_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandPlotter.plot_op_run_times_dist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trafpy.generator.src.demand.DemandsAnalyser">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.generator.src.demand.</code><code class="sig-name descname">DemandsAnalyser</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">demands</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandsAnalyser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandsAnalyser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandsAnalyser.compute_metrics">
+<code class="sig-name descname">compute_metrics</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">print_summary</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandsAnalyser.compute_metrics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandsAnalyser.compute_metrics" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trafpy.generator.src.demand.DemandsPlotter">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.generator.src.demand.</code><code class="sig-name descname">DemandsPlotter</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">demands</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandsPlotter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandsPlotter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandsPlotter.plot_flow_size_dists">
+<code class="sig-name descname">plot_flow_size_dists</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandsPlotter.plot_flow_size_dists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandsPlotter.plot_flow_size_dists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.demand.DemandsPlotter.plot_interarrival_time_dists">
+<code class="sig-name descname">plot_interarrival_time_dists</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/demand.html#DemandsPlotter.plot_interarrival_time_dists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.demand.DemandsPlotter.plot_interarrival_time_dists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="trafpy-generator-src-flowcentric-module">
-<h2>trafpy.generator.src.flowcentric module<a class="headerlink" href="#trafpy-generator-src-flowcentric-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-trafpy.generator.src.flowcentric">
+<span id="trafpy-generator-src-flowcentric-module"></span><h2>trafpy.generator.src.flowcentric module<a class="headerlink" href="#module-trafpy.generator.src.flowcentric" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trafpy.generator.src.flowcentric.FlowGenerator">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">FlowGenerator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">flow_size_dist</span></em>, <em class="sig-param"><span class="n">interarrival_time_dist</span></em>, <em class="sig-param"><span class="n">network_load_config</span></em>, <em class="sig-param"><span class="n">min_num_demands</span><span class="o">=</span><span class="default_value">6000</span></em>, <em class="sig-param"><span class="n">max_num_demands</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">jensen_shannon_distance_threshold</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">min_last_demand_arrival_time</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">auto_node_dist_correction</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">check_dont_exceed_one_ep_load</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">bidirectional_links</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#FlowGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.FlowGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trafpy.generator.src.flowcentric.FlowGenerator.create_flow_centric_demand_data">
+<code class="sig-name descname">create_flow_centric_demand_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#FlowGenerator.create_flow_centric_demand_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.FlowGenerator.create_flow_centric_demand_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trafpy.generator.src.flowcentric.FlowPacker">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">FlowPacker</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">generator</span></em>, <em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">flow_ids</span></em>, <em class="sig-param"><span class="n">flow_sizes</span></em>, <em class="sig-param"><span class="n">flow_interarrival_times</span></em>, <em class="sig-param"><span class="n">network_load_config</span></em>, <em class="sig-param"><span class="n">auto_node_dist_correction</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">check_dont_exceed_one_ep_load</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">bidirectional_links</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#FlowPacker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.FlowPacker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trafpy.generator.src.flowcentric.FlowPacker.pack_the_flows">
+<code class="sig-name descname">pack_the_flows</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#FlowPacker.pack_the_flows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.FlowPacker.pack_the_flows" title="Permalink to this definition">¶</a></dt>
+<dd><p>If you find that your achieved node distribution does not look like
+your original node distribution before packing (e.g. achieved is more
+uniform), is probably because your flow sizes are very large for
+the end point bandwidth you have specified. Either decrease
+your flow sizes or increase the endpoint link capacity
+to make packing easier.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.generator.src.flowcentric.FlowPacker.reset">
+<code class="sig-name descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#FlowPacker.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.FlowPacker.reset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.duplicate_demand">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">duplicate_demand</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job</span></em>, <em class="sig-param"><span class="n">sn</span></em>, <em class="sig-param"><span class="n">dn</span></em>, <em class="sig-param"><span class="n">flow_size</span></em>, <em class="sig-param"><span class="n">event_time</span></em>, <em class="sig-param"><span class="n">duration</span></em>, <em class="sig-param"><span class="n">establish</span></em>, <em class="sig-param"><span class="n">index</span></em>, <em class="sig-param"><span class="n">num_demands</span></em>, <em class="sig-param"><span class="n">idx</span></em>, <em class="sig-param"><span class="n">jobs</span></em>, <em class="sig-param"><span class="n">job_ids</span></em>, <em class="sig-param"><span class="n">flow_ids</span></em>, <em class="sig-param"><span class="n">sns</span></em>, <em class="sig-param"><span class="n">dns</span></em>, <em class="sig-param"><span class="n">flow_sizes</span></em>, <em class="sig-param"><span class="n">event_times</span></em>, <em class="sig-param"><span class="n">establishes</span></em>, <em class="sig-param"><span class="n">indexes</span></em>, <em class="sig-param"><span class="n">job_centric</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#duplicate_demand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.duplicate_demand" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.duplicate_demands_in_demand_data_dict">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">duplicate_demands_in_demand_data_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em>, <em class="sig-param"><span class="n">num_duplications</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#duplicate_demands_in_demand_data_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.duplicate_demands_in_demand_data_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Duplicates set of demands by the specified number of times.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.gen_network_skewness_heat_maps">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">gen_network_skewness_heat_maps</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network</span></em>, <em class="sig-param"><span class="n">num_skewed_nodes</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">loads</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">roof_skew_factor</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">labeled_grid_resolution</span><span class="o">=</span><span class="default_value">0.05</span></em>, <em class="sig-param"><span class="n">min_skewed_traffic_requested</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">max_skewed_traffic_requested</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#gen_network_skewness_heat_maps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.gen_network_skewness_heat_maps" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Assumptions:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>All endpoints in network have equal bandwidth capacity, and this</dt><dd><p>capacity is 1/n of the overall network capacity, where n is the
+number of endpoints in the network.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Skewness is simply a skew factor, which is the fractional difference</dt><dd><p>between traffic_per_skewed_node and traffic_per_non_skewed_node</p>
+</dd>
+</dl>
+</li>
+<li><p>All nodes are either skewed (by the same amount) or not skewed (by the same amount)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>network</strong> (<em>object</em>) – </p></li>
+<li><p><strong>num_skewed_nodes</strong> (<em>list</em>) – List of number of nodes to skew. Forms y-axis
+on heat map.</p></li>
+<li><p><strong>loads</strong> (<em>list</em>) – List of overall loads to apply to network (length of loads
+list determines the number of heat maps generated).</p></li>
+<li><p><strong>min_skewed_traffic_requested</strong> (<em>float</em>) – Minimum proportion of overall traffic
+requested by skewed nodes. Must be between 0 and 1. Forms minimum of
+heat map x-axis (matrix rows).</p></li>
+<li><p><strong>max_skewed_traffic_requested</strong> (<em>float</em>) – Maximum proportion of overall traffic
+requested by skewed nodes. Must be between 0 and 1. Forms maximum of
+heat map x-axis (matrix columns).</p></li>
+<li><p><strong>show_fig</strong> (<em>bool</em>) – Whether or not to display colour map.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns skewed_nodes_traffic_requested (y-axis coords), proportion_nodes_skewed
+(x-axis coords), heat_maps (2D matrix of skewness values for x-y coords), and
+list of colour map matplotlib figures.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.get_first_last_flow_arrival_times">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">get_first_last_flow_arrival_times</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#get_first_last_flow_arrival_times"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.get_first_last_flow_arrival_times" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.get_flow_centric_demand_data_ep_load_rate">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">get_flow_centric_demand_data_ep_load_rate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em>, <em class="sig-param"><span class="n">ep</span></em>, <em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">method</span><span class="o">=</span><span class="default_value">'all_eps'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#get_flow_centric_demand_data_ep_load_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.get_flow_centric_demand_data_ep_load_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>If method==’all_eps’, duration is time_last_flow_arrived-time_first_flow_arrived
+across all endpoints. If method==’per_ep’, duration is time_last_flow_arrived-time_first_flow_arrived
+for this specific ep.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.get_flow_centric_demand_data_overall_load_rate">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">get_flow_centric_demand_data_overall_load_rate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#get_flow_centric_demand_data_overall_load_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.get_flow_centric_demand_data_overall_load_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>If flow connections are bidirectional_links, 1 flow takes up 2 endpoint links (the
+source link and the destination link), therefore effecitvely takes up load rate
+2*flow_size*duration bandwidth. If not bidriectional, only takes up
+1*flow_size*duration since only occupies bandwidth for 1 of these links.</p>
+<p>If method == ‘mean_per_ep’, will calculate the total network load as being the mean
+average load on each endpoint link (i.e. sum info requests for each link -&gt;
+find load of each link -&gt; find mean of ep link loads)</p>
+<p>If method == ‘mean_all_eps’, will calculate the total network load as being
+the average load over all endpoint links (i.e. sum info requests for all links
+-&gt; find overall load of network)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.get_flow_centric_demand_data_total_info_arrived">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">get_flow_centric_demand_data_total_info_arrived</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#get_flow_centric_demand_data_total_info_arrived"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.get_flow_centric_demand_data_total_info_arrived" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.flowcentric.group_demand_data_into_ep_info">
+<code class="sig-prename descclassname">trafpy.generator.src.flowcentric.</code><code class="sig-name descname">group_demand_data_into_ep_info</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em>, <em class="sig-param"><span class="n">eps</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/flowcentric.html#group_demand_data_into_ep_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.flowcentric.group_demand_data_into_ep_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="module-trafpy.generator.src.interactive">
 <span id="trafpy-generator-src-interactive-module"></span><h2>trafpy.generator.src.interactive module<a class="headerlink" href="#module-trafpy.generator.src.interactive" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="trafpy-generator-src-jobcentric-module">
-<h2>trafpy.generator.src.jobcentric module<a class="headerlink" href="#trafpy-generator-src-jobcentric-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-trafpy.generator.src.jobcentric">
+<span id="trafpy-generator-src-jobcentric-module"></span><h2>trafpy.generator.src.jobcentric module<a class="headerlink" href="#module-trafpy.generator.src.jobcentric" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trafpy.generator.src.jobcentric.JobGenerator">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.generator.src.jobcentric.</code><code class="sig-name descname">JobGenerator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">node_dist</span></em>, <em class="sig-param"><span class="n">flow_size_dist</span></em>, <em class="sig-param"><span class="n">interarrival_time_dist</span></em>, <em class="sig-param"><span class="n">num_ops_dist</span></em>, <em class="sig-param"><span class="n">network_load_config</span></em>, <em class="sig-param"><span class="n">c</span><span class="o">=</span><span class="default_value">1.5</span></em>, <em class="sig-param"><span class="n">run_time_gaussian_noise_mean</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">run_time_gaussian_noise_sd</span><span class="o">=</span><span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">round_op_run_time_to_nearest</span><span class="o">=</span><span class="default_value">0.0001</span></em>, <em class="sig-param"><span class="n">prob_data_dependency</span><span class="o">=</span><span class="default_value">0.8</span></em>, <em class="sig-param"><span class="n">use_multiprocessing</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">min_num_demands</span><span class="o">=</span><span class="default_value">6000</span></em>, <em class="sig-param"><span class="n">max_num_demands</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">jensen_shannon_distance_threshold</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">min_last_demand_arrival_time</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">auto_node_dist_correction</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">check_dont_exceed_one_ep_load</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">bidirectional_links</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/jobcentric.html#JobGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.jobcentric.JobGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trafpy.generator.src.jobcentric.JobGenerator.create_job_centric_demand_data">
+<code class="sig-name descname">create_job_centric_demand_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/jobcentric.html#JobGenerator.create_job_centric_demand_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.jobcentric.JobGenerator.create_job_centric_demand_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>N.B. Currently only applying jensen_shannon_distance_threshold requirement
+to num_ops, not to flow size or interarrival time etc. Do this because
+otherwise may require far too many demands (jobs) -&gt; very memory intensive.
+In future, should try to fix this and apply threshold requirement to all
+distributions.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.jobcentric.draw_job_graph">
+<code class="sig-prename descclassname">trafpy.generator.src.jobcentric.</code><code class="sig-name descname">draw_job_graph</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job</span></em>, <em class="sig-param"><span class="n">node_size</span><span class="o">=</span><span class="default_value">500</span></em>, <em class="sig-param"><span class="n">font_size</span><span class="o">=</span><span class="default_value">15</span></em>, <em class="sig-param"><span class="n">linewidths</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">fig_scale</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">draw_labels</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">directed_graph</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/jobcentric.html#draw_job_graph"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.jobcentric.draw_job_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws single job graph</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.jobcentric.draw_job_graphs">
+<code class="sig-prename descclassname">trafpy.generator.src.jobcentric.</code><code class="sig-name descname">draw_job_graphs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">job_graphs</span><span class="o">=</span><span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">node_size</span><span class="o">=</span><span class="default_value">500</span></em>, <em class="sig-param"><span class="n">font_size</span><span class="o">=</span><span class="default_value">15</span></em>, <em class="sig-param"><span class="n">linewidths</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">fig_scale</span><span class="o">=</span><span class="default_value">1.25</span></em>, <em class="sig-param"><span class="n">draw_labels</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/jobcentric.html#draw_job_graphs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.jobcentric.draw_job_graphs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws list of specified job graphs. If no job graphs specified,
+plots all job graphs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.jobcentric.gen_job_event_dict">
+<code class="sig-prename descclassname">trafpy.generator.src.jobcentric.</code><code class="sig-name descname">gen_job_event_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em>, <em class="sig-param"><span class="n">event_iter</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/jobcentric.html#gen_job_event_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.jobcentric.gen_job_event_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.jobcentric.get_job_demand_data_dependency_stats">
+<code class="sig-prename descclassname">trafpy.generator.src.jobcentric.</code><code class="sig-name descname">get_job_demand_data_dependency_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">demand_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/jobcentric.html#get_job_demand_data_dependency_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.jobcentric.get_job_demand_data_dependency_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets stats of all dependencies of each job in demand_data. Returns these
+stats as a dict {job_id: dependency_stats}</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.generator.src.jobcentric.get_job_dependency_stats">
+<code class="sig-prename descclassname">trafpy.generator.src.jobcentric.</code><code class="sig-name descname">get_job_dependency_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/jobcentric.html#get_job_dependency_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.jobcentric.get_job_dependency_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get stats of all dependencies in a single job and returns as a list.</p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-trafpy.generator.src.networks">
 <span id="trafpy-generator-src-networks-module"></span><h2>trafpy.generator.src.networks module<a class="headerlink" href="#module-trafpy.generator.src.networks" title="Permalink to this headline">¶</a></h2>
