@@ -43,3 +43,6 @@ data/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# folders
+doc/_build
