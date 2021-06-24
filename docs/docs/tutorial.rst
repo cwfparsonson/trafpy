@@ -11,11 +11,12 @@ This guide can help you start with TrafPy.
     is required).
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
-   tutorial_test1  
-   tutorial_test2
+   tutorial_generator
+   tutorial_manager
+   tutorial_benchmarker
 
 
 
