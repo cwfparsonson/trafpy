@@ -82,7 +82,7 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
 <li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
@@ -188,6 +188,9 @@
 <div class="section" id="id3">
 <h2>trafpy.manager.src.simulators module<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="module-2"></span></div>
+<div class="section" id="id4">
+<h2>trafpy.manager.src.simulators module<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-3"></span></div>
 <div class="section" id="module-trafpy.manager.src.simulators.analysers">
 <span id="trafpy-manager-src-simulators-analysers-module"></span><h2>trafpy.manager.src.simulators.analysers module<a class="headerlink" href="#module-trafpy.manager.src.simulators.analysers" title="Permalink to this headline">¶</a></h2>
 </div>
@@ -750,13 +753,13 @@ data with radar plots.</p>
 <dl class="py method">
 <dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_mean_fct_vs_load">
 <code class="sig-name descname">plot_mean_fct_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_mean_fct_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_mean_fct_vs_load" title="Permalink to this definition">¶</a></dt>
-<dd><p><a href="#id4"><span class="problematic" id="id5">*</span></a>analysers (<a href="#id6"><span class="problematic" id="id7">*</span></a>args): Analyser objects whose metrics you wish to plot.</p>
+<dd><p><a href="#id5"><span class="problematic" id="id6">*</span></a>analysers (<a href="#id7"><span class="problematic" id="id8">*</span></a>args): Analyser objects whose metrics you wish to plot.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_mean_jct_vs_load">
 <code class="sig-name descname">plot_mean_jct_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_mean_jct_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_mean_jct_vs_load" title="Permalink to this definition">¶</a></dt>
-<dd><p><a href="#id8"><span class="problematic" id="id9">*</span></a>analysers (<a href="#id10"><span class="problematic" id="id11">*</span></a>args): Analyser objects whose metrics you wish to plot.</p>
+<dd><p><a href="#id9"><span class="problematic" id="id10">*</span></a>analysers (<a href="#id11"><span class="problematic" id="id12">*</span></a>args): Analyser objects whose metrics you wish to plot.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -790,11 +793,11 @@ data with radar plots.</p>
 <dl class="py function">
 <dt id="trafpy.manager.src.simulators.env_plotter.plot_summary_dict_params">
 <code class="sig-prename descclassname">trafpy.manager.src.simulators.env_plotter.</code><code class="sig-name descname">plot_summary_dict_params</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">summary_dicts</span></em>, <em class="sig-param"><span class="n">error_summary_dicts</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dependent_var_name</span><span class="o">=</span><span class="default_value">'Random Variable'</span></em>, <em class="sig-param"><span class="n">dependent_var_display_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">control_var_name</span><span class="o">=</span><span class="default_value">'Param'</span></em>, <em class="sig-param"><span class="n">loads</span><span class="o">=</span><span class="default_value">[0.1, 0.5, 0.9]</span></em>, <em class="sig-param"><span class="n">subjects_to_plot</span><span class="o">=</span><span class="default_value">'all'</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#plot_summary_dict_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.plot_summary_dict_params" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function is for when you have used <a href="#id12"><span class="problematic" id="id13">`</span></a>envs_plotter’ to plot individual
+<dd><p>This function is for when you have used <a href="#id13"><span class="problematic" id="id14">`</span></a>envs_plotter’ to plot individual
 simulation statistics for various loads, and now wish to do some plots
 across multiple simulation statistics for cross-simulation analysis. Note
 that this notebook requires you having set a path_to_save string when
-calling <a href="#id14"><span class="problematic" id="id15">`</span></a>envs_plotter’ so that an <a href="#id16"><span class="problematic" id="id17">`</span></a>envs_plotter’_ directory contains a
+calling <a href="#id15"><span class="problematic" id="id16">`</span></a>envs_plotter’ so that an <a href="#id17"><span class="problematic" id="id18">`</span></a>envs_plotter’_ directory contains a
 summary_dataframe.pkl file.</p>
 <p>summary_dicts should be a dict of dicts. The keys of summary_dicts should
 be the parameter values of the control_var_name (e.g. for
@@ -815,8 +818,8 @@ way as summary_dicts but containing the error (e.g. std) for each stat.</p>
 <div class="section" id="module-trafpy.manager.src.simulators.simulators">
 <span id="trafpy-manager-src-simulators-simulators-module"></span><h2>trafpy.manager.src.simulators.simulators module<a class="headerlink" href="#module-trafpy.manager.src.simulators.simulators" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-3">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-3" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-4">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-4" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 

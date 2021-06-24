@@ -36,6 +36,14 @@ trafpy.manager.src.simulators module
    :undoc-members:
    :show-inheritance:
 
+trafpy.manager.src.simulators module
+------------------------------------
+
+.. automodule:: trafpy.manager.src.simulators
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 trafpy.manager.src.simulators.analysers module
 ----------------------------------------------
 

@@ -1,5 +1,8 @@
 Node Distributions
 ==================
+.. nbplot::
+    >>> import trafpy.generator as tpg
+
 Network traffic travels from a **source** node to a **destination** node.
 Source-destination nodes are **endpoints** in a network
 
@@ -30,7 +33,7 @@ distribution
 
 .. nbplot::
 
-    >>> node_dist, fig = tpg.gen_multimodal_node_pair_dist(eps=endpoints,skewed_pairs=[['server_1','server_3'],['server_4','server_2']], show_fig=True)
+    >>> node_dist, fig = tpg.gen_multimodal_node_pair_dist(eps=endpoints, skewed_pairs=[['server_1','server_3'], ['server_4','server_2']], show_fig=True)
 
 Different networks have different node distributions. Sometimes you may want a 
 simple uniform distribution, or a slightly skewed distribution, or certain nodes 

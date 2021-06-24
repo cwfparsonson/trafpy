@@ -1,16 +1,11 @@
 TrafPy Generator
 ================
 
-
-Network traffic patterns can be characterised by probability distributions. By
-accurately describing a probability distribution, one can sample from it to generate
-arbitrary amounts of realistic network traffic.
-
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   tutorial_trafpy_distributions
    tutorial_value_distributions
    tutorial_node_distributions
    tutorial_networks
@@ -18,3 +13,4 @@ arbitrary amounts of realistic network traffic.
    tutorial_job_centric_traffic_demands
    tutorial_load_rack_config
    tutorial_visually_shaping_distributions
+

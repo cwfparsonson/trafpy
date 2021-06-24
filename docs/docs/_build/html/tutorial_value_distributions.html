@@ -92,6 +92,7 @@
 <li class="toctree-l3"><a class="reference internal" href="tutorial_job_centric_traffic_demands.html">Job-Centric Traffic Demands</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_load_rack_config.html">Load and Rack Configurations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_visually_shaping_distributions.html">Visually Shaping TrafPy Distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_generator.html#trafpy-distributions">TrafPy Distributions</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial_manager.html">TrafPy Manager</a></li>
@@ -173,6 +174,7 @@
             
   <div class="section" id="value-distributions">
 <h1>Value Distributions<a class="headerlink" href="#value-distributions" title="Permalink to this headline">¶</a></h1>
+<p>To import the TrafPy generator, run:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
 </pre></div>
 </div>
@@ -186,15 +188,6 @@ of occurring</p>
 <div class="figure align-default">
 <img alt="_images/tutorial_value_distributions-2.png" src="_images/tutorial_value_distributions-2.png" />
 </div>
-<p>TrafPy probability distributions are defined as hashtables (Python dictionaries).
-These tables map each possible value taken by the random variable to some fractional
-value between 0 and 1 (where this value could be e.g. probability)</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Uniform probability distribution:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prob_dist</span><span class="p">))</span>
-<span class="go">Uniform probability distribution:</span>
-<span class="go">{1: 0.01, 2: 0.01, 3: 0.01, 4: 0.01, 5: 0.01, 6: 0.01, 7: 0.01, 8: 0.01, 9: 0.01, 10: 0.01, 11: 0.01, 12: 0.01, 13: 0.01, 14: 0.01, 15: 0.01, 16: 0.01, 17: 0.01, 18: 0.01, 19: 0.01, 20: 0.01, 21: 0.01, 22: 0.01, 23: 0.01, 24: 0.01, 25: 0.01, 26: 0.01, 27: 0.01, 28: 0.01, 29: 0.01, 30: 0.01, 31: 0.01, 32: 0.01, 33: 0.01, 34: 0.01, 35: 0.01, 36: 0.01, 37: 0.01, 38: 0.01, 39: 0.01, 40: 0.01, 41: 0.01, 42: 0.01, 43: 0.01, 44: 0.01, 45: 0.01, 46: 0.01, 47: 0.01, 48: 0.01, 49: 0.01, 50: 0.01, 51: 0.01, 52: 0.01, 53: 0.01, 54: 0.01, 55: 0.01, 56: 0.01, 57: 0.01, 58: 0.01, 59: 0.01, 60: 0.01, 61: 0.01, 62: 0.01, 63: 0.01, 64: 0.01, 65: 0.01, 66: 0.01, 67: 0.01, 68: 0.01, 69: 0.01, 70: 0.01, 71: 0.01, 72: 0.01, 73: 0.01, 74: 0.01, 75: 0.01, 76: 0.01, 77: 0.01, 78: 0.01, 79: 0.01, 80: 0.01, 81: 0.01, 82: 0.01, 83: 0.01, 84: 0.01, 85: 0.01, 86: 0.01, 87: 0.01, 88: 0.01, 89: 0.01, 90: 0.01, 91: 0.01, 92: 0.01, 93: 0.01, 94: 0.01, 95: 0.01, 96: 0.01, 97: 0.01, 98: 0.01, 99: 0.01, 100: 0.01}</span>
-</pre></div>
-</div>
-<p>and the probability density plot is constructed by sampling random variables from the discrete probability distribution.</p>
 <p>Demand characteristics of real network traffic patterns are rarely uniform. However,
 they can often be described by certain well-defined <strong>named distributions</strong>. These
 named distributions are themselves characterised by just a few parameters, making them
@@ -203,36 +196,36 @@ easy to reproduce.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;exponential&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_beta&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">],</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">101</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//tutorial_value_distributions-4.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-4.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-4.pdf">pdf</a>)</p>
+<p>(<a class="reference external" href=".//tutorial_value_distributions-3.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-3.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-3.pdf">pdf</a>)</p>
 <div class="figure align-default">
-<img alt="_images/tutorial_value_distributions-4.png" src="_images/tutorial_value_distributions-4.png" />
+<img alt="_images/tutorial_value_distributions-3.png" src="_images/tutorial_value_distributions-3.png" />
 </div>
 <img alt="_images/exponential_dist_param_composite.png" class="align-center" src="_images/exponential_dist_param_composite.png" />
 <p>the <em>log-normal distribution</em></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;lognormal&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_mu&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;_sigma&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//tutorial_value_distributions-5.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-5.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-5.pdf">pdf</a>)</p>
+<p>(<a class="reference external" href=".//tutorial_value_distributions-4.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-4.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-4.pdf">pdf</a>)</p>
 <div class="figure align-default">
-<img alt="_images/tutorial_value_distributions-5.png" src="_images/tutorial_value_distributions-5.png" />
+<img alt="_images/tutorial_value_distributions-4.png" src="_images/tutorial_value_distributions-4.png" />
 </div>
 <img alt="_images/lognormal_dist_param_composite.png" class="align-center" src="_images/lognormal_dist_param_composite.png" />
 <p>the <em>Weibull distribution</em></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;weibull&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_alpha&#39;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="s1">&#39;_lambda&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">3.5</span><span class="p">],</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">101</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//tutorial_value_distributions-6.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-6.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-6.pdf">pdf</a>)</p>
+<p>(<a class="reference external" href=".//tutorial_value_distributions-5.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-5.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-5.pdf">pdf</a>)</p>
 <div class="figure align-default">
-<img alt="_images/tutorial_value_distributions-6.png" src="_images/tutorial_value_distributions-6.png" />
+<img alt="_images/tutorial_value_distributions-5.png" src="_images/tutorial_value_distributions-5.png" />
 </div>
 <img alt="_images/weibull_dist_param_composite.png" class="align-center" src="_images/weibull_dist_param_composite.png" />
 <p>and the <em>Pareto distribution</em></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;pareto&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_alpha&#39;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s1">&#39;_mode&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">101</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//tutorial_value_distributions-7.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-7.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-7.pdf">pdf</a>)</p>
+<p>(<a class="reference external" href=".//tutorial_value_distributions-6.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-6.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-6.pdf">pdf</a>)</p>
 <div class="figure align-default">
-<img alt="_images/tutorial_value_distributions-7.png" src="_images/tutorial_value_distributions-7.png" />
+<img alt="_images/tutorial_value_distributions-6.png" src="_images/tutorial_value_distributions-6.png" />
 </div>
 <img alt="_images/pareto_dist_param_composite.png" class="align-center" src="_images/pareto_dist_param_composite.png" />
 <p>However, some demand characteristics cannot be accurately described by these named
@@ -242,9 +235,9 @@ of <strong>skewness</strong> and/or <strong>kurtosis</strong></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">max_val</span><span class="o">=</span><span class="mi">7000</span><span class="p">,</span><span class="n">locations</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="mi">4000</span><span class="p">],</span><span class="n">skews</span><span class="o">=</span><span class="p">[</span><span class="mi">6</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="n">scales</span><span class="o">=</span><span class="p">[</span><span class="mi">150</span><span class="p">,</span><span class="mi">1500</span><span class="p">],</span><span class="n">num_skew_samples</span><span class="o">=</span><span class="p">[</span><span class="mi">10000</span><span class="p">,</span><span class="mi">650</span><span class="p">],</span><span class="n">bg_factor</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span><span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">10000</span><span class="p">],</span><span class="n">num_bins</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//tutorial_value_distributions-8.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-8.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-8.pdf">pdf</a>)</p>
+<p>(<a class="reference external" href=".//tutorial_value_distributions-7.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-7.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-7.pdf">pdf</a>)</p>
 <div class="figure align-default">
-<img alt="_images/tutorial_value_distributions-8.png" src="_images/tutorial_value_distributions-8.png" />
+<img alt="_images/tutorial_value_distributions-7.png" src="_images/tutorial_value_distributions-7.png" />
 </div>
 <p>Later in this tutorial, you will see how to visually shape a multimodal distribution
 using TrafPy, allowing for almost any distribution to be generated.</p>

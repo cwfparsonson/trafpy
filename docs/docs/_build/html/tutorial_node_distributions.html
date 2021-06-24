@@ -34,7 +34,9 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Networks" href="tutorial_networks.html" />
+    <link rel="prev" title="Value Distributions" href="tutorial_value_distributions.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -79,8 +81,23 @@
             
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="tutorial.html">Tutorial</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="tutorial_generator.html">TrafPy Generator</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="tutorial_value_distributions.html">Value Distributions</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Node Distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_networks.html">Networks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_flow_centric_traffic_demands.html">Flow-Centric Traffic Demands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_job_centric_traffic_demands.html">Job-Centric Traffic Demands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_load_rack_config.html">Load and Rack Configurations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_visually_shaping_distributions.html">Visually Shaping TrafPy Distributions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_manager.html">TrafPy Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_benchmarker.html">TrafPy Benchmarker</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
 <li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
@@ -131,6 +148,10 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
+          <li><a href="tutorial.html">Tutorial</a> &raquo;</li>
+        
+          <li><a href="tutorial_generator.html">TrafPy Generator</a> &raquo;</li>
+        
       <li>Node Distributions</li>
     
     
@@ -152,6 +173,9 @@
             
   <div class="section" id="node-distributions">
 <h1>Node Distributions<a class="headerlink" href="#node-distributions" title="Permalink to this headline">¶</a></h1>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
+</pre></div>
+</div>
 <p>Network traffic travels from a <strong>source</strong> node to a <strong>destination</strong> node.
 Source-destination nodes are <strong>endpoints</strong> in a network</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">endpoints</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;server_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
@@ -163,6 +187,10 @@ is the <strong>uniform distribution</strong></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>(<a class="reference external" href=".//tutorial_node_distributions-3.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-3.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-3.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/tutorial_node_distributions-3.png" src="_images/tutorial_node_distributions-3.png" />
+</div>
 <p>Since different endpoint nodes in a network likely have different hardware
 capabilities, network node distributions are rarely uniform. Instead, some nodes
 become ‘hot nodes’ and are requested more than others, forming a <strong>multimodal
@@ -170,10 +198,14 @@ node distribution</strong></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">skewed_nodes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;server_2&#39;</span><span class="p">],</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>(<a class="reference external" href=".//tutorial_node_distributions-4.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-4.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-4.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/tutorial_node_distributions-4.png" src="_images/tutorial_node_distributions-4.png" />
+</div>
 <p>Instead of certain <em>nodes</em> being requested more regularly, sometimes certain
 <em>node pairs</em> in the network might be skewed, forming a <strong>multimodal node pair</strong>
 distribution</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">skewed_pairs</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;server_1&#39;</span><span class="p">,</span><span class="s1">&#39;server_3&#39;</span><span class="p">],[</span><span class="s1">&#39;server_4&#39;</span><span class="p">,</span><span class="s1">&#39;server_2&#39;</span><span class="p">]],</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span> <span class="n">skewed_pairs</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;server_1&#39;</span><span class="p">,</span><span class="s1">&#39;server_3&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;server_4&#39;</span><span class="p">,</span><span class="s1">&#39;server_2&#39;</span><span class="p">]],</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Different networks have different node distributions. Sometimes you may want a
@@ -189,6 +221,14 @@ for further details.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="figure align-default" id="id1">
+<img alt="_images/tutorial_node_distributions-6_00.png" src="_images/tutorial_node_distributions-6_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-6_00.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_00.pdf">pdf</a>)</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id2">
+<img alt="_images/tutorial_node_distributions-6_01.png" src="_images/tutorial_node_distributions-6_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-6_01.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_01.pdf">pdf</a>)</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
 <p>Once you have your node probability distribution, you can use it to generate
 as many source-destination node pairs as you like</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sn</span><span class="p">,</span> <span class="n">dn</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_node_demands</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span><span class="n">num_demands</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
@@ -201,6 +241,15 @@ as many source-destination node pairs as you like</p>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tutorial_networks.html" class="btn btn-neutral float-right" title="Networks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="tutorial_value_distributions.html" class="btn btn-neutral float-left" title="Value Distributions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>
