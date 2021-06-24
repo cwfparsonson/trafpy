@@ -34,7 +34,9 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Node Distributions" href="tutorial_node_distributions.html" />
+    <link rel="prev" title="TrafPy Generator" href="tutorial_generator.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -79,9 +81,23 @@
             
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="tutorial.html">Tutorial</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="tutorial_generator.html">TrafPy Generator</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Value Distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_node_distributions.html">Node Distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_networks.html">Networks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_flow_centric_traffic_demands.html">Flow-Centric Traffic Demands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_job_centric_traffic_demands.html">Job-Centric Traffic Demands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_load_rack_config.html">Load and Rack Configurations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_visually_shaping_distributions.html">Visually Shaping TrafPy Distributions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_manager.html">TrafPy Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_benchmarker.html">TrafPy Benchmarker</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
 <li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
@@ -132,6 +148,10 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
+          <li><a href="tutorial.html">Tutorial</a> &raquo;</li>
+        
+          <li><a href="tutorial_generator.html">TrafPy Generator</a> &raquo;</li>
+        
       <li>Value Distributions</li>
     
     
@@ -153,17 +173,9 @@
             
   <div class="section" id="value-distributions">
 <h1>Value Distributions<a class="headerlink" href="#value-distributions" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="trafpy-generator">
-<h2>TrafPy Generator<a class="headerlink" href="#trafpy-generator" title="Permalink to this headline">¶</a></h2>
-<p>Import the <code class="docutils literal notranslate"><span class="pre">trafpy.generator</span></code> package.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
 </pre></div>
 </div>
-<p>Network traffic patterns can be characterised by probability distributions. By
-accurately describing a probability distribution, one can sample from it to generate
-arbitrary amounts of realistic network traffic.</p>
-<div class="section" id="id1">
-<h3>Value Distributions<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>The most simple probability distribution for random variable values is the
 <strong>uniform distribution</strong>, where each random variable value has an equal probability
 of occurring</p>
@@ -242,14 +254,21 @@ random variable values as you like</p>
 </pre></div>
 </div>
 </div>
-</div>
-</div>
 
 
            </div>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tutorial_node_distributions.html" class="btn btn-neutral float-right" title="Node Distributions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="tutorial_generator.html" class="btn btn-neutral float-left" title="TrafPy Generator" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

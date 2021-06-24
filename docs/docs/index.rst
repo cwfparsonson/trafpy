@@ -22,7 +22,7 @@ researchers to benchmark their management systems.
 Getting Started
 ===============
 Follow the :doc:`instructions <Install>` to install TrafPy, then have a look 
-at the :doc:`tutorial <Tutorial>`.
+at the :doc:`tutorial <tutorial>`.
 
 
 
@@ -44,7 +44,7 @@ Documentation
    :caption: Contents:
 
    Install
-   Tutorial
+   tutorial
    Contribute
    License
    Citing

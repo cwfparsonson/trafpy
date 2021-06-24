@@ -1,21 +1,9 @@
 Value Distributions
 ===================
 
-TrafPy Generator
-----------------
-Import the ``trafpy.generator`` package.
-
 .. nbplot::
+    >>> import trafpy.generator as tpg
 
-    >>> import trafpy.generator as tpg 
-
-Network traffic patterns can be characterised by probability distributions. By
-accurately describing a probability distribution, one can sample from it to generate
-arbitrary amounts of realistic network traffic. 
-
-
-Value Distributions
-^^^^^^^^^^^^^^^^^^^
 The most simple probability distribution for random variable values is the 
 **uniform distribution**, where each random variable value has an equal probability
 of occurring

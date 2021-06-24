@@ -1,0 +1,246 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Load and Rack Configurations &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">setup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trafpy.html">trafpy package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Load and Rack Configurations</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/tutorial_load_rack_config.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="load-and-rack-configurations">
+<h1>Load and Rack Configurations<a class="headerlink" href="#load-and-rack-configurations" title="Permalink to this headline">¶</a></h1>
+<p>Up to now, you have used TrafPy to create some number of demands. However,
+it is often more useful to create an arbitrary number of demands such that a certain
+<strong>network load</strong> is generated for an arbitrary network. Here, the <strong>network capacity</strong>
+is the total <em>rate</em> at which information can be reliably transmitted over the network,
+and the network load is the fraction of this capacity being requested during the
+session.</p>
+<p>To specify the load and have the number of demands automatically generated,
+the same functions you’ve seen above can be used, but now specifying the
+<code class="docutils literal notranslate"><span class="pre">network_load_config</span></code> argument rather than <code class="docutils literal notranslate"><span class="pre">num_demands</span></code>. E.g. to generate
+demands that will request a 0.75 load of a network with a network capacity
+of 6,000 Gbps:</p>
+<p># TEMPORARY COMMENT OUT OF BELOW CODE - BRING DEMO IN LATER WHEN FINALISED THIS FUNCTIONALITY
+#.. nbplot:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#    &gt;&gt;&gt; network_load_config = {&#39;network_rate_capacity&#39;: 6000, &#39;target_load_fraction&#39;: 0.75}</span>
+<span class="c1">#    &gt;&gt;&gt; flow_centric_demand_data = tpg.create_demand_data(network_load_config=network_load_config,eps=endpoints,node_dist=node_dist,flow_size_dist=flow_size_dist,interarrival_time_dist=interarrival_time_dist)</span>
+</pre></div>
+</div>
+<p>Network endpoints/servers are often grouped into physically local clusters or ‘racks’.
+Different networks may have different levels of inter- (between) and intra- (within) rack communication.
+One way to specify this would be to set individual node pair probabilities with the <code class="docutils literal notranslate"><span class="pre">gen_multimodal_node_pair_dist</span></code> function
+you’ve already seen, however this would be inconvenient and laborious. Instead, when using the above node distribution functions,
+you can specify the <code class="docutils literal notranslate"><span class="pre">rack_prob_config</span></code> argument, which allows you to set the proportion of
+traffic which should be inter-rack. TrafPy will then use your shaped node distribution
+to create an adjusted node distribution which accounts for your specified rack probabilites.
+For example, if you specify <code class="docutils literal notranslate"><span class="pre">rack_prob_config</span></code> in <code class="docutils literal notranslate"><span class="pre">gen_uniform_node_dist</span></code>, you will not generate a perfectly
+uniform node distribution as you would if you left <code class="docutils literal notranslate"><span class="pre">rack_prob_config</span></code> as <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+but instead a node distribution with set inter- and intra-rack probabilities sampled
+from a uniform distribution. You will need to specify which endpoints are
+in which rack with a dictionary (this is automatically done for you if you
+use one of the TrafPy networks). E.g. Making 20% of traffic inter-rack in a
+fat-tree topology:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">net</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_fat_tree</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">num_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">plot_network</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">draw_node_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">network_node_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Racks dict:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;rack_to_ep_dict&#39;</span><span class="p">]))</span>
+<span class="go">Racks dict:</span>
+<span class="go">{&#39;rack_0&#39;: [&#39;server_0&#39;, &#39;server_1&#39;], &#39;rack_1&#39;: [&#39;server_2&#39;, &#39;server_3&#39;],</span>
+<span class="go">&#39;rack_2&#39;: [&#39;server_4&#39;, &#39;server_5&#39;], &#39;rack_3&#39;: [&#39;server_6&#39;, &#39;server_7&#39;],</span>
+<span class="go">&#39;rack_4&#39;: [&#39;server_8&#39;, &#39;server_9&#39;], &#39;rack_5&#39;: [&#39;server_10&#39;, &#39;server_11&#39;]}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rack_prob_config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;racks_dict&#39;</span><span class="p">:</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;rack_to_ep_dict&#39;</span><span class="p">],</span> <span class="s1">&#39;prob_inter_rack&#39;</span><span class="p">:</span> <span class="mf">0.20</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">],</span> <span class="n">rack_prob_config</span><span class="o">=</span><span class="n">rack_prob_config</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Making 90% of traffic inter-rack:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rack_prob_config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;racks_dict&#39;</span><span class="p">:</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;rack_to_ep_dict&#39;</span><span class="p">],</span> <span class="s1">&#39;prob_inter_rack&#39;</span><span class="p">:</span> <span class="mf">0.90</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">],</span> <span class="n">rack_prob_config</span><span class="o">=</span><span class="n">rack_prob_config</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
