@@ -36,7 +36,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Node Distributions" href="tutorial_node_distributions.html" />
-    <link rel="prev" title="TrafPy Generator" href="tutorial_generator.html" /> 
+    <link rel="prev" title="TrafPy Distributions" href="tutorial_trafpy_distributions.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -85,6 +85,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="tutorial.html">Tutorial</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="tutorial_generator.html">TrafPy Generator</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="tutorial_trafpy_distributions.html">TrafPy Distributions</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Value Distributions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_node_distributions.html">Node Distributions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_networks.html">Networks</a></li>
@@ -92,7 +93,6 @@
 <li class="toctree-l3"><a class="reference internal" href="tutorial_job_centric_traffic_demands.html">Job-Centric Traffic Demands</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_load_rack_config.html">Load and Rack Configurations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_visually_shaping_distributions.html">Visually Shaping TrafPy Distributions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="tutorial_generator.html#trafpy-distributions">TrafPy Distributions</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial_manager.html">TrafPy Manager</a></li>
@@ -180,7 +180,7 @@
 </div>
 <p>The most simple probability distribution for random variable values is the
 <strong>uniform distribution</strong>, where each random variable value has an equal probability
-of occurring</p>
+of occurring:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">101</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -229,19 +229,36 @@ easy to reproduce.</p>
 </div>
 <img alt="_images/pareto_dist_param_composite.png" class="align-center" src="_images/pareto_dist_param_composite.png" />
 <p>However, some demand characteristics cannot be accurately described by these named
-distributions. Instead, they are described by arbitrary <strong>multimodal distributions</strong>,
-which are distributions with more than one <strong>mode</strong> which may or may not have some amount
-of <strong>skewness</strong> and/or <strong>kurtosis</strong></p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">max_val</span><span class="o">=</span><span class="mi">7000</span><span class="p">,</span><span class="n">locations</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="mi">4000</span><span class="p">],</span><span class="n">skews</span><span class="o">=</span><span class="p">[</span><span class="mi">6</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="n">scales</span><span class="o">=</span><span class="p">[</span><span class="mi">150</span><span class="p">,</span><span class="mi">1500</span><span class="p">],</span><span class="n">num_skew_samples</span><span class="o">=</span><span class="p">[</span><span class="mi">10000</span><span class="p">,</span><span class="mi">650</span><span class="p">],</span><span class="n">bg_factor</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span><span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">10000</span><span class="p">],</span><span class="n">num_bins</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+distributions. Instead, they might be described by arbitrarily <strong>skewed</strong> distributions
+which may or may not have some amount of <strong>skewness</strong> and/or <strong>kurtosis</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_skewnorm_val_dist</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">skew</span><span class="o">=-</span><span class="mi">5</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>(<a class="reference external" href=".//tutorial_value_distributions-7.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-7.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-7.pdf">pdf</a>)</p>
 <div class="figure align-default">
 <img alt="_images/tutorial_value_distributions-7.png" src="_images/tutorial_value_distributions-7.png" />
 </div>
+<p>Note that setting <code class="docutils literal notranslate"><span class="pre">skew=0</span></code> simply generates a <strong>normal</strong> distribution with
+standard deviation <code class="docutils literal notranslate"><span class="pre">scale</span></code> and mean <code class="docutils literal notranslate"><span class="pre">location</span></code></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_skewnorm_val_dist</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">skew</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//tutorial_value_distributions-8.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-8.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-8.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/tutorial_value_distributions-8.png" src="_images/tutorial_value_distributions-8.png" />
+</div>
+<p>You can also use TrafPy to generate <strong>multimodal</strong> distributions with an arbitrary
+number of modes</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_val_dist</span><span class="p">(</span><span class="n">min_val</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">max_val</span><span class="o">=</span><span class="mi">7000</span><span class="p">,</span><span class="n">locations</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="mi">4000</span><span class="p">],</span><span class="n">skews</span><span class="o">=</span><span class="p">[</span><span class="mi">6</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="n">scales</span><span class="o">=</span><span class="p">[</span><span class="mi">150</span><span class="p">,</span><span class="mi">1500</span><span class="p">],</span><span class="n">num_skew_samples</span><span class="o">=</span><span class="p">[</span><span class="mi">10000</span><span class="p">,</span><span class="mi">650</span><span class="p">],</span><span class="n">bg_factor</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span><span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">10000</span><span class="p">],</span><span class="n">num_bins</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href=".//tutorial_value_distributions-9.png">png</a>, <a class="reference external" href=".//tutorial_value_distributions-9.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_value_distributions-9.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/tutorial_value_distributions-9.png" src="_images/tutorial_value_distributions-9.png" />
+</div>
 <p>Later in this tutorial, you will see how to visually shape a multimodal distribution
 using TrafPy, allowing for almost any distribution to be generated.</p>
-<p>Once you have your value probability distribution, you can use it to generate as many
+<p>Once you have your valuqe distribution, you can use it to generate as many
 random variable values as you like</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rand_vars</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_rand_vars_from_discretised_dist</span><span class="p">(</span><span class="n">unique_vars</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">prob_dist</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span><span class="n">probabilities</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">prob_dist</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span><span class="n">num_demands</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
@@ -259,7 +276,7 @@ random variable values as you like</p>
         <a href="tutorial_node_distributions.html" class="btn btn-neutral float-right" title="Node Distributions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="tutorial_generator.html" class="btn btn-neutral float-left" title="TrafPy Generator" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="tutorial_trafpy_distributions.html" class="btn btn-neutral float-left" title="TrafPy Distributions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

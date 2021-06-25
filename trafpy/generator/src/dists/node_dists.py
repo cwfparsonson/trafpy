@@ -1182,17 +1182,18 @@ def gen_multimodal_node_pair_dist(eps,
 
     # find prob of each skewed node pair being chosen
     pairs_per_node = num_nodes - 1
-    probs_per_skewed_pair = {json.dumps(pair): prob for pair, prob in zip(skewed_pairs, [p for p in skewed_pair_probs])}
-    # # keep src < dst
-    # for pair in probs_per_skewed_pair.keys():
-        # unpacked_pair = json.loads(pair)
-        # if node_to_index[unpacked_pair[0]] > node_to_index[unpacked_pair[1]]:
-            # flipped_pair = json.dumps([unpacked_pair[1], unpacked_pair[0]])
-            # probs_per_skewed_pair[flipped_pair] = probs_per_skewed_pair[pair]
-            # del probs_per_skewed_pair[pair]
+    prob_pair_chosen = {pair: 0 for pair in pair_to_index.keys()}
+    _skewed_pairs = []
+    for p in skewed_pairs:
+        # ensure same order
+        if json.dumps(p) not in prob_pair_chosen:
+            _skewed_pairs.append(json.dumps(p[::-1]))
+        else:
+            _skewed_pairs.append(json.dumps(p))
+    skewed_pairs = _skewed_pairs
+    probs_per_skewed_pair = {pair: prob for pair, prob in zip(skewed_pairs, [p for p in skewed_pair_probs])}
 
     # update prob pair chosen for each pair with a skewed node
-    prob_pair_chosen = {pair: 0 for pair in pair_to_index.keys()}
     unskewed_pairs = {pair: 0 for pair in pair_to_index.keys()} # maintain for efficient hashing
     for skewed_pair in probs_per_skewed_pair.keys():
         try:
@@ -1253,7 +1254,7 @@ def gen_multimodal_node_pair_dist(eps,
         print('Normalised matrix:\n{}'.format(node_dist))
         print('Normalised matrix sum: {}'.format(matrix_sum))
     if path_to_save is not None:
-        tools.pickle_data(path, node_dist)
+        tools.pickle_data(path_to_save, node_dist)
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
                                         eps=eps,

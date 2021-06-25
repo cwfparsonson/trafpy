@@ -57,9 +57,20 @@ and the *Pareto distribution*
     :align: center
 
 However, some demand characteristics cannot be accurately described by these named
-distributions. Instead, they are described by arbitrary **multimodal distributions**, 
-which are distributions with more than one **mode** which may or may not have some amount
-of **skewness** and/or **kurtosis**
+distributions. Instead, they might be described by arbitrarily **skewed** distributions
+which may or may not have some amount of **skewness** and/or **kurtosis**
+
+.. nbplot::
+    >>> prob_dist, rand_vars, fig = tpg.gen_skewnorm_val_dist(location=50, skew=-5, scale=10, return_data=True, show_fig=True, num_bins=15)
+
+Note that setting ``skew=0`` simply generates a **normal** distribution with 
+standard deviation ``scale`` and mean ``location``
+
+.. nbplot::
+    >>> prob_dist, rand_vars, fig = tpg.gen_skewnorm_val_dist(location=50, skew=0, scale=10, return_data=True, show_fig=True, num_bins=15)
+
+You can also use TrafPy to generate **multimodal** distributions with an arbitrary
+number of modes
 
 .. nbplot::
 
@@ -68,7 +79,7 @@ of **skewness** and/or **kurtosis**
 Later in this tutorial, you will see how to visually shape a multimodal distribution
 using TrafPy, allowing for almost any distribution to be generated.
 
-Once you have your value probability distribution, you can use it to generate as many
+Once you have your value distribution, you can use it to generate as many
 random variable values as you like
 
 .. nbplot::

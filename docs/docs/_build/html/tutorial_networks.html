@@ -85,6 +85,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="tutorial.html">Tutorial</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="tutorial_generator.html">TrafPy Generator</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="tutorial_trafpy_distributions.html">TrafPy Distributions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_value_distributions.html">Value Distributions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_node_distributions.html">Node Distributions</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Networks</a></li>
@@ -173,6 +174,9 @@
             
   <div class="section" id="networks">
 <h1>Networks<a class="headerlink" href="#networks" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
+</pre></div>
+</div>
 <p>By definition, a network is a collection of nodes (vertices) which together
 form pairs of nodes connected by links (edges). Some or all of these nodes can
 act as <strong>sources</strong> and <strong>destinations</strong> for network traffic <strong>demands</strong>. Such
@@ -182,18 +186,26 @@ multiple links and nodes, some of which may be endpoints and some not.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>(<a class="reference external" href=".//tutorial_networks-2.png">png</a>, <a class="reference external" href=".//tutorial_networks-2.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_networks-2.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/tutorial_networks-2.png" src="_images/tutorial_networks-2.png" />
+</div>
 <p>or the 14-node NSFNET network</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_nsfnet_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
+</div>
+<p>(<a class="reference external" href=".//tutorial_networks-3.png">png</a>, <a class="reference external" href=".//tutorial_networks-3.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_networks-3.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/tutorial_networks-3.png" src="_images/tutorial_networks-3.png" />
 </div>
 <p>or a fat-tree network</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_fat_tree</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>A single demand in a network can be considered as either a <strong>flow</strong> or a computation
-graph (a <strong>job</strong>) whose dependencies (edges) may form flows. Both flow-centric
-and job-centric network traffic demand generation and management are supported
-by TrafPy.</p>
+<p>(<a class="reference external" href=".//tutorial_networks-4.png">png</a>, <a class="reference external" href=".//tutorial_networks-4.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_networks-4.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/tutorial_networks-4.png" src="_images/tutorial_networks-4.png" />
+</div>
 </div>
 
 

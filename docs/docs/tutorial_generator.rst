@@ -1,6 +1,8 @@
 TrafPy Generator
 ================
 
+The TrafPy Generator can generate custom and/or literature network traffic.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:

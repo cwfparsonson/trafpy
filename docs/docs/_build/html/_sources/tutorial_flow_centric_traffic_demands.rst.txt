@@ -1,5 +1,14 @@
 Flow-Centric Traffic Demands
 ============================
+
+.. nbplot::
+    >>> import trafpy.generator as tpg
+
+A single demand in a network can be considered as either a **flow** or a computation
+graph (a **job**) whose dependencies (edges) may form flows. Both flow-centric
+and job-centric network traffic demand generation and management are supported
+by TrafPy.
+
 A flow is some information being sent from a source node to a destination node
 in a network (e.g. a data centre network).
 

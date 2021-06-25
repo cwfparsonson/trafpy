@@ -1354,6 +1354,74 @@ to generate skew data.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt id="trafpy.generator.src.dists.val_dists.gen_skewnorm_val_dist">
+<code class="sig-prename descclassname">trafpy.generator.src.dists.val_dists.</code><code class="sig-name descname">gen_skewnorm_val_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location</span></em>, <em class="sig-param"><span class="n">skew</span></em>, <em class="sig-param"><span class="n">scale</span></em>, <em class="sig-param"><span class="n">num_skew_samples</span><span class="o">=</span><span class="default_value">150000</span></em>, <em class="sig-param"><span class="n">min_val</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_val</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">return_data</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">xlim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">transparent</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">rand_var_name</span><span class="o">=</span><span class="default_value">'Random Variable'</span></em>, <em class="sig-param"><span class="n">num_bins</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">round_to_nearest</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">occurrence_multiplier</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">prob_rand_var_less_than</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_decimal_places</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/val_dists.html#gen_skewnorm_val_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.val_dists.gen_skewnorm_val_dist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a skew norm distribution of random variable values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>location</strong> (<em>int/float</em>) – Position value of skewed distribution (mean shape
+parameter).</p></li>
+<li><p><strong>skew</strong> (<em>int/float</em>) – Skew value of skewed distribution (skewness shape
+parameter).</p></li>
+<li><p><strong>scale</strong> (<em>int/float</em>) – Scale value of skewed distribution (standard deviation</p></li>
+<li><p><strong>scale</strong> – Scale value of skewed distribution (standard deviation
+shape parameter).
+shape parameter).</p></li>
+<li><p><strong>num_skew_samples</strong> (<em>int</em>) – Number of random variables to sample from distribution
+to generate skew data and plot.</p></li>
+<li><p><strong>return_data</strong> (<em>bool</em>) – from generated distribution.</p></li>
+<li><p><strong>xlim</strong> (<em>list</em>) – X-axis limits of plot. E.g. xlim=[0,10] to plot random
+variable values between 0 and 10.</p></li>
+<li><p><strong>plot_fig</strong> (<em>bool</em>) – Whether or not to plot fig. If True, will return fig.</p></li>
+<li><p><strong>show_fig</strong> (<em>bool</em>) – Whether or not to plot and show fig. If True, will</p></li>
+<li><p><strong>logscale</strong> (<em>bool</em>) – Whether or not plot should have logscale x-axis and bins.</p></li>
+<li><p><strong>transparent</strong> (<em>bool</em>) – Whether or not to make plot bins slightly transparent.</p></li>
+<li><p><strong>rand_var_name</strong> (<em>str</em>) – Name of random variable to label plot’s x-axis.</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em>) – Number of bins to use in plot. Default is 0, in which
+case the number of bins chosen will be automatically selected.</p></li>
+<li><p><strong>round_to_nearest</strong> (<em>int/float</em>) – Value to round random variables to nearest.
+E.g. if round_to_nearest=0.2, will round each random variable to
+nearest 0.2.</p></li>
+<li><p><strong>prob_rand_var_less_than</strong> (<em>list</em>) – List of values for which to print the
+probability that a variable sampled randomly from the generated
+distribution will be less than. This is useful for replicating
+distributions from the literature. E.g. prob_rand_var_less_than=[3.7,5.8]
+will return the probability that a randomly chosen variable is less
+than 3.7 and 5.8 respectively.</p></li>
+<li><p><strong>occurrence_multiplier</strong> (<em>int/float</em>) – When sampling random variables from
+distribution to create plot and random variable data, use this
+multiplier to determine number of data points to sample. A higher
+value will cause the random variable data to match the probability
+distribution more closely, but will take longer to generate.</p></li>
+<li><p><strong>num_decimal_places</strong> (<em>int</em>) – Number of decimal places to random variable
+values. Need to explicitly state otherwise Python’s floating point
+arithmetic will cause spurious unique random variable value errors
+when discretising.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Tuple containing:</dt><dd><ul class="simple">
+<li><p><strong>prob_dist</strong> (<em>dict</em>): Probability distribution whose key-value pairs are
+random variable value-probability pairs.</p></li>
+<li><p><strong>rand_vars</strong> (<em>list, optional</em>): Random variable values sampled from the
+generated probability distribution. To return, set return_data=True.</p></li>
+<li><p><strong>fig</strong> (<em>matplotlib.figure.Figure, optional</em>): Probability density
+and cumulative distribution function plot. To return, set show_fig=True
+and/or plot_fig=True.</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="trafpy.generator.src.dists.val_dists.gen_uniform_val_dist">
 <code class="sig-prename descclassname">trafpy.generator.src.dists.val_dists.</code><code class="sig-name descname">gen_uniform_val_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_val</span></em>, <em class="sig-param"><span class="n">max_val</span></em>, <em class="sig-param"><span class="n">round_to_nearest</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_decimal_places</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">occurrence_multiplier</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plot_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">show_fig</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_data</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">xlim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">logscale</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">rand_var_name</span><span class="o">=</span><span class="default_value">'Random Variable'</span></em>, <em class="sig-param"><span class="n">prob_rand_var_less_than</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_bins</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">print_data</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/generator/src/dists/val_dists.html#gen_uniform_val_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.generator.src.dists.val_dists.gen_uniform_val_dist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates a uniform distribution of random variable values.</p>

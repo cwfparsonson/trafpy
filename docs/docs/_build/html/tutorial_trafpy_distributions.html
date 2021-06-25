@@ -184,15 +184,15 @@ value between 0 and 1 (where this value could be e.g. probability, fraction of n
 The fractional values should sum to 1.0.</p>
 <p>E.g. If you have integer random variable values 1-10 each with an equal probability of occurring,
 this distribution would be represtented by the following hash table in TrafPy:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">6</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">7</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">8</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">9</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">10</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dist</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">6</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">7</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">8</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">9</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">10</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">}</span>
 </pre></div>
 </div>
 <p>Similarly, a distribution where a random variable value of 5 always occurs would be:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="mi">5</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dist</span> <span class="o">=</span> <span class="p">{</span><span class="mi">5</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
 </pre></div>
 </div>
 <p>and so on.</p>
-<p>TrafPy distributions are typically either <strong>value distributions</strong> which map
+<p>TrafPy distributions are typically referred to as either <strong>value distributions</strong> which map
 random variables such as flow size and inter-arrival times to ‘probability of
 occurring’, or <strong>node distributions</strong> which map node pairs to ‘fraction of the overall
 traffic load requested’.</p>

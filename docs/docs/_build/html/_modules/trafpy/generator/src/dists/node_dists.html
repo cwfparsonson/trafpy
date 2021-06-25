@@ -1334,17 +1334,18 @@
 
     <span class="c1"># find prob of each skewed node pair being chosen</span>
     <span class="n">pairs_per_node</span> <span class="o">=</span> <span class="n">num_nodes</span> <span class="o">-</span> <span class="mi">1</span>
-    <span class="n">probs_per_skewed_pair</span> <span class="o">=</span> <span class="p">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pair</span><span class="p">):</span> <span class="n">prob</span> <span class="k">for</span> <span class="n">pair</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">skewed_pairs</span><span class="p">,</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">skewed_pair_probs</span><span class="p">])}</span>
-    <span class="c1"># # keep src &lt; dst</span>
-    <span class="c1"># for pair in probs_per_skewed_pair.keys():</span>
-        <span class="c1"># unpacked_pair = json.loads(pair)</span>
-        <span class="c1"># if node_to_index[unpacked_pair[0]] &gt; node_to_index[unpacked_pair[1]]:</span>
-            <span class="c1"># flipped_pair = json.dumps([unpacked_pair[1], unpacked_pair[0]])</span>
-            <span class="c1"># probs_per_skewed_pair[flipped_pair] = probs_per_skewed_pair[pair]</span>
-            <span class="c1"># del probs_per_skewed_pair[pair]</span>
+    <span class="n">prob_pair_chosen</span> <span class="o">=</span> <span class="p">{</span><span class="n">pair</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">pair_to_index</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+    <span class="n">_skewed_pairs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">skewed_pairs</span><span class="p">:</span>
+        <span class="c1"># ensure same order</span>
+        <span class="k">if</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prob_pair_chosen</span><span class="p">:</span>
+            <span class="n">_skewed_pairs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">p</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_skewed_pairs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+    <span class="n">skewed_pairs</span> <span class="o">=</span> <span class="n">_skewed_pairs</span>
+    <span class="n">probs_per_skewed_pair</span> <span class="o">=</span> <span class="p">{</span><span class="n">pair</span><span class="p">:</span> <span class="n">prob</span> <span class="k">for</span> <span class="n">pair</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">skewed_pairs</span><span class="p">,</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">skewed_pair_probs</span><span class="p">])}</span>
 
     <span class="c1"># update prob pair chosen for each pair with a skewed node</span>
-    <span class="n">prob_pair_chosen</span> <span class="o">=</span> <span class="p">{</span><span class="n">pair</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">pair_to_index</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
     <span class="n">unskewed_pairs</span> <span class="o">=</span> <span class="p">{</span><span class="n">pair</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">pair_to_index</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span> <span class="c1"># maintain for efficient hashing</span>
     <span class="k">for</span> <span class="n">skewed_pair</span> <span class="ow">in</span> <span class="n">probs_per_skewed_pair</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="k">try</span><span class="p">:</span>
@@ -1405,7 +1406,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Normalised matrix:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_dist</span><span class="p">))</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Normalised matrix sum: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">matrix_sum</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">path_to_save</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">tools</span><span class="o">.</span><span class="n">pickle_data</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">node_dist</span><span class="p">)</span>
+        <span class="n">tools</span><span class="o">.</span><span class="n">pickle_data</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">,</span> <span class="n">node_dist</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">plot_fig</span> <span class="ow">or</span> <span class="n">show_fig</span><span class="p">:</span>
         <span class="n">fig</span> <span class="o">=</span> <span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_node_dist</span><span class="p">(</span><span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span> 
                                         <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>

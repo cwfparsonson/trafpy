@@ -85,6 +85,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="tutorial.html">Tutorial</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="tutorial_generator.html">TrafPy Generator</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="tutorial_trafpy_distributions.html">TrafPy Distributions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_value_distributions.html">Value Distributions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_node_distributions.html">Node Distributions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_networks.html">Networks</a></li>
@@ -173,6 +174,13 @@
             
   <div class="section" id="flow-centric-traffic-demands">
 <h1>Flow-Centric Traffic Demands<a class="headerlink" href="#flow-centric-traffic-demands" title="Permalink to this headline">¶</a></h1>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
+</pre></div>
+</div>
+<p>A single demand in a network can be considered as either a <strong>flow</strong> or a computation
+graph (a <strong>job</strong>) whose dependencies (edges) may form flows. Both flow-centric
+and job-centric network traffic demand generation and management are supported
+by TrafPy.</p>
 <p>A flow is some information being sent from a source node to a destination node
 in a network (e.g. a data centre network).</p>
 <p>Common flow demand characteristics include:</p>
@@ -192,18 +200,38 @@ network</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">network</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;endpoint&#39;</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>(<a class="reference external" href=".//tutorial_flow_centric_traffic_demands-2.png">png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-2.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-2.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/tutorial_flow_centric_traffic_demands-2.png" src="_images/tutorial_flow_centric_traffic_demands-2.png" />
+</div>
 <p>You could start by defining the flow size distribution</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flow_size_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;weibull&#39;</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_alpha&#39;</span><span class="p">:</span> <span class="mf">1.4</span><span class="p">,</span> <span class="s1">&#39;_lambda&#39;</span><span class="p">:</span> <span class="mi">7000</span><span class="p">},</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">rand_var_name</span><span class="o">=</span><span class="s1">&#39;Flow Size&#39;</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mf">1e2</span><span class="p">,</span><span class="mf">1e12</span><span class="p">])</span>
 </pre></div>
+</div>
+<p>(<a class="reference external" href=".//tutorial_flow_centric_traffic_demands-3.png">png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-3.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-3.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/tutorial_flow_centric_traffic_demands-3.png" src="_images/tutorial_flow_centric_traffic_demands-3.png" />
 </div>
 <p>then the flow interarrival time distribution</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">interarrival_time_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_named_val_dist</span><span class="p">(</span><span class="n">dist</span><span class="o">=</span><span class="s1">&#39;lognormal&#39;</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_mu&#39;</span><span class="p">:</span> <span class="mf">7.4</span><span class="p">,</span> <span class="s1">&#39;_sigma&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">rand_var_name</span><span class="o">=</span><span class="s1">&#39;Interarrival Time&#39;</span><span class="p">,</span><span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">round_to_nearest</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mf">1e1</span><span class="p">,</span><span class="mf">1e6</span><span class="p">])</span>
 </pre></div>
 </div>
+<p>(<a class="reference external" href=".//tutorial_flow_centric_traffic_demands-4.png">png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-4.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-4.pdf">pdf</a>)</p>
+<div class="figure align-default">
+<img alt="_images/tutorial_flow_centric_traffic_demands-4.png" src="_images/tutorial_flow_centric_traffic_demands-4.png" />
+</div>
 <p>and then the source-destination node distribution</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">endpoints</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">num_skewed_nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
+</div>
+<div class="figure align-default" id="id1">
+<img alt="_images/tutorial_flow_centric_traffic_demands-5_00.png" src="_images/tutorial_flow_centric_traffic_demands-5_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_flow_centric_traffic_demands-5_00.png">png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-5_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-5_00.pdf">pdf</a>)</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id2">
+<img alt="_images/tutorial_flow_centric_traffic_demands-5_01.png" src="_images/tutorial_flow_centric_traffic_demands-5_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_flow_centric_traffic_demands-5_01.png">png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-5_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-5_01.pdf">pdf</a>)</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
 </div>
 <p>You can then use your distributions to generate flow-centric demand data formatted
 neatly into a single dictionary</p>

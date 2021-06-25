@@ -85,6 +85,7 @@
 <li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="tutorial.html">Tutorial</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="tutorial_generator.html">TrafPy Generator</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="tutorial_trafpy_distributions.html">TrafPy Distributions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_value_distributions.html">Value Distributions</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Node Distributions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorial_networks.html">Networks</a></li>
@@ -182,8 +183,10 @@ Source-destination nodes are <strong>endpoints</strong> in a network</p>
 </pre></div>
 </div>
 <p>How regularly each node is selected as a source or destination is determined by a
-<strong>node distribution probability matrix</strong>. The most simple node distribution
-is the <strong>uniform distribution</strong></p>
+<strong>node distribution matrix</strong>. The elements in this matrix might refer to probabilities,
+but in TrafPy they usually refer to <strong>load fractions</strong> (i.e. what fraction of the overall
+traffic arriving is requested by a particular node pair).</p>
+<p>The most simple node distribution is the <strong>uniform distribution</strong></p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -208,6 +211,21 @@ distribution</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span> <span class="n">skewed_pairs</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;server_1&#39;</span><span class="p">,</span><span class="s1">&#39;server_3&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;server_4&#39;</span><span class="p">,</span><span class="s1">&#39;server_2&#39;</span><span class="p">]],</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="figure align-default" id="id1">
+<img alt="_images/tutorial_node_distributions-5_00.png" src="_images/tutorial_node_distributions-5_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-5_00.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_00.pdf">pdf</a>)</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id2">
+<img alt="_images/tutorial_node_distributions-5_01.png" src="_images/tutorial_node_distributions-5_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-5_01.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_01.pdf">pdf</a>)</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
+<p>N.B. The above graph plots are <strong>chord diagrams</strong>. Each network end point is a node,
+and the colour of the node indicates how much of the overall traffic requestes
+that particular end point. The width of edges between nodes indicates how much
+traffic is travelling between a particular endpoint pair, with pair edges
+below a certain load threshold being excluded from the plot for visual clarity.
+Chord diagrams are just an alternative way of visualising the more standard 2D
+traffic matrix.</p>
 <p>Different networks have different node distributions. Sometimes you may want a
 simple uniform distribution, or a slightly skewed distribution, or certain nodes
 being heavily in demand, or certain node pairs being heavily in demand. Furthermore,
@@ -221,13 +239,13 @@ for further details.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="figure align-default" id="id1">
+<div class="figure align-default" id="id3">
 <img alt="_images/tutorial_node_distributions-6_00.png" src="_images/tutorial_node_distributions-6_00.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-6_00.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_00.pdf">pdf</a>)</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-6_00.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_00.pdf">pdf</a>)</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
 </div>
-<div class="figure align-default" id="id2">
+<div class="figure align-default" id="id4">
 <img alt="_images/tutorial_node_distributions-6_01.png" src="_images/tutorial_node_distributions-6_01.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-6_01.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_01.pdf">pdf</a>)</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-6_01.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_01.pdf">pdf</a>)</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
 </div>
 <p>Once you have your node probability distribution, you can use it to generate
 as many source-destination node pairs as you like</p>

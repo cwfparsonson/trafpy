@@ -235,6 +235,122 @@ def gen_skew_dists(min_val,
     
     return data_dict
 
+def gen_skewnorm_val_dist(location, 
+                  skew, 
+                  scale, 
+                  num_skew_samples=150000,
+                  min_val=None,
+                  max_val=None,
+                  return_data=False,
+                  xlim=None, 
+                  plot_fig=False,
+                  show_fig=False,
+                  logscale=False,
+                  path_to_save=None,
+                  transparent=True,
+                  rand_var_name='Random Variable',
+                  num_bins=0,
+                  round_to_nearest=None,
+                  occurrence_multiplier=10,
+                  prob_rand_var_less_than=None,
+                  num_decimal_places=2):
+    '''Generates a skew norm distribution of random variable values.
+
+    Args:
+        location (int/float): Position value of skewed distribution (mean shape
+            parameter).
+        skew (int/float): Skew value of skewed distribution (skewness shape
+            parameter).
+        scale (int/float): Scale value of skewed distribution (standard deviation
+        scale (int/float): Scale value of skewed distribution (standard deviation
+            shape parameter).
+            shape parameter).
+        num_skew_samples (int): Number of random variables to sample from distribution
+            to generate skew data and plot.
+        return_data (bool) Whether or not to return random variable data sampled
+            from generated distribution.
+        xlim (list): X-axis limits of plot. E.g. xlim=[0,10] to plot random
+            variable values between 0 and 10.
+        plot_fig (bool): Whether or not to plot fig. If True, will return fig.
+        show_fig (bool): Whether or not to plot and show fig. If True, will
+        logscale (bool): Whether or not plot should have logscale x-axis and bins.
+        transparent (bool): Whether or not to make plot bins slightly transparent.
+        rand_var_name (str): Name of random variable to label plot's x-axis.
+        num_bins (int): Number of bins to use in plot. Default is 0, in which
+            case the number of bins chosen will be automatically selected.
+        round_to_nearest (int/float): Value to round random variables to nearest.
+            E.g. if round_to_nearest=0.2, will round each random variable to 
+            nearest 0.2.
+        prob_rand_var_less_than (list): List of values for which to print the
+            probability that a variable sampled randomly from the generated 
+            distribution will be less than. This is useful for replicating 
+            distributions from the literature. E.g. prob_rand_var_less_than=[3.7,5.8]
+            will return the probability that a randomly chosen variable is less
+            than 3.7 and 5.8 respectively.
+        occurrence_multiplier (int/float): When sampling random variables from
+            distribution to create plot and random variable data, use this
+            multiplier to determine number of data points to sample. A higher 
+            value will cause the random variable data to match the probability
+            distribution more closely, but will take longer to generate.
+        num_decimal_places (int): Number of decimal places to random variable
+            values. Need to explicitly state otherwise Python's floating point 
+            arithmetic will cause spurious unique random variable value errors
+            when discretising.
+
+    Returns:
+        tuple: Tuple containing:
+            - **prob_dist** (*dict*): Probability distribution whose key-value pairs are 
+              random variable value-probability pairs. 
+            - **rand_vars** (*list, optional*): Random variable values sampled from the 
+              generated probability distribution. To return, set return_data=True.
+            - **fig** (*matplotlib.figure.Figure, optional*): Probability density 
+              and cumulative distribution function plot. To return, set show_fig=True 
+              and/or plot_fig=True.
+
+    '''
+    rand_vars = []
+    
+    data = gen_skewnorm_data(a=skew,
+                             loc=location,
+                             scale=scale,
+                             min_val=min_val,
+                             max_val=max_val,
+                             num_samples=num_skew_samples)
+    rand_vars.append(list(data))
+    
+    rand_vars = [y for x in rand_vars for y in x] # flatten
+    if round_to_nearest is not None:
+        # discretise
+        rand_vars = [x_round(i,round_to_nearest,num_decimal_places,min_val=min_val) for i in rand_vars]
+    else:
+        pass
+
+    unique_vals, pmf = gen_discrete_prob_dist(rand_vars=rand_vars, 
+                                              round_to_nearest=round_to_nearest,
+                                              num_decimal_places=num_decimal_places)
+
+    # ensure keys are floats so dont get error if try save with json
+    prob_dist = {float(unique_val): prob for unique_val, prob in zip(unique_vals, pmf)}
+
+    fig = None
+    if path_to_save is not None:
+        tools.pickle_data(path_to_save, prob_dist)
+    if plot_fig or show_fig:
+        min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
+        num_occurrences = [int(val*(1/min_prob)*occurrence_multiplier) for val in list(prob_dist.values())]
+        rand_vars = convert_key_occurrences_to_data(unique_vals,num_occurrences)
+        fig = plot_dists.plot_val_dist(rand_vars=rand_vars, 
+                                       xlim=xlim,
+                                       logscale=logscale,
+                                       rand_var_name=rand_var_name,
+                                       prob_rand_var_less_than=prob_rand_var_less_than,
+                                       transparent=transparent,
+                                       num_bins=num_bins,
+                                       print_characteristics=False,
+                                       show_fig=show_fig)
+
+    return prob_dist, rand_vars, fig
+
 
 def gen_skew_data(location, 
                   skew, 
@@ -549,7 +665,7 @@ def gen_multimodal_val_dist(min_val,
     if print_data:
         print('Prob dist:\n{}'.format(prob_dist))
     if path_to_save is not None:
-        tools.pickle_data(path_to_save, node_dist)
+        tools.pickle_data(path_to_save, prob_dist)
     if plot_fig or show_fig:
         min_prob = min(prob for prob in list(prob_dist.values()) if prob > 0)
         num_occurrences = [int(val*(1/min_prob)*occurrence_multiplier) for val in list(prob_dist.values())]
@@ -572,6 +688,7 @@ def gen_multimodal_val_dist(min_val,
             return prob_dist, rand_vars 
         else:
             return prob_dist
+
 
 
 def gen_skewnorm_data(a, 

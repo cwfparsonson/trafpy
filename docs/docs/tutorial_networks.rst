@@ -1,6 +1,9 @@
 Networks
 ========
 
+.. nbplot::
+    import trafpy.generator as tpg
+
 By definition, a network is a collection of nodes (vertices) which together
 form pairs of nodes connected by links (edges). Some or all of these nodes can 
 act as **sources** and **destinations** for network traffic **demands**. Such 
@@ -25,7 +28,3 @@ or a fat-tree network
 
     >>> network = tpg.gen_fat_tree(k=4, show_fig=True)
 
-A single demand in a network can be considered as either a **flow** or a computation
-graph (a **job**) whose dependencies (edges) may form flows. Both flow-centric
-and job-centric network traffic demand generation and management are supported
-by TrafPy.

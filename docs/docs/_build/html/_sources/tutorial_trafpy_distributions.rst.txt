@@ -14,15 +14,15 @@ The fractional values should sum to 1.0.
 E.g. If you have integer random variable values 1-10 each with an equal probability of occurring,
 this distribution would be represtented by the following hash table in TrafPy::
 
-    {1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 5: 0.1, 6: 0.1, 7: 0.1, 8: 0.1, 9: 0.1, 10: 0.1}
+    dist = {1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 5: 0.1, 6: 0.1, 7: 0.1, 8: 0.1, 9: 0.1, 10: 0.1}
 
 Similarly, a distribution where a random variable value of 5 always occurs would be::
     
-    {5: 1.0}
+    dist = {5: 1.0}
 
 and so on.
 
-TrafPy distributions are typically either **value distributions** which map
+TrafPy distributions are typically referred to as either **value distributions** which map
 random variables such as flow size and inter-arrival times to 'probability of
 occurring', or **node distributions** which map node pairs to 'fraction of the overall 
 traffic load requested'.

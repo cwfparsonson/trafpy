@@ -387,6 +387,122 @@
     
     <span class="k">return</span> <span class="n">data_dict</span></div>
 
+<div class="viewcode-block" id="gen_skewnorm_val_dist"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.val_dists.gen_skewnorm_val_dist">[docs]</a><span class="k">def</span> <span class="nf">gen_skewnorm_val_dist</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> 
+                  <span class="n">skew</span><span class="p">,</span> 
+                  <span class="n">scale</span><span class="p">,</span> 
+                  <span class="n">num_skew_samples</span><span class="o">=</span><span class="mi">150000</span><span class="p">,</span>
+                  <span class="n">min_val</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">max_val</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                  <span class="n">xlim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                  <span class="n">plot_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                  <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                  <span class="n">logscale</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                  <span class="n">path_to_save</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">transparent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                  <span class="n">rand_var_name</span><span class="o">=</span><span class="s1">&#39;Random Variable&#39;</span><span class="p">,</span>
+                  <span class="n">num_bins</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                  <span class="n">round_to_nearest</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">occurrence_multiplier</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                  <span class="n">prob_rand_var_less_than</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">num_decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Generates a skew norm distribution of random variable values.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        location (int/float): Position value of skewed distribution (mean shape</span>
+<span class="sd">            parameter).</span>
+<span class="sd">        skew (int/float): Skew value of skewed distribution (skewness shape</span>
+<span class="sd">            parameter).</span>
+<span class="sd">        scale (int/float): Scale value of skewed distribution (standard deviation</span>
+<span class="sd">        scale (int/float): Scale value of skewed distribution (standard deviation</span>
+<span class="sd">            shape parameter).</span>
+<span class="sd">            shape parameter).</span>
+<span class="sd">        num_skew_samples (int): Number of random variables to sample from distribution</span>
+<span class="sd">            to generate skew data and plot.</span>
+<span class="sd">        return_data (bool) Whether or not to return random variable data sampled</span>
+<span class="sd">            from generated distribution.</span>
+<span class="sd">        xlim (list): X-axis limits of plot. E.g. xlim=[0,10] to plot random</span>
+<span class="sd">            variable values between 0 and 10.</span>
+<span class="sd">        plot_fig (bool): Whether or not to plot fig. If True, will return fig.</span>
+<span class="sd">        show_fig (bool): Whether or not to plot and show fig. If True, will</span>
+<span class="sd">        logscale (bool): Whether or not plot should have logscale x-axis and bins.</span>
+<span class="sd">        transparent (bool): Whether or not to make plot bins slightly transparent.</span>
+<span class="sd">        rand_var_name (str): Name of random variable to label plot&#39;s x-axis.</span>
+<span class="sd">        num_bins (int): Number of bins to use in plot. Default is 0, in which</span>
+<span class="sd">            case the number of bins chosen will be automatically selected.</span>
+<span class="sd">        round_to_nearest (int/float): Value to round random variables to nearest.</span>
+<span class="sd">            E.g. if round_to_nearest=0.2, will round each random variable to </span>
+<span class="sd">            nearest 0.2.</span>
+<span class="sd">        prob_rand_var_less_than (list): List of values for which to print the</span>
+<span class="sd">            probability that a variable sampled randomly from the generated </span>
+<span class="sd">            distribution will be less than. This is useful for replicating </span>
+<span class="sd">            distributions from the literature. E.g. prob_rand_var_less_than=[3.7,5.8]</span>
+<span class="sd">            will return the probability that a randomly chosen variable is less</span>
+<span class="sd">            than 3.7 and 5.8 respectively.</span>
+<span class="sd">        occurrence_multiplier (int/float): When sampling random variables from</span>
+<span class="sd">            distribution to create plot and random variable data, use this</span>
+<span class="sd">            multiplier to determine number of data points to sample. A higher </span>
+<span class="sd">            value will cause the random variable data to match the probability</span>
+<span class="sd">            distribution more closely, but will take longer to generate.</span>
+<span class="sd">        num_decimal_places (int): Number of decimal places to random variable</span>
+<span class="sd">            values. Need to explicitly state otherwise Python&#39;s floating point </span>
+<span class="sd">            arithmetic will cause spurious unique random variable value errors</span>
+<span class="sd">            when discretising.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: Tuple containing:</span>
+<span class="sd">            - **prob_dist** (*dict*): Probability distribution whose key-value pairs are </span>
+<span class="sd">              random variable value-probability pairs. </span>
+<span class="sd">            - **rand_vars** (*list, optional*): Random variable values sampled from the </span>
+<span class="sd">              generated probability distribution. To return, set return_data=True.</span>
+<span class="sd">            - **fig** (*matplotlib.figure.Figure, optional*): Probability density </span>
+<span class="sd">              and cumulative distribution function plot. To return, set show_fig=True </span>
+<span class="sd">              and/or plot_fig=True.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">rand_vars</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="n">data</span> <span class="o">=</span> <span class="n">gen_skewnorm_data</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">skew</span><span class="p">,</span>
+                             <span class="n">loc</span><span class="o">=</span><span class="n">location</span><span class="p">,</span>
+                             <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+                             <span class="n">min_val</span><span class="o">=</span><span class="n">min_val</span><span class="p">,</span>
+                             <span class="n">max_val</span><span class="o">=</span><span class="n">max_val</span><span class="p">,</span>
+                             <span class="n">num_samples</span><span class="o">=</span><span class="n">num_skew_samples</span><span class="p">)</span>
+    <span class="n">rand_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+    
+    <span class="n">rand_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">y</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">rand_vars</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span> <span class="c1"># flatten</span>
+    <span class="k">if</span> <span class="n">round_to_nearest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># discretise</span>
+        <span class="n">rand_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">x_round</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">round_to_nearest</span><span class="p">,</span><span class="n">num_decimal_places</span><span class="p">,</span><span class="n">min_val</span><span class="o">=</span><span class="n">min_val</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">rand_vars</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="n">unique_vals</span><span class="p">,</span> <span class="n">pmf</span> <span class="o">=</span> <span class="n">gen_discrete_prob_dist</span><span class="p">(</span><span class="n">rand_vars</span><span class="o">=</span><span class="n">rand_vars</span><span class="p">,</span> 
+                                              <span class="n">round_to_nearest</span><span class="o">=</span><span class="n">round_to_nearest</span><span class="p">,</span>
+                                              <span class="n">num_decimal_places</span><span class="o">=</span><span class="n">num_decimal_places</span><span class="p">)</span>
+
+    <span class="c1"># ensure keys are floats so dont get error if try save with json</span>
+    <span class="n">prob_dist</span> <span class="o">=</span> <span class="p">{</span><span class="nb">float</span><span class="p">(</span><span class="n">unique_val</span><span class="p">):</span> <span class="n">prob</span> <span class="k">for</span> <span class="n">unique_val</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">unique_vals</span><span class="p">,</span> <span class="n">pmf</span><span class="p">)}</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">path_to_save</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tools</span><span class="o">.</span><span class="n">pickle_data</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">,</span> <span class="n">prob_dist</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plot_fig</span> <span class="ow">or</span> <span class="n">show_fig</span><span class="p">:</span>
+        <span class="n">min_prob</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">prob</span> <span class="k">for</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">prob_dist</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="n">prob</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">num_occurrences</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">min_prob</span><span class="p">)</span><span class="o">*</span><span class="n">occurrence_multiplier</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">prob_dist</span><span class="o">.</span><span class="n">values</span><span class="p">())]</span>
+        <span class="n">rand_vars</span> <span class="o">=</span> <span class="n">convert_key_occurrences_to_data</span><span class="p">(</span><span class="n">unique_vals</span><span class="p">,</span><span class="n">num_occurrences</span><span class="p">)</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_val_dist</span><span class="p">(</span><span class="n">rand_vars</span><span class="o">=</span><span class="n">rand_vars</span><span class="p">,</span> 
+                                       <span class="n">xlim</span><span class="o">=</span><span class="n">xlim</span><span class="p">,</span>
+                                       <span class="n">logscale</span><span class="o">=</span><span class="n">logscale</span><span class="p">,</span>
+                                       <span class="n">rand_var_name</span><span class="o">=</span><span class="n">rand_var_name</span><span class="p">,</span>
+                                       <span class="n">prob_rand_var_less_than</span><span class="o">=</span><span class="n">prob_rand_var_less_than</span><span class="p">,</span>
+                                       <span class="n">transparent</span><span class="o">=</span><span class="n">transparent</span><span class="p">,</span>
+                                       <span class="n">num_bins</span><span class="o">=</span><span class="n">num_bins</span><span class="p">,</span>
+                                       <span class="n">print_characteristics</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                       <span class="n">show_fig</span><span class="o">=</span><span class="n">show_fig</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span><span class="p">,</span> <span class="n">fig</span></div>
+
 
 <div class="viewcode-block" id="gen_skew_data"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.val_dists.gen_skew_data">[docs]</a><span class="k">def</span> <span class="nf">gen_skew_data</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> 
                   <span class="n">skew</span><span class="p">,</span> 
@@ -701,7 +817,7 @@
     <span class="k">if</span> <span class="n">print_data</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Prob dist:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prob_dist</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">path_to_save</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">tools</span><span class="o">.</span><span class="n">pickle_data</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">,</span> <span class="n">node_dist</span><span class="p">)</span>
+        <span class="n">tools</span><span class="o">.</span><span class="n">pickle_data</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">,</span> <span class="n">prob_dist</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">plot_fig</span> <span class="ow">or</span> <span class="n">show_fig</span><span class="p">:</span>
         <span class="n">min_prob</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">prob</span> <span class="k">for</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">prob_dist</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="n">prob</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">num_occurrences</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">min_prob</span><span class="p">)</span><span class="o">*</span><span class="n">occurrence_multiplier</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">prob_dist</span><span class="o">.</span><span class="n">values</span><span class="p">())]</span>
@@ -724,6 +840,7 @@
             <span class="k">return</span> <span class="n">prob_dist</span><span class="p">,</span> <span class="n">rand_vars</span> 
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">prob_dist</span></div>
+
 
 
 <div class="viewcode-block" id="gen_skewnorm_data"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.val_dists.gen_skewnorm_data">[docs]</a><span class="k">def</span> <span class="nf">gen_skewnorm_data</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> 

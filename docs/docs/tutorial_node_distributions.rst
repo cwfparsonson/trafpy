@@ -11,8 +11,11 @@ Source-destination nodes are **endpoints** in a network
     >>> endpoints = ['server_'+str(i) for i in range(5)]
 
 How regularly each node is selected as a source or destination is determined by a
-**node distribution probability matrix**. The most simple node distribution
-is the **uniform distribution**
+**node distribution matrix**. The elements in this matrix might refer to probabilities,
+but in TrafPy they usually refer to **load fractions** (i.e. what fraction of the overall
+traffic arriving is requested by a particular node pair).
+
+The most simple node distribution is the **uniform distribution**
 
 .. nbplot::
     
@@ -34,6 +37,14 @@ distribution
 .. nbplot::
 
     >>> node_dist, fig = tpg.gen_multimodal_node_pair_dist(eps=endpoints, skewed_pairs=[['server_1','server_3'], ['server_4','server_2']], show_fig=True)
+
+N.B. The above graph plots are **chord diagrams**. Each network end point is a node,
+and the colour of the node indicates how much of the overall traffic requestes
+that particular end point. The width of edges between nodes indicates how much
+traffic is travelling between a particular endpoint pair, with pair edges
+below a certain load threshold being excluded from the plot for visual clarity. 
+Chord diagrams are just an alternative way of visualising the more standard 2D
+traffic matrix.
 
 Different networks have different node distributions. Sometimes you may want a 
 simple uniform distribution, or a slightly skewed distribution, or certain nodes 
