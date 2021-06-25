@@ -55,7 +55,7 @@ neatly into a single dictionary
 
 .. nbplot::
 
-    >>> flow_centric_demand_data = tpg.create_demand_data(num_demands=num_demands,eps=endpoints,node_dist=node_dist,flow_size_dist=flow_size_dist,interarrival_time_dist=interarrival_time_dist)
+    >>> flow_centric_demand_data = tpg.create_demand_data(eps=endpoints,node_dist=node_dist,flow_size_dist=flow_size_dist,max_num_demands=1000,interarrival_time_dist=interarrival_time_dist)
 
 Don't forget to save your data as a pickle::
 
@@ -77,12 +77,6 @@ TrafPy flow-centric demand data dictionaries are organised as::
         'dn': [flow_0_dn, ..., flow_n_dn],
         'flow_size': [flow_0_size, ..., flow_n_size],
         'event_time': [event_time_flow_0, ..., event_time_flow_n],
-        'establish': [event_establish_flow_0, ..., event_establish_flow_1],
         'index': [index_flow_0, ..., index_flow_1]
     }
 
-Where ``'establish'`` keys' values are binary values indicating whether the demand is a connection
-establishment request (1) or a take-down request (0) for a given event. Specifying 
-take-down requests is optional in TrafPy. If take-downs have been speified, then
-there will be ``2 * num_demands`` events in the demand data dictionary, otherwise
-there will be ``num_demands`` events.

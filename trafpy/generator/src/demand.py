@@ -349,8 +349,6 @@ class DemandPlotter:
 
         return plot_dists.plot_val_dist(diameters, show_fig=show_fig, logscale=logscale, num_bins=num_bins, rand_var_name='Graph Diameter')
 
-
-
     def plot_interarrival_time_dist(self, logscale=True, num_bins=20, show_fig=True, font_size=20, figsize=(4,3)):
         interarrival_times = [self.demand.demand_data['event_time'][i+1]-self.demand.demand_data['event_time'][i] for i in range(self.demand.num_demands-1)]
         return plot_dists.plot_val_dist(interarrival_times, show_fig=show_fig, logscale=logscale, font_size=font_size, figsize=figsize, num_bins=num_bins, rand_var_name='Interarrival Time')

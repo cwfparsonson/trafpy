@@ -78,7 +78,6 @@ class DistributionGenerator:
         if benchmark not in self.valid_benchmark_sets:
             raise Exception('Unrecognised benchmark set \'{}\'. Valid benchmark sets for benchmark {}:\n{}'.format(benchmark, self.benchmark_version, self.valid_benchmark_sets))
 
-
         num_skewed_nodes = math.ceil(0.2 * len(eps))
         skewed_node_probs = [0.55/num_skewed_nodes for _ in range(num_skewed_nodes)]
 
@@ -239,8 +238,14 @@ class DistributionGenerator:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
 
 
+
+
             if save_data:
                 save_data_as_json(path_to_save=path_to_data, data=node_dist, overwrite=True, print_times=False)
+
+        # check node dist is compatible with eps provided
+        if len(eps) != len(node_dist):
+            raise Exception('You provided len(eps)={} end points but the node distribution used has len(node_dist)={} end points. This is likely because you have left load_prev_dists=True but you are now trying to generate traffic for a network with a different number of end points. Set load_prev_dists=False or ensure len(eps) == len(node_dist)'.format(len(eps), len(node_dist)))
 
 
         return node_dist

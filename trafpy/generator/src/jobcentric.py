@@ -35,7 +35,6 @@ class JobGenerator:
                  min_last_demand_arrival_time=None,
                  auto_node_dist_correction=False,
                  check_dont_exceed_one_ep_load=True,
-                 bidirectional_links=True,
                  print_data=False):
         '''
         Args:
@@ -72,14 +71,6 @@ class JobGenerator:
                 will raise an Exception. If False, no exception will be raised, but run
                 risk of exceeding 1.0 end point load, which for some users might be
                 detrimental to their system.
-            bidirectional_links (bool): If True, assume each network link is split
-                into 2 ports; src port and dst port (i.e. the link is bidirectional).
-                If False, treat network links as separate uni-directional links.
-                In uni-directional case, will assume ep_link_capacity of network
-                is for src OR dst link and pack by doubling ep_link_capacity and packing
-                links with src-dst pairs. In bidirectional case,
-                assume ep_link_capacity is for both src and dst ports, therefore no need
-                to double and can pack links with src-dst pairs as they are.
 
         '''
 
@@ -91,8 +82,11 @@ class JobGenerator:
         self.interarrival_time_dist = interarrival_time_dist
         self.num_ops_dist = num_ops_dist
         self.c = c
-        self.num_demands = min_num_demands 
         self.max_num_demands = max_num_demands
+        if max_num_demands is not None:
+            self.num_demands = min(min_num_demands, max_num_demands)
+        else:
+            self.num_demands = min_num_demands
         self.network_load_config = network_load_config
         self.c = c
         self.prob_data_dependency = prob_data_dependency
@@ -105,7 +99,6 @@ class JobGenerator:
         self.auto_node_dist_correction = auto_node_dist_correction
         self.jensen_shannon_distance_threshold = jensen_shannon_distance_threshold
         self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
-        self.bidirectional_links = bidirectional_links
         self.print_data = print_data
 
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
@@ -204,8 +197,7 @@ class JobGenerator:
                             interarrival_times,
                             network_load_config=self.network_load_config,
                             auto_node_dist_correction=self.auto_node_dist_correction,
-                            check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load,
-                            bidirectional_links=self.bidirectional_links)
+                            check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load)
         packed_flows = packer.pack_the_flows()
 
 

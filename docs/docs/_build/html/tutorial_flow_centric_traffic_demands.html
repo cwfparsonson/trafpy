@@ -235,7 +235,7 @@ network</p>
 </div>
 <p>You can then use your distributions to generate flow-centric demand data formatted
 neatly into a single dictionary</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flow_centric_demand_data</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">create_demand_data</span><span class="p">(</span><span class="n">num_demands</span><span class="o">=</span><span class="n">num_demands</span><span class="p">,</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span><span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span><span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flow_centric_demand_data</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">create_demand_data</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span><span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span><span class="n">max_num_demands</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span><span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Don’t forget to save your data as a pickle:</p>
@@ -257,16 +257,10 @@ neatly into a single dictionary</p>
     <span class="s1">&#39;dn&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">flow_0_dn</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">flow_n_dn</span><span class="p">],</span>
     <span class="s1">&#39;flow_size&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">flow_0_size</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">flow_n_size</span><span class="p">],</span>
     <span class="s1">&#39;event_time&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">event_time_flow_0</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">event_time_flow_n</span><span class="p">],</span>
-    <span class="s1">&#39;establish&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">event_establish_flow_0</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">event_establish_flow_1</span><span class="p">],</span>
     <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">index_flow_0</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">index_flow_1</span><span class="p">]</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>Where <code class="docutils literal notranslate"><span class="pre">'establish'</span></code> keys’ values are binary values indicating whether the demand is a connection
-establishment request (1) or a take-down request (0) for a given event. Specifying
-take-down requests is optional in TrafPy. If take-downs have been speified, then
-there will be <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">num_demands</span></code> events in the demand data dictionary, otherwise
-there will be <code class="docutils literal notranslate"><span class="pre">num_demands</span></code> events.</p>
 </div>
 
 

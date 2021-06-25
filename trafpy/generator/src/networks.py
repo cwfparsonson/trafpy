@@ -7,11 +7,12 @@ import matplotlib.pyplot as plt
 import json
 
 
-def gen_arbitrary_network(ep_label=None, 
-                          server_to_rack_channel_capacity=12500, 
+def gen_arbitrary_network(num_eps,
+                          ep_label=None, 
+                          ep_capacity=12500, 
                           num_channels=1, 
-                          num_eps=10,
-                          bidirectional_links=True):
+                          racks_dict=None,
+                          topology_type=None):
     '''Generates an arbitrary network with num_eps nodes labelled as ep_label.
 
     Note that no edges are formed in this network; it is purely for ep name 
@@ -20,9 +21,15 @@ def gen_arbitrary_network(ep_label=None,
     graph that accurately mimics the network you will use for the demands
 
     Args:
+        num_eps (int): Number of endpoints in network.
         ep_label (str,int,float): Endpoint label (e.g. 'server'). All endpoints will have
             ep_label appended to the start of their label (e.g. 'server_0', 'server_1', ...).
-        num_eps (int): Number of endpoints in network.
+        ep_capacity (int, float): Byte capacity per end point channel.
+        num_channels (int, float): Number of channels on each link in network.
+        racks_dict (dict): Mapping of which end points are in which racks. Keys are
+            rack ids, values are list of end points. If None, assume there is not
+            clustering/rack system in the network where have different end points
+            in different clusters/racks.
 
     Returns:
         networkx graph: network object
@@ -48,18 +55,19 @@ def gen_arbitrary_network(ep_label=None,
     network.graph['endpoints'] = eps
 
     # /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)
-    if bidirectional_links:
-        max_nw_capacity = (num_eps * server_to_rack_channel_capacity * num_channels) / 2
-    else:
-        max_nw_capacity = num_eps * server_to_rack_channel_capacity * num_channels
+    max_nw_capacity = (num_eps * ep_capacity * num_channels) / 2
+
+    if topology_type is None:
+        topology_type = 'arbitrary_endpoints_{}_chancap_{}_channels_{}'.format(num_eps, ep_capacity, num_channels)
 
     init_global_network_attrs(network,
                               max_nw_capacity,
                               num_channels,
-                              ep_link_capacity=server_to_rack_channel_capacity*num_channels,
+                              ep_link_capacity=ep_capacity*num_channels,
                               endpoint_label=ep_label,
                               node_labels=[ep_label],
-                              topology_type='arbitrary')
+                              racks_dict=racks_dict,
+                              topology_type=topology_type)
     
     return network
 
@@ -71,7 +79,6 @@ def gen_nsfnet_network(ep_label='server',
                        num_channels=2, 
                        server_to_rack_channel_capacity=1,
                        rack_to_rack_channel_capacity=10,
-                       bidirectional_links=True,
                        show_fig=False):
     '''Generates the standard 14-node NSFNET topology (a U.S. core network).
     
@@ -146,17 +153,13 @@ def gen_nsfnet_network(ep_label='server',
     
     channel_names = gen_channel_names(num_channels)
     edges = [edge for edge in network.edges]
-    add_edges_capacity_attrs(network, edges, channel_names, rack_to_rack_channel_capacity, bidirectional_links)
+    add_edges_capacity_attrs(network, edges, channel_names, rack_to_rack_channel_capacity)
 
     # set gloabl network attrs
     network.graph['endpoints'] = get_endpoints(network, ep_label)
 
     # /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)
-    if bidirectional_links:
-        max_nw_capacity = (len(network.edges) * num_channels * rack_to_rack_channel_capacity) / 2
-    else:
-        max_nw_capacity = (len(network.edges) * num_channels * rack_to_rack_channel_capacity)
-
+    max_nw_capacity = (len(network.edges) * num_channels * rack_to_rack_channel_capacity) / 2
 
     init_global_network_attrs(network, 
                             max_nw_capacity, 
@@ -174,7 +177,6 @@ def gen_nsfnet_network(ep_label='server',
 def gen_simple_network(ep_label='server', 
                        num_channels=2, 
                        server_to_rack_channel_capacity=500,
-                       bidirectional_links=True,
                        show_fig=False):
     '''Generates very simple 5-node topology.
 
@@ -204,16 +206,13 @@ def gen_simple_network(ep_label='server',
 
     channel_names = gen_channel_names(num_channels)
     edges = [edge for edge in network.edges]
-    add_edges_capacity_attrs(network, edges, channel_names, server_to_rack_channel_capacity, bidirectional_links)
+    add_edges_capacity_attrs(network, edges, channel_names, server_to_rack_channel_capacity)
 
     # set gloabl network attrs
     network.graph['endpoints'] = get_endpoints(network, ep_label)
 
     # /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)
-    if bidirectional_links:
-        max_nw_capacity = (len(network.edges) * num_channels * server_to_rack_channel_capacity) / 2
-    else:
-        max_nw_capacity = (len(network.edges) * num_channels * server_to_rack_channel_capacity)
+    max_nw_capacity = (len(network.edges) * num_channels * server_to_rack_channel_capacity) / 2
 
     init_global_network_attrs(network, 
                             max_nw_capacity, 
@@ -262,7 +261,6 @@ def gen_fat_tree(k=4,
                   edge_to_agg_channel_capacity=1000,
                   agg_to_core_channel_capacity=2000,
                   rack_to_core_channel_capacity=2000,
-                  bidirectional_links=True,
                   show_fig=False):
     '''Generates a perfect fat tree (i.e. all layers have switches with same radix/number of ports).
 
@@ -360,8 +358,7 @@ def gen_fat_tree(k=4,
                 add_edge_capacity_attrs(fat_tree_network,
                                         (rack, core),
                                         channel_names,
-                                        rack_to_core_channel_capacity,
-                                        bidirectional_links)
+                                        rack_to_core_channel_capacity)
     else:
         # 4 layers: Core, Agg, Edge, ToR. Agg and Edge switches grouped into pods.
         # group edges and aggregates into pods
@@ -392,8 +389,7 @@ def gen_fat_tree(k=4,
                     add_edge_capacity_attrs(pods_dict[key], 
                                      (pod_agg,pod_edge), 
                                      channel_names, 
-                                     edge_to_agg_channel_capacity,
-                                     bidirectional_links) 
+                                     edge_to_agg_channel_capacity)
 
         # add pods (agg + edge) layer to fat-tree
         pod_networks = list(pods_dict.values())
@@ -411,8 +407,7 @@ def gen_fat_tree(k=4,
                     add_edge_capacity_attrs(fat_tree_network,
                                      (core,pod_agg),
                                      channel_names,
-                                     agg_to_core_channel_capacity,
-                                     bidirectional_links)
+                                     agg_to_core_channel_capacity)
 
         # link edge switches in pods to racks, add link attributes
         rack_iterator = iter(racks)
@@ -425,8 +420,7 @@ def gen_fat_tree(k=4,
                     add_edge_capacity_attrs(fat_tree_network,
                                      (pod_edge,rack),
                                      channel_names,
-                                     rack_to_edge_channel_capacity,
-                                     bidirectional_links)
+                                     rack_to_edge_channel_capacity)
 
     # link servers to racks, add link attributes
     racks_dict = {rack: [] for rack in racks} # track which endpoints in which rack
@@ -438,16 +432,12 @@ def gen_fat_tree(k=4,
             add_edge_capacity_attrs(fat_tree_network,
                                     (rack, server),
                                     channel_names,
-                                    server_to_rack_channel_capacity,
-                                    bidirectional_links)
+                                    server_to_rack_channel_capacity)
             racks_dict[rack].append(server)
 
     # calc total network capacity
     # /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)
-    if bidirectional_links:
-        max_nw_capacity = (num_servers * num_channels * server_to_rack_channel_capacity) / 2
-    else:
-        max_nw_capacity = (num_servers * num_channels * server_to_rack_channel_capacity)
+    max_nw_capacity = (num_servers * num_channels * server_to_rack_channel_capacity) / 2
 
 
     # init global network attrs

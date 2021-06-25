@@ -239,8 +239,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">node_dist</span> <span class="o">=</span> <span class="n">node_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">flow_size_dist</span> <span class="o">=</span> <span class="n">flow_size_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">interarrival_time_dist</span> <span class="o">=</span> <span class="n">interarrival_time_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">num_demands</span> <span class="o">=</span> <span class="n">min_num_demands</span> 
         <span class="bp">self</span><span class="o">.</span><span class="n">max_num_demands</span> <span class="o">=</span> <span class="n">max_num_demands</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_demands</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">min_num_demands</span><span class="p">,</span> <span class="n">max_num_demands</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">network_load_config</span> <span class="o">=</span> <span class="n">network_load_config</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min_last_demand_arrival_time</span> <span class="o">=</span> <span class="n">min_last_demand_arrival_time</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auto_node_dist_correction</span> <span class="o">=</span> <span class="n">auto_node_dist_correction</span>

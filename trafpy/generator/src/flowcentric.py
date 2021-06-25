@@ -34,7 +34,6 @@ class FlowGenerator:
                  min_last_demand_arrival_time=None,
                  auto_node_dist_correction=False,
                  check_dont_exceed_one_ep_load=True,
-                 bidirectional_links=True,
                  print_data=False):
         '''
         Args:
@@ -71,14 +70,6 @@ class FlowGenerator:
                 will raise an Exception. If False, no exception will be raised, but run
                 risk of exceeding 1.0 end point load, which for some users might be
                 detrimental to their system.
-            bidirectional_links (bool): If True, assume each network link is split
-                into 2 ports; src port and dst port (i.e. the link is bidirectional).
-                If False, treat network links as separate uni-directional links.
-                In uni-directional case, will assume ep_link_capacity of network
-                is for src OR dst link and pack by doubling ep_link_capacity and packing
-                links with src-dst pairs. In bidirectional case,
-                assume ep_link_capacity is for both src and dst ports, therefore no need
-                to double and can pack links with src-dst pairs as they are.
 
         '''
         self.started = time.time()
@@ -87,14 +78,16 @@ class FlowGenerator:
         self.node_dist = node_dist
         self.flow_size_dist = flow_size_dist
         self.interarrival_time_dist = interarrival_time_dist
-        self.num_demands = min_num_demands 
         self.max_num_demands = max_num_demands
+        if max_num_demands is not None:
+            self.num_demands = min(min_num_demands, max_num_demands)
+        else:
+            self.num_demands = min_num_demands
         self.network_load_config = network_load_config
         self.min_last_demand_arrival_time = min_last_demand_arrival_time
         self.auto_node_dist_correction = auto_node_dist_correction
         self.jensen_shannon_distance_threshold = jensen_shannon_distance_threshold
         self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
-        self.bidirectional_links = bidirectional_links
         self.print_data = print_data
 
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
@@ -169,8 +162,7 @@ class FlowGenerator:
                             interarrival_times,
                             network_load_config=self.network_load_config,
                             auto_node_dist_correction=self.auto_node_dist_correction,
-                            check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load,
-                            bidirectional_links=self.bidirectional_links)
+                            check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load)
         packed_flows = packer.pack_the_flows()
 
         # compile packed flows into demand_data dict ordered in terms of arrival time
@@ -268,20 +260,7 @@ class FlowPacker:
                  network_load_config,
                  auto_node_dist_correction=False,
                  check_dont_exceed_one_ep_load=True,
-                 bidirectional_links=True,
                  print_data=False):
-        '''
-        Args:
-            bidirectional_links (bool): If True, assume each network link is split
-                into 2 ports; src port and dst port (i.e. the link is bidirectional).
-                If False, treat network links as separate uni-directional links.
-                In uni-directional case, will assume ep_link_capacity of network
-                is for src OR dst link and pack by doubling ep_link_capacity and packing
-                links with src-dst pairs. In bidirectional case,
-                assume ep_link_capacity is for both src and dst ports, therefore no need
-                to double and can pack links with src-dst pairs as they are.
-
-        '''
         self.generator = generator
         self.eps = eps
         self.node_dist = copy.deepcopy(node_dist)
@@ -291,7 +270,6 @@ class FlowPacker:
         self.network_load_config = network_load_config
         self.auto_node_dist_correction = auto_node_dist_correction
         self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
-        self.bidirectional_links = bidirectional_links
         self.print_data = print_data
         # self.print_data = True # DEBUG
 
@@ -351,9 +329,8 @@ class FlowPacker:
 
         # calc max total info during simulation per end point and initialise end point total info tracker
         self.max_total_ep_info = self.network_load_config['ep_link_capacity'] * self.duration
-        if not self.bidirectional_links:
-            # double total ep info so can pack src-dst pairs into links
-            self.max_total_ep_info *= 2
+        # double total ep info so can pack src-dst pairs into links
+        self.max_total_ep_info *= 2
         # calc max info can put on src and dst ports (half ep dedicated to each so / 2)
         self.max_total_port_info = self.max_total_ep_info / 2
         self.ep_total_infos = {ep: 0 for ep in self.eps}
@@ -637,11 +614,6 @@ def get_flow_centric_demand_data_ep_load_rate(demand_data, ep, eps, method='all_
 
 def get_flow_centric_demand_data_overall_load_rate(demand_data):
     '''
-    If flow connections are bidirectional_links, 1 flow takes up 2 endpoint links (the
-    source link and the destination link), therefore effecitvely takes up load rate
-    2*flow_size*duration bandwidth. If not bidriectional, only takes up
-    1*flow_size*duration since only occupies bandwidth for 1 of these links.
-
     If method == 'mean_per_ep', will calculate the total network load as being the mean
     average load on each endpoint link (i.e. sum info requests for each link ->
     find load of each link -> find mean of ep link loads)

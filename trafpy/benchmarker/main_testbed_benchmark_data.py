@@ -16,15 +16,32 @@ import glob
 from pympler import classtracker
 tf.keras.backend.clear_session()
 
+import ray
+import psutil
+num_cpus = psutil.cpu_count(logical=False)
+try:
+    ray.init(num_cpus=num_cpus)
+except RuntimeError:
+    # already initialised ray in script calling dcn sim, no need to init again
+    pass
+
 
 class TestBed: 
     def __init__(self, path_to_benchmark_data):
         if os.path.isdir(path_to_benchmark_data):
-            # data split into separate files in a directory
+            print('Data split into separate files in a directory. Loading...')
             self.separate_files = True
-            self.benchmarks = glob.glob(path_to_benchmark_data + '/*.json')
+            if glob.glob(path_to_benchmark_data + '/*.json'):
+                # saved demand data in json format
+                self.demand_data_extension = '.json'
+            elif glob.glob(path_to_benchmark_data + '/*.pickle'):
+                # saved demand data in pickle format
+                self.demand_data_extension = '.pickle'
+            else:
+                raise Exception('Unrecognised or multiple extensions in {}'.format(path_to_benchmark_data))
+            self.benchmarks = glob.glob(path_to_benchmark_data + '/*{}'.format(self.demand_data_extension))
         else:
-            # all data stored in single file
+            print('All data stored in single file. Loading...')
             self.separate_files = False
             self.benchmark_data = self.load_benchmark_data(path_to_benchmark_data)
             self.benchmarks = list(self.benchmark_data.keys())
@@ -33,7 +50,7 @@ class TestBed:
         self.reset()
 
     def reset(self):
-        self.envs = multiprocessing.Manager().list()
+        # self.envs = multiprocessing.Manager().list()
         self.num_envs = 0
         self.config = None
 
@@ -44,10 +61,20 @@ class TestBed:
         elif demand_file_path[-6:] == 'pickle':
             return unpickle_data(demand_file_path)
         else:
-            raise Exception('Unrecognised file type \'{}\''.format(demand_file_path))
+            raise Exception('Unrecognised file type \'{}\'. Make sure path is correct.'.format(demand_file_path))
 
 
-    def run_tests(self, config, path_to_save, overwrite=False):
+    def run_tests(self, config, path_to_save, env_database_path=None, tmp_database_path=None, overwrite=False):
+        '''
+        path_to_save is where to save the data.
+
+        If env_database_path is not None, sim will use databases, which can help
+        with memory errors.
+
+        If tmp_database_path is not None, sim will use tmp_database_path as path
+        for database during simulation then, when sim complete, will move all
+        saved files from tmp_database_path to path_to_save.
+        '''
         self.config = config
 
         if self.separate_files:
@@ -62,7 +89,11 @@ class TestBed:
                     os.mkdir(path_to_save)
                 else:
                     # overwrite
-                    pass
+                    answer = ''
+                    while answer not in ['y', 'n']:
+                        answer = input('Overwrite data in {}? (y/n)'.format(path_to_save)).lower()
+                    if answer == 'n':
+                        sys.exit('User does not want to overwrite data, terminating session.')
             else:
                 # directory doesn't exist, must make
                 os.mkdir(path_to_save)
@@ -70,6 +101,13 @@ class TestBed:
         else:
             # no need to separate files, save under one file path_to_save
             pass
+
+        if tmp_database_path is not None:
+            # make tmp folder
+            if os.path.exists(tmp_database_path):
+                shutil.rmtree(tmp_database_path)
+            os.mkdir(tmp_database_path)
+            print('Set tmp directory {} in which to temporarily save data during simulations (N.B. When simulations are completed, all data will be moved from this tmp directory to {}, and tmp_database_path will be deleted).'.format(tmp_database_path, path_to_save))
 
         # # calc how many jobs to run
         # num_benchmark_tests = 0
@@ -80,9 +118,11 @@ class TestBed:
         # num_tests = int(len(config['schedulers']))
         # num_jobs = num_benchmark_tests * num_tests
 
-        jobs = []
+        ray_remote_args = {}
+        # jobs = []
         start_time = time.time()
         # _loads = [0.1, 0.2, 0.3, 0.4, 0.5] # DEBUG
+        test = 1
         if not self.separate_files:
             for benchmark in self.benchmarks:
                 for load in list(self.benchmark_data[benchmark].keys()):
@@ -105,10 +145,15 @@ class TestBed:
                                           max_flows=config['max_flows'], 
                                           max_time=config['max_time'])
 
-                                p = multiprocessing.Process(target=self.run_test,
-                                                            args=(scheduler, env, self.envs, path_to_save,))
-                                jobs.append(p)
-                                p.start()
+                                ray_remote_args[test] = {'scheduler': scheduler, 'env': env, 'path_to_save': path_to_save, 'tmp_database_path': tmp_database_path}
+                                test += 1
+                                if test > num_cpus:
+                                    raise Exception('Trying to run >{} parallel tests when only have {} available. Decrease number of tests to run in parallel to be <= {}.'.format(num_cpus, num_cpus))
+
+                                # p = multiprocessing.Process(target=self.run_test,
+                                                            # args=(scheduler, env, self.envs, path_to_save,))
+                                # jobs.append(p)
+                                # p.start()
         else:
             for benchmark_path in self.benchmarks:
                 for scheduler in config['schedulers']:
@@ -124,17 +169,24 @@ class TestBed:
                             shutil.rmtree(_path_to_save)
                         # create dir
                         os.mkdir(_path_to_save)
+                        
+                        if tmp_database_path is not None:
+                            # set up folder in tmp_database_path
+                            _tmp_database_path = tmp_database_path + '/' + sim_name
+                            os.mkdir(_tmp_database_path)
+                            env_database_path = _tmp_database_path
+                        else:
+                            env_database_path = _path_to_save
 
                         # get slots_dict path to database
-                        slots_dict = benchmark_path[:-5]+'_slotsize_{}_slots_dict.sqlite'.format(config['slot_size'])
-
-                        # demand = Demand(benchmark_path, config['networks'][0].graph['endpoints'])
+                        slots_dict = benchmark_path[:-(len(self.demand_data_extension))]+'_slotsize_{}_slots_dict.sqlite'.format(config['slot_size'])
                         
+                        # init env
                         env = DCN(config['networks'][0], 
                                   slots_dict, 
                                   scheduler,
                                   num_k_paths=config['num_k_paths'],
-                                  env_database_path=_path_to_save,
+                                  env_database_path=env_database_path,
                                   sim_name=sim_name,
                                   max_flows=config['max_flows'], 
                                   profile_memory=False,
@@ -143,17 +195,31 @@ class TestBed:
                                   memory_profile_resolution=50,
                                   max_time=config['max_time'])
 
-                        p = multiprocessing.Process(target=self.run_test,
-                                                    args=(scheduler, env, self.envs, _path_to_save,))
-                        jobs.append(p)
-                        p.start()
+                        ray_remote_args[test] = {'scheduler': scheduler, 'env': env, 'path_to_save': _path_to_save, 'tmp_database_path': _tmp_database_path}
+                        # ray_remote_args[test] = [scheduler, env, _path_to_save]
+                        test += 1
 
-        for job in jobs:
-            job.join() # only execute below code when all jobs finished
+                        # p = multiprocessing.Process(target=self.run_test,
+                                                    # args=(scheduler, env, self.envs, _path_to_save,))
+                        # jobs.append(p)
+                        # p.start()
+
+        # for job in jobs:
+            # job.join() # only execute below code when all jobs finished
+        self._envs = [self.run_test.remote(self, ray_remote_args[test]['scheduler'], ray_remote_args[test]['env'], ray_remote_args[test]['path_to_save'], ray_remote_args[test]['tmp_database_path']) for test in ray_remote_args.keys()]
+        # self._envs = [self.run_test.remote(self, *ray_remote_args[test]) for test in ray_remote_args.keys()]
+        self.envs = ray.get(self._envs) # get envs
         end_time = time.time()
         total_time = round(end_time-start_time, 2)
         # print('\n{} tests completed in {} seconds.'.format(num_jobs, total_time))
         print('Completed all tests in {} seconds.'.format(total_time))
+
+        if tmp_database_path is not None:
+            # delete tmp_database_path 
+            try:
+                os.rmdir(tmp_database_path)
+            except:
+                raise Exception('tmp_database_path {} is not empty! An error has occurred; all files should be removed from tmp_database_path before deleting this folder.')
 
         # DEBUG: Don't save if just debugging
         if not self.separate_files:
@@ -165,30 +231,45 @@ class TestBed:
             # have already saved files separately
             pass
     
-    def conv_str_path_to_kwarg_value(self, path, kwarg):
-        '''Takes path string containing kwarg_[kwarg_value]_ and returns kwarg_value as a str.'''
+    def conv_str_path_to_kwarg_value(self, path, kwarg, print_mode=False):
+        '''
+        Takes path string containing kwarg_[kwarg_value]_ and returns 
+        kwarg_value as a str. Print mode is useful for debugging.
+        '''
+        # get file extension
+        if path.endswith('.json'):
+            extension = '.json'
+        elif path.endswith('.pickle'):
+            extension = '.pickle'
+        else:
+            raise Exception('Unrecognised extension for file {}'.format(path))
+
         starting_index = len(path) - path[::-1].index('/')
         if kwarg[-1] != '_':
             # should end in under score
             kwarg += '_'
-        # print('path: {} | kwarg: {}'.format(path, kwarg))
+        if print_mode:
+            print('path: {} | kwarg: {}'.format(path, kwarg))
         for idx in range(starting_index, len(path)):
-            # print('idx {}'.format(idx))
-            # print(path[idx:idx+len(kwarg)])
+            if print_mode:
+                print('idx {}'.format(idx))
+                print(path[idx:idx+len(kwarg)])
             if path[idx:idx+len(kwarg)] == kwarg:
                 i = idx+len(kwarg)
                 l = ''
                 c = path[idx+len(kwarg)]
-                while c != '_' and path[i:] != '.json':
+                while c != '_' and path[i:] != extension:
                     l += c
-                    # print('l: {}'.format(l))
+                    if print_mode:
+                        print('l: {}'.format(l))
                     i += 1
                     c = path[i]
                 return l
             else:
                 pass
 
-    def run_test(self, scheduler, env, envs, path_to_save):
+    @ray.remote
+    def run_test(self, scheduler, env, path_to_save, tmp_database_path=None):
         printed_percents = [0]
         observation = env.reset()
         try:
@@ -201,30 +282,60 @@ class TestBed:
             observation, reward, done, info = env.step(action, print_memory_usage=False, print_processing_time=False)
 
             # print progress
-            flows_arrived, flows_processed = env.num_arrived_flows, env.num_completed_flows+env.num_dropped_flows
-            percent_demands_processed = round(100*(flows_processed/env.num_demands), 0)
-            if round(percent_demands_processed % 5, 2) == 0: # % 10
-                if percent_demands_processed not in printed_percents:
-                    percent_demands_arrived = round(100*(flows_arrived/env.num_demands))
-                    print('Sim: {} | Flows arrived: {}% | Flows processed: {}%'.format(env.sim_name, percent_demands_arrived, percent_demands_processed))
-                    printed_percents.append(percent_demands_processed)
+            if env.job_centric:
+                jobs_arrived, jobs_processed = env.num_arrived_jobs, env.num_completed_jobs+env.num_dropped_jobs
+                percent_demands_arrived = round(100*(jobs_arrived/env.num_demands))
+                percent_demands_processed = round(100*(jobs_processed/env.num_demands), 0)
+            else:
+                flows_arrived, flows_processed = env.num_arrived_flows, env.num_completed_flows+env.num_dropped_flows
+                percent_demands_arrived = round(100*(flows_arrived/env.num_demands))
+                percent_demands_processed = round(100*(flows_processed/env.num_demands), 0)
+            if round(percent_demands_arrived % 5, 2) == 0: # % 10
+                if percent_demands_arrived not in printed_percents:
+                    print('Sim: {} | Demands arrived: {}% | Demands processed: {}%'.format(env.sim_name, percent_demands_arrived, percent_demands_processed))
+                    printed_percents.append(percent_demands_arrived)
 
             if done:
                 print('Completed simulation \'{}\''.format(env.sim_name))
-                analyser = EnvAnalyser(env)
+                if tmp_database_path is not None:
+                    database_path = tmp_database_path
+                else:
+                    database_path = path_to_save
+
+                analyser = EnvAnalyser(env,
+                                       time_units='\u03BCs',
+                                       info_units='B',
+                                       subject_class_name=env.scheduler.scheduler_name)
                 analyser.compute_metrics(print_summary=True, 
-                                         measurement_start_time='auto',
-                                         measurement_end_time='auto')
+                                         measurement_start_time='auto', # 'auto' None
+                                         measurement_end_time='auto', # 'auto' None
+                                         env_analyser_database_path=database_path)
+
+
+                if tmp_database_path is not None:
+                    # move data from tmp_database_path to path_to_save
+                    print('Moving data from {} to {}...'.format(tmp_database_path, path_to_save))
+                    if os.path.exists(path_to_save):
+                        shutil.rmtree(path_to_save)
+                    start = time.time()
+                    shutil.copytree(tmp_database_path, path_to_save)
+                    shutil.rmtree(tmp_database_path)
+                    end = time.time()
+                    print('Moved data from {} to {} in {} s.'.format(tmp_database_path, path_to_save, end-start))
+
+                    # edit env database str paths so can access new location
+                    env = self.update_env_database_path_attributes(env, new_path=path_to_save)
+
                 try:
                     if self.separate_files:
                         # saving each run separately
                         self.save(path=path_to_save+'/simulation', 
                                   data=env,
                                   overwrite=False)
-                    else:
-                        # saving all in one file
-                        envs.append(env) # store env
-                        self.num_envs += 1
+                    # else:
+                        # # saving all in one file
+                        # envs.append(env) # store env
+                        # self.num_envs += 1
                 except EOFError:
                     print('Memory error appending env to list. See https://stackoverflow.com/questions/57370803/multiprocessing-pool-manager-namespace-eof-error for example. Allocate more system memory or reduce size of TestBed experiment.')
                     sys.exit()
@@ -257,12 +368,31 @@ class TestBed:
         print('Saved testbed simulation data to {} in {} s'.format(filename, end-start))
 
 
+    def update_env_database_path_attributes(self, env, new_path):
+        '''
+        Goes through database path attributes in env and changes these attributes
+        with <old_path>/<attribute_name>.sqlite to <new_path>/attribute_name>.sqlite
 
+        '''
+        
+        env.slots_dict = new_path + '/slots_dict.sqlite'
 
+        if env.job_centric:
+            env.arrived_job_dicts = new_path + '/arrived_job_dicts.sqlite'
+            env.completed_job_dicts = new_path + '/completed_job_dicts.sqlite'
+            env.dropped_job_dicts = new_path + '/dropped_job_dicts.sqlite'
+            env.control_deps = new_path + '/control_deps.sqlite'
 
+        env.arrived_flow_dicts = new_path + '/arrived_flow_dicts.sqlite'
+        env.completed_flow_dicts = new_path + '/completed_flow_dicts.sqlite'
+        env.dropped_flow_dicts = new_path + '/dropped_flow_dicts.sqlite'
 
+        if env.track_link_utilisation_evolution:
+            env.link_utilisation_dict = new_path + '/link_utilisation_dict.sqlite'
+        if env.track_link_concurrent_demands_evolution:
+            env.link_concurrent_demands_dict = new_path + '/link_concurrent_demands_dict.sqlite'
 
-
+        return env 
 
 
 
@@ -290,94 +420,120 @@ if __name__ == '__main__':
         # _________________________________________________________________________
         # BASIC CONFIGURATION
         # _________________________________________________________________________
-        # DATA_NAME = 'social_media_cloud_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
-        DATA_NAME = 'university_k_4_L_2_n_4_chancap3125_numchans1_mldat2e6_bidirectional'
 
-        # benchmark data
-        # path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data.json'.format(DATA_NAME)
-        path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data'.format(DATA_NAME)
-        # LOADS = 'all' # 'all' [0.1, 0.2]
-        # LOADS = [0.1, 0.2, 0.3, 0.4, 0.5]
-        LOADS = [0.6, 0.7, 0.8, 0.9]
-        # LOADS = [0.1, 0.2]
-        tb = TestBed(path_to_benchmark_data)
-
-        # dcn
-        # MAX_TIME = 1e4 # None
-        MAX_TIME = 'last_demand_arrival_time'
-        MAX_FLOWS = 50 # 10 50 100 500
-
-        # networks
-        NUM_CHANNELS = 1
-        # networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)]
-        networks = [gen_fat_tree(k=4, 
-                                 L=2, 
-                                 n=4, 
-                                 num_channels=NUM_CHANNELS, 
-                                 server_to_rack_channel_capacity=3125, # 500
-                                 rack_to_core_channel_capacity=6250, 
-                                 bidirectional_links=True)]
-
-        # rwas
-        NUM_K_PATHS = 2
-        # NUM_K_PATHS = 1
-        rwas = [RWA(gen_channel_names(NUM_CHANNELS), NUM_K_PATHS)]
-
-        # schedulers
-        # SLOT_SIZE = 1e6
-        SLOT_SIZE = 50.0 #1e4 1e5 1e2 0.1  1e3 50.0
-        PACKET_SIZE = 1 # 300 0.01 1e1 1e2
-        schedulers = [SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      FirstFit(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
-        # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      # SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      # BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
-                      # FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
-        # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      # SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      # BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
-                      # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
-                      # FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
-        # schedulers = [SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
-                      # FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
-        # schedulers = [BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=800, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(800)),
-                      # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=1600, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(1600)),
-                      # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=3200, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(3200)),
-                      # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10000, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(10000))]
-        # schedulers = [FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
-                      # SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
-        # _lambdas = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
-        # _lambdas = [0.05, 0.1, 0.3, 0.5, 0.7, 0.9, 0.95]
-        # _lambdas = [0.1, 0.3, 0.5, 0.7, 0.9]
-        # _lambdas = [0.1]
-        # for _lambda in _lambdas:
-            # schedulers.append(LambdaShare(networks[0], rwas[0], slot_size=SLOT_SIZE, _lambda=_lambda, packet_size=PACKET_SIZE, scheduler_name='\u03BB{}S'.format(_lambda)))
-        # schedulers = []
-        # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]
-        # for V in Vs:
-            # schedulers.append(BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=V, scheduler_name='V{}_basrpt'.format(V)))
+        # version = '_v3' # '' '_v2' '_v3'
+        for version in ['_v2']:
 
 
+            # DATA_NAME = 'social_media_cloud_k_4_L_2_n_4_chancap500_numchans1_mldat2e6_bidirectional'
+            # DATA_NAME = 'skewed_nodes_sensitivity_0_k_4_L_2_n_16_chancap1250_numchans1_mldat2e6_bidirectional_v2'
+            # DATA_NAME = 'commercial_cloud_k_2_L_2_n_2_chancap1250_numchans1_mldatNone_bidirectional'
+            DATA_NAME = 'rack_dist_sensitivity_0.4_k_4_L_2_n_16_chancap1250_numchans1_mldat3.2e5_bidirectional'
+            # DATA_NAME = 'jobcentric_prototyping_k_4_L_2_n_16_chancap1_numchans1_mldat3e3_bidirectional'
 
-        test_config = {'loads': LOADS,
-                       'num_k_paths': NUM_K_PATHS,
-                       'slot_size': SLOT_SIZE,
-                       'max_time': MAX_TIME,
-                       'max_flows': MAX_FLOWS,
-                       'packet_size': PACKET_SIZE,
-                       'networks': networks,
-                       'rwas': rwas,
-                       'schedulers': schedulers}
+            OVERWRITE = True # True False
 
-        tb.reset()
-        tb.run_tests(test_config, 
-                path_to_save='/scratch/datasets/trafpy/management/flowcentric/{}_testbed_data_v2'.format(DATA_NAME),
-                     overwrite=True)
+            # benchmark data
+            # path_to_benchmark_data = '/scratch/datasets/trafpy/traces/flowcentric/{}_benchmark_data'.format(DATA_NAME)
+            path_to_benchmark_data = '/rdata/ong/trafpy/traces/flowcentric/{}_benchmark_data{}'.format(DATA_NAME, version)
+            # path_to_benchmark_data = '/rdata/ong/trafpy/traces/jobcentric/{}_benchmark_data'.format(DATA_NAME)
+            # LOADS = 'all' # 'all' [0.1, 0.2]
+            # LOADS = [0.2]
+            # LOADS = [0.1, 0.2, 0.3, 0.4, 0.5]
+            LOADS = [0.6, 0.7, 0.8, 0.9]
+            # LOADS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+            # LOADS = [0.5, 0.6, 0.7, 0.8, 0.9]
+            tb = TestBed(path_to_benchmark_data)
 
-        
+            # dcn
+            # MAX_TIME = 1e4 # None
+            # MAX_TIME = 3000 # None 'last_demand_arrival_time'
+            MAX_TIME = 'last_demand_arrival_time' # None 'last_demand_arrival_time'
+            MAX_FLOWS = 50 # 10 50 100 500
+
+            # networks
+            NUM_CHANNELS = 1
+            # networks = [gen_fat_tree(k=4, L=2, n=4, num_channels=NUM_CHANNELS, server_to_rack_channel_capacity=500, rack_to_edge_channel_capacity=1000, edge_to_agg_channel_capacity=1000, agg_to_core_channel_capacity=2000, bidirectional_links=True)]
+            networks = [gen_fat_tree(k=4, 
+                                     L=2, 
+                                     n=16, 
+                                     num_channels=NUM_CHANNELS, 
+                                     server_to_rack_channel_capacity=1250, # 500 1250
+                                     # server_to_rack_channel_capacity=10,
+                                     rack_to_core_channel_capacity=10000)]
+
+            # rwas
+            NUM_K_PATHS = 2
+            # NUM_K_PATHS = 1
+            rwas = [RWA(gen_channel_names(NUM_CHANNELS), NUM_K_PATHS)]
+
+            # schedulers
+            SLOT_SIZE = 1000.0 #1e4 1e5 1e2 0.1  1e3 50.0 500.0 10.0 1000.0 0.1
+            # SLOT_SIZE = 10.0
+            PACKET_SIZE = 1 # 300 0.01 1e1 1e2
+            schedulers = [SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                          FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                          FirstFit(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                          RandomAgent(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
+            # DEBUG 
+            # schedulers = [SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
+
+            # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                          # SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                          # BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
+                          # FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
+            # schedulers = [SRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                          # SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                          # BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
+                          # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
+                          # FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
+            # schedulers = [SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                          # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=0.1, packet_size=PACKET_SIZE),
+                          # FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
+            # schedulers = [BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=800, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(800)),
+                          # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=1600, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(1600)),
+                          # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=3200, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(3200)),
+                          # BASRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, V=10000, packet_size=PACKET_SIZE, scheduler_name='basrpt{}'.format(10000))]
+            # schedulers = [FairShare(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE),
+                          # SRPT_v2(networks[0], rwas[0], slot_size=SLOT_SIZE, packet_size=PACKET_SIZE)]
+            # _lambdas = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
+            # _lambdas = [0.05, 0.1, 0.3, 0.5, 0.7, 0.9, 0.95]
+            # _lambdas = [0.1, 0.3, 0.5, 0.7, 0.9]
+            # _lambdas = [0.1]
+            # for _lambda in _lambdas:
+                # schedulers.append(LambdaShare(networks[0], rwas[0], slot_size=SLOT_SIZE, _lambda=_lambda, packet_size=PACKET_SIZE, scheduler_name='\u03BB{}S'.format(_lambda)))
+            # schedulers = []
+            # Vs = [0.1, 1, 5, 10, 20, 30, 50, 100, 200]
+            # for V in Vs:
+                # schedulers.append(BASRPT(networks[0], rwas[0], slot_size=SLOT_SIZE, V=V, scheduler_name='V{}_basrpt'.format(V)))
+
+
+
+            test_config = {'loads': LOADS,
+                           'num_k_paths': NUM_K_PATHS,
+                           'slot_size': SLOT_SIZE,
+                           'max_time': MAX_TIME,
+                           'max_flows': MAX_FLOWS,
+                           'packet_size': PACKET_SIZE,
+                           'networks': networks,
+                           'rwas': rwas,
+                           'schedulers': schedulers}
+
+            tb.reset()
+            tb.run_tests(test_config, 
+
+                         # path_to_save='/scratch/datasets/trafpy/management/flowcentric/{}_slotsize_{}_testbed_data{}'.format(DATA_NAME, SLOT_SIZE, version),
+                         path_to_save='/rdata/ong/trafpy/management/flowcentric/{}_slotsize_{}_testbed_data{}'.format(DATA_NAME, SLOT_SIZE, version),
+                         # path_to_save='/space/ONG/trafpy/management/flowcentric/{}_slotsize_{}_testbed_data{}'.format(DATA_NAME, SLOT_SIZE, version),
+                         # path_to_save='/rdata/ong/trafpy/management/jobcentric/{}_slotsize_{}_testbed_data{}'.format(DATA_NAME, SLOT_SIZE, version),
+
+                         # tmp_database_path='/space/zciccwf/trafpy/management/flowcentric/{}_slotsize__{}_testbed_data{}'.format(DATA_NAME, SLOT_SIZE, version),
+                         tmp_database_path='/scratch/datasets/trafpy/management/flowcentric/{}_slotsize__{}_testbed_data{}'.format(DATA_NAME, SLOT_SIZE, version),
+                         # tmp_database_path='/space/ONG/trafpy/management/flowcentric/{}_slotsize__{}_testbed_data{}'.format(DATA_NAME, SLOT_SIZE, version),
+
+                         overwrite=OVERWRITE)
+
+            
 
 
 

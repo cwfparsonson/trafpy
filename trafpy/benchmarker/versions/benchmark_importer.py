@@ -4,6 +4,18 @@ import trafpy.benchmarker.versions.benchmark_v001 as v001
 
 class BenchmarkImporter:
     def __init__(self, benchmark_version, load_prev_dists=True):
+        '''Imports pre-defined TrafPy benchmark distributions for a network.
+
+        Args:
+            benchmark_version (str): TrafPy benchmark version to access (e.g. '0.0.1').
+            load_prev_dists (bool): If True, will generate a new benchmark distribution
+                for the network(s) you provide the imported. This is needed if
+                you have a network with a different number of endpoints or with
+                different end point labels. If False, will load the exact same distributions as was previously
+                defined, which is needed if you want to use the exact same benchmark
+                distribution multiple times.
+
+        '''
         self.load_prev_dists = load_prev_dists
         if self.load_prev_dists:
             print('load_prev_dists=True. Where possible, will load previously generated distributions. Ensure that e.g. network endpoints, rack prob configs etc. are correct. To overwrite saved distributions with your current configuration, set load_prev_dists to False.')
@@ -25,7 +37,17 @@ class BenchmarkImporter:
 
 
 
-    def get_benchmark_dists(self, benchmark, racks_dict, eps):
+    def get_benchmark_dists(self, benchmark, eps, racks_dict=None):
+        '''Retrieves pre-defined TrafPy benchmark distributions for a network.
+
+        Args:
+            benchmark (str): Name of benchmark (e.g. 'university').
+            eps (list): List of end points/machines/leaf nodes in network.
+            racks_dict (dict): Mapping of which end points are in which racks. Keys are
+                rack ids, values are list of end points. If None, assume there is not
+                clustering/rack system in the network where have different end points
+                in different clusters/racks.
+        '''
         if benchmark not in self.valid_benchmark_sets:
             raise Exception('Unrecognised benchmark set \'{}\'. Valid benchmark sets for benchmark {}:\n{}'.format(benchmark, self.benchmark_version, self.valid_benchmark_sets))
 
