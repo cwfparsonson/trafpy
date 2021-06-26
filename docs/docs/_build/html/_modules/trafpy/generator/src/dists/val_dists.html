@@ -924,8 +924,6 @@
                                         <span class="n">probabilities</span><span class="p">,</span> 
                                         <span class="n">num_demands</span><span class="p">,</span>
                                         <span class="n">jensen_shannon_distance_threshold</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                                        <span class="c1"># deterministic_factor=None,</span>
-                                        <span class="c1"># difference_filter_threshold=0,</span>
                                         <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                                         <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Random Variable&#39;</span><span class="p">,</span>
                                         <span class="n">font_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
@@ -946,16 +944,6 @@
 <span class="sd">            Distance of 1 -&gt; distributions are not at all similar.</span>
 <span class="sd">            https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15</span>
 <span class="sd">            N.B. To meet threshold, this function will keep doubling num_demands</span>
-<span class="sd">        deterministic_factor (int, float): If not None, will deterministically sample from</span>
-<span class="sd">            discretised distribution by finding the lowest probability rand var</span>
-<span class="sd">            and doing num_demands=int(1/lowest_prob)*deterministic_factor to get </span>
-<span class="sd">            the total number of demands, then deterministically generating the </span>
-<span class="sd">            distribution by generating num_demands*prob for each variable&#39;s respective</span>
-<span class="sd">            probability. This is useful for ensuring a very low jensen shannon distance</span>
-<span class="sd">            without needing to sample many random variables, which can be useful</span>
-<span class="sd">            for limiting memory usage for distributions with long tails. If</span>
-<span class="sd">            deterministic_factor &lt; 1, will not sample all unique vars in original</span>
-<span class="sd">            distribution. If &gt;1, guaranteed to sample all vars in original distribution.</span>
 <span class="sd">        show_fig (bool): Whether or not to generated sampled var dist plotted</span>
 <span class="sd">            with the original distribution. </span>
 <span class="sd">        path_to_save (str): Path to directory (with file name included) in which</span>
@@ -992,10 +980,14 @@
             <span class="n">min_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">sampled_vars</span><span class="p">))</span>
             <span class="n">mean_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sampled_vars</span><span class="p">))</span>
             <span class="n">std_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">sampled_vars</span><span class="p">))</span>
-            <span class="n">num_demands</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_demands</span> <span class="o">*</span> <span class="mf">1.1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">num_demands</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+                <span class="c1"># increase to 10 or won&#39;t ever go beyond if increase by 10% each loop</span>
+                <span class="n">num_demands</span> <span class="o">=</span> <span class="mi">10</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">num_demands</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_demands</span> <span class="o">*</span> <span class="mf">1.1</span><span class="p">)</span>
             <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="n">counter</span> <span class="o">==</span> <span class="mf">1e4</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Looped 10,000 times but distance </span><span class="si">{}</span><span class="s1"> still &gt; threshold </span><span class="si">{}</span><span class="s1">. Check no bugs or increase threshold.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">jensen_shannon_distance_threshold</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Looped 10,000 times and reached </span><span class="si">{}</span><span class="s1"> num_demands samples but distance </span><span class="si">{}</span><span class="s1"> still &gt; threshold </span><span class="si">{}</span><span class="s1">. Check no bugs, increase threshold and/or increase num_demands.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_demands</span><span class="p">,</span> <span class="n">distance</span><span class="p">,</span> <span class="n">jensen_shannon_distance_threshold</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># no similarity threshold defined</span>
         <span class="n">sampled_vars</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">unique_vars</span><span class="p">,</span> 

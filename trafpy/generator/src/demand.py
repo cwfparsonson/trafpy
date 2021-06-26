@@ -53,6 +53,28 @@ class Demand:
         self.analyser = DemandAnalyser(self)
 
     def get_slots_dict(self, slot_size, include_empty_slots=True, print_info=False):
+        '''Takes demand data (job-centric or flow-centric) and generates time-slot demand dictionaries.
+
+        Often when simulating networks, it is useful to divide the arriving demands
+        into time slots. This function uses the generated demand data event times
+        and the specified slot size to divide when each demand arrives in the simulation
+        into specific time slots.
+
+        Returned dict keys are time slot boundary times and values are any demands
+        which arrive in the time slot.
+
+        Args:
+            demand_data (dict): Generated demand data (either flow-centric or job-centric).
+            slot_size (float): Time period of each time slot. MUST BE FLOAT!!
+            include_empty_slots (bool): Whether or not to include empty (i.e. no flows arriving)
+                slots in slots_dict values. If True, will have keys for all slots of simulation,
+                but will have larger memory usage, making the slots_dict less scalable.
+
+        Returns:
+            dict: Dictionary containing the original demand data organised into time 
+            slots.
+
+        '''
         return builder.construct_demand_slots_dict(demand_data=self.demand_data,
                                                    slot_size=slot_size,
                                                    include_empty_slots=include_empty_slots,

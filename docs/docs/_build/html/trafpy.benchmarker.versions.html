@@ -110,16 +110,17 @@
 <li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#id14">trafpy.benchmarker module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#id15">trafpy.benchmarker module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#id16">trafpy.benchmarker module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#id17">trafpy.benchmarker module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#id18">trafpy.benchmarker module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#id19">trafpy.benchmarker module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#module-trafpy.benchmarker.config">trafpy.benchmarker.config module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#module-trafpy.benchmarker.gen_new_slots_dict">trafpy.benchmarker.gen_new_slots_dict module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#module-trafpy.benchmarker.main_gen_benchmark_data">trafpy.benchmarker.main_gen_benchmark_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#module-trafpy.benchmarker.main_testbed_benchmark_data">trafpy.benchmarker.main_testbed_benchmark_data module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#module-trafpy.benchmarker.ray_main_testbed_benchmark_data">trafpy.benchmarker.ray_main_testbed_benchmark_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#module-trafpy.benchmarker.speed_test">trafpy.benchmarker.speed_test module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#module-trafpy.benchmarker.test">trafpy.benchmarker.test module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#module-trafpy.benchmarker.tools">trafpy.benchmarker.tools module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#module-trafpy.benchmarker.v2_ray_main_testbed_benchmark_data">trafpy.benchmarker.v2_ray_main_testbed_benchmark_data module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#module-16">Module contents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trafpy.benchmarker.html#module-19">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="trafpy.generator.html">trafpy.generator package</a></li>
@@ -229,8 +230,21 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
 <dt id="trafpy.benchmarker.versions.benchmark_importer.BenchmarkImporter.get_benchmark_dists">
-<code class="sig-name descname">get_benchmark_dists</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">benchmark</span></em>, <em class="sig-param"><span class="n">racks_dict</span></em>, <em class="sig-param"><span class="n">eps</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/benchmarker/versions/benchmark_importer.html#BenchmarkImporter.get_benchmark_dists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.benchmarker.versions.benchmark_importer.BenchmarkImporter.get_benchmark_dists" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname">get_benchmark_dists</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">benchmark</span></em>, <em class="sig-param"><span class="n">eps</span></em>, <em class="sig-param"><span class="n">racks_dict</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/benchmarker/versions/benchmark_importer.html#BenchmarkImporter.get_benchmark_dists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.benchmarker.versions.benchmark_importer.BenchmarkImporter.get_benchmark_dists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves pre-defined TrafPy benchmark distributions for a network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>benchmark</strong> (<em>str</em>) – Name of benchmark (e.g. ‘university’).</p></li>
+<li><p><strong>eps</strong> (<em>list</em>) – List of end points/machines/leaf nodes in network.</p></li>
+<li><p><strong>racks_dict</strong> (<em>dict</em>) – Mapping of which end points are in which racks. Keys are
+rack ids, values are list of end points. If None, assume there is not
+clustering/rack system in the network where have different end points
+in different clusters/racks.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 

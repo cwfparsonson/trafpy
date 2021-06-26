@@ -74,16 +74,15 @@ def plot_heat_map(proportion_nodes_skewed,
     return fig
 
 def get_val_idx_in_matrix(matrix, val, axis=None, axis_vals=None):  
-    '''
-    Find indices of values in 2D numpy matrix.
+    '''Find indices of values in 2D numpy matrix.
 
     Args:
-        - matrix (2D numpy array): Matrix to find values and return indices of.
-        - val (int, float): Value to find indices of in matrix.
-        - axis (None, str): If None, will return [row_idx, col_idx] of element in matrix
+        matrix (2D numpy array): Matrix in which to find values and return indices of.
+        val (int, float): Value to find indices of in matrix.
+        axis (None, str): If None, will return [row_idx, col_idx] of element in matrix
             which is closest to val being searched for. If 'x' or 'y', will return col_idx
             of x- or y-value being searched for respectively.
-        - axis_vals (None, list): Must specify axis values is axis is not None. 
+        axis_vals (None, list): Must specify axis values is axis is not None. 
             Are the x- or y-axis label values of the matrix to search in and return the idx of
             the element in axis_vals closest to val.
     '''

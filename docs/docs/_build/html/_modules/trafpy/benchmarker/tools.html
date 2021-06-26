@@ -165,8 +165,6 @@
 
 
 
-
-
 <div class="viewcode-block" id="gen_benchmark_demands"><a class="viewcode-back" href="../../../trafpy.benchmarker.html#trafpy.benchmarker.tools.gen_benchmark_demands">[docs]</a><span class="k">def</span> <span class="nf">gen_benchmark_demands</span><span class="p">(</span><span class="n">path_to_save</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
                           <span class="n">save_format</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">,</span> 
                           <span class="n">separate_files</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -201,7 +199,7 @@
                 <span class="k">while</span> <span class="n">answer</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">]:</span>
                     <span class="n">answer</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s1">&#39;Overwrite data in </span><span class="si">{}</span><span class="s1">? (y/n)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">answer</span> <span class="o">==</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span>
-                    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="s1">&#39;User does not want to overwrite data, terminating session.&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;User does not want to overwrite data, terminating session.&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># directory doesn&#39;t exist, must make</span>
             <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">path_to_save</span><span class="p">)</span>
@@ -210,29 +208,12 @@
         <span class="c1"># no need to separate files, save under one file path_to_save</span>
         <span class="k">pass</span>
 
-    <span class="c1"># if separate_files:</span>
-        <span class="c1"># # must separate files under common folder</span>
-        <span class="c1"># if os.path.exists(path_to_save):</span>
-            <span class="c1"># # exists, create new version</span>
-            <span class="c1"># version = 2</span>
-            <span class="c1"># while os.path.exists(path_to_save+&#39;_v{}&#39;.format(version)):</span>
-                <span class="c1"># version += 1</span>
-            <span class="c1"># path_to_save = path_to_save+&#39;_v{}&#39;.format(version)</span>
-        <span class="c1"># else:</span>
-            <span class="c1"># pass</span>
-        <span class="c1"># os.mkdir(path_to_save)</span>
-        <span class="c1"># print(&#39;Created directory {} in which to save separate files.&#39;.format(path_to_save))</span>
-    <span class="c1"># else:</span>
-        <span class="c1"># # no need to separate files, save under one file path_to_save</span>
-        <span class="c1"># pass</span>
-
     <span class="c1"># init benchmark importer</span>
     <span class="n">importer</span> <span class="o">=</span> <span class="n">BenchmarkImporter</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">BENCHMARK_VERSION</span><span class="p">,</span> <span class="n">load_prev_dists</span><span class="o">=</span><span class="n">load_prev_dists</span><span class="p">)</span>
 
     <span class="c1"># load distributions for each benchmark</span>
     <span class="n">benchmark_dists</span> <span class="o">=</span> <span class="p">{</span><span class="n">benchmark</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">benchmark</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">BENCHMARKS</span><span class="p">}</span>
 
-    <span class="c1"># benchmark_demands = {benchmark: {load: {repeat: {} for repeat in range(config.NUM_REPEATS)} for load in config.LOADS} for benchmark in config.BENCHMARKS}</span>
     <span class="n">nested_dict</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">nested_dict</span><span class="p">)</span>
     <span class="n">benchmark_demands</span> <span class="o">=</span> <span class="n">nested_dict</span><span class="p">()</span>
 
@@ -260,18 +241,15 @@
 
         <span class="n">start_benchmark</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">load_counter</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">benchmark_dists</span><span class="p">[</span><span class="n">benchmark</span><span class="p">]</span> <span class="o">=</span> <span class="n">importer</span><span class="o">.</span><span class="n">get_benchmark_dists</span><span class="p">(</span><span class="n">benchmark</span><span class="p">,</span> <span class="n">racks_dict</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+        <span class="n">benchmark_dists</span><span class="p">[</span><span class="n">benchmark</span><span class="p">]</span> <span class="o">=</span> <span class="n">importer</span><span class="o">.</span><span class="n">get_benchmark_dists</span><span class="p">(</span><span class="n">benchmark</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">racks_dict</span><span class="o">=</span><span class="n">racks_dict</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">load</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">LOADS</span><span class="p">:</span>
             <span class="n">start_load</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
             <span class="n">network_load_config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;network_rate_capacity&#39;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">NETWORK_CAPACITIES</span><span class="p">[</span><span class="n">benchmark</span><span class="p">],</span> 
                                    <span class="s1">&#39;ep_link_capacity&#39;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">NETWORK_EP_LINK_CAPACITIES</span><span class="p">[</span><span class="n">benchmark</span><span class="p">],</span>
                                    <span class="s1">&#39;target_load_fraction&#39;</span><span class="p">:</span> <span class="n">load</span><span class="p">,</span>
                                    <span class="s1">&#39;disable_timeouts&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-            <span class="c1"># print(&#39;\n~~~~~~ network load config ~~~~~~~\n{}&#39;.format(network_load_config))</span>
             <span class="k">for</span> <span class="n">repeat</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">NUM_REPEATS</span><span class="p">):</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Generating demand data for benchmark </span><span class="si">{}</span><span class="s1"> load </span><span class="si">{}</span><span class="s1"> repeat </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">benchmark</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">repeat</span><span class="p">))</span>
-                <span class="c1"># if &#39;num_ops_dist&#39; in benchmark_dists[benchmark]:</span>
-                <span class="c1"># job-centric</span>
                 <span class="k">if</span> <span class="n">benchmark_dists</span><span class="p">[</span><span class="n">benchmark</span><span class="p">][</span><span class="s1">&#39;num_ops_dist&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="c1"># job-centric</span>
                     <span class="n">use_multiprocessing</span> <span class="o">=</span> <span class="kc">True</span>
@@ -292,19 +270,6 @@
                                                  <span class="n">auto_node_dist_correction</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">AUTO_NODE_DIST_CORRECTION</span><span class="p">,</span>
                                                  <span class="n">use_multiprocessing</span><span class="o">=</span><span class="n">use_multiprocessing</span><span class="p">,</span>
                                                  <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-                <span class="c1"># else:</span>
-                    <span class="c1"># # flow-centric</span>
-                    <span class="c1"># demand_data = create_demand_data(network_load_config=network_load_config,</span>
-                                                                  <span class="c1"># eps=eps,</span>
-                                                                  <span class="c1"># node_dist=benchmark_dists[benchmark][&#39;node_dist&#39;],</span>
-                                                                  <span class="c1"># flow_size_dist=benchmark_dists[benchmark][&#39;flow_size_dist&#39;],</span>
-                                                                  <span class="c1"># interarrival_time_dist=benchmark_dists[benchmark][&#39;interarrival_time_dist&#39;],</span>
-                                                                  <span class="c1"># min_num_demands=config.MIN_NUM_DEMANDS,</span>
-                                                                  <span class="c1"># max_num_demands=config.MAX_NUM_DEMANDS,</span>
-                                                                  <span class="c1"># jensen_shannon_distance_threshold=config.JENSEN_SHANNON_DISTANCE_THRESHOLD,</span>
-                                                                  <span class="c1"># min_last_demand_arrival_time=config.MIN_LAST_DEMAND_ARRIVAL_TIME,</span>
-                                                                  <span class="c1"># auto_node_dist_correction=config.AUTO_NODE_DIST_CORRECTION,</span>
-                                                                  <span class="c1"># print_data=False)</span>
                 <span class="k">if</span> <span class="n">separate_files</span><span class="p">:</span>
                     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Saving demand data for benchmark </span><span class="si">{}</span><span class="s1"> load </span><span class="si">{}</span><span class="s1"> repeat </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">benchmark</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">repeat</span><span class="p">))</span>
                     <span class="c1"># save as benchmark, load, and repeat into separate files</span>

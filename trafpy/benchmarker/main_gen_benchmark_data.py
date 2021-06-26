@@ -1,8 +1,16 @@
+
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
     import trafpy
     from trafpy.benchmarker.tools import gen_benchmark_demands
 
-    import os
 
     for _ in range(2):
         # DATA_NAME = 'tensorflow_k_4_L_2_n_16_chancap1250_numchans1_mldat3.2e5_bidirectional'

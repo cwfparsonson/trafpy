@@ -13,8 +13,6 @@ import json
 
 
 
-
-
 def gen_benchmark_demands(path_to_save=None, 
                           save_format='json', 
                           separate_files=False,
@@ -49,7 +47,7 @@ def gen_benchmark_demands(path_to_save=None,
                 while answer not in ['y', 'n']:
                     answer = input('Overwrite data in {}? (y/n)'.format(path_to_save)).lower()
                 if answer == 'n':
-                    sys.exit('User does not want to overwrite data, terminating session.')
+                    raise Exception('User does not want to overwrite data, terminating session.')
         else:
             # directory doesn't exist, must make
             os.mkdir(path_to_save)
@@ -58,29 +56,12 @@ def gen_benchmark_demands(path_to_save=None,
         # no need to separate files, save under one file path_to_save
         pass
 
-    # if separate_files:
-        # # must separate files under common folder
-        # if os.path.exists(path_to_save):
-            # # exists, create new version
-            # version = 2
-            # while os.path.exists(path_to_save+'_v{}'.format(version)):
-                # version += 1
-            # path_to_save = path_to_save+'_v{}'.format(version)
-        # else:
-            # pass
-        # os.mkdir(path_to_save)
-        # print('Created directory {} in which to save separate files.'.format(path_to_save))
-    # else:
-        # # no need to separate files, save under one file path_to_save
-        # pass
-
     # init benchmark importer
     importer = BenchmarkImporter(config.BENCHMARK_VERSION, load_prev_dists=load_prev_dists)
 
     # load distributions for each benchmark
     benchmark_dists = {benchmark: {} for benchmark in config.BENCHMARKS}
 
-    # benchmark_demands = {benchmark: {load: {repeat: {} for repeat in range(config.NUM_REPEATS)} for load in config.LOADS} for benchmark in config.BENCHMARKS}
     nested_dict = lambda: defaultdict(nested_dict)
     benchmark_demands = nested_dict()
 
@@ -108,18 +89,15 @@ def gen_benchmark_demands(path_to_save=None,
 
         start_benchmark = time.time()
         load_counter = 1
-        benchmark_dists[benchmark] = importer.get_benchmark_dists(benchmark, racks_dict, eps)
+        benchmark_dists[benchmark] = importer.get_benchmark_dists(benchmark, eps, racks_dict=racks_dict)
         for load in config.LOADS:
             start_load = time.time()
             network_load_config = {'network_rate_capacity': config.NETWORK_CAPACITIES[benchmark], 
                                    'ep_link_capacity': config.NETWORK_EP_LINK_CAPACITIES[benchmark],
                                    'target_load_fraction': load,
                                    'disable_timeouts': True}
-            # print('\n~~~~~~ network load config ~~~~~~~\n{}'.format(network_load_config))
             for repeat in range(config.NUM_REPEATS):
                 print('Generating demand data for benchmark {} load {} repeat {}...'.format(benchmark, load, repeat))
-                # if 'num_ops_dist' in benchmark_dists[benchmark]:
-                # job-centric
                 if benchmark_dists[benchmark]['num_ops_dist'] is not None:
                     # job-centric
                     use_multiprocessing = True
@@ -140,19 +118,6 @@ def gen_benchmark_demands(path_to_save=None,
                                                  auto_node_dist_correction=config.AUTO_NODE_DIST_CORRECTION,
                                                  use_multiprocessing=use_multiprocessing,
                                                  print_data=False)
-                # else:
-                    # # flow-centric
-                    # demand_data = create_demand_data(network_load_config=network_load_config,
-                                                                  # eps=eps,
-                                                                  # node_dist=benchmark_dists[benchmark]['node_dist'],
-                                                                  # flow_size_dist=benchmark_dists[benchmark]['flow_size_dist'],
-                                                                  # interarrival_time_dist=benchmark_dists[benchmark]['interarrival_time_dist'],
-                                                                  # min_num_demands=config.MIN_NUM_DEMANDS,
-                                                                  # max_num_demands=config.MAX_NUM_DEMANDS,
-                                                                  # jensen_shannon_distance_threshold=config.JENSEN_SHANNON_DISTANCE_THRESHOLD,
-                                                                  # min_last_demand_arrival_time=config.MIN_LAST_DEMAND_ARRIVAL_TIME,
-                                                                  # auto_node_dist_correction=config.AUTO_NODE_DIST_CORRECTION,
-                                                                  # print_data=False)
                 if separate_files:
                     print('Saving demand data for benchmark {} load {} repeat {}...'.format(benchmark, load, repeat))
                     # save as benchmark, load, and repeat into separate files

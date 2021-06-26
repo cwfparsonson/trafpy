@@ -79,6 +79,8 @@ class FlowGenerator:
         self.flow_size_dist = flow_size_dist
         self.interarrival_time_dist = interarrival_time_dist
         self.max_num_demands = max_num_demands
+        if min_num_demands is None:
+            min_num_demands = 1
         if max_num_demands is not None:
             self.num_demands = min(min_num_demands, max_num_demands)
         else:
@@ -275,7 +277,7 @@ class FlowPacker:
 
         num_pairs = (len(self.eps)**2)-len(self.eps)
         if len(flow_sizes) < num_pairs:
-            print('WARNING: {} endpoints have {} possible pairs, but packer has only been given {} flows to pack. This will result in sparse packing, which will limit how accurately the packer is able to replicate the target node distribution. If you do not want this, provide the packer with more flows (e.g. by setting min_num_demands to > number of possible pairs).'.format(len(self.eps), num_pairs, len(flow_sizes)))
+            print('WARNING: {} endpoints have {} possible pairs, but packer has only been given {} flows to pack. This will result in sparse packing, which will limit how accurately the packer is able to replicate the target node distribution. If you do not want this, provide the packer with more flows (e.g. by setting min_num_demands to >> number of possible pairs).'.format(len(self.eps), num_pairs, len(flow_sizes)))
 
         self.reset()
         if self.network_load_config['target_load_fraction'] is not None:
@@ -432,7 +434,7 @@ class FlowPacker:
 
             if chosen_pair is None:
                 # could not find end point pair with enough capacity to take flow
-                raise Exception('Unable to find valid pair to assign flow {}: {} without exceeding ep total information load limit {} information units for this session. Decrease flow sizes to help with packing (recommended), and/or increase end point link capacity (recommended), and/or decrease your required target load to increase the time duration the flow packer has to pack flows into, and/or change your node dist to be less heavily skewed. Alternatively, try re-running dist and flow generator since may have chance of creating valid dists and flows which can be packed (also recommended). You can also disable this validity checker by setting check_dont_exceed_one_ep_load to False. Doing so will allow end point loads to go above 1.0 when packing the flows and disable this exception being raised. Current end point total information loads (information units):\n{}\nPair info distances from targets:\n{}'.format(flow, self.packed_flows[flow], self.max_total_ep_info, self.ep_total_infos, self.pair_current_distance_from_target_info_dict))
+                raise Exception('Unable to find valid pair to assign flow {}: {} without exceeding ep total information load limit {} information units for this session. Increase number of flows to increase time duration the flow packer has to pack flows into (recommended), and/or decrease flow sizes to help with packing (recommended), and/or increase end point link capacity (recommended), and/or decrease your required target load to increase the time duration the flow packer has to pack flows into, and/or change your node dist to be less heavily skewed. Alternatively, try re-running dist and flow generator since may have chance of creating valid dists and flows which can be packed (also recommended). You can also disable this validity checker by setting check_dont_exceed_one_ep_load to False. Doing so will allow end point loads to go above 1.0 when packing the flows and disable this exception being raised. Current end point total information loads (information units):\n{}\nPair info distances from targets:\n{}'.format(flow, self.packed_flows[flow], self.max_total_ep_info, self.ep_total_infos, self.pair_current_distance_from_target_info_dict))
             
             if self.print_data:
                 print('Assigning flow to pair {}'.format(chosen_pair))
@@ -1117,12 +1119,14 @@ def gen_network_skewness_heat_maps(network,
 
         # plot heat map
         kwargs['title'] = 'Load {}'.format(load)
-        kwargs['path_to_save'] = path_to_save+'heat_map_load_{}.png'.format(load)
+        if path_to_save is not None:
+            kwargs['path_to_save'] = path_to_save+'heat_map_load_{}.png'.format(load)
         figs.append(plot_dists.plot_heat_map(proportion_nodes_skewed, skewed_nodes_traffic_requested, heat_map, roof_skew_factor, **kwargs))
 
         if kwargs['plot_labeled_heat_map']:
             # plot annotated grid of skew values
-            kwargs['path_to_save'] = path_to_save+'labeled_heat_map_load_{}.png'.format(load)
+            if path_to_save is not None:
+                kwargs['path_to_save'] = path_to_save+'labeled_heat_map_load_{}.png'.format(load)
             figs.append(plot_dists.plot_labeled_heat_map(proportion_nodes_skewed, skewed_nodes_traffic_requested, heat_map, labeled_grid_resolution, **kwargs))
 
 

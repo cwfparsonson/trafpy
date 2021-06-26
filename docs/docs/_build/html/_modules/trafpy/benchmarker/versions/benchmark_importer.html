@@ -156,6 +156,18 @@
 
 <div class="viewcode-block" id="BenchmarkImporter"><a class="viewcode-back" href="../../../../trafpy.benchmarker.versions.html#trafpy.benchmarker.versions.benchmark_importer.BenchmarkImporter">[docs]</a><span class="k">class</span> <span class="nc">BenchmarkImporter</span><span class="p">:</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">benchmark_version</span><span class="p">,</span> <span class="n">load_prev_dists</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Imports pre-defined TrafPy benchmark distributions for a network.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            benchmark_version (str): TrafPy benchmark version to access (e.g. &#39;0.0.1&#39;).</span>
+<span class="sd">            load_prev_dists (bool): If True, will generate a new benchmark distribution</span>
+<span class="sd">                for the network(s) you provide the imported. This is needed if</span>
+<span class="sd">                you have a network with a different number of endpoints or with</span>
+<span class="sd">                different end point labels. If False, will load the exact same distributions as was previously</span>
+<span class="sd">                defined, which is needed if you want to use the exact same benchmark</span>
+<span class="sd">                distribution multiple times.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">load_prev_dists</span> <span class="o">=</span> <span class="n">load_prev_dists</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_prev_dists</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;load_prev_dists=True. Where possible, will load previously generated distributions. Ensure that e.g. network endpoints, rack prob configs etc. are correct. To overwrite saved distributions with your current configuration, set load_prev_dists to False.&#39;</span><span class="p">)</span>
@@ -177,7 +189,17 @@
 
 
 
-<div class="viewcode-block" id="BenchmarkImporter.get_benchmark_dists"><a class="viewcode-back" href="../../../../trafpy.benchmarker.versions.html#trafpy.benchmarker.versions.benchmark_importer.BenchmarkImporter.get_benchmark_dists">[docs]</a>    <span class="k">def</span> <span class="nf">get_benchmark_dists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">benchmark</span><span class="p">,</span> <span class="n">racks_dict</span><span class="p">,</span> <span class="n">eps</span><span class="p">):</span>
+<div class="viewcode-block" id="BenchmarkImporter.get_benchmark_dists"><a class="viewcode-back" href="../../../../trafpy.benchmarker.versions.html#trafpy.benchmarker.versions.benchmark_importer.BenchmarkImporter.get_benchmark_dists">[docs]</a>    <span class="k">def</span> <span class="nf">get_benchmark_dists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">benchmark</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">racks_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Retrieves pre-defined TrafPy benchmark distributions for a network.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            benchmark (str): Name of benchmark (e.g. &#39;university&#39;).</span>
+<span class="sd">            eps (list): List of end points/machines/leaf nodes in network.</span>
+<span class="sd">            racks_dict (dict): Mapping of which end points are in which racks. Keys are</span>
+<span class="sd">                rack ids, values are list of end points. If None, assume there is not</span>
+<span class="sd">                clustering/rack system in the network where have different end points</span>
+<span class="sd">                in different clusters/racks.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">benchmark</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_benchmark_sets</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unrecognised benchmark set </span><span class="se">\&#39;</span><span class="si">{}</span><span class="se">\&#39;</span><span class="s1">. Valid benchmark sets for benchmark </span><span class="si">{}</span><span class="s1">:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">benchmark</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">benchmark_version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_benchmark_sets</span><span class="p">))</span>
 

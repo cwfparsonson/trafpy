@@ -186,7 +186,6 @@
                  <span class="n">min_last_demand_arrival_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">auto_node_dist_correction</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                  <span class="n">check_dont_exceed_one_ep_load</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                 <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                  <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Args:</span>
@@ -223,14 +222,6 @@
 <span class="sd">                will raise an Exception. If False, no exception will be raised, but run</span>
 <span class="sd">                risk of exceeding 1.0 end point load, which for some users might be</span>
 <span class="sd">                detrimental to their system.</span>
-<span class="sd">            bidirectional_links (bool): If True, assume each network link is split</span>
-<span class="sd">                into 2 ports; src port and dst port (i.e. the link is bidirectional).</span>
-<span class="sd">                If False, treat network links as separate uni-directional links.</span>
-<span class="sd">                In uni-directional case, will assume ep_link_capacity of network</span>
-<span class="sd">                is for src OR dst link and pack by doubling ep_link_capacity and packing</span>
-<span class="sd">                links with src-dst pairs. In bidirectional case,</span>
-<span class="sd">                assume ep_link_capacity is for both src and dst ports, therefore no need</span>
-<span class="sd">                to double and can pack links with src-dst pairs as they are.</span>
 
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">started</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -240,13 +231,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">flow_size_dist</span> <span class="o">=</span> <span class="n">flow_size_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">interarrival_time_dist</span> <span class="o">=</span> <span class="n">interarrival_time_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_num_demands</span> <span class="o">=</span> <span class="n">max_num_demands</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">num_demands</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">min_num_demands</span><span class="p">,</span> <span class="n">max_num_demands</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">min_num_demands</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">min_num_demands</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">max_num_demands</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_demands</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">min_num_demands</span><span class="p">,</span> <span class="n">max_num_demands</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_demands</span> <span class="o">=</span> <span class="n">min_num_demands</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">network_load_config</span> <span class="o">=</span> <span class="n">network_load_config</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min_last_demand_arrival_time</span> <span class="o">=</span> <span class="n">min_last_demand_arrival_time</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auto_node_dist_correction</span> <span class="o">=</span> <span class="n">auto_node_dist_correction</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">jensen_shannon_distance_threshold</span> <span class="o">=</span> <span class="n">jensen_shannon_distance_threshold</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">check_dont_exceed_one_ep_load</span> <span class="o">=</span> <span class="n">check_dont_exceed_one_ep_load</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional_links</span> <span class="o">=</span> <span class="n">bidirectional_links</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">print_data</span> <span class="o">=</span> <span class="n">print_data</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_pairs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_to_index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_to_node</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">get_network_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
@@ -321,8 +316,7 @@
                             <span class="n">interarrival_times</span><span class="p">,</span>
                             <span class="n">network_load_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">network_load_config</span><span class="p">,</span>
                             <span class="n">auto_node_dist_correction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">auto_node_dist_correction</span><span class="p">,</span>
-                            <span class="n">check_dont_exceed_one_ep_load</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">check_dont_exceed_one_ep_load</span><span class="p">,</span>
-                            <span class="n">bidirectional_links</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bidirectional_links</span><span class="p">)</span>
+                            <span class="n">check_dont_exceed_one_ep_load</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">check_dont_exceed_one_ep_load</span><span class="p">)</span>
         <span class="n">packed_flows</span> <span class="o">=</span> <span class="n">packer</span><span class="o">.</span><span class="n">pack_the_flows</span><span class="p">()</span>
 
         <span class="c1"># compile packed flows into demand_data dict ordered in terms of arrival time</span>
@@ -420,20 +414,7 @@
                  <span class="n">network_load_config</span><span class="p">,</span>
                  <span class="n">auto_node_dist_correction</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                  <span class="n">check_dont_exceed_one_ep_load</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                 <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                  <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            bidirectional_links (bool): If True, assume each network link is split</span>
-<span class="sd">                into 2 ports; src port and dst port (i.e. the link is bidirectional).</span>
-<span class="sd">                If False, treat network links as separate uni-directional links.</span>
-<span class="sd">                In uni-directional case, will assume ep_link_capacity of network</span>
-<span class="sd">                is for src OR dst link and pack by doubling ep_link_capacity and packing</span>
-<span class="sd">                links with src-dst pairs. In bidirectional case,</span>
-<span class="sd">                assume ep_link_capacity is for both src and dst ports, therefore no need</span>
-<span class="sd">                to double and can pack links with src-dst pairs as they are.</span>
-
-<span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">generator</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">node_dist</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">node_dist</span><span class="p">)</span>
@@ -443,13 +424,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">network_load_config</span> <span class="o">=</span> <span class="n">network_load_config</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auto_node_dist_correction</span> <span class="o">=</span> <span class="n">auto_node_dist_correction</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">check_dont_exceed_one_ep_load</span> <span class="o">=</span> <span class="n">check_dont_exceed_one_ep_load</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional_links</span> <span class="o">=</span> <span class="n">bidirectional_links</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">print_data</span> <span class="o">=</span> <span class="n">print_data</span>
         <span class="c1"># self.print_data = True # DEBUG</span>
 
         <span class="n">num_pairs</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">flow_sizes</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_pairs</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING: </span><span class="si">{}</span><span class="s1"> endpoints have </span><span class="si">{}</span><span class="s1"> possible pairs, but packer has only been given </span><span class="si">{}</span><span class="s1"> flows to pack. This will result in sparse packing, which will limit how accurately the packer is able to replicate the target node distribution. If you do not want this, provide the packer with more flows (e.g. by setting min_num_demands to &gt; number of possible pairs).&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">),</span> <span class="n">num_pairs</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">flow_sizes</span><span class="p">)))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING: </span><span class="si">{}</span><span class="s1"> endpoints have </span><span class="si">{}</span><span class="s1"> possible pairs, but packer has only been given </span><span class="si">{}</span><span class="s1"> flows to pack. This will result in sparse packing, which will limit how accurately the packer is able to replicate the target node distribution. If you do not want this, provide the packer with more flows (e.g. by setting min_num_demands to &gt;&gt; number of possible pairs).&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">),</span> <span class="n">num_pairs</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">flow_sizes</span><span class="p">)))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;target_load_fraction&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -503,9 +483,8 @@
 
         <span class="c1"># calc max total info during simulation per end point and initialise end point total info tracker</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_total_ep_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">network_load_config</span><span class="p">[</span><span class="s1">&#39;ep_link_capacity&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bidirectional_links</span><span class="p">:</span>
-            <span class="c1"># double total ep info so can pack src-dst pairs into links</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">max_total_ep_info</span> <span class="o">*=</span> <span class="mi">2</span>
+        <span class="c1"># double total ep info so can pack src-dst pairs into links</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_total_ep_info</span> <span class="o">*=</span> <span class="mi">2</span>
         <span class="c1"># calc max info can put on src and dst ports (half ep dedicated to each so / 2)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_total_port_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_total_ep_info</span> <span class="o">/</span> <span class="mi">2</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ep_total_infos</span> <span class="o">=</span> <span class="p">{</span><span class="n">ep</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">}</span>
@@ -607,7 +586,7 @@
 
             <span class="k">if</span> <span class="n">chosen_pair</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="c1"># could not find end point pair with enough capacity to take flow</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unable to find valid pair to assign flow </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1"> without exceeding ep total information load limit </span><span class="si">{}</span><span class="s1"> information units for this session. Decrease flow sizes to help with packing (recommended), and/or increase end point link capacity (recommended), and/or decrease your required target load to increase the time duration the flow packer has to pack flows into, and/or change your node dist to be less heavily skewed. Alternatively, try re-running dist and flow generator since may have chance of creating valid dists and flows which can be packed (also recommended). You can also disable this validity checker by setting check_dont_exceed_one_ep_load to False. Doing so will allow end point loads to go above 1.0 when packing the flows and disable this exception being raised. Current end point total information loads (information units):</span><span class="se">\n</span><span class="si">{}</span><span class="se">\n</span><span class="s1">Pair info distances from targets:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">packed_flows</span><span class="p">[</span><span class="n">flow</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_total_ep_info</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ep_total_infos</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pair_current_distance_from_target_info_dict</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unable to find valid pair to assign flow </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1"> without exceeding ep total information load limit </span><span class="si">{}</span><span class="s1"> information units for this session. Increase number of flows to increase time duration the flow packer has to pack flows into (recommended), and/or decrease flow sizes to help with packing (recommended), and/or increase end point link capacity (recommended), and/or decrease your required target load to increase the time duration the flow packer has to pack flows into, and/or change your node dist to be less heavily skewed. Alternatively, try re-running dist and flow generator since may have chance of creating valid dists and flows which can be packed (also recommended). You can also disable this validity checker by setting check_dont_exceed_one_ep_load to False. Doing so will allow end point loads to go above 1.0 when packing the flows and disable this exception being raised. Current end point total information loads (information units):</span><span class="se">\n</span><span class="si">{}</span><span class="se">\n</span><span class="s1">Pair info distances from targets:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">packed_flows</span><span class="p">[</span><span class="n">flow</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_total_ep_info</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ep_total_infos</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pair_current_distance_from_target_info_dict</span><span class="p">))</span>
             
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_data</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Assigning flow to pair </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chosen_pair</span><span class="p">))</span>
@@ -789,11 +768,6 @@
 
 <div class="viewcode-block" id="get_flow_centric_demand_data_overall_load_rate"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.flowcentric.get_flow_centric_demand_data_overall_load_rate">[docs]</a><span class="k">def</span> <span class="nf">get_flow_centric_demand_data_overall_load_rate</span><span class="p">(</span><span class="n">demand_data</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    If flow connections are bidirectional_links, 1 flow takes up 2 endpoint links (the</span>
-<span class="sd">    source link and the destination link), therefore effecitvely takes up load rate</span>
-<span class="sd">    2*flow_size*duration bandwidth. If not bidriectional, only takes up</span>
-<span class="sd">    1*flow_size*duration since only occupies bandwidth for 1 of these links.</span>
-
 <span class="sd">    If method == &#39;mean_per_ep&#39;, will calculate the total network load as being the mean</span>
 <span class="sd">    average load on each endpoint link (i.e. sum info requests for each link -&gt;</span>
 <span class="sd">    find load of each link -&gt; find mean of ep link loads)</span>
@@ -1297,12 +1271,14 @@
 
         <span class="c1"># plot heat map</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Load </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load</span><span class="p">)</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;path_to_save&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_to_save</span><span class="o">+</span><span class="s1">&#39;heat_map_load_</span><span class="si">{}</span><span class="s1">.png&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path_to_save</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;path_to_save&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_to_save</span><span class="o">+</span><span class="s1">&#39;heat_map_load_</span><span class="si">{}</span><span class="s1">.png&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load</span><span class="p">)</span>
         <span class="n">figs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_heat_map</span><span class="p">(</span><span class="n">proportion_nodes_skewed</span><span class="p">,</span> <span class="n">skewed_nodes_traffic_requested</span><span class="p">,</span> <span class="n">heat_map</span><span class="p">,</span> <span class="n">roof_skew_factor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;plot_labeled_heat_map&#39;</span><span class="p">]:</span>
             <span class="c1"># plot annotated grid of skew values</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;path_to_save&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_to_save</span><span class="o">+</span><span class="s1">&#39;labeled_heat_map_load_</span><span class="si">{}</span><span class="s1">.png&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">path_to_save</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;path_to_save&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_to_save</span><span class="o">+</span><span class="s1">&#39;labeled_heat_map_load_</span><span class="si">{}</span><span class="s1">.png&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">load</span><span class="p">)</span>
             <span class="n">figs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_labeled_heat_map</span><span class="p">(</span><span class="n">proportion_nodes_skewed</span><span class="p">,</span> <span class="n">skewed_nodes_traffic_requested</span><span class="p">,</span> <span class="n">heat_map</span><span class="p">,</span> <span class="n">labeled_grid_resolution</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 
 

@@ -159,11 +159,12 @@
 <span class="kn">import</span> <span class="nn">json</span>
 
 
-<div class="viewcode-block" id="gen_arbitrary_network"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.networks.gen_arbitrary_network">[docs]</a><span class="k">def</span> <span class="nf">gen_arbitrary_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
-                          <span class="n">server_to_rack_channel_capacity</span><span class="o">=</span><span class="mi">12500</span><span class="p">,</span> 
+<div class="viewcode-block" id="gen_arbitrary_network"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.networks.gen_arbitrary_network">[docs]</a><span class="k">def</span> <span class="nf">gen_arbitrary_network</span><span class="p">(</span><span class="n">num_eps</span><span class="p">,</span>
+                          <span class="n">ep_label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                          <span class="n">ep_capacity</span><span class="o">=</span><span class="mi">12500</span><span class="p">,</span> 
                           <span class="n">num_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
-                          <span class="n">num_eps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-                          <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                          <span class="n">racks_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">topology_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Generates an arbitrary network with num_eps nodes labelled as ep_label.</span>
 
 <span class="sd">    Note that no edges are formed in this network; it is purely for ep name </span>
@@ -172,9 +173,15 @@
 <span class="sd">    graph that accurately mimics the network you will use for the demands</span>
 
 <span class="sd">    Args:</span>
+<span class="sd">        num_eps (int): Number of endpoints in network.</span>
 <span class="sd">        ep_label (str,int,float): Endpoint label (e.g. &#39;server&#39;). All endpoints will have</span>
 <span class="sd">            ep_label appended to the start of their label (e.g. &#39;server_0&#39;, &#39;server_1&#39;, ...).</span>
-<span class="sd">        num_eps (int): Number of endpoints in network.</span>
+<span class="sd">        ep_capacity (int, float): Byte capacity per end point channel.</span>
+<span class="sd">        num_channels (int, float): Number of channels on each link in network.</span>
+<span class="sd">        racks_dict (dict): Mapping of which end points are in which racks. Keys are</span>
+<span class="sd">            rack ids, values are list of end points. If None, assume there is not</span>
+<span class="sd">            clustering/rack system in the network where have different end points</span>
+<span class="sd">            in different clusters/racks.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        networkx graph: network object</span>
@@ -200,18 +207,19 @@
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">eps</span>
 
     <span class="c1"># /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)</span>
-    <span class="k">if</span> <span class="n">bidirectional_links</span><span class="p">:</span>
-        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_eps</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span> <span class="o">*</span> <span class="n">num_channels</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="n">num_eps</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span> <span class="o">*</span> <span class="n">num_channels</span>
+    <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_eps</span> <span class="o">*</span> <span class="n">ep_capacity</span> <span class="o">*</span> <span class="n">num_channels</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="k">if</span> <span class="n">topology_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">topology_type</span> <span class="o">=</span> <span class="s1">&#39;arbitrary_endpoints_</span><span class="si">{}</span><span class="s1">_chancap_</span><span class="si">{}</span><span class="s1">_channels_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_eps</span><span class="p">,</span> <span class="n">ep_capacity</span><span class="p">,</span> <span class="n">num_channels</span><span class="p">)</span>
 
     <span class="n">init_global_network_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span>
                               <span class="n">max_nw_capacity</span><span class="p">,</span>
                               <span class="n">num_channels</span><span class="p">,</span>
-                              <span class="n">ep_link_capacity</span><span class="o">=</span><span class="n">server_to_rack_channel_capacity</span><span class="o">*</span><span class="n">num_channels</span><span class="p">,</span>
+                              <span class="n">ep_link_capacity</span><span class="o">=</span><span class="n">ep_capacity</span><span class="o">*</span><span class="n">num_channels</span><span class="p">,</span>
                               <span class="n">endpoint_label</span><span class="o">=</span><span class="n">ep_label</span><span class="p">,</span>
                               <span class="n">node_labels</span><span class="o">=</span><span class="p">[</span><span class="n">ep_label</span><span class="p">],</span>
-                              <span class="n">topology_type</span><span class="o">=</span><span class="s1">&#39;arbitrary&#39;</span><span class="p">)</span>
+                              <span class="n">racks_dict</span><span class="o">=</span><span class="n">racks_dict</span><span class="p">,</span>
+                              <span class="n">topology_type</span><span class="o">=</span><span class="n">topology_type</span><span class="p">)</span>
     
     <span class="k">return</span> <span class="n">network</span></div>
 
@@ -223,7 +231,6 @@
                        <span class="n">num_channels</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> 
                        <span class="n">server_to_rack_channel_capacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                        <span class="n">rack_to_rack_channel_capacity</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-                       <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                        <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Generates the standard 14-node NSFNET topology (a U.S. core network).</span>
 <span class="sd">    </span>
@@ -298,17 +305,13 @@
     
     <span class="n">channel_names</span> <span class="o">=</span> <span class="n">gen_channel_names</span><span class="p">(</span><span class="n">num_channels</span><span class="p">)</span>
     <span class="n">edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">edge</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">]</span>
-    <span class="n">add_edges_capacity_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel_names</span><span class="p">,</span> <span class="n">rack_to_rack_channel_capacity</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="p">)</span>
+    <span class="n">add_edges_capacity_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel_names</span><span class="p">,</span> <span class="n">rack_to_rack_channel_capacity</span><span class="p">)</span>
 
     <span class="c1"># set gloabl network attrs</span>
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_endpoints</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">ep_label</span><span class="p">)</span>
 
     <span class="c1"># /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)</span>
-    <span class="k">if</span> <span class="n">bidirectional_links</span><span class="p">:</span>
-        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">rack_to_rack_channel_capacity</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">rack_to_rack_channel_capacity</span><span class="p">)</span>
-
+    <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">rack_to_rack_channel_capacity</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
 
     <span class="n">init_global_network_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> 
                             <span class="n">max_nw_capacity</span><span class="p">,</span> 
@@ -326,7 +329,6 @@
 <div class="viewcode-block" id="gen_simple_network"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.networks.gen_simple_network">[docs]</a><span class="k">def</span> <span class="nf">gen_simple_network</span><span class="p">(</span><span class="n">ep_label</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> 
                        <span class="n">num_channels</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> 
                        <span class="n">server_to_rack_channel_capacity</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
-                       <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                        <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Generates very simple 5-node topology.</span>
 
@@ -356,16 +358,13 @@
 
     <span class="n">channel_names</span> <span class="o">=</span> <span class="n">gen_channel_names</span><span class="p">(</span><span class="n">num_channels</span><span class="p">)</span>
     <span class="n">edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">edge</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">]</span>
-    <span class="n">add_edges_capacity_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel_names</span><span class="p">,</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">,</span> <span class="n">bidirectional_links</span><span class="p">)</span>
+    <span class="n">add_edges_capacity_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">channel_names</span><span class="p">,</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span>
 
     <span class="c1"># set gloabl network attrs</span>
     <span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_endpoints</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">ep_label</span><span class="p">)</span>
 
     <span class="c1"># /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)</span>
-    <span class="k">if</span> <span class="n">bidirectional_links</span><span class="p">:</span>
-        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span>
+    <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
 
     <span class="n">init_global_network_attrs</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> 
                             <span class="n">max_nw_capacity</span><span class="p">,</span> 
@@ -414,7 +413,6 @@
                   <span class="n">edge_to_agg_channel_capacity</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
                   <span class="n">agg_to_core_channel_capacity</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
                   <span class="n">rack_to_core_channel_capacity</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
-                  <span class="n">bidirectional_links</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                   <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Generates a perfect fat tree (i.e. all layers have switches with same radix/number of ports).</span>
 
@@ -512,8 +510,7 @@
                 <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span>
                                         <span class="p">(</span><span class="n">rack</span><span class="p">,</span> <span class="n">core</span><span class="p">),</span>
                                         <span class="n">channel_names</span><span class="p">,</span>
-                                        <span class="n">rack_to_core_channel_capacity</span><span class="p">,</span>
-                                        <span class="n">bidirectional_links</span><span class="p">)</span>
+                                        <span class="n">rack_to_core_channel_capacity</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># 4 layers: Core, Agg, Edge, ToR. Agg and Edge switches grouped into pods.</span>
         <span class="c1"># group edges and aggregates into pods</span>
@@ -544,8 +541,7 @@
                     <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">pods_dict</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> 
                                      <span class="p">(</span><span class="n">pod_agg</span><span class="p">,</span><span class="n">pod_edge</span><span class="p">),</span> 
                                      <span class="n">channel_names</span><span class="p">,</span> 
-                                     <span class="n">edge_to_agg_channel_capacity</span><span class="p">,</span>
-                                     <span class="n">bidirectional_links</span><span class="p">)</span> 
+                                     <span class="n">edge_to_agg_channel_capacity</span><span class="p">)</span>
 
         <span class="c1"># add pods (agg + edge) layer to fat-tree</span>
         <span class="n">pod_networks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pods_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
@@ -563,8 +559,7 @@
                     <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span>
                                      <span class="p">(</span><span class="n">core</span><span class="p">,</span><span class="n">pod_agg</span><span class="p">),</span>
                                      <span class="n">channel_names</span><span class="p">,</span>
-                                     <span class="n">agg_to_core_channel_capacity</span><span class="p">,</span>
-                                     <span class="n">bidirectional_links</span><span class="p">)</span>
+                                     <span class="n">agg_to_core_channel_capacity</span><span class="p">)</span>
 
         <span class="c1"># link edge switches in pods to racks, add link attributes</span>
         <span class="n">rack_iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">racks</span><span class="p">)</span>
@@ -577,8 +572,7 @@
                     <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span>
                                      <span class="p">(</span><span class="n">pod_edge</span><span class="p">,</span><span class="n">rack</span><span class="p">),</span>
                                      <span class="n">channel_names</span><span class="p">,</span>
-                                     <span class="n">rack_to_edge_channel_capacity</span><span class="p">,</span>
-                                     <span class="n">bidirectional_links</span><span class="p">)</span>
+                                     <span class="n">rack_to_edge_channel_capacity</span><span class="p">)</span>
 
     <span class="c1"># link servers to racks, add link attributes</span>
     <span class="n">racks_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">rack</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">rack</span> <span class="ow">in</span> <span class="n">racks</span><span class="p">}</span> <span class="c1"># track which endpoints in which rack</span>
@@ -590,16 +584,12 @@
             <span class="n">add_edge_capacity_attrs</span><span class="p">(</span><span class="n">fat_tree_network</span><span class="p">,</span>
                                     <span class="p">(</span><span class="n">rack</span><span class="p">,</span> <span class="n">server</span><span class="p">),</span>
                                     <span class="n">channel_names</span><span class="p">,</span>
-                                    <span class="n">server_to_rack_channel_capacity</span><span class="p">,</span>
-                                    <span class="n">bidirectional_links</span><span class="p">)</span>
+                                    <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span>
             <span class="n">racks_dict</span><span class="p">[</span><span class="n">rack</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
 
     <span class="c1"># calc total network capacity</span>
     <span class="c1"># /= 2 to get max theoretical capacity (number of units which network can transfer per unit time)</span>
-    <span class="k">if</span> <span class="n">bidirectional_links</span><span class="p">:</span>
-        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_servers</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_servers</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span>
+    <span class="n">max_nw_capacity</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_servers</span> <span class="o">*</span> <span class="n">num_channels</span> <span class="o">*</span> <span class="n">server_to_rack_channel_capacity</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
 
 
     <span class="c1"># init global network attrs</span>

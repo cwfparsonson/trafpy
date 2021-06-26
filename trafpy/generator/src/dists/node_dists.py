@@ -1673,7 +1673,7 @@ def adjust_probability_dict_sum(probs, target_sum=1, print_data=False):
     return adjusted_probs
 
 
-def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps, all_combinations=False, bidirectional=False):
+def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps, all_combinations=False, bidirectional=True):
     '''Gets prob dict of each pair being chosen given node dist of probabilities.
 
     If all_combinations, will record pair probabilities for all possible pair combinations

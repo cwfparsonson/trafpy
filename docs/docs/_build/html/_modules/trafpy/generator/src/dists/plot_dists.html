@@ -226,16 +226,15 @@
     <span class="k">return</span> <span class="n">fig</span></div>
 
 <div class="viewcode-block" id="get_val_idx_in_matrix"><a class="viewcode-back" href="../../../../../trafpy.generator.src.dists.html#trafpy.generator.src.dists.plot_dists.get_val_idx_in_matrix">[docs]</a><span class="k">def</span> <span class="nf">get_val_idx_in_matrix</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">axis_vals</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Find indices of values in 2D numpy matrix.</span>
+    <span class="sd">&#39;&#39;&#39;Find indices of values in 2D numpy matrix.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        - matrix (2D numpy array): Matrix to find values and return indices of.</span>
-<span class="sd">        - val (int, float): Value to find indices of in matrix.</span>
-<span class="sd">        - axis (None, str): If None, will return [row_idx, col_idx] of element in matrix</span>
+<span class="sd">        matrix (2D numpy array): Matrix in which to find values and return indices of.</span>
+<span class="sd">        val (int, float): Value to find indices of in matrix.</span>
+<span class="sd">        axis (None, str): If None, will return [row_idx, col_idx] of element in matrix</span>
 <span class="sd">            which is closest to val being searched for. If &#39;x&#39; or &#39;y&#39;, will return col_idx</span>
 <span class="sd">            of x- or y-value being searched for respectively.</span>
-<span class="sd">        - axis_vals (None, list): Must specify axis values is axis is not None. </span>
+<span class="sd">        axis_vals (None, list): Must specify axis values is axis is not None. </span>
 <span class="sd">            Are the x- or y-axis label values of the matrix to search in and return the idx of</span>
 <span class="sd">            the element in axis_vals closest to val.</span>
 <span class="sd">    &#39;&#39;&#39;</span>

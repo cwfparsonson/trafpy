@@ -205,6 +205,28 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">analyser</span> <span class="o">=</span> <span class="n">DemandAnalyser</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Demand.get_slots_dict"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.Demand.get_slots_dict">[docs]</a>    <span class="k">def</span> <span class="nf">get_slots_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slot_size</span><span class="p">,</span> <span class="n">include_empty_slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Takes demand data (job-centric or flow-centric) and generates time-slot demand dictionaries.</span>
+
+<span class="sd">        Often when simulating networks, it is useful to divide the arriving demands</span>
+<span class="sd">        into time slots. This function uses the generated demand data event times</span>
+<span class="sd">        and the specified slot size to divide when each demand arrives in the simulation</span>
+<span class="sd">        into specific time slots.</span>
+
+<span class="sd">        Returned dict keys are time slot boundary times and values are any demands</span>
+<span class="sd">        which arrive in the time slot.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            demand_data (dict): Generated demand data (either flow-centric or job-centric).</span>
+<span class="sd">            slot_size (float): Time period of each time slot. MUST BE FLOAT!!</span>
+<span class="sd">            include_empty_slots (bool): Whether or not to include empty (i.e. no flows arriving)</span>
+<span class="sd">                slots in slots_dict values. If True, will have keys for all slots of simulation,</span>
+<span class="sd">                but will have larger memory usage, making the slots_dict less scalable.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Dictionary containing the original demand data organised into time </span>
+<span class="sd">            slots.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">construct_demand_slots_dict</span><span class="p">(</span><span class="n">demand_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">demand_data</span><span class="p">,</span>
                                                    <span class="n">slot_size</span><span class="o">=</span><span class="n">slot_size</span><span class="p">,</span>
                                                    <span class="n">include_empty_slots</span><span class="o">=</span><span class="n">include_empty_slots</span><span class="p">,</span>
@@ -500,8 +522,6 @@
             <span class="n">diameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;graph_diameter&#39;</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">plot_dists</span><span class="o">.</span><span class="n">plot_val_dist</span><span class="p">(</span><span class="n">diameters</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="n">show_fig</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="n">logscale</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="n">num_bins</span><span class="p">,</span> <span class="n">rand_var_name</span><span class="o">=</span><span class="s1">&#39;Graph Diameter&#39;</span><span class="p">)</span></div>
-
-
 
 <div class="viewcode-block" id="DemandPlotter.plot_interarrival_time_dist"><a class="viewcode-back" href="../../../../trafpy.generator.src.html#trafpy.generator.src.demand.DemandPlotter.plot_interarrival_time_dist">[docs]</a>    <span class="k">def</span> <span class="nf">plot_interarrival_time_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">font_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">)):</span>
         <span class="n">interarrival_times</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">demand_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand</span><span class="o">.</span><span class="n">num_demands</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>

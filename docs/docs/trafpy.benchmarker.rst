@@ -148,6 +148,30 @@ trafpy.benchmarker module
    :undoc-members:
    :show-inheritance:
 
+trafpy.benchmarker module
+-------------------------
+
+.. automodule:: trafpy.benchmarker
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.benchmarker module
+-------------------------
+
+.. automodule:: trafpy.benchmarker
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.benchmarker module
+-------------------------
+
+.. automodule:: trafpy.benchmarker
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 trafpy.benchmarker.config module
 --------------------------------
 
@@ -180,14 +204,6 @@ trafpy.benchmarker.main\_testbed\_benchmark\_data module
    :undoc-members:
    :show-inheritance:
 
-trafpy.benchmarker.ray\_main\_testbed\_benchmark\_data module
--------------------------------------------------------------
-
-.. automodule:: trafpy.benchmarker.ray_main_testbed_benchmark_data
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 trafpy.benchmarker.speed\_test module
 -------------------------------------
 
@@ -208,14 +224,6 @@ trafpy.benchmarker.tools module
 -------------------------------
 
 .. automodule:: trafpy.benchmarker.tools
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-trafpy.benchmarker.v2\_ray\_main\_testbed\_benchmark\_data module
------------------------------------------------------------------
-
-.. automodule:: trafpy.benchmarker.v2_ray_main_testbed_benchmark_data
    :members:
    :undoc-members:
    :show-inheritance:

@@ -7,85 +7,46 @@ TrafPy is a Python package for the generation, management and standardisation of
 
 Example
 -------
-Generate realistic flow-centric traffic demands for a data centre network and 
-use the traffic to test the performance of the *Shortest Remaining Processing Time*
-(SRPT) scheduling algorithm:
+Generate simple flow-centric traffic for an arbitrary network you want to put under 10% traffic load
+with 16 leaf node end points which have communication link capacities of 1,250 information units
+per unit time. Save the traffic trace in a universally compatible file format
+so you can import it into any simulation, emulation, or experimentation test bed
+independently of ``TrafPy``.
 
 .. code:: python
-
     import trafpy.generator as tpg
-    from trafpy.manager import Demand, RWA, SRPT, DCN
-    import config
+    import gzip, pickle
 
-    # create demand data
-    flow_size_dist = tpg.gen_named_val_dist(dist='weibull',
-                                            params={'_alpha': 1.4, '_lambda': 7000},
-                                            round_to_nearest=1)
-    interarrival_time_dist = tpg.gen_named_val_dist(dist='lognormal',
-                                                    params={'_mu': 7.4, '_sigma': 2},
-                                                    round_to_nearest=1)
-    network = tpg.gen_simple_network(ep_label=config.ENDPOINT_LABEL,
-                                     num_channels=config.NUM_CHANNELS)
-    node_dist = tpg.gen_multimodal_node_dist(eps=network.graph['endpoints'],
-                                             num_skewed_nodes=1)
-    flow_centric_demand_data = tpg.create_demand_data(num_demands=config.NUM_DEMANDS,
-                                                      eps=network.graph['endpoints'],
-                                                      node_dist=node_dist,
-                                                      flow_size_dist=flow_size_dist,
-                                                      interarrival_time_dist=interarrival_time_dist)
+    # init network
+    net = tpg.gen_arbitrary_network(num_eps=16, ep_capacity=1250)
 
-    # init manager
-    demand = Demand(demand_data=flow_centric_demand_data)
-    rwa = RWA(tpg.gen_channel_names(config.NUM_CHANNELS), 
-              config.NUM_K_PATHS)
-    scheduler = SRPT(network, rwa, slot_size=config.SLOT_SIZE)
-    env = DCN(network, 
-              demand, 
-              scheduler, 
-              slot_size=config.SLOT_SIZE, 
-              max_flows=config.MAX_FLOWS, 
-              max_time=config.MAX_TIME)
+    # define flow characteristic distributions
+    dists = {}
+    dists['node_dist'] = tpg.gen_uniform_node_dist(eps=net.graph['endpoints'])
+    dists['interarrival_time_dist'] = {1.0: 1.0}
+    dists['flow_size_dist'] = {1.0: 1.0}
 
-    # run simulation
-    for episode in range(config.NUM_EPISODES):
-        print('\nEpisode {}/{}'.format(episode+1,config.NUM_EPISODES))
-        observation = env.reset(config.LOAD_DEMANDS)
-        while True:
-            print('Time: {}'.format(env.curr_time))
-            action = scheduler.get_action(observation)
-            print('Action:\n{}'.format(action))
-            observation, reward, done, info = env.step(action)
-            if done:
-                print('Episode finished.')
-                break
+    # define network load config
+    network_load_config = {'network_rate_capacity': net.graph['max_nw_capacity'], 
+                           'ep_link_capacity': net.graph['ep_link_capacity'],
+                           'target_load_fraction': 0.1}
 
-    >>> env.get_scheduling_session_summary(print_summary=True)
+    # generate traffic demands
+    demand_data = tpg.create_demand_data(eps=net.graph['endpoints'],
+                                         node_dist=dists['node_dist'],
+                                         flow_size_dist=dists['flow_size_dist'],
+                                         interarrival_time_dist=dists['interarrival_time_dist'],
+                                         network_load_config=network_load_config,
+                                         jensen_shannon_distance_threshold=jsd_threshold)
 
-::
+    # save
+    Path('data/').mkdir(parents=True)
+    with gzip.open('data/demand_data.pickle', 'wb') as f:
+        pickle.dump(demand_data, f)
 
-    -=-=-=-=-=-=-= Scheduling Session Ended -=-=-=-=-=-=-=
-    SUMMARY:
-    ~* General Info *~
-    Total session duration: 80000.0 time units
-    Total number of generated demands (jobs or flows): 10
-    Total info arrived: 61316.0 info units
-    Load: 1.8257503573130063 info unit demands arrived per unit time (from first to last flow arriving)
-    Total info transported: 61316.0 info units
-    Throughput: 0.76645 info units transported per unit time
-
-    ~* Flow Info *~
-    Total number generated flows (src!=dst,dependency_type=='data_dep'): 10
-    Time first flow arrived: 0.0 time units
-    Time last flow arrived: 33584.0 time units
-    Time first flow completed: 10000.0 time units
-    Time last flow completed: 80000.0 time units
-    Total number of demands that arrived and became flows: 10
-    Total number of flows that were completed: 10
-    Total number of dropped flows + flows in queues at end of session: 0
-    Average FCT: 24527.6 time units
-    99th percentile FCT: 73821.64 time units
 
 See the `documentation's tutorial <https://trafpy.readthedocs.io/en/latest/Tutorial.html>`_
+and the `examples <https://github.com/cwfparsonson/trafpy/tree/master/examples>`_ directory
 for more information.
 
 

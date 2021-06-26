@@ -230,7 +230,6 @@
         <span class="k">if</span> <span class="n">benchmark</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_benchmark_sets</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unrecognised benchmark set </span><span class="se">\&#39;</span><span class="si">{}</span><span class="se">\&#39;</span><span class="s1">. Valid benchmark sets for benchmark </span><span class="si">{}</span><span class="s1">:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">benchmark</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">benchmark_version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_benchmark_sets</span><span class="p">))</span>
 
-
         <span class="n">num_skewed_nodes</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="mf">0.2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">eps</span><span class="p">))</span>
         <span class="n">skewed_node_probs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.55</span><span class="o">/</span><span class="n">num_skewed_nodes</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_skewed_nodes</span><span class="p">)]</span>
 
@@ -391,8 +390,14 @@
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Benchmark </span><span class="se">\&#39;</span><span class="si">{}</span><span class="se">\&#39;</span><span class="s1"> not recognised.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">benchmark</span><span class="p">))</span>
 
 
+
+
             <span class="k">if</span> <span class="n">save_data</span><span class="p">:</span>
                 <span class="n">save_data_as_json</span><span class="p">(</span><span class="n">path_to_save</span><span class="o">=</span><span class="n">path_to_data</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_times</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># check node dist is compatible with eps provided</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_dist</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;You provided len(eps)=</span><span class="si">{}</span><span class="s1"> end points but the node distribution used has len(node_dist)=</span><span class="si">{}</span><span class="s1"> end points. This is likely because you have left load_prev_dists=True but you are now trying to generate traffic for a network with a different number of end points. Set load_prev_dists=False or ensure len(eps) == len(node_dist)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">eps</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_dist</span><span class="p">)))</span>
 
 
         <span class="k">return</span> <span class="n">node_dist</span></div>

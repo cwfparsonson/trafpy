@@ -772,8 +772,6 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
                                         probabilities, 
                                         num_demands,
                                         jensen_shannon_distance_threshold=None,
-                                        # deterministic_factor=None,
-                                        # difference_filter_threshold=0,
                                         show_fig=False,
                                         xlabel='Random Variable',
                                         font_size=20,
@@ -794,16 +792,6 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
             Distance of 1 -> distributions are not at all similar.
             https://medium.com/datalab-log/measuring-the-statistical-similarity-between-two-samples-using-jensen-shannon-and-kullback-leibler-8d05af514b15
             N.B. To meet threshold, this function will keep doubling num_demands
-        deterministic_factor (int, float): If not None, will deterministically sample from
-            discretised distribution by finding the lowest probability rand var
-            and doing num_demands=int(1/lowest_prob)*deterministic_factor to get 
-            the total number of demands, then deterministically generating the 
-            distribution by generating num_demands*prob for each variable's respective
-            probability. This is useful for ensuring a very low jensen shannon distance
-            without needing to sample many random variables, which can be useful
-            for limiting memory usage for distributions with long tails. If
-            deterministic_factor < 1, will not sample all unique vars in original
-            distribution. If >1, guaranteed to sample all vars in original distribution.
         show_fig (bool): Whether or not to generated sampled var dist plotted
             with the original distribution. 
         path_to_save (str): Path to directory (with file name included) in which
@@ -840,10 +828,14 @@ def gen_rand_vars_from_discretised_dist(unique_vars,
             min_list.append(min(sampled_vars))
             mean_list.append(np.mean(sampled_vars))
             std_list.append(np.std(sampled_vars))
-            num_demands = int(num_demands * 1.1)
+            if num_demands < 10:
+                # increase to 10 or won't ever go beyond if increase by 10% each loop
+                num_demands = 10
+            else:
+                num_demands = int(num_demands * 1.1)
             counter += 1
             if counter == 1e4:
-                raise Exception('Looped 10,000 times but distance {} still > threshold {}. Check no bugs or increase threshold.'.format(distance, jensen_shannon_distance_threshold))
+                raise Exception('Looped 10,000 times and reached {} num_demands samples but distance {} still > threshold {}. Check no bugs, increase threshold and/or increase num_demands.'.format(num_demands, distance, jensen_shannon_distance_threshold))
     else:
         # no similarity threshold defined
         sampled_vars = np.random.choice(a=unique_vars, 
