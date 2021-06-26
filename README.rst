@@ -76,8 +76,7 @@ on your machine
 
 .. code:: python
 
-    import trafpy.generator as tpg
-    from trafpy.manager import Demand, RWA, SRPT, DCN
+    import trafpy
 
 
 Contributing
