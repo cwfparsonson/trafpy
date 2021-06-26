@@ -22,10 +22,9 @@ independently of ``TrafPy``.
     net = tpg.gen_arbitrary_network(num_eps=16, ep_capacity=1250)
 
     # define flow characteristic distributions
-    dists = {}
-    dists['node_dist'] = tpg.gen_uniform_node_dist(eps=net.graph['endpoints'])
-    dists['interarrival_time_dist'] = {1.0: 1.0}
-    dists['flow_size_dist'] = {1.0: 1.0}
+    node_dist = tpg.gen_uniform_node_dist(eps=net.graph['endpoints'])
+    interarrival_time_dist = {1.0: 1.0}
+    flow_size_dist = {1.0: 1.0}
 
     # define network load config
     network_load_config = {'network_rate_capacity': net.graph['max_nw_capacity'], 
@@ -34,11 +33,11 @@ independently of ``TrafPy``.
 
     # generate traffic demands
     demand_data = tpg.create_demand_data(eps=net.graph['endpoints'],
-                                         node_dist=dists['node_dist'],
-                                         flow_size_dist=dists['flow_size_dist'],
-                                         interarrival_time_dist=dists['interarrival_time_dist'],
+                                         node_dist=node_dist,
+                                         flow_size_dist=flow_size_dist,
+                                         interarrival_time_dist=interarrival_time_dist,
                                          network_load_config=network_load_config,
-                                         jensen_shannon_distance_threshold=jsd_threshold)
+                                         jensen_shannon_distance_threshold=0.9)
 
     # save
     Path('data/').mkdir(parents=True)
