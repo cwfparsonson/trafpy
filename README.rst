@@ -14,6 +14,7 @@ so you can import it into any simulation, emulation, or experimentation test bed
 independently of ``TrafPy``.
 
 .. code:: python
+
     import trafpy.generator as tpg
     import gzip, pickle
 
