@@ -20,7 +20,7 @@ import math
 class DistributionGenerator:
     def __init__(self, load_prev_dists=True):
         self.load_prev_dists=load_prev_dists
-        self.benchmark_version = '0.0.1'
+        self.benchmark_version = 'v001'
         self.valid_benchmark_sets = config.ALL_BENCHMARK_SETS
 
         trafpy_path = os.path.dirname(trafpy.__file__)

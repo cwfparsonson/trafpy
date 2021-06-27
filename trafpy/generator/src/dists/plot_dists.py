@@ -280,6 +280,16 @@ def plot_node_dist(node_dist,
             plot_chord = False
 
         if plot_chord:
+            # only plot chord if have at least 2 different node loads
+            all_same = True
+            for load in node_to_load.values():
+                if load != node_to_load[nodelist[0]]:
+                    all_same = False
+            if all_same:
+                plot_chord = False
+                print('Node loads all same, will not plot chord diagram.')
+
+        if plot_chord:
             edgelist = [(str(u),str(v),{"weight":ws.pop(0)}) for u,v in graph.edges]
 
             graph2 = nx.Graph()

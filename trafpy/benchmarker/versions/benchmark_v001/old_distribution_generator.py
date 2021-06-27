@@ -20,7 +20,7 @@ import math
 class DistributionGenerator:
     def __init__(self, load_prev_dists=True):
         self.load_prev_dists=load_prev_dists
-        self.benchmark_version = '0.0.1'
+        self.benchmark_version = 'v001'
         self.valid_benchmark_sets = config.ALL_BENCHMARK_SETS
 
         trafpy_path = os.path.dirname(trafpy.__file__)
@@ -187,7 +187,6 @@ class DistributionGenerator:
                                                                 print_data=False)
 
             elif benchmark == 'skewed_nodes_sensitivity_0.4':
-                rack_prob_config = None
                 num_skewed_nodes = math.ceil(0.4 * len(eps))
                 skewed_node_probs = [0.55/num_skewed_nodes for _ in range(num_skewed_nodes)]
                 rack_prob_config = None

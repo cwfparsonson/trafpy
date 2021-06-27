@@ -7,7 +7,7 @@ class BenchmarkImporter:
         '''Imports pre-defined TrafPy benchmark distributions for a network.
 
         Args:
-            benchmark_version (str): TrafPy benchmark version to access (e.g. '0.0.1').
+            benchmark_version (str): TrafPy benchmark version to access (e.g. 'v001').
             load_prev_dists (bool): If True, will generate a new benchmark distribution
                 for the network(s) you provide the imported. This is needed if
                 you have a network with a different number of endpoints or with
@@ -22,14 +22,14 @@ class BenchmarkImporter:
         else:
             print('load_prev_dist=False. Will re-generate dists with given network params and override any previously saved distributions.')
 
-        self.valid_versions = ['0.0.1']
+        self.valid_versions = ['v001']
 
         if benchmark_version not in self.valid_versions:
             raise Exception('Unrecognised benchmark version \'{}\'. Please enter a valid benchmark version (one of:\n{}).'.format(benchmark_version, self.valid_versions))
 
         self.benchmark_version = benchmark_version
         
-        if self.benchmark_version == '0.0.1':
+        if self.benchmark_version == 'v001':
             from trafpy.benchmarker.versions.benchmark_v001.distribution_generator import DistributionGenerator
             self.distgen = DistributionGenerator(load_prev_dists=self.load_prev_dists)
         

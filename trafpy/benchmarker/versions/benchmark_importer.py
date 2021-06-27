@@ -30,8 +30,8 @@ class BenchmarkImporter:
         self.benchmark_version = benchmark_version
         
         if self.benchmark_version == 'v001':
-            from trafpy.benchmarker.versions.benchmark_v001.config import get_default_benchmarks
-        self.valid_benchmark_sets = get_default_benchmarks()
+            from trafpy.benchmarker.versions.benchmark_v001.config import get_default_benchmark_names
+        self.default_benchmark_names = get_default_benchmark_names()
 
     def get_benchmark_dists(self, benchmark_name, eps, racks_dict=None):
         '''Retrieves pre-defined TrafPy benchmark distributions for a network.
@@ -44,8 +44,8 @@ class BenchmarkImporter:
                 clustering/rack system in the network where have different end points
                 in different clusters/racks.
         '''
-        if benchmark_name not in self.valid_benchmark_sets:
-            raise Exception('Unrecognised default benchmark set \'{}\'. Valid default benchmark sets for benchmark version {}:\n{}'.format(benchmark_name, self.benchmark_version, self.valid_benchmark_sets))
+        if benchmark_name not in self.default_benchmark_names:
+            raise Exception('Unrecognised default benchmark set \'{}\'. Valid default benchmark sets for benchmark version {}:\n{}'.format(benchmark_name, self.benchmark_version, self.default_benchmark_names))
 
         # import benchmark class and instantiate benchmark object
         benchmark_module = importlib.import_module('trafpy.benchmarker.versions.benchmark_{}.benchmarks.{}'.format(self.benchmark_version, benchmark_name))

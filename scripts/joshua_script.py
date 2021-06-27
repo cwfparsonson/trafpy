@@ -19,7 +19,7 @@ loads = [0.9, 0.8]
 net = tpg.gen_arbitrary_network(ep_label=None, num_eps=N, server_to_rack_channel_capacity=50000, bidirectional_links=True)
 
 # set flow size, interarrival time, and node distributions
-importer = BenchmarkImporter(benchmark_version='0.0.1', load_prev_dists=False)
+importer = BenchmarkImporter(benchmark_version='v001', load_prev_dists=False)
 benchmark_dists = importer.get_benchmark_dists(benchmark='university', racks_dict=None, eps=net.graph['endpoints'])
 flow_size_dist, interarrival_time_dist, node_dist = benchmark_dists['flow_size_dist'], benchmark_dists['interarrival_time_dist'], benchmark_dists['node_dist']
 

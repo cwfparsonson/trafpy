@@ -10,7 +10,7 @@ import numpy as np
 # general configuration
 # -------------------------------------------------------------------------
 # define benchmark version
-BENCHMARK_VERSION = '0.0.1'
+BENCHMARK_VERSION = 'v001'
 
 # define minimum number of demands to generate (may generate more to meet jensen_shannon_distance_threshold and/or min_last_demand_arrival_time)
 MIN_NUM_DEMANDS = 10 # 1500 4000 10 400 10
