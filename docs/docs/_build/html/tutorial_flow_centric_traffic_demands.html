@@ -233,6 +233,22 @@ network</p>
 <img alt="_images/tutorial_flow_centric_traffic_demands-5_01.png" src="_images/tutorial_flow_centric_traffic_demands-5_01.png" />
 <p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_flow_centric_traffic_demands-5_01.png">png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-5_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_flow_centric_traffic_demands-5_01.pdf">pdf</a>)</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
 </div>
+<p>The network load refers to the overall amount of traffic received by the
+network. This is commonly referred to as a load rate (information units
+arriving per unit time) or as a load fraction (the fraction of the total
+network capacity being requested for a given duration). <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> typically uses
+the load fraction definition for load, therefore loads can be varied between 0
+and 1.</p>
+<p>A key feature of <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> is that you can generate any load for your custom
+network. To do this, you should provide <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> with a <code class="docutils literal notranslate"><span class="pre">network_load_config</span></code>
+dictionary which tells <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> (1) the end point capacity of your network, (2)
+the maximum capacity of your network, and (3) the overall load fraction you
+would like <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> to generate for your network. Consider that you would like
+<code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> to generate a 0.1 load traffic trace for your network (i.e. around 10%
+of your total network capacity will be requested per unit time):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="go">&gt;&gt;&gt;</span>
+</pre></div>
+</div>
 <p>You can then use your distributions to generate flow-centric demand data formatted
 neatly into a single dictionary</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flow_centric_demand_data</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">create_demand_data</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span><span class="n">flow_size_dist</span><span class="o">=</span><span class="n">flow_size_dist</span><span class="p">,</span><span class="n">max_num_demands</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span><span class="n">interarrival_time_dist</span><span class="o">=</span><span class="n">interarrival_time_dist</span><span class="p">)</span>

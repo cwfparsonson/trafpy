@@ -13,6 +13,4 @@ The TrafPy Generator can generate custom and/or literature network traffic.
    tutorial_networks
    tutorial_flow_centric_traffic_demands
    tutorial_job_centric_traffic_demands
-   tutorial_load_rack_config
    tutorial_visually_shaping_distributions
-

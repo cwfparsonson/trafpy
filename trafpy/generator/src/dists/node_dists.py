@@ -145,7 +145,7 @@ def gen_uniform_node_dist(eps,
         print('Normalised matrix:\n{}'.format(node_dist))
         print('Normalised matrix sum: {}'.format(matrix_sum))
     if path_to_save is not None:
-        tools.pickle_data(path, node_dist)
+        tools.pickle_data(path_to_save, node_dist)
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
                                         eps=eps,
@@ -237,7 +237,7 @@ def gen_uniform_multinomial_exp_node_dist(eps,
         print('Normalised matrix:\n{}'.format(node_dist))
         print('Normalised matrix sum: {}'.format(matrix_sum))
     if path_to_save is not None:
-        tools.pickle_data(path, node_dist)
+        tools.pickle_data(path_to_save, node_dist)
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
                                         eps=eps,
@@ -1673,7 +1673,7 @@ def adjust_probability_dict_sum(probs, target_sum=1, print_data=False):
     return adjusted_probs
 
 
-def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps, all_combinations=False, bidirectional=True):
+def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps, all_combinations=False, bidirectional=False):
     '''Gets prob dict of each pair being chosen given node dist of probabilities.
 
     If all_combinations, will record pair probabilities for all possible pair combinations

@@ -28,7 +28,6 @@ network
 
 .. nbplot::
 
-    >>> num_demands = 1000
     >>> network = tpg.gen_simple_network(ep_label='endpoint', show_fig=True)
 
 You could start by defining the flow size distribution
@@ -50,12 +49,30 @@ and then the source-destination node distribution
     >>> endpoints = network.graph['endpoints']
     >>> node_dist = tpg.gen_multimodal_node_dist(eps=endpoints,num_skewed_nodes=1,show_fig=True)
 
-You can then use your distributions to generate flow-centric demand data formatted
+The network load refers to the overall amount of traffic received by the
+network. This is commonly referred to as a load rate (information units
+arriving per unit time) or as a load fraction (the fraction of the total
+network capacity being requested for a given duration). ``TrafPy`` typically uses
+the load fraction definition for load, therefore loads can be varied between 0
+and 1.
+
+A key feature of ``TrafPy`` is that you can generate any load for your custom
+network. To do this, you should provide ``TrafPy`` with a ``network_load_config``
+dictionary which tells ``TrafPy`` (1) the end point capacity of your network, (2)
+the maximum capacity of your network, and (3) the overall load fraction you
+would like ``TrafPy`` to generate for your network. Consider that you would like
+``TrafPy`` to generate a 0.1 load traffic trace for your network (i.e. around 10%
+of your total network capacity will be requested per unit time):
+
+.. nbplot::
+    >>> network_load_config = {'network_rate_capacity': network.graph['max_nw_capacity'], 'ep_link_capacity': network.graph['ep_link_capacity'], 'target_load_fraction': 0.1}
+
+You can then use your distributions and load config to generate flow-centric demand data formatted
 neatly into a single dictionary
 
 .. nbplot::
 
-    >>> flow_centric_demand_data = tpg.create_demand_data(eps=endpoints,node_dist=node_dist,flow_size_dist=flow_size_dist,max_num_demands=1000,interarrival_time_dist=interarrival_time_dist)
+    >>> flow_centric_demand_data = tpg.create_demand_data(eps=endpoints,node_dist=node_dist,flow_size_dist=flow_size_dist,max_num_demands=1000,interarrival_time_dist=interarrival_time_dist,network_load_config=network_load_config)
 
 Don't forget to save your data as a pickle::
 

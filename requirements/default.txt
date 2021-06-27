@@ -11,3 +11,10 @@ nxviz
 tqdm
 sigfig
 pympler
+jsonpickle
+tabulate
+ray
+tree
+dm-tree
+opencv-python
+lz4

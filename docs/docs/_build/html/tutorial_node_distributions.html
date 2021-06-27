@@ -187,7 +187,7 @@ Source-destination nodes are <strong>endpoints</strong> in a network</p>
 but in TrafPy they usually refer to <strong>load fractions</strong> (i.e. what fraction of the overall
 traffic arriving is requested by a particular node pair).</p>
 <p>The most simple node distribution is the <strong>uniform distribution</strong></p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>(<a class="reference external" href=".//tutorial_node_distributions-3.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-3.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-3.pdf">pdf</a>)</p>
@@ -198,12 +198,16 @@ traffic arriving is requested by a particular node pair).</p>
 capabilities, network node distributions are rarely uniform. Instead, some nodes
 become ‘hot nodes’ and are requested more than others, forming a <strong>multimodal
 node distribution</strong></p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">skewed_nodes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;server_2&#39;</span><span class="p">],</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span> <span class="n">skewed_nodes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;server_2&#39;</span><span class="p">],</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>(<a class="reference external" href=".//tutorial_node_distributions-4.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-4.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-4.pdf">pdf</a>)</p>
-<div class="figure align-default">
-<img alt="_images/tutorial_node_distributions-4.png" src="_images/tutorial_node_distributions-4.png" />
+<div class="figure align-default" id="id1">
+<img alt="_images/tutorial_node_distributions-4_00.png" src="_images/tutorial_node_distributions-4_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-4_00.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-4_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-4_00.pdf">pdf</a>)</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id2">
+<img alt="_images/tutorial_node_distributions-4_01.png" src="_images/tutorial_node_distributions-4_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-4_01.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-4_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-4_01.pdf">pdf</a>)</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
 </div>
 <p>Instead of certain <em>nodes</em> being requested more regularly, sometimes certain
 <em>node pairs</em> in the network might be skewed, forming a <strong>multimodal node pair</strong>
@@ -211,13 +215,13 @@ distribution</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span> <span class="n">skewed_pairs</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;server_1&#39;</span><span class="p">,</span><span class="s1">&#39;server_3&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;server_4&#39;</span><span class="p">,</span><span class="s1">&#39;server_2&#39;</span><span class="p">]],</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="figure align-default" id="id1">
+<div class="figure align-default" id="id3">
 <img alt="_images/tutorial_node_distributions-5_00.png" src="_images/tutorial_node_distributions-5_00.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-5_00.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_00.pdf">pdf</a>)</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-5_00.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_00.pdf">pdf</a>)</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
 </div>
-<div class="figure align-default" id="id2">
+<div class="figure align-default" id="id4">
 <img alt="_images/tutorial_node_distributions-5_01.png" src="_images/tutorial_node_distributions-5_01.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-5_01.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_01.pdf">pdf</a>)</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-5_01.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-5_01.pdf">pdf</a>)</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
 </div>
 <p>N.B. The above graph plots are <strong>chord diagrams</strong>. Each network end point is a node,
 and the colour of the node indicates how much of the overall traffic requestes
@@ -236,20 +240,69 @@ The above functions handle all of the above functionality. See their documentati
 for further details.</p>
 <p>You can create any size of node distribution you like to fit any network</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">endpoints</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;server_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">)]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_multimodal_node_pair_dist</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="figure align-default" id="id3">
+<div class="figure align-default" id="id5">
 <img alt="_images/tutorial_node_distributions-6_00.png" src="_images/tutorial_node_distributions-6_00.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-6_00.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_00.pdf">pdf</a>)</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-6_00.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_00.pdf">pdf</a>)</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
 </div>
-<div class="figure align-default" id="id4">
+<div class="figure align-default" id="id6">
 <img alt="_images/tutorial_node_distributions-6_01.png" src="_images/tutorial_node_distributions-6_01.png" />
-<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-6_01.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_01.pdf">pdf</a>)</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-6_01.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-6_01.pdf">pdf</a>)</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
 </div>
-<p>Once you have your node probability distribution, you can use it to generate
+<p>Network endpoints/servers are often grouped into physically local clusters or ‘racks’.
+Different networks may have different levels of inter- (between) and intra- (within) rack communication.
+One way to specify this would be to set individual node pair probabilities with the <code class="docutils literal notranslate"><span class="pre">gen_multimodal_node_pair_dist</span></code> function
+you’ve already seen, however this would be inconvenient and laborious. Instead, when using the above node distribution functions,
+you can specify the <code class="docutils literal notranslate"><span class="pre">rack_prob_config</span></code> argument, which allows you to set the proportion of
+traffic which should be inter-rack. TrafPy will then use your shaped node distribution
+to create an adjusted node distribution which accounts for your specified rack probabilites.
+For example, if you specify <code class="docutils literal notranslate"><span class="pre">rack_prob_config</span></code> in <code class="docutils literal notranslate"><span class="pre">gen_uniform_node_dist</span></code>, you will not generate a perfectly
+uniform node distribution as you would if you left <code class="docutils literal notranslate"><span class="pre">rack_prob_config</span></code> as <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+but instead a node distribution with set inter- and intra-rack probabilities sampled
+from a uniform distribution. You will need to specify which endpoints are
+in which rack with a dictionary (this is automatically done for you if you
+use one of the TrafPy networks). E.g. Making 10% of traffic inter-rack in a
+fat-tree topology:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">net</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_fat_tree</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">plot_network</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">draw_node_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">network_node_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Racks dict:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;rack_to_ep_dict&#39;</span><span class="p">]))</span>
+<span class="go">Racks dict:</span>
+<span class="go">{&#39;rack_0&#39;: [&#39;server_0&#39;, &#39;server_1&#39;, &#39;server_2&#39;, &#39;server_3&#39;], &#39;rack_1&#39;:</span>
+<span class="go">[&#39;server_4&#39;, &#39;server_5&#39;, &#39;server_6&#39;, &#39;server_7&#39;], &#39;rack_2&#39;: [&#39;server_8&#39;,</span>
+<span class="go">&#39;server_9&#39;, &#39;server_10&#39;, &#39;server_11&#39;], &#39;rack_3&#39;: [&#39;server_12&#39;, &#39;server_13&#39;,</span>
+<span class="go">&#39;server_14&#39;, &#39;server_15&#39;]}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rack_prob_config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;racks_dict&#39;</span><span class="p">:</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;rack_to_ep_dict&#39;</span><span class="p">],</span> <span class="s1">&#39;prob_inter_rack&#39;</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">],</span> <span class="n">rack_prob_config</span><span class="o">=</span><span class="n">rack_prob_config</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure align-default" id="id7">
+<img alt="_images/tutorial_node_distributions-7_00.png" src="_images/tutorial_node_distributions-7_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-7_00.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-7_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-7_00.pdf">pdf</a>)</span><a class="headerlink" href="#id7" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id8">
+<img alt="_images/tutorial_node_distributions-7_01.png" src="_images/tutorial_node_distributions-7_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-7_01.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-7_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-7_01.pdf">pdf</a>)</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
+</div>
+<p>Making 90% of traffic inter-rack:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rack_prob_config</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;racks_dict&#39;</span><span class="p">:</span> <span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;rack_to_ep_dict&#39;</span><span class="p">],</span> <span class="s1">&#39;prob_inter_rack&#39;</span><span class="p">:</span> <span class="mf">0.90</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_dist</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">],</span> <span class="n">rack_prob_config</span><span class="o">=</span><span class="n">rack_prob_config</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure align-default" id="id9">
+<img alt="_images/tutorial_node_distributions-8_00.png" src="_images/tutorial_node_distributions-8_00.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-8_00.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-8_00.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-8_00.pdf">pdf</a>)</span><a class="headerlink" href="#id9" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-default" id="id10">
+<img alt="_images/tutorial_node_distributions-8_01.png" src="_images/tutorial_node_distributions-8_01.png" />
+<p class="caption"><span class="caption-text">(<a class="reference external" href=".//tutorial_node_distributions-8_01.png">png</a>, <a class="reference external" href=".//tutorial_node_distributions-8_01.hires.png">hires.png</a>, <a class="reference external" href=".//tutorial_node_distributions-8_01.pdf">pdf</a>)</span><a class="headerlink" href="#id10" title="Permalink to this image">¶</a></p>
+</div>
+<p>Once you have your node distribution, you can use it to generate
 as many source-destination node pairs as you like</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sn</span><span class="p">,</span> <span class="n">dn</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_node_demands</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span><span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span><span class="n">num_demands</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sn</span><span class="p">,</span> <span class="n">dn</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_node_demands</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">],</span> <span class="n">node_dist</span><span class="o">=</span><span class="n">node_dist</span><span class="p">,</span> <span class="n">num_demands</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
