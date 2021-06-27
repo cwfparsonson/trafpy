@@ -1,5 +1,10 @@
 Job-Centric Traffic Demands
 ===========================
+
+.. nbplot::
+
+    >>> import trafpy.generator as tpg
+
 A job is a task sent to a network (such as a data centre) to execute. Jobs are 
 computation graphs made up of **operations** (ops). Jobs might be e.g. a Google
 search query, generating a user's Facebook feed, performing a TensorFlow machine
@@ -52,8 +57,8 @@ Consider that you want to create 10 realistic data centre jobs in the same simpl
 
 .. nbplot:: 
 
-    >>> num_demands = 10
-    >>> tpg.gen_simple_network(ep_label='endpoint')
+    >>> network = tpg.gen_simple_network(ep_label='endpoint')
+    >>> network_load_config = {'network_rate_capacity': network.graph['max_nw_capacity'], 'ep_link_capacity': network.graph['ep_link_capacity'], 'target_load_fraction': 0.1}
 
 You could start by definiing the flow size distribution of the flows inside the 
 job graphs
@@ -86,7 +91,7 @@ returned neatly into a single dictionary
 
 .. nbplot::
 
-    >>> job_centric_demand_data = tpg.create_demand_data(num_demands=num_demands,eps=endpoints,node_dist=node_dist,flow_size_dist=flow_size_dist,interarrival_time_dist=interarrival_time_dist,num_ops_dist=num_ops_dist,c=1.5,use_multiprocessing=False)
+    >>> job_centric_demand_data = tpg.create_demand_data(eps=endpoints,node_dist=node_dist,flow_size_dist=flow_size_dist,interarrival_time_dist=interarrival_time_dist,num_ops_dist=num_ops_dist,c=1.5,max_num_demands=10,network_load_config=network_load_config,use_multiprocessing=False)
 
 Don't forget to save your data::
     

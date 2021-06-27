@@ -2,7 +2,7 @@ Networks
 ========
 
 .. nbplot::
-    import trafpy.generator as tpg
+    >>> import trafpy.generator as tpg
 
 By definition, a network is a collection of nodes (vertices) which together
 form pairs of nodes connected by links (edges). Some or all of these nodes can 
@@ -28,3 +28,12 @@ or a fat-tree network
 
     >>> network = tpg.gen_fat_tree(k=4, show_fig=True)
 
+A key feature of TrafPy is that it can generate traffic for any network. If your
+network does not fall into one of the above networks (which is likely that it will not),
+you should use the ``trafpy.generator.gen_arbitrary_network`` function to generate your network.
+This will generate an arbitrary network given your number of end points, but will
+format the network in a way recognised by TrafPy.
+
+.. nbplot::
+
+    >>> network = tpg.gen_arbitrary_network(num_eps=10)

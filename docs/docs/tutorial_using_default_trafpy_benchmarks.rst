@@ -56,14 +56,14 @@ run:
     'social_media_cloud', 'tensorflow', 'uniform', 'university']
 
 Decide which default benchmarks you would like to generate for your system,
-and then simply call the ``trafpy.benchmarker.BenchmarkImporter.get_benchmark_dists``
+and then simply call the ``trafpy.benchmarker.BenchmarkImporter.get_benchmark_dists`` function
 to get the node, flow size, and flow interarrival time distributions of this benchmark
 adapted to your custom network. For example, we can generate the ``'university'``
 benchmark distributions:
 
 .. nbplot::
 
-    >>> dists = importer.get_benchmark_dists(benchmark='university', eps=net.graph['endpoints'], rack_dist=net.graph['rack_to_ep_dist'])
+    >>> dists = importer.get_benchmark_dists(benchmark_name='university', eps=net.graph['endpoints'], racks_dict=net.graph['rack_to_ep_dict'])
 
 The distributions are returned as a dictionary
 

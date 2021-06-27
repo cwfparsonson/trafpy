@@ -3,14 +3,18 @@ Overview of TrafPy
 TrafPy is a Python package for the generation, management and standardisation of 
 network traffic.
 
-TrafPy provides:
+TrafPy contains the following key modules:
 
-- a pre-built **interactive Jupyter Notebook** tool for visually building distributions and 
-  data which accurately mimic traffic characteristics of real networks (e.g. data centres);
-- a **generator** package for generating network traffic which can be flexibly integrated 
-  into custom Python projects; and
-- a **manager** package which can be used to simulate network management (scheduling,
-  routing etc.) following the standard OpenAI Gym reinforcement learning framework.
+- ``trafpy.generator``: A package for generating custom and/or literature traffic
+  trace data which can be exported into universally compatible file formats (e.g.
+  CSV, Pickle, JSON, etc.) and imported into any simulation, emulation, or experimentation
+  environment. It also comes with an interactive Jupyter Notebook tool for visually building
+  and shaping distributions.
+- ``trafpy.manager``: A package for simulating a data centre network with various
+  routing and scheduling protocols following the standard OpenAI Gym reinforcement
+  learning interface.
+- ``trafpy.benchmarker``: A package for generating, reproducing, and establishing
+  standard network traffic benchmarks.
 
 TrafPy can be used to quickly and easily replicate traffic distributions from the
 literature even in the absense of raw open-access data. Furthermore, it is hoped
@@ -22,7 +26,8 @@ researchers to benchmark their management systems.
 Getting Started
 ===============
 Follow the :doc:`instructions <Install>` to install TrafPy, then have a look 
-at the :doc:`tutorial <tutorial>`.
+at the :doc:`tutorial <tutorial>` and the `examples <https://github.com/cwfparsonson/trafpy/tree/master/examples>`_ on the
+GitHub page.
 
 
 

@@ -20,10 +20,26 @@ trafpy.benchmarker.versions module
    :undoc-members:
    :show-inheritance:
 
+trafpy.benchmarker.versions.benchmark module
+--------------------------------------------
+
+.. automodule:: trafpy.benchmarker.versions.benchmark
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 trafpy.benchmarker.versions.benchmark\_importer module
 ------------------------------------------------------
 
 .. automodule:: trafpy.benchmarker.versions.benchmark_importer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trafpy.benchmarker.versions.old\_benchmark\_importer module
+-----------------------------------------------------------
+
+.. automodule:: trafpy.benchmarker.versions.old_benchmark_importer
    :members:
    :undoc-members:
    :show-inheritance:
