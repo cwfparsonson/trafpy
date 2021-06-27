@@ -63,12 +63,6 @@ class DistributionGenerator:
             print('{} distribution not previously saved in {}.'.format(dist_name, path_to_data))
             dist = None
 
-        # if dist_name == 'node_dist':
-            # print(dist)
-        # print('loaded dist_name {}, type {}'.format(dist_name, type(dist)))
-        # if dist_name == 'flow_size_dist' or dist_name == 'interarrival_time_dist':
-            # print('dist_name {} | type {} | idx 0 type {}'.format(dist_name, type(dist), type(dist[0])))
-
         return dist, path_to_data
 
 
@@ -107,132 +101,6 @@ class DistributionGenerator:
                                                                 skewed_node_probs=skewed_node_probs, 
                                                                 show_fig=False, 
                                                                 print_data=False)
-            
-            elif benchmark == 'private_enterprise':
-                num_skewed_nodes = math.ceil(0.2 * len(eps))
-                skewed_node_probs = [0.55/num_skewed_nodes for _ in range(num_skewed_nodes)]
-                if racks_dict is None:
-                    rack_prob_config = None
-                else:
-                    rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.5}
-                # node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
-                node_dist = node_dists.gen_multimodal_node_dist(eps, 
-                                                                rack_prob_config=rack_prob_config, 
-                                                                num_skewed_nodes=num_skewed_nodes, 
-                                                                skewed_node_probs=skewed_node_probs, 
-                                                                show_fig=False, 
-                                                                print_data=False)
-
-            elif benchmark in ['commercial_cloud', 
-                               'tensorflow']:
-                num_skewed_nodes = math.ceil(0.2 * len(eps))
-                skewed_node_probs = [0.55/num_skewed_nodes for _ in range(num_skewed_nodes)]
-                if racks_dict is None:
-                    rack_prob_config = None
-                else:
-                    rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.2}
-                # node_dist = node_dists.gen_uniform_node_dist(eps, rack_prob_config=rack_prob_config, show_fig=False, print_data=False)
-                node_dist = node_dists.gen_multimodal_node_dist(eps, 
-                                                                rack_prob_config=rack_prob_config, 
-                                                                num_skewed_nodes=num_skewed_nodes, 
-                                                                skewed_node_probs=skewed_node_probs, 
-                                                                show_fig=False, 
-                                                                print_data=False)
-
-            elif benchmark == 'social_media_cloud':
-                num_skewed_nodes = math.ceil(0.2 * len(eps))
-                skewed_node_probs = [0.55/num_skewed_nodes for _ in range(num_skewed_nodes)]
-                if racks_dict is None:
-                    rack_prob_config = None
-                else:
-                    rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.129}
-                node_dist = node_dists.gen_multimodal_node_dist(eps, 
-                                                                rack_prob_config=rack_prob_config, 
-                                                                num_skewed_nodes=num_skewed_nodes, 
-                                                                skewed_node_probs=skewed_node_probs, 
-                                                                show_fig=False, 
-                                                                print_data=False)
-
-            elif benchmark == 'skewed_nodes_sensitivity_0.05':
-                num_skewed_nodes = math.ceil(0.05 * len(eps))
-                skewed_node_probs = [0.55/num_skewed_nodes for _ in range(num_skewed_nodes)]
-                rack_prob_config = None
-                node_dist = node_dists.gen_multimodal_node_dist(eps, 
-                                                                rack_prob_config=rack_prob_config, 
-                                                                num_skewed_nodes=num_skewed_nodes, 
-                                                                skewed_node_probs=skewed_node_probs, 
-                                                                show_fig=False, 
-                                                                print_data=False)
-
-            elif benchmark == 'skewed_nodes_sensitivity_0.1':
-                num_skewed_nodes = math.ceil(0.1 * len(eps))
-                skewed_node_probs = [0.55/num_skewed_nodes for _ in range(num_skewed_nodes)]
-                rack_prob_config = None
-                node_dist = node_dists.gen_multimodal_node_dist(eps, 
-                                                                rack_prob_config=rack_prob_config, 
-                                                                num_skewed_nodes=num_skewed_nodes, 
-                                                                skewed_node_probs=skewed_node_probs, 
-                                                                show_fig=False, 
-                                                                print_data=False)
-
-            elif benchmark == 'skewed_nodes_sensitivity_0.2':
-                num_skewed_nodes = math.ceil(0.2 * len(eps))
-                skewed_node_probs = [0.55/num_skewed_nodes for _ in range(num_skewed_nodes)]
-                rack_prob_config = None
-                node_dist = node_dists.gen_multimodal_node_dist(eps, 
-                                                                rack_prob_config=rack_prob_config, 
-                                                                num_skewed_nodes=num_skewed_nodes, 
-                                                                skewed_node_probs=skewed_node_probs, 
-                                                                show_fig=False, 
-                                                                print_data=False)
-
-            elif benchmark == 'skewed_nodes_sensitivity_0.4':
-                rack_prob_config = None
-                num_skewed_nodes = math.ceil(0.4 * len(eps))
-                skewed_node_probs = [0.55/num_skewed_nodes for _ in range(num_skewed_nodes)]
-                rack_prob_config = None
-                node_dist = node_dists.gen_multimodal_node_dist(eps, 
-                                                                rack_prob_config=rack_prob_config, 
-                                                                num_skewed_nodes=num_skewed_nodes, 
-                                                                skewed_node_probs=skewed_node_probs, 
-                                                                show_fig=False, 
-                                                                print_data=False)
-
-            elif benchmark == 'rack_dist_sensitivity_0.2':
-                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.8} 
-                node_dist = node_dists.gen_uniform_node_dist(eps, 
-                                                             rack_prob_config=rack_prob_config, 
-                                                             show_fig=False, 
-                                                             print_data=False)
-
-            elif benchmark == 'rack_dist_sensitivity_0.4':
-                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.6} 
-                node_dist = node_dists.gen_uniform_node_dist(eps, 
-                                                             rack_prob_config=rack_prob_config, 
-                                                             show_fig=False, 
-                                                             print_data=False)
-
-
-            elif benchmark == 'rack_dist_sensitivity_0.6':
-                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.4} 
-                node_dist = node_dists.gen_uniform_node_dist(eps, 
-                                                             rack_prob_config=rack_prob_config, 
-                                                             show_fig=False, 
-                                                             print_data=False)
-
-            elif benchmark == 'rack_dist_sensitivity_0.8':
-                rack_prob_config = {'racks_dict': racks_dict, 'prob_inter_rack': 0.2} 
-                node_dist = node_dists.gen_uniform_node_dist(eps, 
-                                                             rack_prob_config=rack_prob_config, 
-                                                             show_fig=False, 
-                                                             print_data=False)
-
-            elif benchmark in ['uniform', 
-                               'skewed_nodes_sensitivity_0', 
-                               'rack_dist_sensitivity_0',
-                               'artificial_light',
-                               'jobcentric_prototyping']:
-                node_dist = node_dists.gen_uniform_node_dist(eps, show_fig=False, print_data=False)
 
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
@@ -277,76 +145,6 @@ class DistributionGenerator:
                                                               round_to_nearest=25,
                                                               show_fig=False,
                                                               print_data=False)
-                # # DEBUG
-                # flow_size_dist = {1e3: 1} 
-
-            elif benchmark == 'private_enterprise':
-                flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
-                                                              params={'_mu': 7, '_sigma': 2.5},
-                                                              min_val=1,
-                                                              max_val=2e7,
-                                                              round_to_nearest=25,
-                                                              show_fig=False,
-                                                              print_data=False)
-
-            elif benchmark in ['commercial_cloud', 
-                               'skewed_nodes_sensitivity_0', 
-                               'skewed_nodes_sensitivity_0.05', 
-                               'skewed_nodes_sensitivity_0.1',
-                               'skewed_nodes_sensitivity_0.2',
-                               'skewed_nodes_sensitivity_0.4',
-                               'rack_dist_sensitivity_0',
-                               'rack_dist_sensitivity_0.2',
-                               'rack_dist_sensitivity_0.4',
-                               'rack_dist_sensitivity_0.6',
-                               'rack_dist_sensitivity_0.8']:
-                flow_size_dist = val_dists.gen_named_val_dist(dist='lognormal',
-                                                              params={'_mu': 7, '_sigma': 2.5},
-                                                              min_val=1,
-                                                              max_val=2e7,
-                                                              round_to_nearest=25,
-                                                              show_fig=False,
-                                                              print_data=False)
-
-            elif benchmark == 'social_media_cloud':
-                flow_size_dist = val_dists.gen_named_val_dist(dist='weibull',
-                                                              params={'_alpha': 0.5, '_lambda': 21000},
-                                                              min_val=1,
-                                                              max_val=2e6,
-                                                              round_to_nearest=25,
-                                                              show_fig=False,
-                                                              print_data=False)
-
-            elif benchmark == 'uniform':
-                flow_size_dist = val_dists.gen_uniform_val_dist(min_val=100,
-                                                                 max_val=10000,
-                                                                 round_to_nearest=25,
-                                                                 show_fig=False,
-                                                                 print_data=False)
-
-            elif benchmark == 'artificial_light':
-                # flow_size_dist = val_dists.gen_named_val_dist(dist='normal',
-                                                              # params={'_loc': 3, '_scale': 0.5},
-                                                              # min_val=1,
-                                                              # round_to_nearest=25,
-                                                              # show_fig=False,
-                                                              # print_data=False)
-                flow_size_dist = {10: 0.33333333, 20: 0.33333333, 30: 0.33333333}
-
-            elif benchmark == 'jobcentric_prototyping':
-                flow_size_dist = {10.0: 1}
-
-            elif benchmark == 'tensorflow':
-                # taken from DeepMind paper https://arxiv.org/pdf/1905.02494.pdf, no units given. Assume units are in MB -> convert to B
-                conversion = 1e6
-                flow_size_dist = val_dists.gen_named_val_dist(dist='normal',
-                                                              params={'_loc': 50*conversion, '_scale': 10*conversion},
-                                                              min_val=1,
-                                                              max_val=None,
-                                                              round_to_nearest=25,
-                                                              show_fig=False,
-                                                              print_data=False)
-
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
 
@@ -386,77 +184,6 @@ class DistributionGenerator:
                                                                       round_to_nearest=25,
                                                                       show_fig=False,
                                                                       print_data=False)
-
-            elif benchmark == 'private_enterprise':
-                interarrival_time_dist = val_dists.gen_multimodal_val_dist(min_val=1,
-                                                                           max_val=100000,
-                                                                           locations=[40,1],
-                                                                           skews=[-1,4],
-                                                                           scales=[60,1000],
-                                                                           num_skew_samples=[10000,10000],
-                                                                           round_to_nearest=25,
-                                                                           bg_factor=0.05)
-
-            elif benchmark in ['commercial_cloud', 
-                               'skewed_nodes_sensitivity_0', 
-                               'skewed_nodes_sensitivity_0.05', 
-                               'skewed_nodes_sensitivity_0.1',
-                               'skewed_nodes_sensitivity_0.2',
-                               'skewed_nodes_sensitivity_0.4',
-                               'rack_dist_sensitivity_0',
-                               'rack_dist_sensitivity_0.2',
-                               'rack_dist_sensitivity_0.4',
-                               'rack_dist_sensitivity_0.6',
-                               'rack_dist_sensitivity_0.8']:
-                interarrival_time_dist = val_dists.gen_multimodal_val_dist(min_val=1,
-                                                                           max_val=10000,
-                                                                           locations=[10,20,100,1],
-                                                                           skews=[0,0,0,100],
-                                                                           scales=[1,3,4,50],
-                                                                           num_skew_samples=[10000,7000,5000,20000],
-                                                                           round_to_nearest=25,
-                                                                           bg_factor=0.01)
-
-            elif benchmark == 'social_media_cloud':
-                interarrival_time_dist = val_dists.gen_named_val_dist(dist='lognormal',
-                                                                      params={'_mu': 6, '_sigma': 2.3},
-                                                                      min_val=1,
-                                                                      round_to_nearest=25,
-                                                                      show_fig=False,
-                                                                      print_data=False)
-
-            elif benchmark == 'uniform':
-                interarrival_time_dist = val_dists.gen_uniform_val_dist(min_val=1,
-                                                                        max_val=10000,
-                                                                        round_to_nearest=25,
-                                                                        show_fig=False,
-                                                                        print_data=False)
-            elif benchmark == 'artificial_light':
-                # interarrival_time_dist = val_dists.gen_named_val_dist(dist='normal',
-                                                                      # params={'_loc': 3, '_scale': 0.5},
-                                                                      # show_fig=False,
-                                                                      # print_data=False)
-                interarrival_time_dist = {1.0: 1.0}
-
-            elif benchmark == 'jobcentric_prototyping':
-                interarrival_time_dist = {10000.0: 1.0}
-
-            elif benchmark == 'tensorflow':
-                interarrival_time_dist = val_dists.gen_multimodal_val_dist(1,
-                                                                           1e8,
-                                                                           locations=[1, 1, 3000, 1, 1800000, 10000000],
-                                                                           skews=[0, 100, -10, 10, 50, 6],
-                                                                           scales=[0.1, 62, 2000, 7500, 3500000, 20000000],
-                                                                           num_skew_samples=[800, 1000, 2000, 4000, 4000, 3000],
-                                                                           bg_factor=0.025)
-                # interarrival_time_dist = val_dists.gen_multimodal_val_dist(min_val=1,
-                                                                           # max_val=10000,
-                                                                           # locations=[10,20,100,1],
-                                                                           # skews=[0,0,0,100],
-                                                                           # scales=[1,3,4,50],
-                                                                           # num_skew_samples=[10000,7000,5000,20000],
-                                                                           # round_to_nearest=25,
-                                                                           # bg_factor=0.01)
 
             else:
                 raise Exception('Benchmark \'{}\' not recognised.'.format(benchmark))
@@ -587,27 +314,6 @@ class DistributionGenerator:
                 else:
                     print('Unrecognised dist_name {}'.format(dist_name))
                     
-        
-        # # create plot of sub plots
-        # fig = plt.figure()
-        # ax = fig.gca()
-        # ax.axis('off')
-        # ax.margins(0) # remove large white borders
-        # fig.tight_layout(pad=0)
-        # fig.subplots_adjust(hspace=0.1, wspace=0.1)
-        # i = 1
-        # for dist_name in self.dist_names:
-            # for benchmark in benchmarks:
-                # fig.add_subplot(len(self.dist_names), len(benchmarks), i)
-                # ax = fig.gca()
-                # ax.axis('off')
-                # dist_fig = plots[benchmark][dist_name]
-                # img = self.conv_fig_to_image(dist_fig)
-
-                # plt.imshow(img)
-                # i += 1
-
-        # plt.show()
         
         return plots, dists, plotted_rand_vars
 
