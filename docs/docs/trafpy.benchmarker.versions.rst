@@ -12,14 +12,6 @@ Subpackages
 Submodules
 ----------
 
-trafpy.benchmarker.versions module
-----------------------------------
-
-.. automodule:: trafpy.benchmarker.versions
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 trafpy.benchmarker.versions.benchmark module
 --------------------------------------------
 

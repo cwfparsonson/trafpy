@@ -10,11 +10,11 @@ TrafPy contains the following key modules:
   CSV, Pickle, JSON, etc.) and imported into any simulation, emulation, or experimentation
   environment. It also comes with an interactive Jupyter Notebook tool for visually building
   and shaping distributions.
+- ``trafpy.benchmarker``: A package for generating, reproducing, and establishing
+  standard network traffic benchmarks.
 - ``trafpy.manager``: A package for simulating a data centre network with various
   routing and scheduling protocols following the standard OpenAI Gym reinforcement
   learning interface.
-- ``trafpy.benchmarker``: A package for generating, reproducing, and establishing
-  standard network traffic benchmarks.
 
 TrafPy can be used to quickly and easily replicate traffic distributions from the
 literature even in the absense of raw open-access data. Furthermore, it is hoped

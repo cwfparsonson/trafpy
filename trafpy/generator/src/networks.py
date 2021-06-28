@@ -39,6 +39,7 @@ def gen_arbitrary_network(num_eps,
     network.add_nodes_from([node for node in range(num_eps)])
     
     if ep_label is None:
+        # must be str or not json serialisable
         servers = [str(i) for i in range(num_eps)]
     else:
         servers = [ep_label+'_'+str(i) for i in range(num_eps)]
@@ -493,12 +494,22 @@ def init_global_network_attrs(network,
     network.graph['node_labels'] = node_labels
     network.graph['topology_type'] = topology_type
     network.graph['channel_names'] = gen_channel_names(num_channels)
-    network.graph['rack_to_ep_dict'] = racks_dict
+
+    # ensure racks dict is str so json serialisable
+    if racks_dict is not None:
+        _racks_dict = {}
+        for key, val in racks_dict.items():
+            _racks_dict[str(key)] = []
+            for v in val:
+                _racks_dict[str(key)].append(str(v))
+        network.graph['rack_to_ep_dict'] = _racks_dict
+    else:
+        network.graph['rack_to_ep_dict'] = None
 
     if racks_dict is not None:
         # switch racks_dict keys and values to make hashing easier
         ep_to_rack_dict = {}
-        for key, val in racks_dict.items():
+        for key, val in _racks_dict.items():
             for v in val:
                 if v not in ep_to_rack_dict.keys():
                     ep_to_rack_dict[v] = key

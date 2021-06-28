@@ -20,8 +20,8 @@ TrafPy.
    :caption: Contents:
 
    tutorial_generator
-   tutorial_manager
    tutorial_benchmarker
+   tutorial_manager
 
 
 

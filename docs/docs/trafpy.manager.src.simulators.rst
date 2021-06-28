@@ -4,46 +4,6 @@ trafpy.manager.src.simulators package
 Submodules
 ----------
 
-trafpy.manager.src.simulators module
-------------------------------------
-
-.. automodule:: trafpy.manager.src.simulators
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-trafpy.manager.src.simulators module
-------------------------------------
-
-.. automodule:: trafpy.manager.src.simulators
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-trafpy.manager.src.simulators module
-------------------------------------
-
-.. automodule:: trafpy.manager.src.simulators
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-trafpy.manager.src.simulators module
-------------------------------------
-
-.. automodule:: trafpy.manager.src.simulators
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-trafpy.manager.src.simulators module
-------------------------------------
-
-.. automodule:: trafpy.manager.src.simulators
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 trafpy.manager.src.simulators.analysers module
 ----------------------------------------------
 

@@ -62,19 +62,18 @@ SLOT_SIZE = 1000.0 # 50.0 1000.0 10.0
 BENCHMARKS = ['social_media_cloud']
 
 # BENCHMARKS = ['uniform']
-# BENCHMARKS = ['artificial_light']
 
 # BENCHMARKS = ['skewed_nodes_sensitivity_0']
-# BENCHMARKS = ['skewed_nodes_sensitivity_0.05']
-# BENCHMARKS = ['skewed_nodes_sensitivity_0.1']
-# BENCHMARKS = ['skewed_nodes_sensitivity_0.2']
-# BENCHMARKS = ['skewed_nodes_sensitivity_0.4']
+# BENCHMARKS = ['skewed_nodes_sensitivity_005']
+# BENCHMARKS = ['skewed_nodes_sensitivity_01']
+# BENCHMARKS = ['skewed_nodes_sensitivity_02']
+# BENCHMARKS = ['skewed_nodes_sensitivity_04']
 
-# BENCHMARKS = ['rack_dist_sensitivity_0']
-# BENCHMARKS = ['rack_dist_sensitivity_0.2']
-# BENCHMARKS = ['rack_dist_sensitivity_0.4']
-# BENCHMARKS = ['rack_dist_sensitivity_0.6']
-# BENCHMARKS = ['rack_dist_sensitivity_0.8']
+# BENCHMARKS = ['rack_sensitivity_0']
+# BENCHMARKS = ['rack_sensitivity_02']
+# BENCHMARKS = ['rack_sensitivity_04']
+# BENCHMARKS = ['rack_sensitivity_06']
+# BENCHMARKS = ['rack_sensitivity_08']
 
 
 # JOB-CENTRIC

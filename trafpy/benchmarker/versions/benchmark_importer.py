@@ -57,6 +57,8 @@ class BenchmarkImporter:
                            'interarrival_time_dist': benchmark.get_interarrival_time_dist(dist_name='interarrival_time_dist')}
         if benchmark.jobcentric:
             benchmark_dists['num_ops_dist'] = benchmark.get_num_ops_dist(dist_name='num_ops_dist')
+        else:
+            benchmark_dists['num_ops_dist'] = None
 
         return benchmark_dists
 
