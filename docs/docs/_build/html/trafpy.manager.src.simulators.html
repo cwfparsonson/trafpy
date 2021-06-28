@@ -1,0 +1,873 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trafpy.manager.src.simulators package &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="trafpy.manager.src.schedulers package" href="trafpy.manager.src.schedulers.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">setup module</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="trafpy.html">trafpy package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="trafpy.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="trafpy.benchmarker.html">trafpy.benchmarker package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="trafpy.generator.html">trafpy.generator package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="trafpy.manager.html">trafpy.manager package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="trafpy.manager.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trafpy.manager.html#module-trafpy.manager">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="trafpy.html#module-trafpy">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="trafpy.html">trafpy package</a> &raquo;</li>
+        
+          <li><a href="trafpy.manager.html">trafpy.manager package</a> &raquo;</li>
+        
+          <li><a href="trafpy.manager.src.html">trafpy.manager.src package</a> &raquo;</li>
+        
+      <li>trafpy.manager.src.simulators package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/trafpy.manager.src.simulators.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="trafpy-manager-src-simulators-package">
+<h1>trafpy.manager.src.simulators package<a class="headerlink" href="#trafpy-manager-src-simulators-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trafpy.manager.src.simulators">
+<span id="trafpy-manager-src-simulators-module"></span><h2>trafpy.manager.src.simulators module<a class="headerlink" href="#module-trafpy.manager.src.simulators" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id1">
+<h2>trafpy.manager.src.simulators module<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-0"></span></div>
+<div class="section" id="id2">
+<h2>trafpy.manager.src.simulators module<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-1"></span></div>
+<div class="section" id="id3">
+<h2>trafpy.manager.src.simulators module<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-2"></span></div>
+<div class="section" id="id4">
+<h2>trafpy.manager.src.simulators module<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-3"></span></div>
+<div class="section" id="module-trafpy.manager.src.simulators.analysers">
+<span id="trafpy-manager-src-simulators-analysers-module"></span><h2>trafpy.manager.src.simulators.analysers module<a class="headerlink" href="#module-trafpy.manager.src.simulators.analysers" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trafpy.manager.src.simulators.dcn">
+<span id="trafpy-manager-src-simulators-dcn-module"></span><h2>trafpy.manager.src.simulators.dcn module<a class="headerlink" href="#module-trafpy.manager.src.simulators.dcn" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trafpy.manager.src.simulators.dcn.DCN">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.manager.src.simulators.dcn.</code><code class="sig-name descname">DCN</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Network</span></em>, <em class="sig-param"><span class="n">slots_dict</span></em>, <em class="sig-param"><span class="n">Scheduler</span></em>, <em class="sig-param"><span class="n">num_k_paths</span></em>, <em class="sig-param"><span class="n">env_database_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sim_name</span><span class="o">=</span><span class="default_value">'dcn_sim'</span></em>, <em class="sig-param"><span class="n">max_flows</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_time</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">time_multiplexing</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">track_grid_slot_evolution</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">track_queue_length_evolution</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">track_link_utilisation_evolution</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">track_link_concurrent_demands_evolution</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">profile_memory</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">memory_profile_resolution</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">gen_machine_readable_network</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gym.core.Env</span></code></p>
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.add_flow_to_queue">
+<code class="sig-name descname">add_flow_to_queue</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flow_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.add_flow_to_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.add_flow_to_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a new flow to the appropriate src-dst virtual queue in the
+simulator’s network. Also updates arrived flows record</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.add_flows_to_queues">
+<code class="sig-name descname">add_flows_to_queues</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">observation</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.add_flows_to_queues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.add_flows_to_queues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes observation of current time slot and updates virtual queues in
+network</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.add_job_to_queue">
+<code class="sig-name descname">add_job_to_queue</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job_dict</span></em>, <em class="sig-param"><span class="n">print_times</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.add_job_to_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.add_job_to_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a new job with its respective flows to the appropriate
+src-dst virtual queue in the simulator’s network. Aslo updates
+arrived flows record</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.calc_num_queued_flows_num_full_queues">
+<code class="sig-name descname">calc_num_queued_flows_num_full_queues</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.calc_num_queued_flows_num_full_queues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.calc_num_queued_flows_num_full_queues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calc num queued flows and full queues in network</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.calc_num_queued_jobs">
+<code class="sig-name descname">calc_num_queued_jobs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.calc_num_queued_jobs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.calc_num_queued_jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calc num queued jobs in network.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.calc_queue_length">
+<code class="sig-name descname">calc_queue_length</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">src</span></em>, <em class="sig-param"><span class="n">dst</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.calc_queue_length"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.calc_queue_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calc queue length in bytes at a given src-dst queue</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.calc_reward">
+<code class="sig-name descname">calc_reward</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.calc_reward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.calc_reward" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.check_chosen_flows_valid">
+<code class="sig-name descname">check_chosen_flows_valid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chosen_flows</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.check_chosen_flows_valid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.check_chosen_flows_valid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.check_flow_present">
+<code class="sig-name descname">check_flow_present</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flow</span></em>, <em class="sig-param"><span class="n">flows</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.check_flow_present"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.check_flow_present" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if flow is present in a list of flows. Assumes the following
+flow features are unique and unchanged properties of each flow:
+- flow size
+- source
+- destination
+- time arrived
+- flow_id
+- job_id</p>
+<p>Args:
+- flow (dict): flow dictionary
+- flows (list of dicts) list of flows in which to check if flow is
+present</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.check_if_any_flows_arrived">
+<code class="sig-name descname">check_if_any_flows_arrived</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.check_if_any_flows_arrived"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.check_if_any_flows_arrived" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.check_if_channel_used">
+<code class="sig-name descname">check_if_channel_used</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">edges</span></em>, <em class="sig-param"><span class="n">channel</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.check_if_channel_used"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.check_if_channel_used" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes list of edges to see if any one of the edges have used a certain
+channel</p>
+<p>Args:
+- edges (list of lists): edges we want to check if have used certain
+channel
+- channel (label): channel we want to check if has been used by any
+of the edges</p>
+<p>Returns:
+- True/False</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.check_if_done">
+<code class="sig-name descname">check_if_done</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.check_if_done"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.check_if_done" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if all flows (if flow centric) or all jobs (if job centric) have arrived &amp;
+been completed &amp;/or dropped</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.check_if_pairs_valid">
+<code class="sig-name descname">check_if_pairs_valid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">slots_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.check_if_pairs_valid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.check_if_pairs_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Since the network and the demand for a simulation are created separately,
+an easy mistake to fall into is to name the network nodes in the network
+differently from the src-dst pairs in the demand. This can lead to
+infinite loops since the flows never get added to appropriate queues!
+This function loops through all the src-dst pairs in the first slot
+of the slots dict to try to catch this error before the simulation is
+ran.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.check_num_channels_used">
+<code class="sig-name descname">check_num_channels_used</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">edge</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.check_num_channels_used"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.check_num_channels_used" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks number of channels currently in use on given edge in graph</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.conv_fig_to_image">
+<code class="sig-name descname">conv_fig_to_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fig</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.conv_fig_to_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.conv_fig_to_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes matplotlib figure and converts into numpy array of RGB pixel values</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.display_env_memory_usage">
+<code class="sig-name descname">display_env_memory_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.display_env_memory_usage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.display_env_memory_usage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.display_step_processing_time">
+<code class="sig-name descname">display_step_processing_time</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_decimals</span><span class="o">=</span><span class="default_value">8</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.display_step_processing_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.display_step_processing_time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.draw_network_state">
+<code class="sig-name descname">draw_network_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">draw_flows</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">draw_ops</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">draw_node_labels</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">ep_label</span><span class="o">=</span><span class="default_value">'server'</span></em>, <em class="sig-param"><span class="n">appended_node_size</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">network_node_size</span><span class="o">=</span><span class="default_value">2000</span></em>, <em class="sig-param"><span class="n">appended_node_x_spacing</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">appended_node_y_spacing</span><span class="o">=</span><span class="default_value">0.75</span></em>, <em class="sig-param"><span class="n">font_size</span><span class="o">=</span><span class="default_value">15</span></em>, <em class="sig-param"><span class="n">linewidths</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">fig_scale</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.draw_network_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.draw_network_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws network state as matplotlib figure</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.find_flow_idx">
+<code class="sig-name descname">find_flow_idx</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flow</span></em>, <em class="sig-param"><span class="n">flows</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.find_flow_idx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.find_flow_idx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds flow idx in a list of flows. Assumes the following
+flow features are unique and unchanged properties of each flow:
+- flow size
+- source
+- destination
+- time arrived
+- flow_id
+- job_id</p>
+<p>Args:
+- flow (dict): flow dictionary
+- flows (list of dicts) list of flows in which to find flow idx</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.get_channel_bandwidth">
+<code class="sig-name descname">get_channel_bandwidth</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">edge</span></em>, <em class="sig-param"><span class="n">channel</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.get_channel_bandwidth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.get_channel_bandwidth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets current channel bandwidth left on a given edge in the network.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.get_current_queue_states">
+<code class="sig-name descname">get_current_queue_states</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.get_current_queue_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.get_current_queue_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns list of all queues in network</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.get_max_flow_info_transferred_per_slot">
+<code class="sig-name descname">get_max_flow_info_transferred_per_slot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flow_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.get_max_flow_info_transferred_per_slot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.get_max_flow_info_transferred_per_slot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns maximum possible flow information &amp; number of packets transferred
+per timeslot given the flow’s path (i.e. in point-to-point circuit switched
+network, max info transferred per slot is the bandwidth of the lowest bw
+link in the path * the slot size)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.get_path_edges">
+<code class="sig-name descname">get_path_edges</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.get_path_edges"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.get_path_edges" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a path and returns list of edges in the path</p>
+<p>Args:
+- path (list): path in which you want to find all edges</p>
+<p>Returns:
+- edges (list of lists): all edges contained within the path</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.init_grid_slot_evolution">
+<code class="sig-name descname">init_grid_slot_evolution</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Graph</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.init_grid_slot_evolution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.init_grid_slot_evolution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.init_link_concurrent_demands_dict">
+<code class="sig-name descname">init_link_concurrent_demands_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.init_link_concurrent_demands_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.init_link_concurrent_demands_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.init_link_utilisation_evolution">
+<code class="sig-name descname">init_link_utilisation_evolution</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.init_link_utilisation_evolution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.init_link_utilisation_evolution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.init_queue_evolution">
+<code class="sig-name descname">init_queue_evolution</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Graph</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.init_queue_evolution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.init_queue_evolution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.init_virtual_queues">
+<code class="sig-name descname">init_virtual_queues</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Graph</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.init_virtual_queues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.init_virtual_queues" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.k_shortest_paths">
+<code class="sig-name descname">k_shortest_paths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">source</span></em>, <em class="sig-param"><span class="n">target</span></em>, <em class="sig-param"><span class="n">num_k</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">weight</span><span class="o">=</span><span class="default_value">'weight'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.k_shortest_paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.k_shortest_paths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses Yen’s algorithm to compute the k-shortest paths between a source
+and a target node. The shortest path is that with the lowest pathcost,
+defined by external path_cost() function. Paths are returned in order
+of path cost, with lowest past cost being first etc.</p>
+<p>Args:
+- source (label): label of source node
+- target (label): label of destination node
+- num_k (int, float): number of shortest paths to compute
+- weight (dict key): dictionary key of value to be ‘minimised’ when
+finding ‘shortest’ paths</p>
+<p>Returns:
+- A (list of lists): list of shortest paths between src and dst</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.next_observation">
+<code class="sig-name descname">next_observation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.next_observation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.next_observation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compiles simulator data and returns observation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.path_cost">
+<code class="sig-name descname">path_cost</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">weight</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.path_cost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.path_cost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates cost of path. If no weight specified, 1 unit of cost is 1
+link/edge in the path</p>
+<p>Args:
+- path (list): list of node labels making up path from src to dst
+- weight (dict key): label of weight to be considered when evaluating
+path cost</p>
+<p>Returns:
+- pathcost (int, float): total cost of path</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.register_arrived_flow">
+<code class="sig-name descname">register_arrived_flow</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flow_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.register_arrived_flow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.register_arrived_flow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.register_completed_flow">
+<code class="sig-name descname">register_completed_flow</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flow_dict</span></em>, <em class="sig-param"><span class="n">print_times</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.register_completed_flow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.register_completed_flow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a completed flow, appends it to list of completed flows, records
+time at which it was completed, and removes it from queue. If ‘flow’ in
+fact never become a flow (i.e. had src == dst or was control dependency
+with size == 0), will update dependencies but won’t append to completed
+flows etc.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.register_completed_job">
+<code class="sig-name descname">register_completed_job</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.register_completed_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.register_completed_job" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.remove_flow_from_queue">
+<code class="sig-name descname">remove_flow_from_queue</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flow_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.remove_flow_from_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.remove_flow_from_queue" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.remove_job_from_queue">
+<code class="sig-name descname">remove_job_from_queue</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.remove_job_from_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.remove_job_from_queue" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.render">
+<code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">action</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dpi</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">fig_scale</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.render"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renders current network state for final animation at end of scheduling
+session. If action is None, will only render network queue state(s)
+rather than also rendering selected lightpaths.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.render_network">
+<code class="sig-name descname">render_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">action</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fig_scale</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.render_network"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.render_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renders network state as matplotlib figure and, if specified, renders
+chosen action(s) (lightpaths) on top of figure</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.reset">
+<code class="sig-name descname">reset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">return_obs</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets DCN simulation environment</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.reset_channel_capacities_of_edges">
+<code class="sig-name descname">reset_channel_capacities_of_edges</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">edges</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.reset_channel_capacities_of_edges"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.reset_channel_capacities_of_edges" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes edges and resets their available capacities back to their maximum capacities.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.save_rendered_animation">
+<code class="sig-name descname">save_rendered_animation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path_animation</span></em>, <em class="sig-param"><span class="n">fps</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">bitrate</span><span class="o">=</span><span class="default_value">1800</span></em>, <em class="sig-param"><span class="n">animation_name</span><span class="o">=</span><span class="default_value">'anim'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.save_rendered_animation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.save_rendered_animation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.save_sim">
+<code class="sig-name descname">save_sim</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">overwrite</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">zip_data</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">print_times</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.save_sim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.save_sim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save self (i.e. object) using pickle</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.set_up_connection">
+<code class="sig-name descname">set_up_connection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flow</span></em>, <em class="sig-param"><span class="n">num_decimals</span><span class="o">=</span><span class="default_value">6</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.set_up_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.set_up_connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up connection between src-dst node pair by removing capacity from
+all edges in path connecting them. Also updates graph’s global curr
+network capacity used property</p>
+<p>Args:
+- flow (dict): flow dict containing flow info to set up</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">action</span></em>, <em class="sig-param"><span class="n">print_memory_usage</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">print_processing_time</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs an action in the DCN simulation environment, moving simulator
+to next step</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.take_action">
+<code class="sig-name descname">take_action</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">action</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.take_action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.take_action" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.take_down_connection">
+<code class="sig-name descname">take_down_connection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flow</span></em>, <em class="sig-param"><span class="n">num_decimals</span><span class="o">=</span><span class="default_value">6</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.take_down_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.take_down_connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes established connection by adding capacity back onto all edges
+in the path connecting the src-dst node pair. Also updates graph’s
+global curr network capacity used property</p>
+<p>Args:
+- flow (dict): flow dict containing info of flow to take down</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.update_completed_flow_job">
+<code class="sig-name descname">update_completed_flow_job</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">completed_flow</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.update_completed_flow_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.update_completed_flow_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates dependencies of other flows in job of completed flow.
+Checks if all flows in job of completed flow have been completed.
+If so, will update stat trackers &amp; remove from tracking list</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.update_curr_time">
+<code class="sig-name descname">update_curr_time</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">slot_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.update_curr_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.update_curr_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates current time of simulator using slot dict</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.update_flow_attrs">
+<code class="sig-name descname">update_flow_attrs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chosen_flows</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.update_flow_attrs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.update_flow_attrs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.update_flow_packets">
+<code class="sig-name descname">update_flow_packets</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flow_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.update_flow_packets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.update_flow_packets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes flow dict that has been schedueled to be activated for curr
+time slot and removes corresponding number of packets flow in queue</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.update_grid_slot_evolution">
+<code class="sig-name descname">update_grid_slot_evolution</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chosen_flows</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.update_grid_slot_evolution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.update_grid_slot_evolution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.update_job_flow_dependencies">
+<code class="sig-name descname">update_job_flow_dependencies</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">completed_flow</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.update_job_flow_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.update_job_flow_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Go through flows in job and update any flows that were waiting for
+completed flow to arrive before being able to be scheduled</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.update_link_concurrent_demands_evolution">
+<code class="sig-name descname">update_link_concurrent_demands_evolution</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">link</span></em>, <em class="sig-param"><span class="n">num_concurrent_demands_to_add</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.update_link_concurrent_demands_evolution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.update_link_concurrent_demands_evolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds num_concurrent_demands_to_add to current number of concurrent demands on a given link.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.update_link_utilisation_evolution">
+<code class="sig-name descname">update_link_utilisation_evolution</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.update_link_utilisation_evolution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.update_link_utilisation_evolution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.update_queue_evolution">
+<code class="sig-name descname">update_queue_evolution</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.update_queue_evolution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.update_queue_evolution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.DCN.update_running_op_dependencies">
+<code class="sig-name descname">update_running_op_dependencies</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">observation</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#DCN.update_running_op_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.DCN.update_running_op_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes observation of current time slot and updates dependencies of any
+ops that are running</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trafpy.manager.src.simulators.dcn.RepresentationGenerator">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.manager.src.simulators.dcn.</code><code class="sig-name descname">RepresentationGenerator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">env</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#RepresentationGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.RepresentationGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.RepresentationGenerator.conv_human_readable_flow_to_machine_readable_flow">
+<code class="sig-name descname">conv_human_readable_flow_to_machine_readable_flow</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flow</span></em>, <em class="sig-param"><span class="n">return_onehot_vectors</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">tf.float32</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#RepresentationGenerator.conv_human_readable_flow_to_machine_readable_flow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.RepresentationGenerator.conv_human_readable_flow_to_machine_readable_flow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.RepresentationGenerator.gen_machine_readable_network_observation">
+<code class="sig-name descname">gen_machine_readable_network_observation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">network_observation</span></em>, <em class="sig-param"><span class="n">return_onehot_vectors</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">tf.float32</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#RepresentationGenerator.gen_machine_readable_network_observation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.RepresentationGenerator.gen_machine_readable_network_observation" title="Permalink to this definition">¶</a></dt>
+<dd><p>If return_onehot_vectors is False, rather than returning one hot encodings,
+will return discrete indices of variables. This is useful for gym.spaces.Discrete()
+observation spaces which automatically one-hot encode Discrete observation space variables.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.RepresentationGenerator.onehot_encode_endpoints">
+<code class="sig-name descname">onehot_encode_endpoints</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#RepresentationGenerator.onehot_encode_endpoints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.RepresentationGenerator.onehot_encode_endpoints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.dcn.RepresentationGenerator.onehot_encode_paths">
+<code class="sig-name descname">onehot_encode_paths</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/dcn.html#RepresentationGenerator.onehot_encode_paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.dcn.RepresentationGenerator.onehot_encode_paths" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trafpy.manager.src.simulators.env_analyser">
+<span id="trafpy-manager-src-simulators-env-analyser-module"></span><h2>trafpy.manager.src.simulators.env_analyser module<a class="headerlink" href="#module-trafpy.manager.src.simulators.env_analyser" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trafpy.manager.src.simulators.env_analyser.EnvAnalyser">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.manager.src.simulators.env_analyser.</code><code class="sig-name descname">EnvAnalyser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">env</span></em>, <em class="sig-param"><span class="n">time_units</span><span class="o">=</span><span class="default_value">'a.u.'</span></em>, <em class="sig-param"><span class="n">info_units</span><span class="o">=</span><span class="default_value">'a.u.'</span></em>, <em class="sig-param"><span class="n">subject_class_name</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_analyser.html#EnvAnalyser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_analyser.EnvAnalyser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_analyser.EnvAnalyser.compute_metrics">
+<code class="sig-name descname">compute_metrics</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">measurement_start_time</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">measurement_end_time</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">env_analyser_database_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">overwrite</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">print_summary</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_analyser.html#EnvAnalyser.compute_metrics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_analyser.EnvAnalyser.compute_metrics" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>measurement_start_time (int, float): Simulation time at which to begin recording</dt><dd><p>metrics etc.; is the warm-up time</p>
+</dd>
+<dt>measurement_end_time (int, float): Simulation time at which to stop recording</dt><dd><p>metrics etc.; is the cool-down time</p>
+</dd>
+</dl>
+<p>If overwrite is False and an analyser object exists in env_analyser_database_path,
+will load previously saved analyser object rather than re-computing everything.
+To overwrite this previously saved analyser, set overwrite=True.</p>
+<p>If tmp_database_path is not None, will store data in tmp_database_path str
+specified. This can help with memory errors as avoids holding everything
+in RAM memory.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trafpy.manager.src.simulators.env_plotter">
+<span id="trafpy-manager-src-simulators-env-plotter-module"></span><h2>trafpy.manager.src.simulators.env_plotter module<a class="headerlink" href="#module-trafpy.manager.src.simulators.env_plotter" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvPlotter">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.manager.src.simulators.env_plotter.</code><code class="sig-name descname">EnvPlotter</code><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvPlotter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvPlotter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter">
+<em class="property">class </em><code class="sig-prename descclassname">trafpy.manager.src.simulators.env_plotter.</code><code class="sig-name descname">EnvsPlotter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_units</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">info_units</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.construct_tables">
+<code class="sig-name descname">construct_tables</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.construct_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.construct_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs summary dataframes and tables and (optionally) prints out
+and displays these tables. Optionally also visualises these summary
+data with radar plots.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.find_index_of_int_in_str">
+<code class="sig-name descname">find_index_of_int_in_str</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.find_index_of_int_in_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.find_index_of_int_in_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_99th_percentile_fct_vs_load">
+<code class="sig-name descname">plot_99th_percentile_fct_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_99th_percentile_fct_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_99th_percentile_fct_vs_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_99th_percentile_jct_vs_load">
+<code class="sig-name descname">plot_99th_percentile_jct_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_99th_percentile_jct_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_99th_percentile_jct_vs_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_demand_completion_time_vs_size_for_different_loads">
+<code class="sig-name descname">plot_demand_completion_time_vs_size_for_different_loads</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_demand_completion_time_vs_size_for_different_loads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_demand_completion_time_vs_size_for_different_loads" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_demand_slot_colour_grid_for_different_schedulers">
+<code class="sig-name descname">plot_demand_slot_colour_grid_for_different_schedulers</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_demand_slot_colour_grid_for_different_schedulers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_demand_slot_colour_grid_for_different_schedulers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_fcts_cdf_for_different_loads">
+<code class="sig-name descname">plot_fcts_cdf_for_different_loads</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_fcts_cdf_for_different_loads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_fcts_cdf_for_different_loads" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_fraction_of_arrived_flows_dropped_vs_load">
+<code class="sig-name descname">plot_fraction_of_arrived_flows_dropped_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_fraction_of_arrived_flows_dropped_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_fraction_of_arrived_flows_dropped_vs_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_fraction_of_arrived_info_dropped_vs_load">
+<code class="sig-name descname">plot_fraction_of_arrived_info_dropped_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_fraction_of_arrived_info_dropped_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_fraction_of_arrived_info_dropped_vs_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_fraction_of_arrived_jobs_dropped_vs_load">
+<code class="sig-name descname">plot_fraction_of_arrived_jobs_dropped_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_fraction_of_arrived_jobs_dropped_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_fraction_of_arrived_jobs_dropped_vs_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_jcts_cdf_for_different_loads">
+<code class="sig-name descname">plot_jcts_cdf_for_different_loads</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_jcts_cdf_for_different_loads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_jcts_cdf_for_different_loads" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_link_concurrent_demands_vs_time_for_different_loads">
+<code class="sig-name descname">plot_link_concurrent_demands_vs_time_for_different_loads</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_link_concurrent_demands_vs_time_for_different_loads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_link_concurrent_demands_vs_time_for_different_loads" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_link_utilisation_vs_time_for_different_loads">
+<code class="sig-name descname">plot_link_utilisation_vs_time_for_different_loads</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_link_utilisation_vs_time_for_different_loads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_link_utilisation_vs_time_for_different_loads" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_max_fct_vs_load">
+<code class="sig-name descname">plot_max_fct_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_max_fct_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_max_fct_vs_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_max_jct_vs_load">
+<code class="sig-name descname">plot_max_jct_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_max_jct_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_max_jct_vs_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_mean_fct_vs_load">
+<code class="sig-name descname">plot_mean_fct_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_mean_fct_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_mean_fct_vs_load" title="Permalink to this definition">¶</a></dt>
+<dd><p><a href="#id5"><span class="problematic" id="id6">*</span></a>analysers (<a href="#id7"><span class="problematic" id="id8">*</span></a>args): Analyser objects whose metrics you wish to plot.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_mean_jct_vs_load">
+<code class="sig-name descname">plot_mean_jct_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_mean_jct_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_mean_jct_vs_load" title="Permalink to this definition">¶</a></dt>
+<dd><p><a href="#id9"><span class="problematic" id="id10">*</span></a>analysers (<a href="#id11"><span class="problematic" id="id12">*</span></a>args): Analyser objects whose metrics you wish to plot.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_src_dst_queue_evolution_for_different_loads">
+<code class="sig-name descname">plot_src_dst_queue_evolution_for_different_loads</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">src</span></em>, <em class="sig-param"><span class="n">dst</span></em>, <em class="sig-param"><span class="n">length_type</span><span class="o">=</span><span class="default_value">'queue_lengths_num_flows'</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_src_dst_queue_evolution_for_different_loads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_src_dst_queue_evolution_for_different_loads" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_t_score_scatter">
+<code class="sig-name descname">plot_t_score_scatter</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_t_score_scatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_t_score_scatter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots performance indicators for T-scores.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_throughput_frac_vs_load">
+<code class="sig-name descname">plot_throughput_frac_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_throughput_frac_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_throughput_frac_vs_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_throughput_rate_vs_load">
+<code class="sig-name descname">plot_throughput_rate_vs_load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">analysers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#EnvsPlotter.plot_throughput_rate_vs_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.EnvsPlotter.plot_throughput_rate_vs_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.manager.src.simulators.env_plotter.get_summary_dict">
+<code class="sig-prename descclassname">trafpy.manager.src.simulators.env_plotter.</code><code class="sig-name descname">get_summary_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">analysers</span></em>, <em class="sig-param"><span class="n">headers</span></em>, <em class="sig-param"><span class="n">time_units</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">info_units</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#get_summary_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.get_summary_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="trafpy.manager.src.simulators.env_plotter.plot_summary_dict_params">
+<code class="sig-prename descclassname">trafpy.manager.src.simulators.env_plotter.</code><code class="sig-name descname">plot_summary_dict_params</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">summary_dicts</span></em>, <em class="sig-param"><span class="n">error_summary_dicts</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dependent_var_name</span><span class="o">=</span><span class="default_value">'Random Variable'</span></em>, <em class="sig-param"><span class="n">dependent_var_display_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">control_var_name</span><span class="o">=</span><span class="default_value">'Param'</span></em>, <em class="sig-param"><span class="n">loads</span><span class="o">=</span><span class="default_value">[0.1, 0.5, 0.9]</span></em>, <em class="sig-param"><span class="n">subjects_to_plot</span><span class="o">=</span><span class="default_value">'all'</span></em>, <em class="sig-param"><span class="n">path_to_save</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trafpy/manager/src/simulators/env_plotter.html#plot_summary_dict_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trafpy.manager.src.simulators.env_plotter.plot_summary_dict_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is for when you have used <a href="#id13"><span class="problematic" id="id14">`</span></a>envs_plotter’ to plot individual
+simulation statistics for various loads, and now wish to do some plots
+across multiple simulation statistics for cross-simulation analysis. Note
+that this notebook requires you having set a path_to_save string when
+calling <a href="#id15"><span class="problematic" id="id16">`</span></a>envs_plotter’ so that an <a href="#id17"><span class="problematic" id="id18">`</span></a>envs_plotter’_ directory contains a
+summary_dataframe.pkl file.</p>
+<p>summary_dicts should be a dict of dicts. The keys of summary_dicts should
+be the parameter values of the control_var_name (e.g. for
+rack_dist_sensitivity benchmark, would be 0.2, 0.4, 0.6, and 0.8 for 20%,
+40%, 60%, and 80% intra-rack traffic).  The values are the originial
+summary_dataframe.pkl file which has been loaded as a pandas dataframe and
+converted to a dict (pf.read_pickle(path_to_summary_dataframe.pkl).to_dict)</p>
+<p>The keys of these individual summary dicts will be e.g. ‘Load’, ‘Subject’,
+‘Mean FCT’ etc., and the values will be the corresponding values.</p>
+<p>If error_summary_dicts is not None, should be a summary_dict formatted in same
+way as summary_dicts but containing the error (e.g. std) for each stat.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-trafpy.manager.src.simulators.plotters">
+<span id="trafpy-manager-src-simulators-plotters-module"></span><h2>trafpy.manager.src.simulators.plotters module<a class="headerlink" href="#module-trafpy.manager.src.simulators.plotters" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trafpy.manager.src.simulators.simulators">
+<span id="trafpy-manager-src-simulators-simulators-module"></span><h2>trafpy.manager.src.simulators.simulators module<a class="headerlink" href="#module-trafpy.manager.src.simulators.simulators" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-4">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-4" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="trafpy.manager.src.schedulers.html" class="btn btn-neutral float-left" title="trafpy.manager.src.schedulers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

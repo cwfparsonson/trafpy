@@ -16,6 +16,7 @@ trafpy/benchmarker/tools.py
 trafpy/benchmarker/versions/__init__.py
 trafpy/benchmarker/versions/benchmark.py
 trafpy/benchmarker/versions/benchmark_importer.py
+trafpy/benchmarker/versions/old_benchmark_importer.py
 trafpy/benchmarker/versions/benchmark_v001/__init__.py
 trafpy/benchmarker/versions/benchmark_v001/benchmark_plot_script.py
 trafpy/benchmarker/versions/benchmark_v001/config.py

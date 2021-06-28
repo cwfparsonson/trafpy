@@ -1,6 +1,7 @@
 numpy
 pandas
 matplotlib
+seaborn
 statsmodels
 ipywidgets
 networkx
@@ -18,3 +19,5 @@ tree
 dm-tree
 opencv-python
 lz4
+gym
+tensorflow

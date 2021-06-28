@@ -1,0 +1,1308 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trafpy.manager.src.simulators.env_analyser &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/underscore.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../../index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Contribute.html">Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../setup.html">setup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../trafpy.html">trafpy package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trafpy.manager.src.simulators.env_analyser</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trafpy.manager.src.simulators.env_analyser</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">sqlitedict</span> <span class="kn">import</span> <span class="n">SqliteDict</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">_pickle</span> <span class="k">as</span> <span class="nn">cPickle</span>
+
+<div class="viewcode-block" id="EnvAnalyser"><a class="viewcode-back" href="../../../../../trafpy.manager.src.simulators.html#trafpy.manager.src.simulators.env_analyser.EnvAnalyser">[docs]</a><span class="k">class</span> <span class="nc">EnvAnalyser</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">time_units</span><span class="o">=</span><span class="s1">&#39;a.u.&#39;</span><span class="p">,</span> <span class="n">info_units</span><span class="o">=</span><span class="s1">&#39;a.u.&#39;</span><span class="p">,</span> <span class="n">subject_class_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        envs (obj): Environment/simulation object to analyse.</span>
+<span class="sd">        time_units (str): Units of time in env simulation (e.g. us).</span>
+<span class="sd">        info_units (str): Units of information in simulation (e.g. B). </span>
+<span class="sd">        subject_class_name (str): Name of test subject class. Is useful for when come</span>
+<span class="sd">            to e.g. plotting multiple envs using EnvsPlotter and want to group</span>
+<span class="sd">            analysers into classes/subject names being tested (e.g. test subject </span>
+<span class="sd">            &#39;scheduler_1&#39; vs. test subject &#39;scheduler_2&#39;) across an</span>
+<span class="sd">            arbitrary number of tests (e.g. 10 different network loads).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">env</span>
+        <span class="k">if</span> <span class="n">subject_class_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subject_class_name</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">sim_name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subject_class_name</span> <span class="o">=</span> <span class="n">subject_class_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">computed_metrics</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span> <span class="o">=</span> <span class="n">time_units</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info_units</span> <span class="o">=</span> <span class="n">info_units</span>
+
+
+<div class="viewcode-block" id="EnvAnalyser.compute_metrics"><a class="viewcode-back" href="../../../../../trafpy.manager.src.simulators.html#trafpy.manager.src.simulators.env_analyser.EnvAnalyser.compute_metrics">[docs]</a>    <span class="k">def</span> <span class="nf">compute_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                        <span class="n">measurement_start_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                        <span class="n">measurement_end_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                        <span class="n">env_analyser_database_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="n">print_summary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        measurement_start_time (int, float): Simulation time at which to begin recording</span>
+<span class="sd">            metrics etc.; is the warm-up time</span>
+<span class="sd">        measurement_end_time (int, float): Simulation time at which to stop recording</span>
+<span class="sd">            metrics etc.; is the cool-down time</span>
+
+<span class="sd">        If overwrite is False and an analyser object exists in env_analyser_database_path,</span>
+<span class="sd">        will load previously saved analyser object rather than re-computing everything.</span>
+<span class="sd">        To overwrite this previously saved analyser, set overwrite=True.</span>
+
+<span class="sd">        If tmp_database_path is not None, will store data in tmp_database_path str</span>
+<span class="sd">        specified. This can help with memory errors as avoids holding everything</span>
+<span class="sd">        in RAM memory.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Computing metrics for env </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">computed_metrics</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">=</span> <span class="n">measurement_start_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="o">=</span> <span class="n">measurement_end_time</span>
+        <span class="n">load_prev</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># using databases to store in external memory, init database dir</span>
+            <span class="n">env_analyser_database_path</span> <span class="o">+=</span> <span class="s1">&#39;/env_analyser_database&#39;</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">env_analyser_database_path</span><span class="o">+</span><span class="s1">&#39;/analyser&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Overwriting </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">env_analyser_database_path</span><span class="p">))</span>
+                    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">env_analyser_database_path</span><span class="p">)</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">env_analyser_database_path</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">load_prev</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> exists and overwrite is False. Loading previously completed analysis...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">env_analyser_database_path</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">env_analyser_database_path</span><span class="p">):</span>
+                    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">env_analyser_database_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">load_prev</span> <span class="ow">and</span> <span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">env_analyser_database_path</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">env_analyser_database_path</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="o">=</span> <span class="n">env_analyser_database_path</span>
+
+        <span class="k">if</span> <span class="n">load_prev</span> <span class="ow">and</span> <span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_self</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span><span class="p">)</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loaded previously saved analyser object from </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1"> s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_compute_job_summary</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_flow_summary</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_general_summary</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Saving analyser object for env </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">))</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_save_self</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span><span class="p">)</span> 
+                <span class="n">e</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Saved analyser object to </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1"> s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span><span class="p">,</span> <span class="n">e</span><span class="o">-</span><span class="n">s</span><span class="p">))</span>
+            
+            <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computed metrics for env </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1"> s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">print_summary</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">-=-=-=-=-=-=--= Summary -=-=-=-=-=-=-=-&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_print_general_summary</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_print_flow_summary</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_print_job_summary</span><span class="p">()</span></div>
+
+
+
+    <span class="c1">####################################### GENERAL ##########################################</span>
+    <span class="k">def</span> <span class="nf">_print_general_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> ~* General Information *~&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Simulation name: </span><span class="se">\&#39;</span><span class="si">{}</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Measurement duration: </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> (Start time : </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> | End time: </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">measurement_duration</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of generated demands (jobs or flows) passed to env: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">num_demands</span><span class="p">))</span> 
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total info arrived: </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_info_arrived</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_units</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total info transported: </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_info_transported</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_units</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Load (abs): </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">load_abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_units</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Load (frac): </span><span class="si">{}</span><span class="s1"> fraction of network capacity requested.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">load_frac</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Throughput (abs): </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">throughput_abs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_units</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Throughput (frac): </span><span class="si">{}</span><span class="s1"> fraction of arrived info successfully transported.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">throughput_frac</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;T-Score: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">t_score</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_compute_general_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_info_arrived</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_total_info_arrived</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_info_transported</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_total_info_transported</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_abs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_network_load_abs</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_frac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_network_load_frac</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">throughput_abs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_throughput_abs</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">throughput_frac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_throughput_frac</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_t_score</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_calc_total_info_arrived</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">arrived_flow_dicts</span><span class="p">:</span>
+                <span class="n">arrived_flows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">arrived_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                <span class="n">arrived_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">arrived_flows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="n">arrived_flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arrived_flows</span><span class="p">))])</span>
+
+    <span class="k">def</span> <span class="nf">_calc_total_info_transported</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_flow_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">completed_flow_dicts</span><span class="p">:</span>
+                <span class="n">completed_flows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">completed_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                <span class="n">completed_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">completed_flows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="n">completed_flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">completed_flows</span><span class="p">))])</span>
+    
+    <span class="k">def</span> <span class="nf">_calc_network_load_abs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Calc absolute network load (i.e. is load rate during measurement period).&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_info_arrived</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_duration</span>
+
+    <span class="k">def</span> <span class="nf">_calc_network_load_frac</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Calc fraction network load (i.e. is fraction of network capacity requested during measurement period).&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_abs</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;max_nw_capacity&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_calc_throughput_abs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_info_transported</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_duration</span>
+
+    <span class="k">def</span> <span class="nf">_calc_throughput_frac</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_info_transported</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_info_arrived</span>
+
+
+
+    <span class="c1">################################## FLOW ################################################</span>
+    <span class="k">def</span> <span class="nf">_print_flow_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> ~* Flow Information *~&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of generated flows passed to env (src != dst, dependency_type == </span><span class="se">\&#39;</span><span class="s1">data_dep</span><span class="se">\&#39;</span><span class="s1">): </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">num_flows</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of these flows which arrived during measurement period: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_arrived_flows</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time first flow arrived: </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_first_flow_arrived</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time last flow arrived: </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_last_flow_arrived</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of flows that were completed: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_completed_flows</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of flows that were left in queue at end of measurement period: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_queued_flows</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of flows that were dropped (dropped + left in queue at end of measurement period): </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_dropped_flows</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Fraction of arrived flows dropped: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dropped_flow_frac</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Mean flow completion time (FCT): </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_fct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;99th percentile FCT: </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nn_fct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_compute_t_score</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Returns TrafPy overall T-score.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">computed_metrics</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Must first run compute_metrics() method.&#39;</span><span class="p">)</span>
+
+        <span class="c1"># FCT COMPONENT</span>
+        <span class="c1"># collect flow sizes of arrived flows</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">arrived_flow_dicts</span><span class="p">:</span>
+                <span class="n">arrived_flows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">arrived_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                <span class="n">arrived_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">arrived_flows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flow_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">arrived_flows</span><span class="p">]</span>
+
+        <span class="n">mean_fct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_fct</span>
+        <span class="n">std_fct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_fct</span>
+
+        <span class="n">mean_fct_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flow_sizes</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;ep_link_capacity&#39;</span><span class="p">]</span>
+        <span class="n">std_fct_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flow_sizes</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;ep_link_capacity&#39;</span><span class="p">]</span>
+
+        <span class="n">mean_fct_component</span> <span class="o">=</span> <span class="n">mean_fct_factor</span> <span class="o">/</span> <span class="n">mean_fct</span>
+        <span class="n">std_fct_component</span> <span class="o">=</span> <span class="n">std_fct_factor</span> <span class="o">/</span> <span class="n">std_fct</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fct_component</span> <span class="o">=</span> <span class="n">mean_fct_component</span> <span class="o">+</span> <span class="n">std_fct_component</span>
+
+
+        <span class="c1"># DROPPED FLOWS COMPONENT</span>
+        <span class="n">num_eps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">])</span>
+        <span class="n">num_queues</span> <span class="o">=</span> <span class="n">num_eps</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_eps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">max_num_flows_in_network</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">max_flows</span> <span class="o">*</span> <span class="n">num_queues</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropped_component</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dropped_flow_frac</span> <span class="o">*</span> <span class="n">max_num_flows_in_network</span><span class="p">)</span>
+
+        <span class="c1"># THROUGHPUT COMPONENT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">throughput_component</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">throughput_abs</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;max_nw_capacity&#39;</span><span class="p">]</span>
+
+        <span class="c1"># T-SCORE</span>
+        <span class="c1"># print(&#39;fct component: {} | dropped component: {} | throughput_component: {}&#39;.format(fct_component, dropped_component, throughput_component))</span>
+        <span class="n">t_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fct_component</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropped_component</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">throughput_component</span>
+
+        <span class="k">return</span> <span class="n">t_score</span>
+
+
+    
+    <span class="k">def</span> <span class="nf">_save_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="o">+</span><span class="s1">&#39;/analyser&#39;</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span>
+        <span class="n">cPickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">_load_self</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="o">+</span><span class="s1">&#39;/analyser&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+        <span class="n">tmp_dict</span> <span class="o">=</span> <span class="n">cPickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">tmp_dict</span><span class="p">)</span>
+
+
+
+
+
+
+
+    <span class="k">def</span> <span class="nf">_compute_flow_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_flow_arrival_metrics</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_flow_completion_metrics</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_flow_queued_metrics</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_flow_dropped_metrics</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">track_grid_slot_evolution</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_generate_grid_demands_numpy_array</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_generate_grid_demands_numpy_array</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># collect ep link channel demand info into numpy array grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_demands</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">grid_slot_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">grid_slot_dict</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">grid_demands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">grid_slot_dict</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="n">channel</span><span class="p">][</span><span class="s1">&#39;demands&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_demands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span> <span class="k">for</span> <span class="n">xi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_demands</span><span class="p">])</span> <span class="c1"># unpack and conv to numpy array</span>
+
+        <span class="c1"># conv grid demands to unique integer ids (for colour coding)</span>
+        <span class="n">unique_id_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">demand_to_id</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">demand_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_demands</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="k">for</span> <span class="n">time_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_demands</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_demands</span><span class="p">[</span><span class="n">demand_idx</span><span class="p">][</span><span class="n">time_idx</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">demand_to_id</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="c1"># not yet encountered demand id, update demand_to_id dict</span>
+                    <span class="n">demand_to_id</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">unique_id_counter</span>
+                    <span class="n">unique_id_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="c1"># update grid_demands</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">grid_demands</span><span class="p">[</span><span class="n">demand_idx</span><span class="p">][</span><span class="n">time_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">demand_to_id</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># update grid_demands</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">grid_demands</span><span class="p">[</span><span class="n">demand_idx</span><span class="p">][</span><span class="n">time_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">demand_to_id</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+
+        <span class="c1"># conv grid elements to ints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_demands</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_demands</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+
+
+
+
+    <span class="k">def</span> <span class="nf">_calc_flow_completion_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow_completion_times</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">flow_completion_times</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">mean_fct</span><span class="p">,</span> <span class="n">ninetyninth_percentile_fct</span><span class="p">,</span> <span class="n">max_fct</span><span class="p">,</span> <span class="n">standard_deviation_fct</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mean_fct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">flow_completion_times</span><span class="p">))</span>
+            <span class="n">ninetyninth_percentile_fct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">flow_completion_times</span><span class="p">),</span> <span class="mi">99</span><span class="p">)</span>
+            <span class="n">max_fct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">flow_completion_times</span><span class="p">))</span>
+            <span class="n">standard_deviation_fct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">flow_completion_times</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">mean_fct</span><span class="p">,</span> <span class="n">ninetyninth_percentile_fct</span><span class="p">,</span> <span class="n">max_fct</span><span class="p">,</span> <span class="n">standard_deviation_fct</span>
+
+    <span class="k">def</span> <span class="nf">_init_flow_arrival_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># init database</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="o">+</span> <span class="s1">&#39;/arrived_flow_dicts.sqlite&#39;</span>
+            <span class="c1"># print(&#39;arrived dicts:\n{}&#39;.format(self.arrived_flow_dicts))</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="p">)</span>
+            <span class="n">times_arrived</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">arrived_flow_dicts</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_flows_arrived_in_measurement_period</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">arrived_flow_dicts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                    <span class="n">times_arrived</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">])</span>
+                <span class="n">arrived_flow_dicts</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                <span class="n">arrived_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># load into memory</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_flows_arrived_in_measurement_period</span><span class="p">()</span> 
+            <span class="n">arrived_flows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">times_arrived</span> <span class="o">=</span> <span class="p">[</span><span class="n">arrived_flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arrived_flows</span><span class="p">))]</span>
+
+        <span class="c1"># print(times_arrived)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_arrived_flows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">times_arrived</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_first_flow_arrived</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">times_arrived</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_last_flow_arrived</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">times_arrived</span><span class="p">)</span>
+
+
+
+
+    <span class="k">def</span> <span class="nf">_compute_flow_arrival_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computing flow arrival metrics for env </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_flow_arrival_metrics</span><span class="p">()</span>
+        <span class="c1"># self.measurement_duration, self.measurement_start_time, self.measurement_end_time = self._get_flow_measurement_times()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+            <span class="c1"># compute flow-centric measurement tims</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">measurement_duration</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_measurement_times</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># demands are jobs therefore measurements times computed by job arrivals</span>
+            <span class="k">pass</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computed flow arrival metrics for env </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1"> s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_compute_flow_completion_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computing flow completion metrics for env </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># init database</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">completed_flow_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="o">+</span> <span class="s1">&#39;/completed_flow_dicts.sqlite&#39;</span>
+            <span class="n">fcts</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_flow_dicts</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_flow_dicts</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_flow_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">completed_flow_dicts</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_flows_completed_in_measurement_period</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">completed_flow_dicts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                    <span class="n">time_arrived</span><span class="p">,</span> <span class="n">time_completed</span> <span class="o">=</span> <span class="n">val</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">],</span> <span class="n">val</span><span class="p">[</span><span class="s1">&#39;time_completed&#39;</span><span class="p">]</span>
+                    <span class="n">fct</span> <span class="o">=</span> <span class="n">time_completed</span> <span class="o">-</span> <span class="n">time_arrived</span>
+                    <span class="n">fcts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fct</span><span class="p">)</span>
+                <span class="n">completed_flow_dicts</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                <span class="n">completed_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># load into memory</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">completed_flow_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_flows_completed_in_measurement_period</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">completed_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">fct</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_completed&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="n">fcts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fct</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_completed_flows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">fcts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean_fct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_fct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_fct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_fct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_flow_completion_times</span><span class="p">(</span><span class="n">fcts</span><span class="p">)</span>
+
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computed flow completion metrics for env </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1"> s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_compute_flow_dropped_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computing flow dropped metrics for env </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="n">dropped_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_flows_dropped_in_measurement_period</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dropped_flow_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="o">+</span> <span class="s1">&#39;/dropped_flow_dicts.sqlite&#39;</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dropped_flow_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">dropped_flow_dicts</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dropped_flows</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">dropped_flow_dicts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                <span class="n">dropped_flow_dicts</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                <span class="n">dropped_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dropped_flow_dicts</span> <span class="o">=</span> <span class="n">dropped_flows</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_dropped_flows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">dropped_flows</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropped_flow_frac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_dropped_flows</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_arrived_flows</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_info_dropped</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">dropped_flows</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">total_info_dropped</span> <span class="o">+=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropped_info_frac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_info_dropped</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_total_info_arrived</span><span class="p">()</span>
+
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computed flow dropped metrics for env </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1"> s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="nf">_compute_flow_queued_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computing flow queued metrics for env </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="n">queued_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_flows_remaining_in_queue_at_end_of_measurement_period</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queued_flow_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="o">+</span> <span class="s1">&#39;/queued_flow_dicts.sqlite&#39;</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queued_flow_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">queued_flow_dicts</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">queued_flows</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">queued_flow_dicts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                <span class="n">queued_flow_dicts</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                <span class="n">queued_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queued_flow_dicts</span> <span class="o">=</span> <span class="n">queued_flows</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_queued_flows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">queued_flows</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computed flow queued metrics for env </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1"> s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_get_measurement_times</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+                <span class="n">measurement_start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_first_job_arrived</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">measurement_start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_first_flow_arrived</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+                <span class="c1"># both start and end must be assigned simultaneously</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_last_job_arrived</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">curr_time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">slot_size</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_init_job_arrival_metrics</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># both start and end must be assigned simultaneously</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_last_flow_arrived</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">curr_time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">slot_size</span>
+            <span class="c1"># update arrived demands to be within measurement duration</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_flow_arrival_metrics</span><span class="p">()</span>
+            <span class="n">measurement_start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span>
+            <span class="n">measurement_end_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="o">!=</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_last_job_arrived</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_init_job_arrival_metrics</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_last_flow_arrived</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_flow_arrival_metrics</span><span class="p">()</span>
+            <span class="n">measurement_start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">measurement_start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">measurement_end_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">curr_time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">slot_size</span> <span class="c1"># time sim was ended</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="o">=</span> <span class="n">measurement_end_time</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">!=</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">job_centric</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_last_job_arrived</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_init_job_arrival_metrics</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_last_flow_arrived</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_flow_arrival_metrics</span><span class="p">()</span>
+            <span class="n">measurement_start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">measurement_end_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span>
+        <span class="n">measurement_duration</span> <span class="o">=</span> <span class="n">measurement_end_time</span> <span class="o">-</span> <span class="n">measurement_start_time</span>
+
+
+        <span class="k">return</span> <span class="n">measurement_duration</span><span class="p">,</span> <span class="n">measurement_start_time</span><span class="p">,</span> <span class="n">measurement_end_time</span>
+
+    <span class="c1"># def _get_flow_measurement_times(self):</span>
+        <span class="c1"># if self.measurement_start_time is None:</span>
+            <span class="c1"># measurement_start_time = self.time_first_flow_arrived</span>
+        <span class="c1"># elif self.measurement_start_time == &#39;auto&#39; and self.measurement_end_time == &#39;auto&#39;:</span>
+            <span class="c1"># # both start and end must be assigned simultaneously</span>
+            <span class="c1"># self.measurement_start_time = 0.1 * self.time_last_flow_arrived</span>
+            <span class="c1"># self.measurement_end_time = self.time_last_flow_arrived</span>
+            <span class="c1"># # update arrived flows to be within measurement duration</span>
+            <span class="c1"># self._init_flow_arrival_metrics()</span>
+            <span class="c1"># measurement_start_time = self.measurement_start_time</span>
+            <span class="c1"># measurement_end_time = self.measurement_end_time</span>
+        <span class="c1"># elif self.measurement_start_time == &#39;auto&#39; and self.measurement_end_time != &#39;auto&#39;:</span>
+            <span class="c1"># self.measurement_start_time = 0.1 * self.time_last_flow_arrived</span>
+            <span class="c1"># self._init_flow_arrival_metrics()</span>
+            <span class="c1"># measurement_start_time = self.measurement_start_time</span>
+        <span class="c1"># else:</span>
+            <span class="c1"># measurement_start_time = self.measurement_start_time</span>
+
+        <span class="c1"># if self.measurement_end_time is None:</span>
+            <span class="c1"># measurement_end_time = self.env.curr_time # time sim was ended</span>
+        <span class="c1"># elif self.measurement_end_time == &#39;auto&#39; and self.measurement_start_time != &#39;auto&#39;:</span>
+            <span class="c1"># self.measurement_start_time = self.time_last_flow_arrived</span>
+            <span class="c1"># self._init_flow_arrival_metrics()</span>
+            <span class="c1"># measurement_start_time = self.measurement_start_time</span>
+        <span class="c1"># else:</span>
+            <span class="c1"># measurement_end_time = self.measurement_end_time</span>
+        <span class="c1"># measurement_duration = measurement_end_time - measurement_start_time</span>
+
+
+        <span class="c1"># return measurement_duration, measurement_start_time, measurement_end_time</span>
+
+    <span class="k">def</span> <span class="nf">_get_flows_remaining_in_queue_at_end_of_measurement_period</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">queued_flow_dicts</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># get flows that were dropped during measurement period -&gt; these won&#39;t be in queue</span>
+        <span class="n">dropped_flow_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_flows_dropped_in_measurement_period</span><span class="p">(</span><span class="n">count_flows_left_in_queue</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># create dicts to enable efficient hash searching</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_flow_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">completed_flow_dicts</span><span class="p">:</span>
+                <span class="n">completed_flows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">completed_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                <span class="n">completed_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">completed_flows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">if</span> <span class="s1">&#39;unique_id&#39;</span> <span class="ow">in</span> <span class="n">completed_flows</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">completed_flow_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">completed_flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;unique_id&#39;</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">completed_flows</span><span class="p">))}</span>
+            <span class="n">dropped_flows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dropped_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">dropped_flow_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">dropped_flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;unique_id&#39;</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dropped_flows</span><span class="p">))}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># no unique id included in flow dict</span>
+            <span class="n">completed_flow_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">completed_flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">completed_flows</span><span class="p">))}</span>
+            <span class="n">dropped_flows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dropped_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">dropped_flow_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">dropped_flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dropped_flows</span><span class="p">))}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">arrived_flow_dicts</span> <span class="o">=</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">arrived_flow_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arrived_flow_dicts</span>
+        <span class="k">for</span> <span class="n">flow_id</span><span class="p">,</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">arrived_flow_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">flow_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">completed_flow_ids</span> <span class="ow">and</span> <span class="n">flow_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dropped_flow_ids</span><span class="p">:</span>
+                <span class="n">queued_flow_dicts</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">flow</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">arrived_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">queued_flow_dicts</span>
+
+    <span class="k">def</span> <span class="nf">_get_flows_dropped_in_measurement_period</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count_flows_left_in_queue</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Find all flows which arrived during measurement period and were dropped.</span>
+
+<span class="sd">        If count_flows_left_in_queue, will count flows left in queue at end of</span>
+<span class="sd">        measurement period as having been dropped.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">dropped_flow_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="c1"># load database</span>
+            <span class="n">env_dropped_flow_dicts</span> <span class="o">=</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">dropped_flow_dicts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">env_dropped_flow_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">dropped_flow_dicts</span>
+
+        <span class="n">dropped_flow_dicts</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">env_dropped_flow_dicts</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flow_id</span><span class="p">,</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">env_dropped_flow_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="n">dropped_flow_dicts</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">flow</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flow_id</span><span class="p">,</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">env_dropped_flow_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="n">dropped_flow_dicts</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">flow</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flow_id</span><span class="p">,</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">env_dropped_flow_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+                <span class="k">elif</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">and</span> <span class="n">arr_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="c1"># measure</span>
+                    <span class="n">dropped_flow_dicts</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">flow</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="n">count_flows_left_in_queue</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queued_flow_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">queued_flow_dicts</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">queued_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="s1">&#39;unique_id&#39;</span> <span class="ow">in</span> <span class="n">flow</span><span class="p">:</span>
+                            <span class="n">dropped_flow_dicts</span><span class="p">[</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;unique_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">flow</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="c1"># no unique id included in flow dict</span>
+                            <span class="n">dropped_flow_dicts</span><span class="p">[</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">flow</span>
+
+                    <span class="n">queued_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queued_flow_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="s1">&#39;unique_id&#39;</span> <span class="ow">in</span> <span class="n">flow</span><span class="p">:</span>
+                        <span class="n">dropped_flow_dicts</span><span class="p">[</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;unique_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">flow</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># no unique id included in flow dict</span>
+                        <span class="n">dropped_flow_dicts</span><span class="p">[</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">flow</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">dropped_flow_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">env_dropped_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+            
+        <span class="k">return</span> <span class="n">dropped_flow_dicts</span> 
+
+    <span class="k">def</span> <span class="nf">_get_flows_completed_in_measurement_period</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Find all flows which arrived during measurement period and were completed.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">completed_flow_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="c1"># load database</span>
+            <span class="n">env_completed_flow_dicts</span> <span class="o">=</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">completed_flow_dicts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">env_completed_flow_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">completed_flow_dicts</span>
+
+        <span class="n">completed_flow_dicts</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">env_completed_flow_dicts</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flow_id</span><span class="p">,</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">env_completed_flow_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">comp_time</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_completed&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">comp_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="n">completed_flow_dicts</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">flow</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flow_id</span><span class="p">,</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">env_completed_flow_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span><span class="p">,</span> <span class="n">comp_time</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">],</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_completed&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">comp_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">and</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="n">completed_flow_dicts</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">flow</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flow_id</span><span class="p">,</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">env_completed_flow_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span><span class="p">,</span> <span class="n">comp_time</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">],</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_completed&#39;</span><span class="p">]</span>
+                <span class="c1"># print(&#39;flow arr time: {} | meas start time: {} | comp time: {} | meas end time: {}&#39;.format(flow[&#39;time_arrived&#39;], self.measurement_start_time, flow[&#39;time_completed&#39;], self.measurement_end_time))</span>
+                <span class="k">if</span> <span class="n">comp_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">or</span> <span class="n">arr_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+                <span class="k">elif</span> <span class="n">comp_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">and</span> <span class="n">comp_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">and</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="c1"># measure</span>
+                    <span class="n">completed_flow_dicts</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">flow</span>
+                <span class="k">elif</span> <span class="n">comp_time</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">completed_flow_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">env_completed_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">completed_flow_dicts</span> 
+
+    <span class="k">def</span> <span class="nf">_get_flows_arrived_in_measurement_period</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Find flows arrived during measurement period.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="c1"># load database</span>
+            <span class="n">env_arrived_flow_dicts</span> <span class="o">=</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">env_arrived_flow_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">arrived_flow_dicts</span>
+
+        <span class="n">flows_arrived</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">env_arrived_flow_dicts</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
+            <span class="c1"># assume all arrived for now, will update later</span>
+            <span class="k">return</span> <span class="n">env_arrived_flow_dicts</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flow_id</span><span class="p">,</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">env_arrived_flow_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="n">flows_arrived</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">flow</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flow_id</span><span class="p">,</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">env_arrived_flow_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="n">flows_arrived</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">flow</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flow_id</span><span class="p">,</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">env_arrived_flow_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span> <span class="o">=</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="c1"># print(&#39;flow arr time: {} | meas start time: {}&#39;.format(flow[&#39;time_arrived&#39;], self.measurement_start_time))</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+                <span class="k">elif</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">and</span> <span class="n">arr_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="c1"># measure</span>
+                    <span class="n">flows_arrived</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">flow</span>
+                <span class="k">elif</span> <span class="n">arr_time</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">arrived_flow_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">env_arrived_flow_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">flows_arrived</span> 
+
+
+    <span class="c1">#################################### JOB ##################################</span>
+    <span class="k">def</span> <span class="nf">_print_job_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> ~* Job Information *~&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of generated jobs passed to env: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">num_demands</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of these jobs which arrived during measurement period: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_arrived_jobs</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time first job arrived: </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_first_job_arrived</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time last job arrived: </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_last_job_arrived</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of jobs that were completed: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_completed_jobs</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of jobs that were left in queue at end of measurement period: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_queued_jobs</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total number of jobs that were dropped (dropped + left in queue at end of measurement period): </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_dropped_jobs</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Fraction of arrived jobs dropped: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dropped_job_frac</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Mean job completion time (JCT): </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_jct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;99th percentile JCT: </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nn_jct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_units</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_compute_job_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_job_arrival_metrics</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_job_completion_metrics</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_job_queued_metrics</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_job_dropped_metrics</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_compute_job_arrival_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computing job arrival metrics for env </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="c1"># self.arrived_job_dicts = self._get_jobs_arrived_in_measurement_period(self.measurement_start_time, self.measurement_end_time)</span>
+        <span class="c1"># self.job_times_arrived = [self.arrived_job_dicts[i][&#39;time_arrived&#39;] for i in range(len(self.arrived_job_dicts))]</span>
+        <span class="c1"># self.num_arrived_jobs = len(self.arrived_job_dicts)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_job_arrival_metrics</span><span class="p">()</span>
+        <span class="c1"># self.measurement_duration, self.measurement_start_time, self.measurement_end_time = self._get_job_measurement_times()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">measurement_duration</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_measurement_times</span><span class="p">()</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computed job arrival metrics for env </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1"> s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_compute_job_completion_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># self.completed_job_dicts = self._get_jobs_completed_in_measurement_period()</span>
+        <span class="c1"># self.num_completed_jobs = len(self.completed_job_dicts)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computing job completion metrics for env </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># init database</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">completed_job_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="o">+</span> <span class="s1">&#39;/completed_job_dicts.sqlite&#39;</span>
+            <span class="n">jcts</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_job_dicts</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_job_dicts</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_job_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">completed_job_dicts</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_jobs_completed_in_measurement_period</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">completed_job_dicts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                    <span class="n">time_arrived</span><span class="p">,</span> <span class="n">time_completed</span> <span class="o">=</span> <span class="n">val</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">],</span> <span class="n">val</span><span class="p">[</span><span class="s1">&#39;time_completed&#39;</span><span class="p">]</span>
+                    <span class="n">jct</span> <span class="o">=</span> <span class="n">time_completed</span> <span class="o">-</span> <span class="n">time_arrived</span>
+                    <span class="n">jcts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">jct</span><span class="p">)</span>
+                <span class="n">completed_job_dicts</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                <span class="n">completed_job_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># load into memory</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">completed_job_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_jobs_completed_in_measurement_period</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">completed_job_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">jct</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_completed&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="n">jcts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">jct</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_completed_jobs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">jcts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean_jct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_jct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_jct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_jct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_job_completion_times</span><span class="p">(</span><span class="n">jcts</span><span class="p">)</span>
+
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computed job completion metrics for env </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1"> s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+        
+    <span class="k">def</span> <span class="nf">_compute_job_dropped_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># self.dropped_job_dicts = self._get_jobs_dropped_in_measurement_period()</span>
+        <span class="c1"># self.num_dropped_jobs = len(self.dropped_job_dicts)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computing job dropped metrics for env </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="n">dropped_jobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_jobs_dropped_in_measurement_period</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dropped_job_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="o">+</span> <span class="s1">&#39;/dropped_job_dicts.sqlite&#39;</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dropped_job_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">dropped_job_dicts</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dropped_jobs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">dropped_job_dicts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                <span class="n">dropped_job_dicts</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                <span class="n">dropped_job_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dropped_job_dicts</span> <span class="o">=</span> <span class="n">dropped_jobs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_dropped_jobs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">dropped_jobs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropped_job_frac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_dropped_jobs</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_arrived_jobs</span>
+
+        <span class="c1"># self.total_info_dropped = 0</span>
+        <span class="c1"># for job in dropped_jobs.values():</span>
+            <span class="c1"># self.total_info_dropped += job[&#39;size&#39;]</span>
+        <span class="c1"># self.dropped_info_frac = self.total_info_dropped / self._calc_total_info_arrived()</span>
+
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computed job dropped metrics for env </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1"> s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_compute_job_queued_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># self.queued_job_dicts = self._get_job_remaining_in_queue_at_end_of_measurement_period()</span>
+        <span class="c1"># self.num_queued_jobs = len(self.queued_job_dicts)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computing job queued metrics for env </span><span class="si">{}</span><span class="s1">...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="n">queued_jobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_jobs_remaining_in_queue_at_end_of_measurement_period</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queued_job_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="o">+</span> <span class="s1">&#39;/queued_job_dicts.sqlite&#39;</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queued_job_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">queued_job_dicts</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">queued_jobs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">queued_job_dicts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                <span class="n">queued_job_dicts</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                <span class="n">queued_job_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queued_job_dicts</span> <span class="o">=</span> <span class="n">queued_jobs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_queued_jobs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">queued_jobs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computed job queued metrics for env </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1"> s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">sim_name</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_get_jobs_remaining_in_queue_at_end_of_measurement_period</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">queued_job_dicts</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># get jobs that were dropped during measurement period -&gt; these won&#39;t be in queue</span>
+        <span class="n">dropped_job_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_jobs_dropped_in_measurement_period</span><span class="p">(</span><span class="n">count_jobs_left_in_queue</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># create dicts to enable efficient hash searching</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_job_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">completed_job_dicts</span><span class="p">:</span>
+                <span class="n">completed_jobs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">completed_job_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                <span class="n">completed_job_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">completed_jobs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completed_job_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">if</span> <span class="s1">&#39;unique_id&#39;</span> <span class="ow">in</span> <span class="n">completed_jobs</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">completed_job_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">completed_jobs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;unique_id&#39;</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">completed_jobs</span><span class="p">))}</span>
+            <span class="n">dropped_jobs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dropped_job_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">dropped_job_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">dropped_jobs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;unique_id&#39;</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dropped_jobs</span><span class="p">))}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># no unique id included in job dict</span>
+            <span class="n">completed_job_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">completed_jobs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;job_id&#39;</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">completed_jobs</span><span class="p">))}</span>
+            <span class="n">dropped_jobs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dropped_job_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">dropped_job_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">dropped_jobs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;job_id&#39;</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dropped_jobs</span><span class="p">))}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">arrived_job_dicts</span> <span class="o">=</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_job_dicts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">arrived_job_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arrived_job_dicts</span>
+        <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">arrived_job_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">job_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">completed_job_ids</span> <span class="ow">and</span> <span class="n">job_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dropped_job_ids</span><span class="p">:</span>
+                <span class="n">queued_job_dicts</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">arrived_job_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">queued_job_dicts</span>
+
+    <span class="k">def</span> <span class="nf">_get_jobs_arrived_in_measurement_period</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Find jobs arrived during measurement period.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">arrived_job_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="c1"># load database</span>
+            <span class="n">env_arrived_job_dicts</span> <span class="o">=</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">arrived_job_dicts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">env_arrived_job_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">arrived_job_dicts</span>
+
+        <span class="n">jobs_arrived</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">env_arrived_job_dicts</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
+            <span class="c1"># assume all arrived for now, will update later</span>
+            <span class="k">return</span> <span class="n">env_arrived_job_dicts</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">env_arrived_job_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="n">jobs_arrived</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">env_arrived_job_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="n">jobs_arrived</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">env_arrived_job_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+                <span class="k">elif</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">and</span> <span class="n">arr_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="c1"># measure</span>
+                    <span class="n">jobs_arrived</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+                <span class="k">elif</span> <span class="n">arr_time</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">arrived_job_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">env_arrived_job_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">jobs_arrived</span> 
+
+    <span class="k">def</span> <span class="nf">_get_jobs_completed_in_measurement_period</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Find all jobs which arrived during measurement period and were completed.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">completed_job_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="c1"># load database</span>
+            <span class="n">env_completed_job_dicts</span> <span class="o">=</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">completed_job_dicts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">env_completed_job_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">completed_job_dicts</span>
+
+        <span class="n">completed_job_dicts</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">env_completed_job_dicts</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">env_completed_job_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">comp_time</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_completed&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">comp_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="n">completed_job_dicts</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">env_completed_job_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span><span class="p">,</span> <span class="n">comp_time</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">],</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_completed&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">comp_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">and</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="n">completed_job_dicts</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">env_completed_job_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span><span class="p">,</span> <span class="n">comp_time</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">],</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_completed&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">comp_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">or</span> <span class="n">arr_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+                <span class="k">elif</span> <span class="n">comp_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">and</span> <span class="n">comp_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">and</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="c1"># measure</span>
+                    <span class="n">completed_job_dicts</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+                <span class="k">elif</span> <span class="n">comp_time</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">completed_job_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">env_completed_job_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">completed_job_dicts</span> 
+
+    <span class="k">def</span> <span class="nf">_calc_job_completion_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_completion_times</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">job_completion_times</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">mean_jct</span><span class="p">,</span> <span class="n">ninetyninth_percentile_jct</span><span class="p">,</span> <span class="n">max_jct</span><span class="p">,</span> <span class="n">standard_deviation_jct</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mean_jct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">job_completion_times</span><span class="p">))</span>
+            <span class="n">ninetyninth_percentile_jct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">job_completion_times</span><span class="p">),</span> <span class="mi">99</span><span class="p">)</span>
+            <span class="n">max_jct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">job_completion_times</span><span class="p">))</span>
+            <span class="n">standard_deviation_jct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">job_completion_times</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">mean_jct</span><span class="p">,</span> <span class="n">ninetyninth_percentile_jct</span><span class="p">,</span> <span class="n">max_jct</span><span class="p">,</span> <span class="n">standard_deviation_jct</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_jobs_dropped_in_measurement_period</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count_jobs_left_in_queue</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Find all jobs which arrived during measurement period and were dropped.</span>
+
+<span class="sd">        If count_jobs_left_in_queue, will count jobs left in queue at end of</span>
+<span class="sd">        measurement period as having been dropped.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">dropped_job_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="c1"># load database</span>
+            <span class="n">env_dropped_job_dicts</span> <span class="o">=</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">dropped_job_dicts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">env_dropped_job_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">dropped_job_dicts</span>
+
+        <span class="n">dropped_job_dicts</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">env_dropped_job_dicts</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">env_dropped_job_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="n">dropped_job_dicts</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">env_dropped_job_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="n">dropped_job_dicts</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">env_dropped_job_dicts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">arr_time</span> <span class="o">=</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">arr_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span><span class="p">:</span>
+                    <span class="c1"># warming up</span>
+                    <span class="k">pass</span>
+                <span class="k">elif</span> <span class="n">arr_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_start_time</span> <span class="ow">and</span> <span class="n">arr_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_end_time</span><span class="p">:</span>
+                    <span class="c1"># measure</span>
+                    <span class="n">dropped_job_dicts</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># cooling down</span>
+                    <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="n">count_jobs_left_in_queue</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queued_job_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">queued_job_dicts</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">queued_job_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="s1">&#39;unique_id&#39;</span> <span class="ow">in</span> <span class="n">job</span><span class="p">:</span>
+                            <span class="n">dropped_job_dicts</span><span class="p">[</span><span class="n">job</span><span class="p">[</span><span class="s1">&#39;unique_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">job</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="c1"># no unique id included in job dict</span>
+                            <span class="n">dropped_job_dicts</span><span class="p">[</span><span class="n">job</span><span class="p">[</span><span class="s1">&#39;job_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">job</span>
+
+                    <span class="n">queued_job_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queued_job_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="s1">&#39;unique_id&#39;</span> <span class="ow">in</span> <span class="n">job</span><span class="p">:</span>
+                        <span class="n">dropped_job_dicts</span><span class="p">[</span><span class="n">job</span><span class="p">[</span><span class="s1">&#39;unique_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">job</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># no unique id included in job dict</span>
+                        <span class="n">dropped_job_dicts</span><span class="p">[</span><span class="n">job</span><span class="p">[</span><span class="s1">&#39;job_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">job</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">dropped_job_dicts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">env_dropped_job_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+            
+        <span class="k">return</span> <span class="n">dropped_job_dicts</span> 
+
+
+
+    <span class="k">def</span> <span class="nf">_init_job_arrival_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># init database</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arrived_job_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_analyser_database_path</span> <span class="o">+</span> <span class="s1">&#39;/arrived_job_dicts.sqlite&#39;</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_job_dicts</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_job_dicts</span><span class="p">)</span>
+            <span class="n">times_arrived</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">with</span> <span class="n">SqliteDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_job_dicts</span><span class="p">)</span> <span class="k">as</span> <span class="n">arrived_job_dicts</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_jobs_arrived_in_measurement_period</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">arrived_job_dicts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                    <span class="n">times_arrived</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">])</span>
+                <span class="n">arrived_job_dicts</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                <span class="n">arrived_job_dicts</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># load into memory</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arrived_job_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_jobs_arrived_in_measurement_period</span><span class="p">()</span> 
+            <span class="n">arrived_jobs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrived_job_dicts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">times_arrived</span> <span class="o">=</span> <span class="p">[</span><span class="n">arrived_jobs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;time_arrived&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arrived_jobs</span><span class="p">))]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_arrived_jobs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">times_arrived</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_first_job_arrived</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">times_arrived</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_last_job_arrived</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">times_arrived</span><span class="p">)</span></div>
+
+
+    <span class="c1"># def _get_job_measurement_times(self):</span>
+        <span class="c1"># if self.measurement_start_time is None:</span>
+            <span class="c1"># measurement_start_time = self.time_first_job_arrived</span>
+        <span class="c1"># elif self.measurement_start_time == &#39;auto&#39; and self.measurement_end_time == &#39;auto&#39;:</span>
+            <span class="c1"># # both start and end must be assigned simultaneously</span>
+            <span class="c1"># self.measurement_start_time = 0.1 * self.time_last_job_arrived</span>
+            <span class="c1"># self.measurement_end_time = self.time_last_job_arrived</span>
+            <span class="c1"># # update arrived jobs to be within measurement duration</span>
+            <span class="c1"># self._init_job_arrival_metrics()</span>
+            <span class="c1"># measurement_start_time = self.measurement_start_time</span>
+            <span class="c1"># measurement_end_time = self.measurement_end_time</span>
+        <span class="c1"># elif self.measurement_start_time == &#39;auto&#39; and self.measurement_end_time != &#39;auto&#39;:</span>
+            <span class="c1"># self.measurement_start_time = 0.1 * self.time_last_job_arrived</span>
+            <span class="c1"># self._init_job_arrival_metrics()</span>
+            <span class="c1"># measurement_start_time = self.measurement_start_time</span>
+        <span class="c1"># else:</span>
+            <span class="c1"># measurement_start_time = self.measurement_start_time</span>
+
+        <span class="c1"># if self.measurement_end_time is None:</span>
+            <span class="c1"># measurement_end_time = self.env.curr_time # time sim ended</span>
+        <span class="c1"># elif self.measurement_end_time == &#39;auto&#39; and self.measurement_start_time != &#39;auto&#39;:</span>
+            <span class="c1"># self.measurement_start_time = self.time_last_job_arrived</span>
+            <span class="c1"># self._init_job_arrival_metrics()</span>
+            <span class="c1"># measurement_start_time = self.measurement_start_time</span>
+        <span class="c1"># else:</span>
+            <span class="c1"># measurement_end_time = self.measurement_end_time</span>
+        <span class="c1"># measurement_duration = measurement_end_time - measurement_start_time</span>
+
+        <span class="c1"># print(&#39;measurement end time: {} | curr sim time: {}&#39;.format(self.measurement_end_time, self.env.curr_time))</span>
+
+
+        <span class="c1"># return measurement_duration, measurement_start_time, measurement_end_time</span>
+    
+
+
+
+
+
+
+
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
