@@ -121,30 +121,3 @@ There are a few steps to generating a multimodal distribution with TrafPy:
    random variable data.
 
 5. (Optional) Run the 5th cell to save your mutlimodal random variable data
-
-
-
-Generate Distributions in Sets
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. note::
-    This is an extension of the interactive toolbox primarily for TrafPy users
-    who are not familiar with Python and want to simply run the Notebook to generate
-    distribution and/or random variable data CSV files to import into their own
-    e.g. MATLAB scripts. Users familiar with Python are encouraged to shape their
-    distributions and then implement their own TrafPy scripts, and may therefore
-    omit this final cell. 
-
-The final cell in the TrafPy Jupyter Notebook tool allows users to generate
-distributions without visualisation (i.e. the above cells are needed to first 
-shape the distributions, or some prior shaping parameters are needed). This 
-is useful for generating large amounts of data in 'sets', where some sets may
-have different demand characteristics/distributions from others.
-
-Simply configure the variables under ``# set vars`` (e.g. the number of sets 
-``num_sets`` and the number of demands in each set ``num_demands``). Any
-distributions to keep constant across all sets should be defined outside the for loop,
-and those that should change should be defined within.
-
-.. note::
-    This is a basic script written for a specific use-case. Adjusting it to
-    your specific needs may require some basic Python knowledge.
