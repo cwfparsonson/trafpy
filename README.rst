@@ -45,7 +45,7 @@ independently of ``TrafPy``.
         pickle.dump(demand_data, f)
 
 
-See the `documentation's tutorial <https://trafpy.readthedocs.io/en/latest/Tutorial.html>`_
+See the `tutorial <https://trafpy.readthedocs.io/en/latest/tutorial.html>`_
 and the `examples <https://github.com/cwfparsonson/trafpy/tree/master/examples>`_ directory
 for more information.
 
