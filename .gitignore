@@ -45,5 +45,5 @@ ehthumbs.db
 Thumbs.db
 
 # folders
-doc/_build
-examples/data
+doc/_build/*
+examples/data/*
