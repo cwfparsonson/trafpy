@@ -1,0 +1,512 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trafpy.manager.src.schedulers.lambda_share &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/underscore.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../../index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Contribute.html">Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../setup.html">setup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../trafpy.html">trafpy package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trafpy.manager.src.schedulers.lambda_share</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trafpy.manager.src.schedulers.lambda_share</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">trafpy.manager.src.schedulers.schedulertoolbox</span> <span class="kn">import</span> <span class="n">SchedulerToolbox_v2</span>
+<span class="kn">from</span> <span class="nn">trafpy.manager.src.schedulers.fair_share</span> <span class="kn">import</span> <span class="n">FairShare</span> 
+<span class="kn">from</span> <span class="nn">trafpy.manager.src.schedulers.srpt</span> <span class="kn">import</span> <span class="n">SRPT_v2</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+
+
+
+
+
+<div class="viewcode-block" id="LambdaShare"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.lambda_share.LambdaShare">[docs]</a><span class="k">class</span> <span class="nc">LambdaShare</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">Graph</span><span class="p">,</span>
+                 <span class="n">RWA</span><span class="p">,</span>
+                 <span class="n">slot_size</span><span class="p">,</span>
+                 <span class="n">_lambda</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+                 <span class="n">packet_size</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+                 <span class="n">time_multiplexing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">debug_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">scheduler_name</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\u03BB</span><span class="s1">S&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        _lambda is the share of the network bandwidth dedicated to priority</span>
+<span class="sd">        shortest flows (i.e. this bandwidth will be given to srpt). The remaining</span>
+<span class="sd">        bandwidth will be shared equally among all flows (i.e. this bandwidth</span>
+<span class="sd">        will be given to fair share).</span>
+
+<span class="sd">        E.g. if _lambda = 0.8 -&gt; 80% of bandwidth used for srpt, 20% for fair share.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># DEBUG</span>
+        <span class="c1"># debug_mode = True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug_mode</span> <span class="o">=</span> <span class="n">debug_mode</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span> <span class="o">=</span> <span class="n">_lambda</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rwa</span> <span class="o">=</span> <span class="n">RWA</span>
+
+        <span class="c1"># init srpt and fair share networks with lambda share bandwidth capacities</span>
+        <span class="n">srpt_network</span><span class="p">,</span> <span class="n">fair_share_network</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_lambda_networks</span><span class="p">(</span><span class="n">network</span><span class="o">=</span><span class="n">Graph</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">srpt</span> <span class="o">=</span> <span class="n">SRPT_v2</span><span class="p">(</span><span class="n">Graph</span><span class="o">=</span><span class="n">srpt_network</span><span class="p">,</span>
+                            <span class="n">RWA</span><span class="o">=</span><span class="n">RWA</span><span class="p">,</span>
+                            <span class="n">slot_size</span><span class="o">=</span><span class="n">slot_size</span><span class="p">,</span>
+                            <span class="n">packet_size</span><span class="o">=</span><span class="n">packet_size</span><span class="p">,</span>
+                            <span class="n">time_multiplexing</span><span class="o">=</span><span class="n">time_multiplexing</span><span class="p">,</span>
+                            <span class="n">debug_mode</span><span class="o">=</span><span class="n">debug_mode</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fair_share</span> <span class="o">=</span> <span class="n">FairShare</span><span class="p">(</span><span class="n">Graph</span><span class="o">=</span><span class="n">fair_share_network</span><span class="p">,</span>
+                                    <span class="n">RWA</span><span class="o">=</span><span class="n">RWA</span><span class="p">,</span>
+                                    <span class="n">slot_size</span><span class="o">=</span><span class="n">slot_size</span><span class="p">,</span>
+                                    <span class="n">packet_size</span><span class="o">=</span><span class="n">packet_size</span><span class="p">,</span>
+                                    <span class="n">time_multiplexing</span><span class="o">=</span><span class="n">time_multiplexing</span><span class="p">,</span>
+                                    <span class="n">debug_mode</span><span class="o">=</span><span class="n">debug_mode</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span> <span class="o">=</span> <span class="n">SchedulerToolbox_v2</span><span class="p">(</span><span class="n">Graph</span><span class="o">=</span><span class="n">Graph</span><span class="p">,</span> 
+                                           <span class="n">RWA</span><span class="o">=</span><span class="n">RWA</span><span class="p">,</span> 
+                                           <span class="n">slot_size</span><span class="o">=</span><span class="n">slot_size</span><span class="p">,</span> 
+                                           <span class="n">packet_size</span><span class="o">=</span><span class="n">packet_size</span><span class="p">,</span>
+                                           <span class="n">time_multiplexing</span><span class="o">=</span><span class="n">time_multiplexing</span><span class="p">,</span> 
+                                           <span class="n">debug_mode</span><span class="o">=</span><span class="n">debug_mode</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scheduler_name</span> <span class="o">=</span> <span class="n">scheduler_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolution_strategy</span><span class="o">=</span><span class="s1">&#39;lambda_share&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_update_lambda_networks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                                <span class="n">network</span><span class="p">,</span>
+                                <span class="n">update_channel_capacities</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                <span class="n">update_graph_attrs</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Takes in network and initialises i) srpt and ii) fair share networks</span>
+<span class="sd">        with updates lambda share capacities.</span>
+
+<span class="sd">        if not update_channel_capacities, will not multiply channel capacities</span>
+<span class="sd">        by lambda.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">srpt_network</span><span class="p">,</span> <span class="n">fair_share_network</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">network</span><span class="p">),</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">network</span><span class="p">)</span>
+
+        <span class="c1"># update channel capacities</span>
+        <span class="k">if</span> <span class="n">update_channel_capacities</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">network</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+                <span class="c1"># max edge capacities</span>
+                <span class="c1"># src-dst</span>
+                <span class="n">srpt_network</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">])][</span><span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span>
+                <span class="n">fair_share_network</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">])][</span><span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span><span class="p">)</span>
+                <span class="c1"># dst-src</span>
+                <span class="n">srpt_network</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">])][</span><span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span>
+                <span class="n">fair_share_network</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">])][</span><span class="s1">&#39;max_channel_capacity&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rwa</span><span class="o">.</span><span class="n">channel_names</span><span class="p">:</span>
+                    <span class="c1"># available edge channel capacity</span>
+                    <span class="c1"># src-dst</span>
+                    <span class="n">srpt_network</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">])][</span><span class="s1">&#39;channels&#39;</span><span class="p">][</span><span class="n">channel</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span>
+                    <span class="n">fair_share_network</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">])][</span><span class="s1">&#39;channels&#39;</span><span class="p">][</span><span class="n">channel</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span><span class="p">)</span>
+                    <span class="c1"># dst-src</span>
+                    <span class="n">srpt_network</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">])][</span><span class="s1">&#39;channels&#39;</span><span class="p">][</span><span class="n">channel</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span>
+                    <span class="n">fair_share_network</span><span class="p">[</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_to_</span><span class="si">{}</span><span class="s1">_port&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">])][</span><span class="s1">&#39;channels&#39;</span><span class="p">][</span><span class="n">channel</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span><span class="p">)</span>
+
+        <span class="c1"># update graph attrs</span>
+        <span class="k">if</span> <span class="n">update_graph_attrs</span><span class="p">:</span>
+            <span class="n">srpt_network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;ep_link_capacity&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span>
+            <span class="n">fair_share_network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;ep_link_capacity&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span><span class="p">)</span>
+            <span class="n">srpt_network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;ep_link_port_capacity&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span>
+            <span class="n">fair_share_network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;ep_link_port_capacity&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span><span class="p">)</span>
+            <span class="n">srpt_network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;max_nw_capacity&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span>
+            <span class="n">fair_share_network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;max_nw_capacity&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">srpt_network</span><span class="p">,</span> <span class="n">fair_share_network</span>
+
+<div class="viewcode-block" id="LambdaShare.get_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.lambda_share.LambdaShare.get_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">,</span> <span class="n">print_processing_time</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">chosen_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduler_action</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;chosen_flows&#39;</span><span class="p">:</span> <span class="n">chosen_flows</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="LambdaShare.get_scheduler_action"><a class="viewcode-back" href="../../../../../trafpy.manager.src.schedulers.html#trafpy.manager.src.schedulers.lambda_share.LambdaShare.get_scheduler_action">[docs]</a>    <span class="k">def</span> <span class="nf">get_scheduler_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug_mode</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1">---------------- GET SCHEDULER ACTION -------------------&#39;</span><span class="p">)</span>
+
+        <span class="c1"># update network state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">update_network_state</span><span class="p">(</span><span class="n">observation</span><span class="p">,</span> <span class="n">hide_child_dependency_flows</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># update lambda network states</span>
+        <span class="n">srpt_network</span><span class="p">,</span> <span class="n">fair_share_network</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_lambda_networks</span><span class="p">(</span><span class="n">network</span><span class="o">=</span><span class="n">observation</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">])</span>
+
+        <span class="c1"># # ATTEMPT 1 &amp; 2</span>
+        <span class="c1"># # get srpt and fair share chosen flows</span>
+        <span class="c1"># srpt_chosen_flows = self.srpt.get_scheduler_action(observation=srpt_network)</span>
+        <span class="c1"># fair_share_chosen_flows = self.fair_share.get_scheduler_action(observation=fair_share_network)</span>
+
+
+        <span class="c1"># ATTEMPT 3</span>
+        <span class="c1"># choose fair share flows</span>
+        <span class="n">fair_share_chosen_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fair_share</span><span class="o">.</span><span class="n">get_scheduler_action</span><span class="p">(</span><span class="n">observation</span><span class="o">=</span><span class="n">fair_share_network</span><span class="p">,</span> <span class="n">path_channel_assignment_strategy</span><span class="o">=</span><span class="s1">&#39;fair_share_num_flows&#39;</span><span class="p">)</span>
+
+        <span class="c1"># update srpt queued flows with chosen path and channel from fair share</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">srpt</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">update_network_state</span><span class="p">(</span><span class="n">srpt_network</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fair_share</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">]:</span>
+            <span class="n">ep_queues</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fair_share</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">ep</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">_ep</span> <span class="ow">in</span> <span class="n">ep_queues</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="c1"># update packets in queued flows w/ fair share choice so srpt doesn&#39;t choose flows which would otherwise be completed by fair share portion of network</span>
+                <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ep_queues</span><span class="p">[</span><span class="n">_ep</span><span class="p">][</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">])):</span>
+                    <span class="n">ep_queues</span><span class="p">[</span><span class="n">_ep</span><span class="p">][</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">][</span><span class="s1">&#39;packets&#39;</span><span class="p">]</span> <span class="o">-=</span> <span class="n">ep_queues</span><span class="p">[</span><span class="n">_ep</span><span class="p">][</span><span class="s1">&#39;queued_flows&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">][</span><span class="s1">&#39;packets_this_slot&#39;</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">srpt</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">network</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">ep</span><span class="p">][</span><span class="n">_ep</span><span class="p">]</span> <span class="o">=</span> <span class="n">ep_queues</span><span class="p">[</span><span class="n">_ep</span><span class="p">]</span>
+
+        <span class="c1"># choose srpt flows, do not do any path or channel assignment (i.e. use same path and channel as allocated by fair share)</span>
+        <span class="n">srpt_chosen_flows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">srpt</span><span class="o">.</span><span class="n">get_scheduler_action</span><span class="p">(</span><span class="n">observation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">srpt</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">reset_channel_capacities</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">path_channel_assignment_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># merge fair share and srpt flows</span>
+        <span class="n">chosen_flows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">srpt_chosen_flow_id_to_flow</span> <span class="o">=</span> <span class="p">{</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]:</span> <span class="n">flow</span> <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">srpt_chosen_flows</span><span class="p">}</span>
+        <span class="n">fair_share_chosen_flow_id_to_flow</span> <span class="o">=</span> <span class="p">{</span><span class="n">flow</span><span class="p">[</span><span class="s1">&#39;flow_id&#39;</span><span class="p">]:</span> <span class="n">flow</span> <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">fair_share_chosen_flows</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">flow_id</span> <span class="ow">in</span> <span class="n">fair_share_chosen_flow_id_to_flow</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">merged_flow</span> <span class="o">=</span> <span class="n">fair_share_chosen_flow_id_to_flow</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">flow_id</span> <span class="ow">in</span> <span class="n">srpt_chosen_flow_id_to_flow</span><span class="p">:</span>
+                <span class="c1"># flow was chosen by srpt, merge</span>
+                <span class="n">srpt_flow</span> <span class="o">=</span> <span class="n">srpt_chosen_flow_id_to_flow</span><span class="p">[</span><span class="n">flow_id</span><span class="p">]</span>
+                <span class="n">merged_flow</span><span class="p">[</span><span class="s1">&#39;packets_this_slot&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">srpt_flow</span><span class="p">[</span><span class="s1">&#39;packets_this_slot&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># not chosen by srpt, no need to merge</span>
+                <span class="k">pass</span>
+            <span class="n">chosen_flows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">merged_flow</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toolbox</span><span class="o">.</span><span class="n">set_up_connection</span><span class="p">(</span><span class="n">merged_flow</span><span class="p">)</span>
+
+
+
+
+        
+
+
+
+
+        <span class="c1"># # ATTEMPT 1</span>
+        <span class="c1"># # merge srpt and fair share chosen flows into lambda share chosen flows</span>
+        <span class="c1"># chosen_flows = []</span>
+        <span class="c1"># srpt_chosen_flow_id_to_flow = {flow[&#39;flow_id&#39;]: flow for flow in srpt_chosen_flows}</span>
+        <span class="c1"># fair_share_chosen_flow_id_to_flow = {flow[&#39;flow_id&#39;]: flow for flow in fair_share_chosen_flows}</span>
+        <span class="c1"># for flow_id in fair_share_chosen_flow_id_to_flow.keys():</span>
+            <span class="c1"># fair_share_flow = fair_share_chosen_flow_id_to_flow[flow_id]</span>
+            <span class="c1"># if flow_id in srpt_chosen_flow_id_to_flow:</span>
+                <span class="c1"># # flow was chosen by srpt, merge</span>
+                <span class="c1"># srpt_flow = srpt_chosen_flow_id_to_flow[flow_id]</span>
+                <span class="c1"># if srpt_flow[&#39;path&#39;] != fair_share_flow[&#39;path&#39;] or srpt_flow[&#39;channel&#39;] != fair_share_flow[&#39;channel&#39;]:</span>
+                    <span class="c1"># # check which path and channel has most bw available</span>
+                    <span class="c1"># srpt_lowest_edge_bandwidth = self.toolbox.get_lowest_edge_bandwidth(srpt_flow[&#39;path&#39;], max_bw=False, channel=srpt_flow[&#39;channel&#39;])</span>
+                    <span class="c1"># fair_share_lowest_edge_bandwidth = self.toolbox.get_lowest_edge_bandwidth(fair_share_flow[&#39;path&#39;], max_bw=False, channel=fair_share_flow[&#39;channel&#39;])</span>
+                    <span class="c1"># if max(srpt_lowest_edge_bandwidth, fair_share_lowest_edge_bandwidth) == 0:</span>
+                        <span class="c1"># # no bandwidth available in either path or channel, do not set up</span>
+                        <span class="c1"># pass</span>
+                    <span class="c1"># else:</span>
+                        <span class="c1"># # bandwidth available</span>
+                        <span class="c1"># if srpt_lowest_edge_bandwidth &gt; fair_share_lowest_edge_bandwidth:</span>
+                            <span class="c1"># # srpt path and channel has most bw available</span>
+                            <span class="c1"># merged_flow = copy.deepcopy(srpt_flow)</span>
+                            <span class="c1"># max_info = srpt_lowest_edge_bandwidth * self.toolbox.slot_size </span>
+                            <span class="c1"># max_packets = int(max_info / self.toolbox.packet_size) # round down</span>
+                            <span class="c1"># merged_flow[&#39;packets_this_slot&#39;] = min(max_packets, srpt_flow[&#39;packets_this_slot&#39;] + fair_share_flow[&#39;packets_this_slot&#39;])</span>
+                        <span class="c1"># else:</span>
+                            <span class="c1"># # fair share path and channel has most bw available</span>
+                            <span class="c1"># merged_flow = copy.deepcopy(fair_share_flow)</span>
+                            <span class="c1"># max_info = fair_share_lowest_edge_bandwidth * self.toolbox.slot_size </span>
+                            <span class="c1"># max_packets = int(max_info / self.toolbox.packet_size) # round down</span>
+                            <span class="c1"># merged_flow[&#39;packets_this_slot&#39;] = min(max_packets, srpt_flow[&#39;packets_this_slot&#39;] + fair_share_flow[&#39;packets_this_slot&#39;])</span>
+                        <span class="c1"># # set up</span>
+                        <span class="c1"># self.toolbox.set_up_connection(merged_flow)</span>
+                        <span class="c1"># chosen_flows.append(merged_flow)</span>
+                <span class="c1"># else:</span>
+                    <span class="c1"># # path and channel of srpt and fair share are the same</span>
+                    <span class="c1"># lowest_edge_bandwidth = self.toolbox.get_lowest_edge_bandwidth(srpt_flow[&#39;path&#39;], max_bw=False, channel=srpt_flow[&#39;channel&#39;])</span>
+                    <span class="c1"># if lowest_edge_bandwidth == 0:</span>
+                        <span class="c1"># # no bandwidth available, do not set up</span>
+                        <span class="c1"># pass</span>
+                    <span class="c1"># else:</span>
+                        <span class="c1"># # bandwidth available</span>
+                        <span class="c1"># merged_flow = copy.deepcopy(srpt_flow)</span>
+                        <span class="c1"># max_info = lowest_edge_bandwidth * self.toolbox.slot_size </span>
+                        <span class="c1"># max_packets = int(max_info / self.toolbox.packet_size) # round down</span>
+                        <span class="c1"># merged_flow[&#39;packets_this_slot&#39;] = min(max_packets, srpt_flow[&#39;packets_this_slot&#39;] + fair_share_flow[&#39;packets_this_slot&#39;])</span>
+                        <span class="c1"># # set up</span>
+                        <span class="c1"># self.toolbox.set_up_connection(merged_flow)</span>
+                        <span class="c1"># chosen_flows.append(merged_flow)</span>
+            <span class="c1"># else:</span>
+                <span class="c1"># # flow not chosen by srpt, merged flow == fair share flow, set up</span>
+                <span class="c1"># merged_flow = copy.deepcopy(fair_share_flow)</span>
+                <span class="c1"># lowest_edge_bandwidth = self.toolbox.get_lowest_edge_bandwidth(merged_flow[&#39;path&#39;], max_bw=False, channel=merged_flow[&#39;channel&#39;])</span>
+                <span class="c1"># if lowest_edge_bandwidth == 0:</span>
+                    <span class="c1"># # no bandwidth available, do not set up</span>
+                    <span class="c1"># pass</span>
+                <span class="c1"># else:</span>
+                    <span class="c1"># # bandwidth available</span>
+                    <span class="c1"># max_info = lowest_edge_bandwidth * self.toolbox.slot_size </span>
+                    <span class="c1"># max_packets = int(max_info / self.toolbox.packet_size) # round down</span>
+                    <span class="c1"># merged_flow[&#39;packets_this_slot&#39;] = min(max_packets, merged_flow[&#39;packets_this_slot&#39;])</span>
+                    <span class="c1"># self.toolbox.set_up_connection(merged_flow)</span>
+                    <span class="c1"># chosen_flows.append(merged_flow)</span>
+
+
+
+
+
+        <span class="c1"># # ATTEMPT 2</span>
+        <span class="c1"># # merge srpt and fair share chosen flows into lambda share chosen flows</span>
+        <span class="c1"># chosen_flows = []</span>
+        <span class="c1"># srpt_chosen_flow_id_to_flow = {flow[&#39;flow_id&#39;]: flow for flow in srpt_chosen_flows}</span>
+        <span class="c1"># fair_share_chosen_flow_id_to_flow = {flow[&#39;flow_id&#39;]: flow for flow in fair_share_chosen_flows}</span>
+        <span class="c1"># for flow_id in fair_share_chosen_flow_id_to_flow.keys():</span>
+            <span class="c1"># fair_share_flow = fair_share_chosen_flow_id_to_flow[flow_id]</span>
+            <span class="c1"># if flow_id in srpt_chosen_flow_id_to_flow:</span>
+                <span class="c1"># # flow was chosen by srpt, merge</span>
+                <span class="c1"># srpt_flow = srpt_chosen_flow_id_to_flow[flow_id]</span>
+
+                <span class="c1"># # use fair share path and channel</span>
+                <span class="c1"># merged_flow = copy.deepcopy(fair_share_flow)</span>
+                <span class="c1"># lowest_edge_bandwidth = self.toolbox.get_lowest_edge_bandwidth(merged_flow[&#39;path&#39;], max_bw=False, channel=merged_flow[&#39;channel&#39;])</span>
+                <span class="c1"># # srpt can only schedule up to (_lambda*bw) of fair share</span>
+                <span class="c1"># srpt_flow[&#39;packets_this_slot&#39;] = min(srpt_flow[&#39;packets_this_slot&#39;],</span>
+                                                     <span class="c1"># int(self._lambda*(fair_share_flow[&#39;packets_this_slot&#39;] / (1-self._lambda))))</span>
+                <span class="c1"># if lowest_edge_bandwidth != 0:</span>
+                    <span class="c1"># # bandwidth available</span>
+                    <span class="c1"># max_info = lowest_edge_bandwidth * self.toolbox.slot_size</span>
+                    <span class="c1"># max_packets = int(max_info / self.toolbox.packet_size) # round down</span>
+                    <span class="c1"># if max_packets &lt; fair_share_flow[&#39;packets_this_slot&#39;]:</span>
+                        <span class="c1"># # cannot schedule fair share flow packets, subtract excess</span>
+                        <span class="c1"># srpt_packets = max_packets - fair_share_flow[&#39;packets_this_slot&#39;]</span>
+                    <span class="c1"># elif max_packets &lt; fair_share_flow[&#39;packets_this_slot&#39;] + srpt_flow[&#39;packets_this_slot&#39;]:</span>
+                        <span class="c1"># # would exceed, schedule fair share flow + max srpt packets</span>
+                        <span class="c1"># srpt_packets = max_packets - fair_share_flow[&#39;packets_this_slot&#39;]</span>
+                    <span class="c1"># elif max_packets == fair_share_flow[&#39;packets_this_slot&#39;]:</span>
+                        <span class="c1"># # no extra space for srpt flow, just schedule fair_share_flow</span>
+                        <span class="c1"># srpt_packets = 0</span>
+                    <span class="c1"># else:</span>
+                        <span class="c1"># # enough bw for chosen srpt packets</span>
+                        <span class="c1"># srpt_packets = srpt_flow[&#39;packets_this_slot&#39;]</span>
+                    <span class="c1"># # merge srpt packets with fair share packets</span>
+                    <span class="c1"># merged_flow[&#39;packets_this_slot&#39;] += srpt_packets</span>
+                <span class="c1"># else:</span>
+                    <span class="c1"># # no bandwidth available, do not schedule</span>
+                    <span class="c1"># raise Exception(&#39;No bandwidth left&#39;)</span>
+            <span class="c1"># else:</span>
+                <span class="c1"># # flow not chosen by srpt, no srpt packets to merge</span>
+                <span class="c1"># merged_flow = copy.deepcopy(fair_share_flow)</span>
+            <span class="c1"># # set up merged flow</span>
+            <span class="c1"># chosen_flows.append(merged_flow)</span>
+            <span class="c1"># self.toolbox.set_up_connection(merged_flow)</span>
+
+
+
+
+
+
+
+
+            
+
+        <span class="k">return</span> <span class="n">chosen_flows</span></div></div>
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

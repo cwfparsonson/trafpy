@@ -1,0 +1,294 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Creating Custom TrafPy Benchmarks &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Overwriting and Adding New Default TrafPy Benchmarks" href="tutorial_overwriting_and_adding_new_default_trafpy_benchmarks.html" />
+    <link rel="prev" title="Using Default TrafPy Benchmarks" href="tutorial_using_default_trafpy_benchmarks.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="tutorial.html">Tutorial</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tutorial_generator.html">TrafPy Generator</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="tutorial_benchmarker.html">TrafPy Benchmarker</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="tutorial_using_default_trafpy_benchmarks.html">Using Default TrafPy Benchmarks</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Creating Custom TrafPy Benchmarks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_overwriting_and_adding_new_default_trafpy_benchmarks.html">Overwriting and Adding New Default TrafPy Benchmarks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_manager.html">TrafPy Manager</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">setup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trafpy.html">trafpy package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="tutorial.html">Tutorial</a> &raquo;</li>
+        
+          <li><a href="tutorial_benchmarker.html">TrafPy Benchmarker</a> &raquo;</li>
+        
+      <li>Creating Custom TrafPy Benchmarks</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/tutorial_creating_custom_trafpy_benchmarks.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="creating-custom-trafpy-benchmarks">
+<h1>Creating Custom TrafPy Benchmarks<a class="headerlink" href="#creating-custom-trafpy-benchmarks" title="Permalink to this headline">¶</a></h1>
+<p>It is easy to create your own custom benchmarks in <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> using the <code class="docutils literal notranslate"><span class="pre">trafpy.benchmarker.Benchmark</span></code>
+abstract base class. You need only share your child class code for others to be
+able to reproduce the traffic you generated for their own networks.</p>
+<p>Import the <code class="docutils literal notranslate"><span class="pre">trafpy.benchmarker.Benchmark</span></code> abstract parent class</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">trafpy.benchmarker</span> <span class="kn">import</span> <span class="n">Benchmark</span>
+</pre></div>
+</div>
+<p>All flow-centric demands have 3 key properties; flow size, flow interarrival time,
+and node distribtuion. Therefore, all child classes inheriting from
+<code class="docutils literal notranslate"><span class="pre">trafpy.benchmarker.Benchmark</span></code> must define the abstract methods <code class="docutils literal notranslate"><span class="pre">get_node_dist</span></code>,
+<code class="docutils literal notranslate"><span class="pre">get_interarrival_time_dist</span></code>, and <code class="docutils literal notranslate"><span class="pre">get_flow_size_dist</span></code>.</p>
+<p>Inside each of these methods, you should first call the <code class="docutils literal notranslate"><span class="pre">trafpy.benchmarker.Benchmark</span></code>
+parent abstract method to initialise (1) the <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> distribtuion hashtable,
+and (2) the path in which to store the distribution hashtable (automatically decided
+by <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code>). You should then implement your own code to generate the distribution hashtable
+(using what you’ve learned from the previous <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> tutorials and examples on
+the GitHub), before finally calling the <code class="docutils literal notranslate"><span class="pre">trafpy.benchmarker.Benchmark.save_dist</span></code>
+abstract method to save the distribution.</p>
+<p>For example, consider that you want to create a simple benchmark called <code class="docutils literal notranslate"><span class="pre">'my_benchmark'</span></code> with a uniform
+node distribution, a constant flow size of 1 information unit, and a constant interarrival
+time of 10 time units:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
+
+<span class="k">class</span> <span class="nc">MyBenchmark</span><span class="p">(</span><span class="n">Benchmark</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">benchmark_name</span><span class="o">=</span><span class="s1">&#39;my_benchmark&#39;</span><span class="p">,</span> <span class="n">benchmark_version</span><span class="o">=</span><span class="s1">&#39;v001&#39;</span><span class="p">,</span> <span class="n">load_prev_dists</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MyBenchmark</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">benchmark_name</span><span class="p">,</span> <span class="n">benchmark_version</span><span class="p">,</span> <span class="n">load_prev_dists</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_node_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">racks_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dist_name</span><span class="o">=</span><span class="s1">&#39;node_dist&#39;</span><span class="p">):</span>
+        <span class="n">dist</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">racks_dict</span><span class="p">,</span> <span class="n">dist_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dist</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_prev_dists</span><span class="p">:</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_uniform_node_dist</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">show_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save_dist</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">dist_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dist</span>
+
+    <span class="k">def</span> <span class="nf">get_interarrival_time_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist_name</span><span class="o">=</span><span class="s1">&#39;interarrival_time_dist&#39;</span><span class="p">):</span>
+        <span class="n">dist</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_interarrival_time_dist</span><span class="p">(</span><span class="n">dist_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dist</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_prev_dists</span><span class="p">:</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="p">{</span><span class="mi">10</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save_dist</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">dist_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dist</span>
+
+    <span class="k">def</span> <span class="nf">get_flow_size_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist_name</span><span class="o">=</span><span class="s1">&#39;flow_size_dist&#39;</span><span class="p">):</span>
+        <span class="n">dist</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_flow_size_dist</span><span class="p">(</span><span class="n">dist_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dist</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_prev_dists</span><span class="p">:</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save_dist</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">dist_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dist</span>
+</pre></div>
+</div>
+<p>You can now use your <code class="docutils literal notranslate"><span class="pre">MyBenchmark</span></code> class to generate your <code class="docutils literal notranslate"><span class="pre">'my_benchmark'</span></code>
+traffic for any network:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">benchmark</span> <span class="o">=</span> <span class="n">MyBenchmark</span><span class="p">(</span><span class="n">benchmark_name</span><span class="o">=</span><span class="s1">&#39;my_benchmark&#39;</span><span class="p">,</span> <span class="n">benchmark_version</span><span class="o">=</span><span class="s1">&#39;v001&#39;</span><span class="p">,</span> <span class="n">load_prev_dists</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># init network</span>
+<span class="n">net</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_fat_tree</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="c1"># generate my_benchmark distributions for this network</span>
+<span class="n">dists</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">dists</span><span class="p">[</span><span class="s1">&#39;node_dist&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">benchmark</span><span class="o">.</span><span class="n">get_node_dist</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">],</span> <span class="n">racks_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dist_name</span><span class="o">=</span><span class="s1">&#39;node_dist&#39;</span><span class="p">)</span>
+<span class="n">dists</span><span class="p">[</span><span class="s1">&#39;interarrival_time_dist&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">benchmark</span><span class="o">.</span><span class="n">get_interarrival_time_dist</span><span class="p">(</span><span class="n">dist_name</span><span class="o">=</span><span class="s1">&#39;interarrival_time_dist&#39;</span><span class="p">)</span>
+<span class="n">dists</span><span class="p">[</span><span class="s1">&#39;flow_size_dist&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">benchmark</span><span class="o">.</span><span class="n">get_flow_size_dist</span><span class="p">(</span><span class="n">dist_name</span><span class="o">=</span><span class="s1">&#39;flow_size_dist&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can now use the <code class="docutils literal notranslate"><span class="pre">trafpy.generator.create_demand_data()</span></code> function as usual
+to use these benchmark distributions to generate traffic for your own network.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Note that to generate distribution data from your custom benchmark, you have
+not used the <code class="docutils literal notranslate"><span class="pre">trafpy.benchmarker.BenchmarkImporter</span></code> class. This importer
+class is only for default <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> benchmarks.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tutorial_overwriting_and_adding_new_default_trafpy_benchmarks.html" class="btn btn-neutral float-right" title="Overwriting and Adding New Default TrafPy Benchmarks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="tutorial_using_default_trafpy_benchmarks.html" class="btn btn-neutral float-left" title="Using Default TrafPy Benchmarks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

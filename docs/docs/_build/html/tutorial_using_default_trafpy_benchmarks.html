@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Using Default TrafPy Benchmarks &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Creating Custom TrafPy Benchmarks" href="tutorial_creating_custom_trafpy_benchmarks.html" />
+    <link rel="prev" title="TrafPy Benchmarker" href="tutorial_benchmarker.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="tutorial.html">Tutorial</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tutorial_generator.html">TrafPy Generator</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="tutorial_benchmarker.html">TrafPy Benchmarker</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Using Default TrafPy Benchmarks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_creating_custom_trafpy_benchmarks.html">Creating Custom TrafPy Benchmarks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_overwriting_and_adding_new_default_trafpy_benchmarks.html">Overwriting and Adding New Default TrafPy Benchmarks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_manager.html">TrafPy Manager</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">setup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trafpy.html">trafpy package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="tutorial.html">Tutorial</a> &raquo;</li>
+        
+          <li><a href="tutorial_benchmarker.html">TrafPy Benchmarker</a> &raquo;</li>
+        
+      <li>Using Default TrafPy Benchmarks</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/tutorial_using_default_trafpy_benchmarks.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="using-default-trafpy-benchmarks">
+<h1>Using Default TrafPy Benchmarks<a class="headerlink" href="#using-default-trafpy-benchmarks" title="Permalink to this headline">¶</a></h1>
+<p>To load the pre-defined default <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> benchmarks, use the <code class="docutils literal notranslate"><span class="pre">trafpy.benchmarker.BenchmarkImporter</span></code>
+class.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">trafpy.benchmarker</span> <span class="kn">import</span> <span class="n">BenchmarkImporter</span>
+</pre></div>
+</div>
+<p>Initialise a network of your choice for which you would like to generate some
+benchmark traffic for</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">trafpy.generator</span> <span class="k">as</span> <span class="nn">tpg</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">net</span> <span class="o">=</span> <span class="n">tpg</span><span class="o">.</span><span class="n">gen_fat_tree</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> is able to generate arbitrary distributions and therefore arbitrary
+traffic traces. As the nature of applications handled by real data centres
+changes, so too will the resultant traffic traces. Therefore, the initial
+benchmarks established for <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> have been stored under
+<code class="docutils literal notranslate"><span class="pre">benchmark_version='v001'</span></code> with the anticipation that future benchmark
+versions will be established with new and evolving traffic traces.</p>
+<p><code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> benchmarks are generated from sets of <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> parameters rather
+than stored as data sets of flows. This enables the same benchmark to be used
+to generate the same traffic trace characteristics for different networks.
+By setting <code class="docutils literal notranslate"><span class="pre">load_prev_dists=False</span></code>, <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> will re-generate distributions
+for your network by sampling from these underlying <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> parameters. If you
+want to use the same distributions to generate new data sets to e.g. repeat some tests
+sampling from the same benchmark distributions, you should set <code class="docutils literal notranslate"><span class="pre">load_prev_dists=True</span></code>,
+however bare in mind that if the number of end points in your network has changed
+since you last generated the benchmark distributions with <code class="docutils literal notranslate"><span class="pre">load_prev_dists=False</span></code>,
+then <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> will raise an error.</p>
+<p>Initialise the <code class="docutils literal notranslate"><span class="pre">trafpy.benchmarker.BenchmarkImporter</span></code></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">importer</span> <span class="o">=</span> <span class="n">BenchmarkImporter</span><span class="p">(</span><span class="n">benchmark_version</span><span class="o">=</span><span class="s1">&#39;v001&#39;</span><span class="p">,</span> <span class="n">load_prev_dists</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">trafpy.benchmarker.BenchmarkImporter</span></code> can be used to import pre-defined
+default <code class="docutils literal notranslate"><span class="pre">TrafPy</span></code> benchmarks and generate their corresponding distributions for your
+custom network. To see the valid default benchmark names supported by the importer,
+run:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">importer</span><span class="o">.</span><span class="n">default_benchmark_names</span><span class="p">)</span>
+<span class="go">[&#39;commercial_cloud&#39;, &#39;jobcentric_prototyping&#39;, &#39;private_enterprise&#39;,</span>
+<span class="go">&#39;rack_sensitivity_0&#39;, &#39;rack_sensitivity_02&#39;, &#39;rack_sensitivity_04&#39;,</span>
+<span class="go">&#39;rack_sensitivity_06&#39;, &#39;rack_sensitivity_08&#39;, &#39;skewed_nodes_sensitivity_0&#39;,</span>
+<span class="go">&#39;skewed_nodes_sensitivity_005&#39;, &#39;skewed_nodes_sensitivity_01&#39;,</span>
+<span class="go">&#39;skewed_nodes_sensitivity_02&#39;, &#39;skewed_nodes_sensitivity_04&#39;,</span>
+<span class="go">&#39;social_media_cloud&#39;, &#39;tensorflow&#39;, &#39;uniform&#39;, &#39;university&#39;]</span>
+</pre></div>
+</div>
+<p>Decide which default benchmarks you would like to generate for your system,
+and then simply call the <code class="docutils literal notranslate"><span class="pre">trafpy.benchmarker.BenchmarkImporter.get_benchmark_dists</span></code> function
+to get the node, flow size, and flow interarrival time distributions of this benchmark
+adapted to your custom network. For example, we can generate the <code class="docutils literal notranslate"><span class="pre">'university'</span></code>
+benchmark distributions:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dists</span> <span class="o">=</span> <span class="n">importer</span><span class="o">.</span><span class="n">get_benchmark_dists</span><span class="p">(</span><span class="n">benchmark_name</span><span class="o">=</span><span class="s1">&#39;university&#39;</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;endpoints&#39;</span><span class="p">],</span> <span class="n">racks_dict</span><span class="o">=</span><span class="n">net</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s1">&#39;rack_to_ep_dict&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The distributions are returned as a dictionary</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">dists</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="go">    &#39;node_dist&#39;, &#39;flow_size_dist&#39;, &#39;interarrival_time_dist&#39;</span>
+</pre></div>
+</div>
+<p>You can now use the <code class="docutils literal notranslate"><span class="pre">trafpy.generator.create_demand_data()</span></code> function as usual
+to use these benchmark distributions to generate traffic for your own network.</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tutorial_creating_custom_trafpy_benchmarks.html" class="btn btn-neutral float-right" title="Creating Custom TrafPy Benchmarks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="tutorial_benchmarker.html" class="btn btn-neutral float-left" title="TrafPy Benchmarker" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

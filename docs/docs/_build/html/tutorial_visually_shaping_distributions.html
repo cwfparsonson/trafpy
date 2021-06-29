@@ -1,0 +1,335 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Visually Shaping TrafPy Distributions &mdash; TrafPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="TrafPy Benchmarker" href="tutorial_benchmarker.html" />
+    <link rel="prev" title="Job-Centric Traffic Demands" href="tutorial_job_centric_traffic_demands.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TrafPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Install.html">Install</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="tutorial.html">Tutorial</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="tutorial_generator.html">TrafPy Generator</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="tutorial_trafpy_distributions.html">TrafPy Distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_value_distributions.html">Value Distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_node_distributions.html">Node Distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_networks.html">Networks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_flow_centric_traffic_demands.html">Flow-Centric Traffic Demands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorial_job_centric_traffic_demands.html">Job-Centric Traffic Demands</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Visually Shaping TrafPy Distributions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#set-global-variables">Set Global Variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#generate-random-variables-from-named-distribution">Generate Random Variables from ‘Named’ Distribution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#generate-random-variables-from-arbitrary-multimodal-distribution">Generate Random Variables from Arbitrary ‘Multimodal’ Distribution</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_benchmarker.html">TrafPy Benchmarker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_manager.html">TrafPy Manager</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="License.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Citing.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">setup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trafpy.html">trafpy package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TrafPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="tutorial.html">Tutorial</a> &raquo;</li>
+        
+          <li><a href="tutorial_generator.html">TrafPy Generator</a> &raquo;</li>
+        
+      <li>Visually Shaping TrafPy Distributions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/tutorial_visually_shaping_distributions.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="visually-shaping-trafpy-distributions">
+<h1>Visually Shaping TrafPy Distributions<a class="headerlink" href="#visually-shaping-trafpy-distributions" title="Permalink to this headline">¶</a></h1>
+<p>Up until now you have assumed you already knew all the parameters of each distribution
+you have generated with TrafPy. But what if you want to replicate a distribution
+which has either not been produced in TrafPy before or has not had open-access
+data provided? TrafPy has a useful interactive Jupyter-Notebook which integrates with
+all of the above functions, allowing distributions to be visually shaped. Crucially,
+once a distribution has been shaped, it can be easily replicated with TrafPy so long
+as the set of parameters used to shape the distribution are shared.</p>
+<p>Academic papers present network traffic distribution information in many forms.
+It could be e.g. a plot, an analyticaly described named distribution (e.g. ‘the
+connection duration times followed a log-normal distribution with mu -3.8 and
+sigma 6.4’), an analytically described unnamed distribution (e.g. ‘the flow
+sizes followed a distribution with minimum 8, maximum 33,000, mean 6,450, skewness
+1.23, and kurtosis 2.03’) etc.</p>
+<p>The TrafPy Jupyter Notebook tool enables distributions to be tuned visually
+and analytically to reproduce literature distributions. Distribution plots are
+live-updated as slide bars, text boxes etc. are adjusted, with analytical characteristics
+of the generated distributions continuously output to aid accuracy.</p>
+<p>Navigate to the directory where you cloned TrafPy and launch <a class="reference external" href="https://github.com/cwfparsonson/trafpy/blob/master/main.ipynb">the Jupyter Notebook</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ jupyter-notebook main.ipynb
+</pre></div>
+</div>
+<p>The Notebook has a few main sections with markdown descriptions for each:</p>
+<ul class="simple">
+<li><p>Import <code class="docutils literal notranslate"><span class="pre">trafpy.generator</span></code></p></li>
+<li><p>Set global variables</p></li>
+<li><p>Generate random variables from ‘named’ distribution</p></li>
+<li><p>Generate random variables from arbitrary ‘multimodal’ distribution</p></li>
+<li><p>Generate discrete probability distribution from random variables</p></li>
+<li><p>Generate random variables from discrete probability distribution</p></li>
+<li><p>Generate source-destination node distribution</p></li>
+<li><p>Use node distribution to generate source-destination node demands</p></li>
+<li><p>Use previously generated distributions to create single ‘demand data’ dictionary</p></li>
+<li><p>Generate distributions in sets (extension)</p></li>
+</ul>
+<p>All of the above sections can be used together or independently depending on which
+functionalities you need to shape your specific distribution. Below are demonstrations
+of how to use the interactive distribution-shaping cells.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To run a Jupyter Notebook cell, click on the cell and click ‘Run’ on the top ribbon.
+If you are running a cell with a TrafPy interactive graph, some configurable parameters
+will appear. Adjust these parameters and click the <code class="docutils literal notranslate"><span class="pre">Run</span> <span class="pre">Interact</span></code> button to update
+your plot (and the returned values).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Once you have shaped your distribution, you can simply plug your shaped parameters
+into the previously described functions to generate your required random variable data/distributions
+in your own scripts. I.e. There is no need to have to save your Notebook data if you
+note down your shaped parameters and enter them into your own TrafPy scripts.</p>
+</div>
+<div class="section" id="set-global-variables">
+<h2>Set Global Variables<a class="headerlink" href="#set-global-variables" title="Permalink to this headline">¶</a></h2>
+<p>Set the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> global variable to the directory where you want any data generated with the Notebook
+to be saved. You can also set the <code class="docutils literal notranslate"><span class="pre">NUM_DEMANDS</span></code> global variable, which will ensure
+that each time you shape a distribution for a certain traffic demand characteristic,
+the correct number of demands will be generated.</p>
+<img alt="_images/set_global_variables.png" class="align-center" src="_images/set_global_variables.png" />
+</div>
+<div class="section" id="generate-random-variables-from-named-distribution">
+<h2>Generate Random Variables from ‘Named’ Distribution<a class="headerlink" href="#generate-random-variables-from-named-distribution" title="Permalink to this headline">¶</a></h2>
+<p>Use this section to shape the previously described ‘named’ value distributions
+(Pareto, Weibull, etc.) generated by <code class="xref py py-func docutils literal notranslate"><span class="pre">trafpy.gen_named_val_dist()</span></code>.</p>
+<img alt="_images/generate_random_variables_from_named_distribution.png" class="align-center" src="_images/generate_random_variables_from_named_distribution.png" />
+</div>
+<div class="section" id="generate-random-variables-from-arbitrary-multimodal-distribution">
+<h2>Generate Random Variables from Arbitrary ‘Multimodal’ Distribution<a class="headerlink" href="#generate-random-variables-from-arbitrary-multimodal-distribution" title="Permalink to this headline">¶</a></h2>
+<p>Use this section to shape the previously described ‘multimodal’ value distribution
+generated by <code class="xref py py-func docutils literal notranslate"><span class="pre">trafpy.gen_multimodal_val_dist()</span></code>.</p>
+<p>There are a few steps to generating a multimodal distribution with TrafPy:</p>
+<ol class="arabic simple">
+<li><p>Define the random variables of your multimodal distribution. Set the minimum
+and maximum possible values, the number of modes, the name
+of your random variable, the x-axis limits, what to round the values to, and
+how many decimal places to include. Run the 1st cell.</p></li>
+</ol>
+<img alt="_images/generate_random_variables_from_arbitrary_multimodal_distribution_1.png" class="align-center" src="_images/generate_random_variables_from_arbitrary_multimodal_distribution_1.png" />
+<ol class="arabic simple" start="2">
+<li><p>Run the 2nd cell to launch the visualisation tool. A set of tuneable parameters
+for each mode (where you specified <code class="docutils literal notranslate"><span class="pre">num_nodes</span></code> in the previous cell)
+will appear. Adjust the parameters and click <code class="docutils literal notranslate"><span class="pre">Run</span> <span class="pre">Interact</span></code> until you are
+happy with the shape of each mode. Use <code class="docutils literal notranslate"><span class="pre">Location</span></code> for the mode position,
+<code class="docutils literal notranslate"><span class="pre">Skew</span></code> for the mode skew, <code class="docutils literal notranslate"><span class="pre">Scale</span></code> for the mode standard deviation, <code class="docutils literal notranslate"><span class="pre">Samples</span></code>
+for the height of the mode’s probability distribution, and <code class="docutils literal notranslate"><span class="pre">bins</span></code> for how many
+bins to plot (default of 0 automatically chooses number of bins).</p></li>
+</ol>
+<img alt="_images/generate_random_variables_from_arbitrary_multimodal_distribution_2_1.png" class="align-center" src="_images/generate_random_variables_from_arbitrary_multimodal_distribution_2_1.png" />
+<img alt="_images/generate_random_variables_from_arbitrary_multimodal_distribution_2_2.png" class="align-center" src="_images/generate_random_variables_from_arbitrary_multimodal_distribution_2_2.png" />
+<ol class="arabic simple" start="3">
+<li><p>Run the 3rd cell to combine the above modes. Adjust <code class="docutils literal notranslate"><span class="pre">bg_factor</span></code> to increase
+or decrease the ‘background noise’ amongst your shaped nodes.</p></li>
+</ol>
+<img alt="_images/generate_random_variables_from_arbitrary_multimodal_distribution_3.png" class="align-center" src="_images/generate_random_variables_from_arbitrary_multimodal_distribution_3.png" />
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You may find it useful to jump between the 2nd and 3rd cells to improve the accuracy of the modes relative to one-another.</p>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>(Optional) Run the 4th cell to use your shaped multimodal distribution to sample
+random variable data.</p></li>
+<li><p>(Optional) Run the 5th cell to save your mutlimodal random variable data</p></li>
+</ol>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tutorial_benchmarker.html" class="btn btn-neutral float-right" title="TrafPy Benchmarker" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="tutorial_job_centric_traffic_demands.html" class="btn btn-neutral float-left" title="Job-Centric Traffic Demands" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Christopher W. F. Parsonson
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
