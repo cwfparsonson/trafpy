@@ -943,6 +943,7 @@ def plot_val_scatter(plot_dict={},
     else:
         plt.ticklabel_format(axis="x", style="plain", useOffset=False)
 
+
     ax = plt.gca()
     if logscale:
         ax.set_xscale('log')
@@ -966,6 +967,8 @@ def plot_val_scatter(plot_dict={},
         plt.xlim(xlim)
     if ylim is not None:
         plt.ylim(ylim)
+
+    plt.tick_params(axis='x', which='minor')
 
     if show_fig:
         plt.show()
