@@ -326,7 +326,7 @@ def gen_multimodal_node_dist(eps,
                 max_skews = 2
             num_skewed_nodes = np.random.randint(min_skews, max_skews+1)
         # randomly choose a node
-        skewed_nodes = list(np.random.choice(eps, size=num_skewed_nodes))
+        skewed_nodes = [int(x) for x in np.random.choice(eps, size=num_skewed_nodes)]
 
     if len(skewed_node_probs) == 0:
         # randomly choose skew between range
