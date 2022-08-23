@@ -29,7 +29,8 @@ class Benchmark(abc.ABC):
         self.jobcentric = jobcentric
 
         trafpy_path = os.path.dirname(trafpy.__file__)
-        self.benchmark_path = trafpy_path + '/benchmarker/versions/benchmark_{}/data/{}/'.format(benchmark_version, benchmark_name)
+        # self.benchmark_path = trafpy_path + '/benchmarker/versions/benchmark_{}/data/{}/'.format(benchmark_version, benchmark_name)
+        self.benchmark_path = trafpy_path + '/benchmarker/versions/benchmark_{}/benchmarks/{}/'.format(benchmark_version, benchmark_name)
         Path(self.benchmark_path).mkdir(exist_ok=True)
         if load_prev_dists:
             print('Set to load benchmark {} distribution data from {}'.format(benchmark_name, self.benchmark_path))
