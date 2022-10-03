@@ -8,7 +8,7 @@ networkx
 progress
 sqlitedict
 jsonpickle
-nxviz
+nxviz==0.3
 tqdm
 sigfig
 pympler

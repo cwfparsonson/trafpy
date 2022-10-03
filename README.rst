@@ -1,12 +1,22 @@
-TrafPy
-======
+=======================================================
+ :globe_with_meridians: TrafPy :vertical_traffic_light:
+=======================================================
 
-TrafPy is a Python package for the generation, management and standardisation of network traffic.
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+TrafPy is a Python package for the generation, management, and standardisation of network traffic.
+
+**Paper**: `Traffic generation for benchmarking data centre networks <https://www.sciencedirect.com/science/article/pii/S1573427722000315>`_
 
 **Documentation**: https://trafpy.readthedocs.io/ 
 
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
 Example
--------
+=======
 Generate simple flow-centric traffic for an arbitrary network you want to put under 10% traffic load
 with 16 leaf node end points which have communication link capacities of 1,250 information units
 per unit time. Save the traffic trace in a universally compatible file format
@@ -51,7 +61,7 @@ for more information.
 
 
 Install
--------
+=======
 
 Open Git Bash. Change the current working directory to the location where you want
 to clone this `GitHub <https://github.com/cwfparsonson/trafpy>`_ project, and run::
@@ -77,10 +87,28 @@ on your machine
 .. code:: python
 
     import trafpy
+    
+    
+    
+Citing this work
+================
+If you find this project or the associated paper useful, please cite our work::
+
+    @article{parsonson2022traffic,
+        title = {Traffic generation for benchmarking data centre networks},
+        journal = {Optical Switching and Networking},
+        volume = {46},
+        pages = {100695},
+        year = {2022},
+        issn = {1573-4277},
+        doi = {https://doi.org/10.1016/j.osn.2022.100695},
+        url = {https://www.sciencedirect.com/science/article/pii/S1573427722000315},
+        author = {Christopher W.F. Parsonson and Joshua L. Benjamin and Georgios Zervas},
+    }
 
 
 Contributing
-------------
+============
 File an issue `here <https://github.com/cwfparsonson/trafpy/issues>`_  to report 
 any bugs or new suggestions. Or, even better, for the repository on `GitHub <https://github.com/cwfparsonson/trafpy>`_ 
 and create a pull request. If you want help making
@@ -89,7 +117,7 @@ see TrafPy's `contributing guide <https://trafpy.readthedocs.io/en/latest/Contri
 
 
 License
--------
+=======
 TrafPy uses Apache License 2.0.
 
 
