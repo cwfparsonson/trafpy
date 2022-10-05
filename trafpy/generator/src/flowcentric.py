@@ -520,7 +520,7 @@ class FlowPacker:
                 pass
             else:
                 # chosen_pair = self._perform_first_pass(flow, pairs)
-                # chosen_pair = self._perform_first_pass(flow, pairs[first_pass_mask])
+                # mask out any pairs which do not meet the first pass requirements
                 first_pass_mask = np.where(list(self.pair_current_distance_from_target_info_dict.values()) - self.packed_flows[flow]['size'] <= 0, 0, 1)
                 masked_pairs = np.ma.masked_array(pairs, first_pass_mask)
                 chosen_pair = self._perform_first_pass(flow, pairs=masked_pairs[masked_pairs.mask].data)
@@ -528,16 +528,13 @@ class FlowPacker:
             # second pass (if can't avoid exceeding any pair's target load, pack into pair without exceeding max total load)
             if chosen_pair is None:
                 # first pass failed, perform second pass
-                first_pass_successful = False
                 # chosen_pair = self._perform_second_pass(flow, pairs)
-                # second_pass_pairs = self._prepare_pairs_for_packing(second_pass_pairs, sort_mode='descending')
-                # second_pass_pairs = self._prepare_pairs_for_packing(second_pass_pairs, sort_mode='ascending')
-                # second_pass_pairs = self._prepare_pairs_for_packing(pairs[second_pass_mask], sort_mode='random')
+                # mask out any pairs which do not meet the second pass requirements
                 second_pass_mask = np.where(list(self.pair_current_total_info_dict.values()) + self.packed_flows[flow]['size'] >= self.max_total_ep_info, 0, 1)
                 masked_pairs = np.ma.masked_array(pairs, second_pass_mask)
                 chosen_pair = self._perform_second_pass(flow, pairs=masked_pairs[masked_pairs.mask].data)
             else:
-                first_pass_successful = True
+                pass
 
             if chosen_pair is None:
                 # could not find end point pair with enough capacity to take flow
@@ -558,41 +555,6 @@ class FlowPacker:
                 json_loads_pair = self.pair_to_json_loads[chosen_pair]
                 src, dst = json_loads_pair[0], json_loads_pair[1]
                 min_flow_size_remaining = np.min(self.flow_sizes[flow_idx+1:])
-
-            # check if can filter this chosen pair from being included in future first passes to save time
-            # first_pass_mask = np.where(list(self.pair_current_distance_from_target_info_dict.values()) - min_flow_size_remaining <= 0, 0, 1)
-            # if first_pass_successful:
-                # if flow_idx != len(self.flow_sizes) - 1:
-                    # if self.pair_current_distance_from_target_info_dict[chosen_pair] - min_flow_size_remaining < 0:
-                        # # not possible to pack any more flows into this pair without exceeding target end point load, can remove this pair from future first pass loops
-                        # pair_idx = np.where(first_pass_pairs == chosen_pair)[0]
-                        # first_pass_pairs = np.delete(first_pass_pairs, pair_idx)
-                # else:
-                    # # at last flow, no need to filter since finished packing
-                    # pass
-            # else:
-                # # first pass not successful with this pair, possibly because is not in first pass list in first place, ignore
-                # pass
-
-            # check if can filter this chosen pair from being included in future second passes to save time
-            # second_pass_mask = np.where(list(self.pair_current_total_info_dict.values()) + (min_flow_size_remaining) >= self.max_total_ep_info, 0, 1)
-            # first_pass_mask = np.where(second_pass_mask == 0, 0, 1)
-            # if self.check_dont_exceed_one_ep_load:
-                # if flow_idx != len(self.flow_sizes) - 1:
-                    # if self.src_total_infos[src] + min_flow_size_remaining > self.max_total_port_info or self.dst_total_infos[dst] + min_flow_size_remaining > self.max_total_port_info:
-                        # # not possible to pack any more flows into this pair without exceeding 1.0 end point load, can remove this pair from future second pass loops
-                        # pair_idx = np.where(second_pass_pairs == chosen_pair)[0][0]
-                        # second_pass_pairs = np.delete(second_pass_pairs, pair_idx)
-                        # # by definition any pair not in second pass should be removed from first pass as well, therefore should try to remove if still present
-                        # try:
-                            # pair_idx = np.where(first_pass_pairs == chosen_pair)[0][0]
-                            # first_pass_pairs = np.delete(first_pass_pairs, pair_idx)
-                        # except IndexError:
-                            # # pair not in first_pass_pairs, no need to remove
-                            # pass
-                # else:
-                    # # at last flow, no need to filter since finished packing
-                    # pass
 
             # # DEBUG
             # if self.pair_current_distance_from_target_info_dict[chosen_pair] < 0:
