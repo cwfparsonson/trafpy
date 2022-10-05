@@ -16,8 +16,14 @@ import warnings
 import matplotlib
 import matplotlib.pyplot as plt
 
-
-import ray
+# import ray
+# import psutil
+# NUM_CPUS = psutil.cpu_count(logical=False)
+# try:
+    # ray.init(num_cpus=NUM_CPUS)
+# except RuntimeError:
+    # # already initialised ray in another script, no need to init again
+    # pass
 
 
 
@@ -249,6 +255,33 @@ class FlowGenerator:
 
 
 
+# @ray.remote
+# def _check_if_flow_pair_meets_first_pass_asynchronous(*args, **kwargs):
+    # return _check_if_flow_pair_meets_first_pass_synchronous(*args, **kwargs)
+
+# def _check_if_flow_pair_meets_first_pass_synchronous(flow_size,
+                                                     # src,
+                                                     # src_total_info,
+                                                     # dst,
+                                                     # dst_total_info,
+                                                     # max_total_port_info,
+                                                     # pair_current_distance_from_target_info_dict,
+                                                     # ):
+    # meets_pass = False
+    # src, dst = json.loads(pair)[0], json.loads(pair)[1]
+    # if self.check_dont_exceed_one_ep_load:
+        # # ensure will not exceed 1.0 end point load by allocating this flow to pair
+        # if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
+            # # would exceed maximum load for at least one of src and/or dst
+            # pass
+        # else:
+            # if self.pair_current_distance_from_target_info_dict[pair] - self.packed_flows[flow]['size'] < 0:
+                # # would exceed pair's target total info, try next pair
+                # pass
+            # else:
+                # meets_pass = True
+    # return meets_pass 
+
 
 
 
@@ -321,6 +354,7 @@ class FlowPacker:
         # init current total info packed into each src-dst pair and current distance from target info
         self.pair_current_total_info_dict = {pair: 0 for pair in self.pair_prob_dict.keys()}
         self.pair_current_distance_from_target_info_dict = {pair: self.pair_target_total_info_dict[pair]-self.pair_current_total_info_dict[pair] for pair in self.pair_prob_dict.keys()}
+        self.max_distance_from_target = np.max(list(self.pair_target_total_info_dict.values())) # keep track of this parameter to avoid doing needless first pass when packing
 
         # calc max total info during simulation per end point and initialise end point total info tracker
         self.max_total_ep_info = self.network_load_config['ep_link_capacity'] * self.duration
@@ -332,7 +366,7 @@ class FlowPacker:
         self.src_total_infos = {ep: 0 for ep in self.eps}
         self.dst_total_infos = {ep: 0 for ep in self.eps}
 
-        flow_sizes = [self.packed_flows[flow]['size'] for flow in self.packed_flows.keys()]
+        self.flow_sizes = np.asarray([self.packed_flows[flow]['size'] for flow in self.packed_flows.keys()])
         if self.print_data:
             print('pair prob dict:\n{}'.format(self.pair_prob_dict))
             print('pair target load rate dict:\n{}'.format(self.pair_target_load_rate_dict))
@@ -342,48 +376,71 @@ class FlowPacker:
             print('pair target load rate sum: {}'.format(np.sum(list(self.pair_target_load_rate_dict.values()))))
             print('pair target total info sum: {}'.format(np.sum(list(self.pair_target_total_info_dict.values()))))
             print('max total ep info: {}'.format(self.max_total_ep_info))
-            print('sum of all flow sizes: {}'.format(sum(flow_sizes)))
+            print('sum of all flow sizes: {}'.format(sum(self.flow_sizes)))
 
-    def _perform_first_pass(self, flow, pairs):
+    def _perform_first_pass(self, flow, pairs, verbose=False):
+        if verbose:
+            print(f'Performing first pass for flow {flow} across {len(pairs)} candidate pairs...')
+        pairs = self._prepare_pairs_for_packing(pairs, sort_mode='random')
         chosen_pair = None
         for pair in pairs:
-            src, dst = json.loads(pair)[0], json.loads(pair)[1]
-            if self.check_dont_exceed_one_ep_load:
-                # ensure wont exceed 1.0 end point load by allocating this flow to pair
-                if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
-                    # would exceed maximum load for at least one of src and/or dst
-                    pass
-                else:
-                    if self.pair_current_distance_from_target_info_dict[pair] - self.packed_flows[flow]['size'] < 0:
-                        # would exceed pair's target total info, try next pair
-                        pass
-                    else:
-                        chosen_pair = pair
-                        break
-            else:
-                # don't worry about exceeding 1.0 end point load, just allocate to pair furthest from target load
+            if self._check_if_flow_pair_meets_first_pass(flow, pair):
                 chosen_pair = pair
                 break
         return chosen_pair
 
-    def _perform_second_pass(self, flow, pairs):
+    def _check_if_flow_pair_meets_first_pass(self, flow, pair, verbose=False):
+        meets_pass = False
+        json_loads_pair = self.pair_to_json_loads[pair]
+        src, dst = json_loads_pair[0], json_loads_pair[1]
+        if verbose:
+            print(f'FIRST PASS: Checking flow {flow} pair {pair}...')
+        if self.check_dont_exceed_one_ep_load:
+            # # ensure will not exceed 1.0 end point load by allocating this flow to pair
+            # if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
+                # if verbose:
+                    # print(f'FAILED: Would exceed pair max load.')
+            # else:
+            if self.pair_current_distance_from_target_info_dict[pair] - self.packed_flows[flow]['size'] < 0:
+                if verbose:
+                    print(f'FAILED: Would exceed pair target load.')
+            else:
+                meets_pass = True
+                if verbose:
+                    print(f'PASS')
+        else:
+            # don't worry about exceeding 1.0 end point load, just allocate to pair furthest from target load
+            meets_pass = True
+            if verbose:
+                print(f'PASS')
+        return meets_pass 
+
+    def _perform_second_pass(self, flow, pairs, verbose=False):
+        if verbose:
+            print(f'Performing second pass for flow {flow} across {len(pairs)} candidate pairs...')
+        pairs = self._prepare_pairs_for_packing(pairs, sort_mode='random')
         chosen_pair = None
         for pair in pairs:
-            # pair = pair[0]
-            src, dst = json.loads(pair)[0], json.loads(pair)[1]
-            if self.check_dont_exceed_one_ep_load:
-                # ensure wont exceed 1.0 end point load by allocating this flow to pair
-                if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
-                    # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
-                    pass
-                else:
-                    chosen_pair = pair
-                    break
-            else:
-                # don't worry about exceeding 1.0 end point load, just allocate to pair furthest from target load
+            if self._check_if_flow_pair_meets_second_pass(flow, pair):
                 chosen_pair = pair
                 break
         return chosen_pair
+
+    def _check_if_flow_pair_meets_second_pass(self, flow, pair):
+        meets_pass = False
+        json_loads_pair = self.pair_to_json_loads[pair]
+        src, dst = json_loads_pair[0], json_loads_pair[1]
+        if self.check_dont_exceed_one_ep_load:
+            # ensure wont exceed 1.0 end point load by allocating this flow to pair
+            if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
+                # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
+                pass
+            else:
+                meets_pass = True
+        else:
+            # don't worry about exceeding 1.0 end point load, just allocate to pair furthest from target load
+            meets_pass = True
+        return meets_pass
         
     def _pack_flow_into_chosen_pair(self, flow, chosen_pair):
         # pack flow into this pair
@@ -399,14 +456,23 @@ class FlowPacker:
         self.src_total_infos[src] += self.packed_flows[flow]['size']
         self.dst_total_infos[dst] += self.packed_flows[flow]['size']
 
-    def _prepare_pairs_for_packing_a_flow(self, pairs):
-        # randomly shuffle pair order to prevent unwanted fade trends in node dist
-        np.random.shuffle(pairs)
-        # get pair distances
-        distances = np.asarray([self.pair_current_distance_from_target_info_dict[pair] for pair in pairs])
-        # sort in descending order
-        sorted_indices = np.argsort(distances)[::-1]
-        sorted_pairs = pairs[sorted_indices]
+    def _prepare_pairs_for_packing(self, pairs, sort_mode='random'):
+        if sort_mode == 'descending':
+            # sort in descending order of total infos
+            # sorted_indices = np.argsort(list(self.pair_current_distance_from_target_info_dict.values()))[::-1]
+            sorted_indices = np.argsort(list(self.pair_current_total_info_dict.values()))[::-1]
+            sorted_pairs = pairs[sorted_indices]
+        if sort_mode == 'ascending':
+            # sort in ascending order of total infos
+            # sorted_indices = np.argsort(list(self.pair_current_distance_from_target_info_dict.values()))
+            sorted_indices = np.argsort(list(self.pair_current_total_info_dict.values()))
+            sorted_pairs = pairs[sorted_indices]
+        elif sort_mode == 'random':
+            # randomly shuffle pair order to prevent unwanted fade trends in node dist
+            np.random.shuffle(pairs)
+            sorted_pairs = pairs
+        else:
+            raise Exception(f'Unrecognised sort_mode {sort_mode}')
         return sorted_pairs
 
     def _shuffle_packed_flows(self):
@@ -434,22 +500,44 @@ class FlowPacker:
         start = time.time()
 
         pairs = np.asarray(list(self.pair_current_distance_from_target_info_dict.keys()))
-        for flow in self.packed_flows.keys():
+        first_pass_mask = np.ones(len(pairs), dtype=np.int8)
+        second_pass_mask = np.ones(len(pairs), dtype=np.int8)
+
+        # map each pair to its string equivalent once at start so do not have to keep making computationally expensive json.loads() for each flow for each pair for each pass
+        self.pair_to_json_loads = {pair: json.loads(pair) for pair in pairs}
+
+        # pack each flow into a pair
+        for flow_idx, flow in enumerate(self.packed_flows.keys()):
             if self.print_data:
                 print('\nPacking flow {} of size {}'.format(flow, self.packed_flows[flow]['size']))
 
-            pairs = self._prepare_pairs_for_packing_a_flow(pairs)
-
-            if self.print_data:
-                print('Current distance from target info:\n{}'.format(pairs))
-                print('Looking for pair furthest from target info...')
+            # first_pass_pairs = self._prepare_pairs_for_packing(pairs[first_pass_mask], sort_mode='random')
+            chosen_pair = None
 
             # first pass (try not to exceed target pair load)
-            chosen_pair = self._perform_first_pass(flow, pairs)
+            if self.max_distance_from_target - self.packed_flows[flow]['size'] < 0:
+                # there is no way to pack this flow into any pair with the forward pass, can skip straight to second pass
+                pass
+            else:
+                # chosen_pair = self._perform_first_pass(flow, pairs)
+                # chosen_pair = self._perform_first_pass(flow, pairs[first_pass_mask])
+                first_pass_mask = np.where(list(self.pair_current_distance_from_target_info_dict.values()) - self.packed_flows[flow]['size'] <= 0, 0, 1)
+                masked_pairs = np.ma.masked_array(pairs, first_pass_mask)
+                chosen_pair = self._perform_first_pass(flow, pairs=masked_pairs[masked_pairs.mask].data)
 
+            # second pass (if can't avoid exceeding any pair's target load, pack into pair without exceeding max total load)
             if chosen_pair is None:
-                # second pass (if can't avoid exceeding any pair's target load, pack into pair without exceeding max total load)
-                chosen_pair = self._perform_second_pass(flow, pairs)
+                # first pass failed, perform second pass
+                first_pass_successful = False
+                # chosen_pair = self._perform_second_pass(flow, pairs)
+                # second_pass_pairs = self._prepare_pairs_for_packing(second_pass_pairs, sort_mode='descending')
+                # second_pass_pairs = self._prepare_pairs_for_packing(second_pass_pairs, sort_mode='ascending')
+                # second_pass_pairs = self._prepare_pairs_for_packing(pairs[second_pass_mask], sort_mode='random')
+                second_pass_mask = np.where(list(self.pair_current_total_info_dict.values()) + self.packed_flows[flow]['size'] >= self.max_total_ep_info, 0, 1)
+                masked_pairs = np.ma.masked_array(pairs, second_pass_mask)
+                chosen_pair = self._perform_second_pass(flow, pairs=masked_pairs[masked_pairs.mask].data)
+            else:
+                first_pass_successful = True
 
             if chosen_pair is None:
                 # could not find end point pair with enough capacity to take flow
@@ -460,6 +548,51 @@ class FlowPacker:
 
             # pack flow into this pair
             self._pack_flow_into_chosen_pair(flow, chosen_pair)
+
+            # update max distance from target load across all pairs
+            if self.pair_current_distance_from_target_info_dict[chosen_pair] > self.max_distance_from_target:
+                self.max_distance_from_target = self.pair_current_distance_from_target_info_dict[chosen_pair]
+
+            # get minimum flow size of remaining flows to be packed
+            if flow_idx != len(self.flow_sizes) - 1:
+                json_loads_pair = self.pair_to_json_loads[chosen_pair]
+                src, dst = json_loads_pair[0], json_loads_pair[1]
+                min_flow_size_remaining = np.min(self.flow_sizes[flow_idx+1:])
+
+            # check if can filter this chosen pair from being included in future first passes to save time
+            # first_pass_mask = np.where(list(self.pair_current_distance_from_target_info_dict.values()) - min_flow_size_remaining <= 0, 0, 1)
+            # if first_pass_successful:
+                # if flow_idx != len(self.flow_sizes) - 1:
+                    # if self.pair_current_distance_from_target_info_dict[chosen_pair] - min_flow_size_remaining < 0:
+                        # # not possible to pack any more flows into this pair without exceeding target end point load, can remove this pair from future first pass loops
+                        # pair_idx = np.where(first_pass_pairs == chosen_pair)[0]
+                        # first_pass_pairs = np.delete(first_pass_pairs, pair_idx)
+                # else:
+                    # # at last flow, no need to filter since finished packing
+                    # pass
+            # else:
+                # # first pass not successful with this pair, possibly because is not in first pass list in first place, ignore
+                # pass
+
+            # check if can filter this chosen pair from being included in future second passes to save time
+            # second_pass_mask = np.where(list(self.pair_current_total_info_dict.values()) + (min_flow_size_remaining) >= self.max_total_ep_info, 0, 1)
+            # first_pass_mask = np.where(second_pass_mask == 0, 0, 1)
+            # if self.check_dont_exceed_one_ep_load:
+                # if flow_idx != len(self.flow_sizes) - 1:
+                    # if self.src_total_infos[src] + min_flow_size_remaining > self.max_total_port_info or self.dst_total_infos[dst] + min_flow_size_remaining > self.max_total_port_info:
+                        # # not possible to pack any more flows into this pair without exceeding 1.0 end point load, can remove this pair from future second pass loops
+                        # pair_idx = np.where(second_pass_pairs == chosen_pair)[0][0]
+                        # second_pass_pairs = np.delete(second_pass_pairs, pair_idx)
+                        # # by definition any pair not in second pass should be removed from first pass as well, therefore should try to remove if still present
+                        # try:
+                            # pair_idx = np.where(first_pass_pairs == chosen_pair)[0][0]
+                            # first_pass_pairs = np.delete(first_pass_pairs, pair_idx)
+                        # except IndexError:
+                            # # pair not in first_pass_pairs, no need to remove
+                            # pass
+                # else:
+                    # # at last flow, no need to filter since finished packing
+                    # pass
 
             # # DEBUG
             # if self.pair_current_distance_from_target_info_dict[chosen_pair] < 0:

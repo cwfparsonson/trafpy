@@ -15,8 +15,6 @@ if __name__ == '__main__':
     # 1. Generate a file called <name>.prof
     # 2. Transfer to /home/cwfparsonson/Downloads
     # 3. Run snakeviz /home/cwfparsonson/Downloads/<name>.prof to visualise
-    profiler = cProfile.Profile()
-    profiler.enable()
 
     sid = 1
     # set vars
@@ -26,15 +24,15 @@ if __name__ == '__main__':
     # path = 'Y:/Joshua/Traffic/'
     endpoints = [str(i) for i in range(N)]
 
-    min_num_demands = 100
-    # min_num_demands = int(10e3)
+    # min_num_demands = 100
+    min_num_demands = int(300)
     min_last_demand_arrival_time = 250
     jensen_shannon_distance_threshold = 0.1
     # loads = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
     # loads = [0.9]
-    loads = [0.1]
-    # jensen_shannon_distance_threshold = 0.1
-    jensen_shannon_distance_threshold = 0.9
+    loads = [0.5]
+    jensen_shannon_distance_threshold = 0.2
+    # jensen_shannon_distance_threshold = 0.9
     NUM_DEMANDS_FACTOR = 5
 
     sk_nd = [0, 0.25,0.5,0.75, 0.5625,0.8125,0.3125, 0.5625,0.8125]
@@ -70,6 +68,10 @@ if __name__ == '__main__':
                                              show_fig=True,
                                              num_skewed_nodes=int(SN*N))
     print(f'Initialised node distribution.')
+
+    # init time profile
+    profiler = cProfile.Profile()
+    profiler.enable()
 
     for load in loads:
         print('Generating load {}...'.format(load))
