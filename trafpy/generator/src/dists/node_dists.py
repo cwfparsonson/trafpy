@@ -259,6 +259,7 @@ def gen_multimodal_node_dist(eps,
                              path_to_save=None,
                              plot_fig=False,
                              show_fig=False,
+                             plot_chord=True,
                              print_data=False):
     '''Generates a multimodal node distribution.
 
@@ -416,6 +417,7 @@ def gen_multimodal_node_dist(eps,
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
                                         eps=eps,
+                                        plot_chord=plot_chord,
                                         show_fig=show_fig)
         return node_dist, fig
 

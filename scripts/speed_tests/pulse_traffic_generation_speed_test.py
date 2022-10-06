@@ -27,12 +27,12 @@ if __name__ == '__main__':
     min_num_demands = 100
     # min_num_demands = int(300)
     min_last_demand_arrival_time = 250
-    jensen_shannon_distance_threshold = 0.3
     # loads = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-    loads = [0.9]
-    # loads = [0.5]
+    # loads = [0.9]
+    loads = [0.5]
     # jensen_shannon_distance_threshold = 0.1
-    # jensen_shannon_distance_threshold = 0.2
+    jensen_shannon_distance_threshold = 0.2
+    # jensen_shannon_distance_threshold = 0.3
     # jensen_shannon_distance_threshold = 0.9
     NUM_DEMANDS_FACTOR = 5
 
