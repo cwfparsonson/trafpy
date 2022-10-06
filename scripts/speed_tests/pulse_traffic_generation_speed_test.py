@@ -1,8 +1,13 @@
 from trafpy.generator import Demand, DemandPlotter
 import trafpy.generator as tpg
+from trafpy.utils import seed_stochastic_modules_globally
+
 import time
 import copy
 from scipy.io import savemat
+
+import numpy as np
+import random
 
 import cProfile
 import pstats
@@ -16,6 +21,11 @@ if __name__ == '__main__':
     # 2. Transfer to /home/cwfparsonson/Downloads
     # 3. Run snakeviz /home/cwfparsonson/Downloads/<name>.prof to visualise
 
+    seed = 0
+    seed_stochastic_modules_globally(default_seed=seed,
+                                     numpy_module=np,
+                                     random_module=random)
+
     sid = 1
     # set vars
     X = 4
@@ -28,10 +38,11 @@ if __name__ == '__main__':
     # min_num_demands = int(300)
     min_last_demand_arrival_time = 250
     # loads = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+    loads = [0.1]
+    # loads = [0.5]
     # loads = [0.9]
-    loads = [0.5]
-    # jensen_shannon_distance_threshold = 0.1
-    jensen_shannon_distance_threshold = 0.2
+    jensen_shannon_distance_threshold = 0.1
+    # jensen_shannon_distance_threshold = 0.2
     # jensen_shannon_distance_threshold = 0.3
     # jensen_shannon_distance_threshold = 0.9
     NUM_DEMANDS_FACTOR = 5

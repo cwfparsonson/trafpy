@@ -16,6 +16,8 @@ import warnings
 import matplotlib
 import matplotlib.pyplot as plt
 
+from typing import Union
+
 # import ray
 # import psutil
 # NUM_CPUS = psutil.cpu_count(logical=False)
@@ -296,7 +298,36 @@ class FlowPacker:
                  network_load_config,
                  auto_node_dist_correction=False,
                  check_dont_exceed_one_ep_load=True,
+                 second_pass_pairs_search_mode: Union['shuffle', 'sample', 'deterministic']='sample',
+                 second_pass_pairs_search_sample_mode_factor=100,
                  print_data=False):
+        '''
+        Args:
+            second_pass_pairs_search_mode: For the second pass, the packer
+                takes a flow and loops through the available src-dst pairs until it
+                finds a pair which it can pack the flow into. In order to stop the
+                majority of flows being packed into the first few pairs (by index),
+                we need to somehow loop through these pairs in a random fashion (if
+                we do not, then we will see a fade phenomenon appear in our
+                resultant node distribution heat map after packing; set
+                second_pass_pairs_search_mode=deterministic to observe this).
+                Setting second_pass_pairs_search_mode=shuffle will randomly shuffle
+                the pairs at the start of each pass and prevent this fade
+                phenomenon. However, np.random.shuffle(pairs) becomes expensive for
+                a large number of pairs, and must be called for each flow (of which
+                there may be millions). To circumvent this, rather than randomly
+                shuffling, we can instead set second_pass_pairs_search_mode=sample
+                to randomly sample a pair to try. We then keep randomly sampling
+                pairs from an array of available candidate pairs until we find a
+                pair which can accommodate the flow. In order to prevent having to
+                generate a list of pair indices with each sample, we do not sample
+                without replacement, therefore there is a chance that a given pair
+                might be needlessly sampled multiple times when searching for a
+                pair for a given flow. However, empirically at scale this method is
+                overall faster than performing a shuffle on the whole pairs array. 
+                You can test this for yourself by switching betwee sample and shuffle
+                mode.
+        '''
         self.generator = generator
         self.eps = eps
         self.node_dist = copy.deepcopy(node_dist)
@@ -306,6 +337,8 @@ class FlowPacker:
         self.network_load_config = network_load_config
         self.auto_node_dist_correction = auto_node_dist_correction
         self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
+        self.second_pass_pairs_search_mode = second_pass_pairs_search_mode
+        self.second_pass_pairs_search_sample_mode_factor = second_pass_pairs_search_sample_mode_factor
         self.print_data = print_data
         # self.print_data = True # DEBUG
 
@@ -395,7 +428,7 @@ class FlowPacker:
 
     def _get_first_pass_mask(self, flow, second_pass_mask):
         first_pass_mask = np.where(list(self.pair_current_distance_from_target_info_dict.values()) - self.packed_flows[flow]['size'] < 0, 0, 1)
-        return (first_pass_mask == 1) & (second_pass_mask == 1)
+        return np.logical_and(first_pass_mask, second_pass_mask)
 
     def _update_second_pass_mask(self, chosen_pair, second_pass_mask):
         json_loads_pair = self.pair_to_json_loads[chosen_pair]
@@ -407,16 +440,16 @@ class FlowPacker:
             if self.src_total_infos[chosen_src] + min_flow_size_remaining > self.max_total_port_info:
                 # any pair with this src port cannot have any more flows packed into it, filter its pairs from being included in any future second pass loops
                 src_second_pass_mask = np.isin(self.pairs, list(self.src_port_to_pairs[chosen_src]), invert=True).astype(np.int8)
-                src_second_pass_mask = (src_second_pass_mask == 1) & (second_pass_mask == 1)
+                src_second_pass_mask = np.logical_and(src_second_pass_mask, second_pass_mask)
             else:
                 src_second_pass_mask = second_pass_mask
             if self.dst_total_infos[chosen_dst] + min_flow_size_remaining > self.max_total_port_info:
                 # any pair with this dst port cannot have any more flows packed into it, filter its pairs from being included in any future second pass loops
                 dst_second_pass_mask = np.isin(self.pairs, list(self.dst_port_to_pairs[chosen_dst]), invert=True).astype(np.int8)
-                dst_second_pass_mask = (dst_second_pass_mask == 1) & (second_pass_mask == 1)
+                dst_second_pass_mask = np.logical_and(dst_second_pass_mask, second_pass_mask)
             else:
                 dst_second_pass_mask = second_pass_mask
-            second_pass_mask = (src_second_pass_mask == 1) & (dst_second_pass_mask == 1)
+            second_pass_mask = np.logical_and(src_second_pass_mask, dst_second_pass_mask)
         return second_pass_mask
 
     def _get_masked_pairs(self, mask):
@@ -429,20 +462,25 @@ class FlowPacker:
         pairs = self._prepare_pairs_for_packing(pairs, sort_mode='random') # random shuffle to remove node matrix heat map fade phenomenon
         chosen_pair = None
         for pair in pairs:
-            if self.check_dont_exceed_one_ep_load:
-                # make sure neither src or dst of pair would exceed their maximum loads
-                if not self._check_if_flow_pair_within_max_load(flow, pair):
-                    pass
-                else:
-                    if self._check_if_flow_pair_within_target_load(flow, pair):
-                        chosen_pair = pair
-                        break
-            else:
-                # do not worry about exceeding 1.0 load
-                if self._check_if_flow_pair_within_target_load(flow, pair):
-                    chosen_pair = pair
-                    break
+            if self._check_if_flow_pair_passes_first_pass(flow, pair):
+                chosen_pair = pair
+                break
         return chosen_pair
+
+    def _check_if_flow_pair_passes_first_pass(self, flow, pair):
+        passes = False
+        if self.check_dont_exceed_one_ep_load:
+            # make sure neither src or dst of pair would exceed their maximum loads
+            if not self._check_if_flow_pair_within_max_load(flow, pair):
+                pass
+            else:
+                if self._check_if_flow_pair_within_target_load(flow, pair):
+                    passes = True            
+        else:
+            # do not worry about exceeding 1.0 load
+            if self._check_if_flow_pair_within_target_load(flow, pair):
+                passes = True
+        return passes
 
     def _check_if_flow_pair_within_target_load(self, flow, pair, verbose=False):
         within_load = False
@@ -462,13 +500,44 @@ class FlowPacker:
     def _perform_second_pass(self, flow, pairs, verbose=False):
         if verbose:
             print(f'Performing second pass for flow {flow} across {len(pairs)} candidate pairs...')
-        pairs = self._prepare_pairs_for_packing(pairs, sort_mode='random') # random shuffle to remove node matrix heat map fade phenomenon
         chosen_pair = None
-        for pair in pairs:
-            if self._check_if_flow_pair_within_max_load(flow, pair):
-                chosen_pair = pair
-                break
+        if self.second_pass_pairs_search_mode in ['deterministic', 'shuffle']:
+            if self.second_pass_pairs_search_mode == 'shuffle':
+                # random shuffle candidate pairs to remove node matrix heat map fade phenomenon
+                pairs = self._prepare_pairs_for_packing(pairs, sort_mode='random') # random shuffle to remove node matrix heat map fade phenomenon
+            else:
+                # deterministically loop through candidate pairs in same way each time
+                pass
+            for pair in pairs:
+                if self._check_if_flow_pair_within_max_load(flow, pair):
+                    chosen_pair = pair
+                    break
+        elif self.second_pass_pairs_search_mode == 'sample':
+            # randomly sample a candidate pair until find a pair which passes
+            counter = 1
+            while counter < len(pairs) * self.second_pass_pairs_search_sample_mode_factor:
+                pair = np.random.choice(pairs)
+                if self._check_if_flow_pair_passes_second_pass(flow, pair):
+                    chosen_pair = pair
+                    break
+                else:
+                    counter += 1
+            if counter == len(pairs) * self.second_pass_pairs_search_sample_mode_factor:
+                raise Exception(f'Was unable to find a valid src-dst pair for flow {flow} after {int(len(pairs) * self.second_pass_pairs_search_sample_mode_factor)} attempts in the second pass with second_pass_pairs_search_mode=sample. This may be because no pair exists which can accommodate this flow without exceeding 1.0 end point load, or because second_pass_pairs_search_sample_mode_factor (self.second_pass_pairs_search_sample_mode_factor) is too low. Try increasing second_pass_pairs_search_sample_mode_factor, or try setting second_pass_pairs_search_mode to shuffle. If this fails, there is likely a bug somehwere with e.g. second_pass_mask masking too many candidate pairs and/or an error in the traffic loads and src-dst pair capacities generated.')
+        else:
+            raise Exception(f'Unrecognised second_pass_pairs_search_mode {self.second_pass_pairs_search_mode}')
+
+
         return chosen_pair
+
+    def _check_if_flow_pair_passes_second_pass(self, flow, pair):
+        passes = False
+        if self.check_dont_exceed_one_ep_load:
+            if self._check_if_flow_pair_within_max_load(flow, pair):
+                passes = True
+        else:
+            passes = True
+        return passes
 
     def _check_if_flow_pair_within_max_load(self, flow, pair):
         within_load = False
@@ -1074,7 +1143,7 @@ def duplicate_demand(job,
             attr_dict['job_id'] = 'job_{}'.format(idx+num_demands)
             attr_dict['unique_id'] = attr_dict['job_id'] + '_' + attr_dict['flow_id']
 
-            # flow src, dst, & size
+            # flow src, dst, and size
             # if data dependency, is a flow
             if attr_dict['dependency_type'] == 'data_dep':
                 flow_ids.append(attr_dict['unique_id'])
