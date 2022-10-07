@@ -1,5 +1,6 @@
 from trafpy.generator.src import tools
 from trafpy.generator.src.dists import val_dists, node_dists, plot_dists
+from trafpy.utils import get_class_from_path
 
 import numpy as np
 import time
@@ -43,6 +44,8 @@ class FlowGenerator:
                  min_last_demand_arrival_time=None,
                  auto_node_dist_correction=False,
                  check_dont_exceed_one_ep_load=True,
+                 # flow_packer_cls='trafpy.generator.src.packers.flow_packer_v1.FlowPackerV1',
+                 flow_packer_cls='trafpy.generator.src.packers.flow_packer_v2.FlowPackerV2',
                  print_data=False):
         '''
         Args:
@@ -100,6 +103,7 @@ class FlowGenerator:
         self.jensen_shannon_distance_threshold = jensen_shannon_distance_threshold
         self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
         self.print_data = print_data
+        self.flow_packer_cls = flow_packer_cls
 
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
 
@@ -165,15 +169,21 @@ class FlowGenerator:
         establish = [1 for _ in range(self.num_demands)]
 
         # pack the flows into src-dst pairs to meet src-dst pair load config requirements of node_dist
-        packer = FlowPacker(self,
-                            self.eps,
-                            self.node_dist,
-                            flow_ids,
-                            flow_sizes,
-                            interarrival_times,
-                            network_load_config=self.network_load_config,
-                            auto_node_dist_correction=self.auto_node_dist_correction,
-                            check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load)
+        if isinstance(self.flow_packer_cls, str):
+            # load packer class from string path
+            flow_packer_cls = get_class_from_path(self.flow_packer_cls)
+        else:
+            flow_packer_cls = self.flow_packer_cls
+        packer = flow_packer_cls(self,
+                                 self.eps,
+                                 self.node_dist,
+                                 flow_ids,
+                                 flow_sizes,
+                                 interarrival_times,
+                                 network_load_config=self.network_load_config,
+                                 auto_node_dist_correction=self.auto_node_dist_correction,
+                                 check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load)
+        packer.reset()
         packed_flows = packer.pack_the_flows()
 
         # compile packed flows into demand_data dict ordered in terms of arrival time
@@ -287,458 +297,6 @@ class FlowGenerator:
 
 
 
-class FlowPacker:
-    def __init__(self,
-                 generator,
-                 eps,
-                 node_dist,
-                 flow_ids,
-                 flow_sizes,
-                 flow_interarrival_times,
-                 network_load_config,
-                 auto_node_dist_correction=False,
-                 check_dont_exceed_one_ep_load=True,
-                 second_pass_pairs_search_mode: Union['shuffle', 'sample', 'deterministic']='sample',
-                 second_pass_pairs_search_sample_mode_factor=100,
-                 print_data=False):
-        '''
-        Args:
-            second_pass_pairs_search_mode: For the second pass, the packer
-                takes a flow and loops through the available src-dst pairs until it
-                finds a pair which it can pack the flow into. In order to stop the
-                majority of flows being packed into the first few pairs (by index),
-                we need to somehow loop through these pairs in a random fashion (if
-                we do not, then we will see a fade phenomenon appear in our
-                resultant node distribution heat map after packing; set
-                second_pass_pairs_search_mode=deterministic to observe this).
-                Setting second_pass_pairs_search_mode=shuffle will randomly shuffle
-                the pairs at the start of each pass and prevent this fade
-                phenomenon. However, np.random.shuffle(pairs) becomes expensive for
-                a large number of pairs, and must be called for each flow (of which
-                there may be millions). To circumvent this, rather than randomly
-                shuffling, we can instead set second_pass_pairs_search_mode=sample
-                to randomly sample a pair to try. We then keep randomly sampling
-                pairs from an array of available candidate pairs until we find a
-                pair which can accommodate the flow. In order to prevent having to
-                generate a list of pair indices with each sample, we do not sample
-                without replacement, therefore there is a chance that a given pair
-                might be needlessly sampled multiple times when searching for a
-                pair for a given flow. However, empirically at scale this method is
-                overall faster than performing a shuffle on the whole pairs array. 
-                You can test this for yourself by switching betwee sample and shuffle
-                mode.
-        '''
-        self.generator = generator
-        self.eps = eps
-        self.node_dist = copy.deepcopy(node_dist)
-        self.flow_ids = flow_ids
-        self.flow_sizes = flow_sizes
-        self.flow_interarrival_times = flow_interarrival_times
-        self.network_load_config = network_load_config
-        self.auto_node_dist_correction = auto_node_dist_correction
-        self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
-        self.second_pass_pairs_search_mode = second_pass_pairs_search_mode
-        self.second_pass_pairs_search_sample_mode_factor = second_pass_pairs_search_sample_mode_factor
-        self.print_data = print_data
-        # self.print_data = True # DEBUG
-
-        num_pairs = (len(self.eps)**2)-len(self.eps)
-        if len(flow_sizes) < num_pairs:
-            print('WARNING: {} endpoints have {} possible pairs, but packer has only been given {} flows to pack. This will result in sparse packing, which will limit how accurately the packer is able to replicate the target node distribution. If you do not want this, provide the packer with more flows (e.g. by setting min_num_demands to >> number of possible pairs).'.format(len(self.eps), num_pairs, len(flow_sizes)))
-
-        self.reset()
-        if self.network_load_config['target_load_fraction'] is not None:
-            self._check_node_dist_valid_for_this_load()
-
-    def reset(self):
-        # init dict in which flows will be packed into src-dst pairs
-        nested_dict = lambda: defaultdict(nested_dict)
-        self.packed_flows = nested_dict()
-
-        # want to pack largest flows first -> re-organise flows into descending order (will shuffle later so maintain random flow sizes of arrivals)
-        self.flow_sizes[::-1].sort()
-        for idx in range(len(self.flow_ids)):
-            self.packed_flows[self.flow_ids[idx]] = {'size': self.flow_sizes[idx],
-                                                     'src': None,
-                                                     'dst': None}
-
-        # calc overall load rate
-        if self.network_load_config['target_load_fraction'] is not None:
-            self.load_rate = self.generator._calc_overall_load_rate(self.flow_sizes, self.flow_interarrival_times)
-        else:
-            # no particular target load specified, just assume max
-            self.load_rate = self.network_load_config['network_rate_capacity']
-        if self.load_rate > self.network_load_config['network_rate_capacity']:
-            raise Exception(f'load_rate ({self.load_rate}) > maximum network_rate_capacity ({self.network_load_config["network_rate_capacity"]})')
-        if self.print_data:
-            print(f'Overall network load rate: {self.load_rate}')
-
-        # calc target load rate of each src-dst pair
-        self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps, all_combinations=True)
-        self.pair_prob_dict = node_dists.get_pair_prob_dict_of_node_dist_matrix(self.node_dist, self.eps, all_combinations=True) # N.B. These values sum to 0.5 -> need to allocate twice (src-dst and dst-src)
-        self.pair_target_load_rate_dict = {pair: frac*self.load_rate for pair, frac in self.pair_prob_dict.items()}
-
-        # calc target total info to pack into each src-dst pair
-        flow_event_times = tools.gen_event_times(self.flow_interarrival_times)
-        self.duration = max(flow_event_times) - min(flow_event_times)
-        if self.duration == 0:
-            # set to some number to prevent infinities
-            self.duration = 1e6
-        self.pair_target_total_info_dict = {pair: load_rate*self.duration for pair, load_rate in self.pair_target_load_rate_dict.items()}
-
-        # init current total info packed into each src-dst pair and current distance from target info
-        self.pair_current_total_info_dict = {pair: 0 for pair in self.pair_prob_dict.keys()}
-        self.pair_current_distance_from_target_info_dict = {pair: self.pair_target_total_info_dict[pair]-self.pair_current_total_info_dict[pair] for pair in self.pair_prob_dict.keys()}
-        self.max_distance_from_target = np.max(list(self.pair_target_total_info_dict.values())) # keep track of this parameter to avoid doing needless first pass when packing
-
-        # calc max total info during simulation per end point and initialise end point total info tracker
-        self.max_total_ep_info = self.network_load_config['ep_link_capacity'] * self.duration
-        # # double total ep info so can pack src-dst pairs into links
-        # self.max_total_ep_info *= 2
-        # calc max info can put on src and dst ports (half ep dedicated to each so / 2)
-        self.max_total_port_info = self.max_total_ep_info / 2
-        self.ep_total_infos = {ep: 0 for ep in self.eps}
-        self.src_total_infos = {ep: 0 for ep in self.eps}
-        self.dst_total_infos = {ep: 0 for ep in self.eps}
-
-        self.pairs = np.asarray(list(self.pair_current_distance_from_target_info_dict.keys()))
-
-        # init mapping of src and dst node ports to each possible pair
-        self.src_port_to_pairs = defaultdict(set)
-        self.dst_port_to_pairs = defaultdict(set)
-        # init mapping of each pair to its string equivalent once at start so do not have to keep making computationally expensive json.loads() for each flow for each pair for each pass
-        self.pair_to_json_loads = {}
-        for pair in self.pairs:
-            json_loads_pair = json.loads(pair)
-            src, dst = json_loads_pair[0], json_loads_pair[1]
-            self.src_port_to_pairs[src].add(pair)
-            self.dst_port_to_pairs[dst].add(pair)
-            self.pair_to_json_loads[pair] = json_loads_pair
-
-        if self.print_data:
-            print('pair prob dict:\n{}'.format(self.pair_prob_dict))
-            print('pair target load rate dict:\n{}'.format(self.pair_target_load_rate_dict))
-            print('pair target total info dict:\n{}'.format(self.pair_target_total_info_dict))
-            print('duration: {}'.format(self.duration))
-            print('pair prob dict sum: {}'.format(np.sum(list(self.pair_prob_dict.values()))))
-            print('pair target load rate sum: {}'.format(np.sum(list(self.pair_target_load_rate_dict.values()))))
-            print('pair target total info sum: {}'.format(np.sum(list(self.pair_target_total_info_dict.values()))))
-            print('max total ep info: {}'.format(self.max_total_ep_info))
-            print('sum of all flow sizes: {}'.format(sum(self.flow_sizes)))
-
-    def _get_first_pass_mask(self, flow, second_pass_mask):
-        first_pass_mask = np.where(list(self.pair_current_distance_from_target_info_dict.values()) - self.packed_flows[flow]['size'] < 0, 0, 1)
-        return np.logical_and(first_pass_mask, second_pass_mask)
-
-    def _update_second_pass_mask(self, chosen_pair, second_pass_mask):
-        json_loads_pair = self.pair_to_json_loads[chosen_pair]
-        chosen_src, chosen_dst = json_loads_pair[0], json_loads_pair[1]
-        if self.check_dont_exceed_one_ep_load:
-            # see if this chosen pair can have any more flows packed into it without exceeding 1.0 endpoint load
-            # get minimum flow size of remaining flows to be packed
-            min_flow_size_remaining = self.flow_sizes[-1] # HACK: Already sorted flow sizes on reset and are packing from largest to smallest, so smallest will be last idx
-            if self.src_total_infos[chosen_src] + min_flow_size_remaining > self.max_total_port_info:
-                # any pair with this src port cannot have any more flows packed into it, filter its pairs from being included in any future second pass loops
-                src_second_pass_mask = np.isin(self.pairs, list(self.src_port_to_pairs[chosen_src]), invert=True).astype(np.int8)
-                src_second_pass_mask = np.logical_and(src_second_pass_mask, second_pass_mask)
-            else:
-                src_second_pass_mask = second_pass_mask
-            if self.dst_total_infos[chosen_dst] + min_flow_size_remaining > self.max_total_port_info:
-                # any pair with this dst port cannot have any more flows packed into it, filter its pairs from being included in any future second pass loops
-                dst_second_pass_mask = np.isin(self.pairs, list(self.dst_port_to_pairs[chosen_dst]), invert=True).astype(np.int8)
-                dst_second_pass_mask = np.logical_and(dst_second_pass_mask, second_pass_mask)
-            else:
-                dst_second_pass_mask = second_pass_mask
-            second_pass_mask = np.logical_and(src_second_pass_mask, dst_second_pass_mask)
-        return second_pass_mask
-
-    def _get_masked_pairs(self, mask):
-        masked_pairs = np.ma.masked_array(self.pairs, mask)
-        return masked_pairs[masked_pairs.mask].data
-
-    def _perform_first_pass(self, flow, pairs, verbose=False):
-        if verbose:
-            print(f'Performing first pass for flow {flow} across {len(pairs)} candidate pairs...')
-        pairs = self._prepare_pairs_for_packing(pairs, sort_mode='random') # random shuffle to remove node matrix heat map fade phenomenon
-        chosen_pair = None
-        for pair in pairs:
-            if self._check_if_flow_pair_passes_first_pass(flow, pair):
-                chosen_pair = pair
-                break
-        return chosen_pair
-
-    def _check_if_flow_pair_passes_first_pass(self, flow, pair):
-        passes = False
-        if self.check_dont_exceed_one_ep_load:
-            # make sure neither src or dst of pair would exceed their maximum loads
-            if not self._check_if_flow_pair_within_max_load(flow, pair):
-                pass
-            else:
-                if self._check_if_flow_pair_within_target_load(flow, pair):
-                    passes = True            
-        else:
-            # do not worry about exceeding 1.0 load
-            if self._check_if_flow_pair_within_target_load(flow, pair):
-                passes = True
-        return passes
-
-    def _check_if_flow_pair_within_target_load(self, flow, pair, verbose=False):
-        within_load = False
-        json_loads_pair = self.pair_to_json_loads[pair]
-        src, dst = json_loads_pair[0], json_loads_pair[1]
-        if verbose:
-            print(f'FIRST PASS: Checking flow {flow} pair {pair}...')
-        if self.pair_current_distance_from_target_info_dict[pair] - self.packed_flows[flow]['size'] < 0:
-            if verbose:
-                print(f'FAILED: Would exceed pair target load.')
-        else:
-            within_load = True
-            if verbose:
-                print(f'PASS')
-        return within_load 
-
-    def _perform_second_pass(self, flow, pairs, verbose=False):
-        if verbose:
-            print(f'Performing second pass for flow {flow} across {len(pairs)} candidate pairs...')
-        chosen_pair = None
-        if self.second_pass_pairs_search_mode in ['deterministic', 'shuffle']:
-            if self.second_pass_pairs_search_mode == 'shuffle':
-                # random shuffle candidate pairs to remove node matrix heat map fade phenomenon
-                pairs = self._prepare_pairs_for_packing(pairs, sort_mode='random') # random shuffle to remove node matrix heat map fade phenomenon
-            else:
-                # deterministically loop through candidate pairs in same way each time
-                pass
-            for pair in pairs:
-                if self._check_if_flow_pair_within_max_load(flow, pair):
-                    chosen_pair = pair
-                    break
-        elif self.second_pass_pairs_search_mode == 'sample':
-            # randomly sample a candidate pair until find a pair which passes
-            counter = 1
-            while counter < len(pairs) * self.second_pass_pairs_search_sample_mode_factor:
-                pair = np.random.choice(pairs)
-                if self._check_if_flow_pair_passes_second_pass(flow, pair):
-                    chosen_pair = pair
-                    break
-                else:
-                    counter += 1
-            if counter == len(pairs) * self.second_pass_pairs_search_sample_mode_factor:
-                raise Exception(f'Was unable to find a valid src-dst pair for flow {flow} after {int(len(pairs) * self.second_pass_pairs_search_sample_mode_factor)} attempts in the second pass with second_pass_pairs_search_mode=sample. This may be because no pair exists which can accommodate this flow without exceeding 1.0 end point load, or because second_pass_pairs_search_sample_mode_factor (self.second_pass_pairs_search_sample_mode_factor) is too low. Try increasing second_pass_pairs_search_sample_mode_factor, or try setting second_pass_pairs_search_mode to shuffle. If this fails, there is likely a bug somehwere with e.g. second_pass_mask masking too many candidate pairs and/or an error in the traffic loads and src-dst pair capacities generated.')
-        else:
-            raise Exception(f'Unrecognised second_pass_pairs_search_mode {self.second_pass_pairs_search_mode}')
-
-
-        return chosen_pair
-
-    def _check_if_flow_pair_passes_second_pass(self, flow, pair):
-        passes = False
-        if self.check_dont_exceed_one_ep_load:
-            if self._check_if_flow_pair_within_max_load(flow, pair):
-                passes = True
-        else:
-            passes = True
-        return passes
-
-    def _check_if_flow_pair_within_max_load(self, flow, pair):
-        within_load = False
-        json_loads_pair = self.pair_to_json_loads[pair]
-        src, dst = json_loads_pair[0], json_loads_pair[1]
-        if self.check_dont_exceed_one_ep_load:
-            # ensure wont exceed 1.0 end point load by allocating this flow to pair
-            if self.src_total_infos[src] + self.packed_flows[flow]['size'] > self.max_total_port_info or self.dst_total_infos[dst] + self.packed_flows[flow]['size'] > self.max_total_port_info:
-                # would exceed at least 1 of this pair's end point's maximum load by adding this flow, move to next pair
-                pass
-            else:
-                within_load = True
-        else:
-            # don't worry about exceeding 1.0 end point load, just allocate to pair furthest from target load
-            within_load = True
-        return within_load
-        
-    def _pack_flow_into_chosen_pair(self, flow, chosen_pair):
-        # pack flow into this pair
-        self.pair_current_total_info_dict[chosen_pair] = int(self.pair_current_total_info_dict[chosen_pair] + (self.packed_flows[flow]['size']))
-        self.pair_current_distance_from_target_info_dict[chosen_pair] = int(self.pair_current_distance_from_target_info_dict[chosen_pair] - (self.packed_flows[flow]['size']))
-
-        # update max distance from target load across all pairs if necessary
-        if self.pair_current_distance_from_target_info_dict[chosen_pair] > self.max_distance_from_target:
-            self.max_distance_from_target = self.pair_current_distance_from_target_info_dict[chosen_pair]
-
-        # updated packed flows dict
-        pair = json.loads(chosen_pair)
-        src, dst = pair[0], pair[1]
-        self.packed_flows[flow]['src'], self.packed_flows[flow]['dst'] = src, dst 
-        self.ep_total_infos[src] += self.packed_flows[flow]['size']
-        self.ep_total_infos[dst] += self.packed_flows[flow]['size']
-        self.src_total_infos[src] += self.packed_flows[flow]['size']
-        self.dst_total_infos[dst] += self.packed_flows[flow]['size']
-
-    def _prepare_pairs_for_packing(self, pairs, sort_mode='random'):
-        if sort_mode == 'descending':
-            # sort in descending order of total infos
-            # sorted_indices = np.argsort(list(self.pair_current_distance_from_target_info_dict.values()))[::-1]
-            sorted_indices = np.argsort(list(self.pair_current_total_info_dict.values()))[::-1]
-            sorted_pairs = pairs[sorted_indices]
-        if sort_mode == 'ascending':
-            # sort in ascending order of total infos
-            # sorted_indices = np.argsort(list(self.pair_current_distance_from_target_info_dict.values()))
-            sorted_indices = np.argsort(list(self.pair_current_total_info_dict.values()))
-            sorted_pairs = [pairs[sorted_indices]]
-        elif sort_mode == 'random':
-            # randomly shuffle pair order to prevent unwanted fade trends in node dist
-            # sorted_pairs = copy.copy(pairs)
-            np.random.shuffle(pairs)
-            sorted_pairs = pairs
-            # np.random.permutation(sorted_pairs)
-        else:
-            raise Exception(f'Unrecognised sort_mode {sort_mode}')
-        return sorted_pairs
-
-    def _shuffle_packed_flows(self):
-        shuffled_packed_flows = {}
-        shuffled_keys = list(self.packed_flows.keys())
-        random.shuffle(shuffled_keys)
-        for shuffled_key in shuffled_keys:
-            shuffled_packed_flows[shuffled_key] = self.packed_flows[shuffled_key]
-        return shuffled_packed_flows
-
-    def pack_the_flows(self):
-        '''
-        If you find that your achieved node distribution does not look like
-        your original node distribution before packing (e.g. achieved is more
-        uniform), is probably because your flow sizes are very large for
-        the end point bandwidth you have specified. Either decrease
-        your flow sizes or increase the endpoint link capacity
-        to make packing easier.
-
-        '''
-        pbar = tqdm(total=len(self.packed_flows.keys()), 
-                    desc='Packing flows',
-                    leave=False,
-                    smoothing=0)
-        start = time.time()
-
-        # initialise the second pass mask
-        second_pass_mask = np.ones(len(self.pairs), dtype=np.int8)
-
-        # pack each flow into a src-dst pair
-        for flow_idx, flow in enumerate(self.packed_flows.keys()):
-            chosen_pair = None
-
-            # first pass (try not to exceed target pair load)
-            if self.max_distance_from_target - self.packed_flows[flow]['size'] < 0:
-                # there is no way to pack this flow into any pair with the forward pass, can skip straight to second pass
-                pass
-            else:
-                # mask out any pairs which do not meet the first pass requirements for this flow
-                first_pass_mask = self._get_first_pass_mask(flow, second_pass_mask)
-                first_pass_pairs = self._get_masked_pairs(first_pass_mask)
-                # print(f'Performing first pass for flow {flow} across {len(first_pass_pairs)} candidate pairs...') # DEBUG
-                chosen_pair = self._perform_first_pass(flow, first_pass_pairs)
-
-            # second pass (if cannot avoid exceeding any pair's target load, pack into pair without exceeding max total load)
-            if chosen_pair is None:
-                # first pass failed, perform second pass
-                second_pass_pairs = self._get_masked_pairs(second_pass_mask)
-                # print(f'Performing second pass for flow {flow} across {len(_pairs)} candidate pairs...') # DEBUG
-                chosen_pair = self._perform_second_pass(flow, second_pass_pairs)
-            else:
-                pass
-
-            # check for errors
-            if chosen_pair is None:
-                # could not find end point pair with enough capacity to take flow
-                raise Exception(f'Unable to find valid pair to assign flow {flow}: {self.packed_flows[flow]} without exceeding ep total information load limit {self.max_total_ep_info} information units for this session. Increase number of flows to increase time duration the flow packer has to pack flows into (recommended), and/or decrease flow sizes to help with packing (recommended), and/or increase end point link capacity (recommended), and/or decrease your required target load to increase the time duration the flow packer has to pack flows into, and/or change your node dist to be less heavily skewed. Alternatively, try re-running dist and flow generator since may have chance of creating valid dists and flows which can be packed (also recommended). You can also disable this validity checker by setting check_dont_exceed_one_ep_load to False. Doing so will allow end point loads to go above 1.0 when packing the flows and disable this exception being raised. Alternatively, there may be a bug in the code resulting in this error. Current end point total information loads (information units):\n{self.ep_total_infos}')
-            if not self._check_if_flow_pair_within_max_load(flow, chosen_pair):
-                raise Exception(f'ERROR: Flow {flow} with size {self.packed_flows[flow]["size"]} has been allocated to chosen_pair {chosen_pair} which has src total info ({self.src_total_infos[chosen_src]}) and/or dst total info ({self.dst_total_infos[chosen_dst]}) + flow size > max_total_port_info ({self.max_total_port_info}) (pair_current_distance_from_target_info_dict: {self.pair_current_distance_from_target_info_dict[chosen_pair]})')
-
-            # pack flow into the chosen src-dst pair
-            self._pack_flow_into_chosen_pair(flow, chosen_pair)
-
-            # update second pass mask if necessary
-            second_pass_mask = self._update_second_pass_mask(chosen_pair, second_pass_mask)
-
-            pbar.update(1)
-
-        # shuffle flow order to maintain randomness for arrival time in simulation (since sorted flows by size above)
-        shuffled_packed_flows = self._shuffle_packed_flows()
-
-        pbar.close()
-        end = time.time()
-        print('Packed {} flows in {} s.'.format(len(self.packed_flows.keys()), end-start))
-
-        if self.print_data:
-            print('\nFinal total infos at each pair:\n{}'.format(self.pair_current_total_info_dict))
-            print('Final total infos at each ep:\n{}'.format(self.ep_total_infos))
-            ep_load_rates = {ep: self.ep_total_infos[ep]/self.duration for ep in self.ep_total_infos.keys()}
-            print('Corresponding final load rates at each ep:\n{}'.format(ep_load_rates))
-
-        return shuffled_packed_flows
-            
-    def _check_node_dist_valid_for_this_load(self):
-        for idx in self.index_to_node.keys():
-            endpoint_target_load_fraction_of_overall_load = sum(self.node_dist[idx, :])
-            endpoint_target_load_rate = endpoint_target_load_fraction_of_overall_load * self.load_rate
-            if endpoint_target_load_rate > self.network_load_config['ep_link_capacity']:
-                # target load rate is invalid
-                if not self.auto_node_dist_correction:
-                    # user has not enabled TrafPy automatic node distribution correction
-                    raise Exception('Your node distribution is invalid for your specified target load. Overall target network load rate: {} info units per unit time. Endpoint {} (node dist idx {}) target fraction of this overall load: {}. Therefore target load rate for this endpoint is {} info units per unit time, which is too high for this end point which has a maximum capacity of {} info units per unit time, therefore your specified node load distribution is invalid. Change your required src-dst target loads in node_dist, or decrease your specified overall load target, or set auto_node_dist_correction=True to make TrafPy automatically correct the node distribution for you by subtracting the excess load of the invalid endpoint and distribution this excess load amongst other nodes (i.e. as your requested network load tends to 1.0, all end point loads will also tend to 1.0).'.format(self.load_rate, self.index_to_node[idx], idx, endpoint_target_load_fraction_of_overall_load, endpoint_target_load_rate, self.network_load_config['ep_link_capacity']))
-                else:
-                    print('auto_node_dist_correction set to True. Adjusting node distribution to make it valid...')
-                    if self.print_data:
-                        print('init node dist before correction:\n{}'.format(self.node_dist))
-                    self.eps_at_capacity = {ep: False for ep in self.ep_total_infos.keys()}
-                    invalid_ep_found = True
-                    while invalid_ep_found:
-                        invalid_ep_found = self._auto_correct_node_dist()
-                    break
-
-    def _auto_correct_node_dist(self):
-        max_ep_load_frac = self.network_load_config['ep_link_capacity'] / self.load_rate # max fraction of total network load rate that one end point can take
-        excess_ep_load_rates = {ep: None for ep in self.ep_total_infos.keys()}
-        invalid_ep_found = False 
-        for idx in self.index_to_node.keys():
-            endpoint_target_load_fraction_of_overall_load = sum(self.node_dist[idx, :])
-            endpoint_target_load_rate = round(endpoint_target_load_fraction_of_overall_load * self.load_rate, 6)
-            if self.print_data:
-                print('ep {} target load rate: {}'.format(idx, endpoint_target_load_rate))
-            if endpoint_target_load_rate > self.network_load_config['ep_link_capacity']:
-                # too much load rate on this ep
-                invalid_ep_found = True
-                excess_ep_load_rates[self.index_to_node[idx]] = endpoint_target_load_rate - self.network_load_config['ep_link_capacity']
-                self.eps_at_capacity[self.index_to_node[idx]] = True
-                # make ep loads equal on all this ep's pairs such that max ep bandwidth requested
-                for pair_idx in self.index_to_node.keys():
-                    if pair_idx != idx:
-                        self.node_dist[idx, pair_idx] = (max_ep_load_frac / ((self.num_nodes-1)))
-                        self.node_dist[pair_idx, idx] = (max_ep_load_frac / ((self.num_nodes-1)))
-                # spread excess load evenly across other eps not already at capacity
-                free_eps = []
-                for ep in excess_ep_load_rates.keys():
-                    if not self.eps_at_capacity[ep]:
-                        free_eps.append(ep)
-                if len(free_eps) == 0:
-                    raise Exception('No free end points left to spread excess load across.')
-                load_rate_to_spread_per_ep = excess_ep_load_rates[self.index_to_node[idx]] / len(free_eps)
-                frac_load_rate_to_spread_per_ep = load_rate_to_spread_per_ep / self.load_rate
-                frac_load_rate_to_spread_per_ep_pair = frac_load_rate_to_spread_per_ep / (self.num_nodes-1)
-                random.shuffle(free_eps) # shuffle so not always spreading load across same eps
-                for ep in free_eps:
-                    indices = list(self.index_to_node.keys())
-                    random.shuffle(indices)
-                    for i in indices:
-                        if i != self.node_to_index[ep] and not self.eps_at_capacity[self.index_to_node[i]]:
-                            self.node_dist[self.node_to_index[ep], i] += (frac_load_rate_to_spread_per_ep_pair)
-                            self.node_dist[i, self.node_to_index[ep]] += (frac_load_rate_to_spread_per_ep_pair)
-
-                endpoint_target_load_fraction_of_overall_load = sum(self.node_dist[idx, :])
-                endpoint_target_load_rate = endpoint_target_load_fraction_of_overall_load * self.load_rate
-                self.reset() # update params
-                if self.print_data:
-                    print('updated node dist:\n{}'.format(self.node_dist))
-
-        return invalid_ep_found
 
 
 

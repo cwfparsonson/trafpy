@@ -1,6 +1,7 @@
 from trafpy.generator.src.dists import val_dists, node_dists
 from trafpy.generator.src import tools
-from trafpy.generator.src.flowcentric import FlowPacker, duplicate_demands_in_demand_data_dict
+from trafpy.generator.src.flowcentric import duplicate_demands_in_demand_data_dict
+from trafpy.utils import get_class_from_path
 
 import numpy as np
 import networkx as nx
@@ -35,6 +36,7 @@ class JobGenerator:
                  min_last_demand_arrival_time=None,
                  auto_node_dist_correction=False,
                  check_dont_exceed_one_ep_load=True,
+                 flow_packer_cls='trafpy.generator.src.packers.flow_packer_v2.FlowPackerV2',
                  print_data=False):
         '''
         Args:
@@ -99,6 +101,7 @@ class JobGenerator:
         self.auto_node_dist_correction = auto_node_dist_correction
         self.jensen_shannon_distance_threshold = jensen_shannon_distance_threshold
         self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
+        self.flow_packer_cls = flow_packer_cls
         self.print_data = print_data
 
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
@@ -189,15 +192,21 @@ class JobGenerator:
             last_flow_idx += job.graph['num_data_deps']
 
         # pack the flows into src-dst pairs to meet src-dst pair load config requirements of node_dist
-        packer = FlowPacker(self,
-                            self.eps,
-                            self.node_dist,
-                            flow_ids,
-                            flow_sizes,
-                            interarrival_times,
-                            network_load_config=self.network_load_config,
-                            auto_node_dist_correction=self.auto_node_dist_correction,
-                            check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load)
+        if isinstance(self.flow_packer_cls, str):
+            # load packer class from string path
+            flow_packer_cls = get_class_from_path(self.flow_packer_cls)
+        else:
+            flow_packer_cls = self.flow_packer_cls
+        packer = flow_packer_cls(self,
+                                 self.eps,
+                                 self.node_dist,
+                                 flow_ids,
+                                 flow_sizes,
+                                 interarrival_times,
+                                 network_load_config=self.network_load_config,
+                                 auto_node_dist_correction=self.auto_node_dist_correction,
+                                 check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load)
+        packer.reset()
         packed_flows = packer.pack_the_flows()
 
 
