@@ -12,7 +12,8 @@ def gen_arbitrary_network(num_eps,
                           ep_capacity=12500, 
                           num_channels=1, 
                           racks_dict=None,
-                          topology_type=None):
+                          topology_type=None,
+                          **kwargs):
     '''Generates an arbitrary network with num_eps nodes labelled as ep_label.
 
     Note that no edges are formed in this network; it is purely for ep name 

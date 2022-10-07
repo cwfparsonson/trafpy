@@ -70,6 +70,10 @@ class FlowPackerV1(FlowPacker):
         # calc target load rate of each src-dst pair
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps, all_combinations=True)
         self.pair_prob_dict = node_dists.get_pair_prob_dict_of_node_dist_matrix(self.node_dist, self.eps, all_combinations=True) # N.B. These values sum to 0.5 -> need to allocate twice (src-dst and dst-src)
+        if np.sum(self.pair_prob_dict.values()) == 1:
+            # need to load fracs sum to 0.5 since allocate twice (src-dst and dst-src)
+            for pair, prob in self.pair_prob_dict.items():
+                self.pair_prob_dict[pair] = prob
         self.pair_target_load_rate_dict = {pair: frac*self.load_rate for pair, frac in self.pair_prob_dict.items()}
 
         # calc target total info to pack into each src-dst pair
@@ -192,7 +196,7 @@ class FlowPackerV1(FlowPacker):
                     desc='Packing flows',
                     leave=False,
                     smoothing=0)
-        start = time.time()
+        packing_start_t = time.time()
 
         pairs = np.asarray(list(self.pair_current_distance_from_target_info_dict.keys()))
         for flow in self.packed_flows.keys():
@@ -232,8 +236,8 @@ class FlowPackerV1(FlowPacker):
         shuffled_packed_flows = self._shuffle_packed_flows()
 
         pbar.close()
-        end = time.time()
-        print('Packed {} flows in {} s.'.format(len(self.packed_flows.keys()), end-start))
+        self.packing_time = time.time() - packing_start_t
+        print(f'Packed {len(self.packed_flows)} flows in {self.packing_time:.3f} s.')
 
         if self.print_data:
             print('\nFinal total infos at each pair:\n{}'.format(self.pair_current_total_info_dict))

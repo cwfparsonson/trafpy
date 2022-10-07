@@ -46,7 +46,9 @@ class FlowGenerator:
                  check_dont_exceed_one_ep_load=True,
                  # flow_packer_cls='trafpy.generator.src.packers.flow_packer_v1.FlowPackerV1',
                  flow_packer_cls='trafpy.generator.src.packers.flow_packer_v2.FlowPackerV2',
-                 print_data=False):
+                 flow_packer_kwargs=None,
+                 print_data=False,
+                 **kwargs):
         '''
         Args:
             network_load_config (dict): Dict of form {'network_rate_capacity': <int/float>, 'target_load_fraction': <float>, 'disable_timeouts': <bool>, 'return_new_interarrival_time_dist': <bool>},
@@ -104,6 +106,10 @@ class FlowGenerator:
         self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
         self.print_data = print_data
         self.flow_packer_cls = flow_packer_cls
+        if flow_packer_kwargs is None:
+            self.flow_packer_kwargs = {}
+        else:
+            self.flow_packer_kwargs = flow_packer_kwargs
 
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
 
@@ -114,7 +120,7 @@ class FlowGenerator:
         if not self.check_dont_exceed_one_ep_load:
             print('WARNING: check_dont_exceed_one_ep_load is set to False. This may result in end point loads going above 1.0, which for some users might be detrimental to the systems they want to test.')
 
-    def create_flow_centric_demand_data(self):
+    def create_flow_centric_demand_data(self, return_packing_time=False):
         # flow sizes
         flow_sizes = val_dists.gen_rand_vars_from_discretised_dist(unique_vars=list(self.flow_size_dist.keys()),
                                                                    probabilities=list(self.flow_size_dist.values()),
@@ -182,9 +188,12 @@ class FlowGenerator:
                                  interarrival_times,
                                  network_load_config=self.network_load_config,
                                  auto_node_dist_correction=self.auto_node_dist_correction,
-                                 check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load)
+                                 check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load,
+                                 **self.flow_packer_kwargs,
+                                 )
         packer.reset()
         packed_flows = packer.pack_the_flows()
+        self.packing_time = packer.packing_time
 
         # compile packed flows into demand_data dict ordered in terms of arrival time
         demand_data = {'flow_id': [],
@@ -214,7 +223,10 @@ class FlowGenerator:
                                                                     num_duplications=num_duplications,
                                                                     use_multiprocessing=False)
 
-        return demand_data
+        if return_packing_time:
+            return demand_data, self.packing_time
+        else:
+            return demand_data
 
 
     def _calc_overall_load_rate(self, flow_sizes, interarrival_times):

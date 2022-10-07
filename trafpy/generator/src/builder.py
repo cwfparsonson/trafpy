@@ -21,11 +21,15 @@ def create_demand_data(eps,
                        check_dont_exceed_one_ep_load=True,
                        min_last_demand_arrival_time=None,
                        auto_node_dist_correction=False,
+                       flow_packer_cls='trafpy.generator.src.packers.flow_packer_v2.FlowPackerV2',
+                       flow_packer_kwargs=None,
                        num_ops_dist=None,
                        c=None,
                        use_multiprocessing=True,
                        print_data=False,
-                       path_to_save=None):
+                       path_to_save=None,
+                       return_packing_time=False,
+                       **kwargs):
     """Create demand data dictionary using given distributions.
 
     If num_ops_dist and c are left as None, return flow-centric demand data.
@@ -121,8 +125,11 @@ def create_demand_data(eps,
                                               min_last_demand_arrival_time=min_last_demand_arrival_time,
                                               auto_node_dist_correction=auto_node_dist_correction,
                                               check_dont_exceed_one_ep_load=check_dont_exceed_one_ep_load,
-                                              print_data=print_data) 
-        return generator.create_flow_centric_demand_data()
+                                              flow_packer_cls=flow_packer_cls,
+                                              flow_packer_kwargs=flow_packer_kwargs,
+                                              print_data=print_data,
+                                              **kwargs) 
+        return generator.create_flow_centric_demand_data(return_packing_time=return_packing_time)
 
     else:
         # jobcentric
@@ -139,9 +146,12 @@ def create_demand_data(eps,
                                               min_last_demand_arrival_time=min_last_demand_arrival_time,
                                               use_multiprocessing=use_multiprocessing,
                                               auto_node_dist_correction=auto_node_dist_correction,
+                                              flow_packer_cls=flow_packer_cls,
+                                              flow_packer_kwargs=flow_packer_kwargs,
                                               check_dont_exceed_one_ep_load=check_dont_exceed_one_ep_load,
-                                              print_data=print_data) 
-        return generator.create_job_centric_demand_data()
+                                              print_data=print_data,
+                                              **kwargs) 
+        return generator.create_job_centric_demand_data(return_packing_time=return_packing_time)
 
 
 
