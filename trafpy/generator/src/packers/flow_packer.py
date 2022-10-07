@@ -92,8 +92,10 @@ class FlowPacker(ABC):
                         print('init node dist before correction:\n{}'.format(self.node_dist))
                     self.eps_at_capacity = {ep: False for ep in self.eps}
                     invalid_ep_found = True
+                    adjust_start_t = time.time()
                     while invalid_ep_found:
                         invalid_ep_found = self._auto_correct_node_dist()
+                    print(f'Adjusted node distribution in {time.time() - adjust_start_t:.3f} s.')
                     break
 
     def _auto_correct_node_dist(self):
