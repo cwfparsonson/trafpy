@@ -226,11 +226,11 @@ class FlowGenerator:
         if not return_packing_time and not return_packing_jensen_shannon_distance:
             returns = demand_data
         else:
-            returns = set([demand_data])
+            returns = [demand_data]
             if return_packing_time:
-                returns.add(self.packing_time)
+                returns.append(self.packing_time)
             if return_packing_jensen_shannon_distance:
-                returns.add(self.packing_jensen_shannon_distance)
+                returns.append(self.packing_jensen_shannon_distance)
         return returns
 
     def _calc_overall_load_rate(self, flow_sizes, interarrival_times):
