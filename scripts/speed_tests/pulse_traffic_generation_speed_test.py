@@ -28,23 +28,25 @@ if __name__ == '__main__':
 
     sid = 1
     # set vars
-    X = 4
+    X = 1
     # X = 8
     # X = 1
+    # N = 64*X
     N = 64*X
     # path = r'Y:/Joshua/Traffic/'
     # path = 'Y:/Joshua/Traffic/'
     endpoints = [str(i) for i in range(N)]
 
-    min_num_demands = 100
-    # min_num_demands = N * N
+    # min_num_demands = 100
+    min_num_demands = N * N * 100
     # min_num_demands = int(300)
-    min_last_demand_arrival_time = 250
+    # min_last_demand_arrival_time = 250
+    min_last_demand_arrival_time = None
     # min_last_demand_arrival_time = N*N
     # loads = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
     # loads = [0.1]
     # loads = [0.5]
-    loads = [0.9]
+    loads = [0.3]
     # jensen_shannon_distance_threshold = 0.1
     jensen_shannon_distance_threshold = 0.2
     # jensen_shannon_distance_threshold = 0.3
@@ -62,12 +64,14 @@ if __name__ == '__main__':
     net = tpg.gen_arbitrary_network(ep_label=None, num_eps=N, ep_capacity=100000)
     print(f'Initialised network with {N} endpoints.')
 
-    # set any distributions you want to keep constant for all sets
-    flow_size_dist, _ = tpg.gen_named_val_dist(dist='weibull',
-                                            params={'_alpha': 4.8, '_lambda': 4100},
-                                            return_data=False,
-                                            show_fig=True,
-                                            round_to_nearest=1)
+    # # set any distributions you want to keep constant for all sets
+    # flow_size_dist, _ = tpg.gen_named_val_dist(dist='weibull',
+                                            # params={'_alpha': 4.8, '_lambda': 4100},
+                                            # return_data=False,
+                                            # show_fig=True,
+                                            # round_to_nearest=1)
+    # flow_size_dist = {50: 0.5, 100: 0.5}
+    flow_size_dist = {1: 1}
     print(f'Initialised flow size distribution.')
 
     interarrival_time_dist = {0.125:1}

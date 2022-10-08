@@ -62,7 +62,8 @@ class FlowPackerV2(FlowPacker):
         self.pair_prob_dict = node_dists.get_pair_prob_dict_of_node_dist_matrix(self.node_dist, self.eps, all_combinations=True) # N.B. These values sum to 0.5 -> need to allocate twice (src-dst and dst-src)
         self.pairs = np.asarray(list(self.pair_prob_dict.keys()))
         self.pair_probs = np.asarray(list(self.pair_prob_dict.values()))
-        if np.sum(self.pair_probs) == 1:
+        # if np.sum(self.pair_probs) == 1:
+        if np.sum(self.pair_probs) + self.machine_eps >= 1:
             # need load fracs to sum to 0.5 since allocate twice (src-dst and dst-src)
             self.pair_probs /= 2
         self.pair_target_load_rate = self.pair_probs * self.load_rate
@@ -81,10 +82,10 @@ class FlowPackerV2(FlowPacker):
 
         # calc max total info during simulation per end point and initialise end point total info tracker
         self.max_total_ep_info = self.network_load_config['ep_link_capacity'] * self.duration
-        self.max_total_port_info = self.max_total_ep_info / 2
+        self.max_total_port_info = self.max_total_ep_info / 2 # each end point is split into a src and dst
         self.ep_total_infos = {ep: 0 for ep in self.eps}
 
-        # calc max info can put on src and dst ports (half ep dedicated to each so / 2)
+        # calc max info can put on src and dst ports
         self.src_total_infos = {ep: 0 for ep in self.eps}
         self.dst_total_infos = {ep: 0 for ep in self.eps}
 
@@ -94,7 +95,7 @@ class FlowPackerV2(FlowPacker):
         # init mapping of each pair to its string equivalent once at start so do not have to keep making computationally expensive json.loads() for each flow for each pair for each pass
         self.pair_to_json_loads = {}
         # init mapping of each pair to its remaining info capacity (the min remaining info capacity of its src-dst)
-        self.pair_to_remaining_capacity = [] # NEW
+        self.pair_to_remaining_capacity = []
         # init mapping of each pair to its idx for accessing numpy arrays
         self.pair_to_idx = {}
         for pair_idx, pair in enumerate(self.pairs):
@@ -196,6 +197,16 @@ class FlowPackerV2(FlowPacker):
         your flow sizes or increase the endpoint link capacity
         to make packing easier.
 
+        N.B. If you want to decrease the resultant Jensen Shannon distribution
+        of the node distribution from the target node distribution, you can 
+        decrease the flow sizes to increase the packing resolution and increase
+        the min_num_demands (i.e. the minimum number of flows) to pack. Note that
+        as the target load rate scales to 1.0, if the target node distribution
+        has not been originally shaped to be compatible with a ~1.0 network load,
+        then the resultant node distribution will obviously have a high Jensen
+        Shannon distance because the target node distribution had to be auto-adjusted
+        to be valid. You can set auto_node_dist_correction=False to stop this behaviour.
+
         '''
         pbar = tqdm(total=len(self.packed_flows.keys()), 
                     desc='Packing flows',
@@ -224,7 +235,17 @@ class FlowPackerV2(FlowPacker):
         shuffled_packed_flows = self._shuffle_packed_flows()
 
         pbar.close()
+
+        # compute tracker metrics
         self.packing_time = time.time() - packing_start_t
-        print(f'Packed {len(self.packed_flows)} flows in {self.packing_time:.3f} s.')
+        if np.sum(self.pair_probs) - self.machine_eps <= 0.5:
+            target_pair_dist = self.pair_probs * 2 # sum to 1.0 (previously summed to 0.5 since allocated twice for src-dst and dst-src)
+        else:
+            target_pair_dist = self.pair_probs
+        achieved_pair_load = self.pair_current_total_info / self.duration
+        achieved_pair_dist = achieved_pair_load / np.sum(achieved_pair_load)
+        self.packing_jensen_shannon_distance = tools.compute_jensen_shannon_distance(target_pair_dist, achieved_pair_dist)
+
+        print(f'Packed {len(self.packed_flows)} flows in {self.packing_time:.3f} s | Node distribution Jensen Shannon distance from target achieved: {self.packing_jensen_shannon_distance}')
 
         return shuffled_packed_flows

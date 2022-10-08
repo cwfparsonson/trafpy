@@ -17,7 +17,7 @@ import scipy
 
 def compute_jensen_shannon_distance(p, q):
     # conv to numpy
-    p, q = np.array(p), np.array(q)
+    p, q = np.asarray(p), np.asarray(q)
 
     # calc m
     m = (p + q) / 2

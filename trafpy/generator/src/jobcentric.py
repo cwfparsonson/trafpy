@@ -119,7 +119,7 @@ class JobGenerator:
         if not self.check_dont_exceed_one_ep_load:
             print('WARNING: check_dont_exceed_one_ep_load is set to False. This may result in end point loads going above 1.0, which for some users might be detrimental to the systems they want to test.')
 
-    def create_job_centric_demand_data(self, return_packing_time=False):
+    def create_job_centric_demand_data(self, return_packing_time=False, return_packing_jensen_shannon_distance=False):
         '''
         N.B. Currently only applying jensen_shannon_distance_threshold requirement
         to num_ops, not to flow size or interarrival time etc. Do this because
@@ -217,6 +217,7 @@ class JobGenerator:
         packer.reset()
         packed_flows = packer.pack_the_flows()
         self.packing_time = packer.packing_time
+        self.packing_jensen_shannon_distance = packer.packing_jensen_shannon_distance
 
 
         
@@ -307,10 +308,15 @@ class JobGenerator:
                                                                     num_processes=10,
                                                                     maxtasksperchild=1)
 
-        if return_packing_time:
-            return demand_data, self.packing_time
+        if not return_packing_time and not return_packing_jensen_shannon_distance:
+            returns = demand_data
         else:
-            return demand_data
+            returns = set([demand_data])
+            if return_packing_time:
+                returns.add(self.packing_time)
+            if return_packing_jensen_shannon_distance:
+                returns.add(self.packing_jensen_shannon_distance)
+        return returns
 
 
     def _set_job_op_run_times(self,

@@ -70,10 +70,6 @@ class FlowPackerV1(FlowPacker):
         # calc target load rate of each src-dst pair
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps, all_combinations=True)
         self.pair_prob_dict = node_dists.get_pair_prob_dict_of_node_dist_matrix(self.node_dist, self.eps, all_combinations=True) # N.B. These values sum to 0.5 -> need to allocate twice (src-dst and dst-src)
-        if np.sum(self.pair_prob_dict.values()) == 1:
-            # need to load fracs sum to 0.5 since allocate twice (src-dst and dst-src)
-            for pair, prob in self.pair_prob_dict.items():
-                self.pair_prob_dict[pair] = prob
         self.pair_target_load_rate_dict = {pair: frac*self.load_rate for pair, frac in self.pair_prob_dict.items()}
 
         # calc target total info to pack into each src-dst pair
@@ -191,6 +187,17 @@ class FlowPackerV1(FlowPacker):
         the end point bandwidth you have specified. Either decrease
         your flow sizes or increase the endpoint link capacity
         to make packing easier.
+
+        N.B. If you want to decrease the resultant Jensen Shannon distribution
+        of the node distribution from the target node distribution, you can 
+        decrease the flow sizes to increase the packing resolution and increase
+        the min_num_demands (i.e. the minimum number of flows) to pack. Note that
+        as the target load rate scales to 1.0, if the target node distribution
+        has not been originally shaped to be compatible with a ~1.0 network load,
+        then the resultant node distribution will obviously have a high Jensen
+        Shannon distance because the target node distribution had to be auto-adjusted
+        to be valid. You can set auto_node_dist_correction=False to stop this behaviour.
+
         '''
         pbar = tqdm(total=len(self.packed_flows.keys()), 
                     desc='Packing flows',
@@ -236,8 +243,14 @@ class FlowPackerV1(FlowPacker):
         shuffled_packed_flows = self._shuffle_packed_flows()
 
         pbar.close()
+        # compute tracker metrics
         self.packing_time = time.time() - packing_start_t
-        print(f'Packed {len(self.packed_flows)} flows in {self.packing_time:.3f} s.')
+        target_pair_dist = np.array(list(self.pair_prob_dict.values()))
+        achieved_pair_load = np.array(list(self.pair_current_total_info_dict.values())) / self.duration
+        achieved_pair_dist = achieved_pair_load / np.sum(achieved_pair_load)
+        self.packing_jensen_shannon_distance = tools.compute_jensen_shannon_distance(target_pair_dist, achieved_pair_dist)
+
+        print(f'Packed {len(self.packed_flows)} flows in {self.packing_time:.3f} s | Node distribution Jensen Shannon distance from target achieved: {self.packing_jensen_shannon_distance}')
 
         if self.print_data:
             print('\nFinal total infos at each pair:\n{}'.format(self.pair_current_total_info_dict))

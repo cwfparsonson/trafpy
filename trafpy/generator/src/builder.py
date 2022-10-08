@@ -21,6 +21,7 @@ def create_demand_data(eps,
                        check_dont_exceed_one_ep_load=True,
                        min_last_demand_arrival_time=None,
                        auto_node_dist_correction=False,
+                       # flow_packer_cls='trafpy.generator.src.packers.flow_packer_v1.FlowPackerV1',
                        flow_packer_cls='trafpy.generator.src.packers.flow_packer_v2.FlowPackerV2',
                        flow_packer_kwargs=None,
                        num_ops_dist=None,
@@ -29,6 +30,7 @@ def create_demand_data(eps,
                        print_data=False,
                        path_to_save=None,
                        return_packing_time=False,
+                       return_packing_jensen_shannon_distance=False,
                        **kwargs):
     """Create demand data dictionary using given distributions.
 
@@ -129,7 +131,10 @@ def create_demand_data(eps,
                                               flow_packer_kwargs=flow_packer_kwargs,
                                               print_data=print_data,
                                               **kwargs) 
-        return generator.create_flow_centric_demand_data(return_packing_time=return_packing_time)
+        return generator.create_flow_centric_demand_data(
+                return_packing_time=return_packing_time, 
+                return_packing_jensen_shannon_distance=return_packing_jensen_shannon_distance,
+                )
 
     else:
         # jobcentric
@@ -151,7 +156,10 @@ def create_demand_data(eps,
                                               check_dont_exceed_one_ep_load=check_dont_exceed_one_ep_load,
                                               print_data=print_data,
                                               **kwargs) 
-        return generator.create_job_centric_demand_data(return_packing_time=return_packing_time)
+        return generator.create_job_centric_demand_data(
+                return_packing_time=return_packing_time, 
+                return_packing_jensen_shannon_distance=return_packing_jensen_shannon_distance,
+                )
 
 
 

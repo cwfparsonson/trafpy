@@ -34,6 +34,7 @@ class FlowPacker(ABC):
                  auto_node_dist_correction=False,
                  check_dont_exceed_one_ep_load=True,
                  print_data=False,
+                 machine_eps=1e-7, # use for avoiding python floating point errors
                  **kwargs,
                  ):
         self.generator = generator
@@ -46,6 +47,7 @@ class FlowPacker(ABC):
         self.auto_node_dist_correction = auto_node_dist_correction
         self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
         self.print_data = print_data
+        self.machine_eps = machine_eps
 
         # init useful params
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps, all_combinations=True)
