@@ -28,11 +28,11 @@ if __name__ == '__main__':
 
     sid = 1
     # set vars
-    X = 1
     # X = 8
-    # X = 1
-    # N = 64*X
+    X = 2
     N = 64*X
+    # X = 1
+    # N = 32*X
     # path = r'Y:/Joshua/Traffic/'
     # path = 'Y:/Joshua/Traffic/'
     endpoints = [str(i) for i in range(N)]
