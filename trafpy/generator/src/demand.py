@@ -17,6 +17,7 @@ from collections import defaultdict # use for initialising arbitrary length nest
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display
+import copy
 
 class Demand:
     def __init__(self,
@@ -383,7 +384,9 @@ class DemandPlotter:
                              font_size=10,
                              bar_width=0.8,
                              plot_all_x_ticks=False,
-                             show_fig=True):
+                             show_fig=True,
+                             path_to_save=None,
+                             ):
         '''
         1. Returns bar chart of end point links on x-axis and corresponding load on
         y-axis. If ep_link_bandwidth not given, y-axis will be absolute info units
@@ -422,8 +425,13 @@ class DemandPlotter:
                                 figsize=figsize,
                                 font_size=font_size,
                                 plot_all_x_ticks=plot_all_x_ticks,
-                                show_fig=show_fig)
+                                show_fig=False)
         figs.append(fig1)
+        fig1 = plt.gcf()
+        if path_to_save is not None:
+            fig1.savefig(f'{path_to_save}/node_load_dist_1.png')
+        if show_fig:
+            plt.show()
 
         # plot src & dst ep loads separately
         src_total_infos = {ep: 0 for ep in eps}
@@ -450,7 +458,13 @@ class DemandPlotter:
                                 figsize=figsize,
                                 font_size=font_size,
                                 plot_all_x_ticks=plot_all_x_ticks,
-                                show_fig=show_fig)
+                                show_fig=False)
+        figs.append(fig2)
+        fig2 = plt.gcf()
+        if path_to_save is not None:
+            fig2.savefig(f'{path_to_save}/node_load_dist_2.png')
+        if show_fig:
+            plt.show()
 
         xlabel = 'Dst Port'
         fig3 = plt.figure()
@@ -462,32 +476,48 @@ class DemandPlotter:
                                 figsize=figsize,
                                 font_size=font_size,
                                 plot_all_x_ticks=plot_all_x_ticks,
-                                show_fig=show_fig)
+                                show_fig=False)
+        figs.append(fig3)
+        fig3 = plt.gcf()
+        if path_to_save is not None:
+            fig3.savefig(f'{path_to_save}/node_load_dist_3.png')
+        if show_fig:
+            plt.show()
 
 
 
 
         if plot_extras:
-            fig2 = plt.figure()
+            fig4 = plt.figure()
             overall_load_rate = flowcentric.get_flow_centric_demand_data_overall_load_rate(self.demand.demand_data)
             ep_loads_as_frac_of_overall_load = {}
             for ep in ep_loads.keys():
                 ep_loads_as_frac_of_overall_load[ep] = flowcentric.get_flow_centric_demand_data_ep_load_rate(self.demand.demand_data, index_to_node[ep], eps)
                 ep_loads_as_frac_of_overall_load[ep] /= overall_load_rate
             ylabel = 'Fraction of Overall Load Requested'
-            plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_load.keys(), ep_loads_as_frac_of_overall_load.values(), ylabel, ylim, xlabel, show_fig=show_fig)
-            figs.append(fig2)
+            plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_load.keys(), ep_loads_as_frac_of_overall_load.values(), ylabel, ylim, xlabel, show_fig=False)
+            figs.append(fig4)
+            fig4 = plt.gcf()
+            if path_to_save is not None:
+                fig4.savefig(f'{path_to_save}/node_load_dist_4.png')
+            if show_fig:
+                plt.show()
 
             if ep_link_bandwidth is not None:
-                fig3 = plt.figure()
+                fig5 = plt.figure()
                 overall_network_capacity = len(eps) * ep_link_bandwidth
                 ep_loads_as_frac_of_overall_capacity = {}
                 for ep in ep_loads.keys():
                     ep_loads_as_frac_of_overall_capacity[ep] = flowcentric.get_flow_centric_demand_data_ep_load_rate(self.demand.demand_data, index_to_node[ep], eps)
                     ep_loads_as_frac_of_overall_capacity[ep] /=overall_network_capacity 
                 ylabel = 'Fraction of Overall Capacity Requested'
-                plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_capacity.keys(), ep_loads_as_frac_of_overall_capacity.values(), ylabel, ylim, xlabel, show_fig=True)
-                figs.append(fig3)
+                plot_dists.plot_val_bar(ep_loads_as_frac_of_overall_capacity.keys(), ep_loads_as_frac_of_overall_capacity.values(), ylabel, ylim, xlabel, show_fig=False)
+                figs.append(fig5)
+                fig5 = plt.gcf()
+                if path_to_save is not None:
+                    fig5.savefig(f'{path_to_save}/node_load_dist_5.png')
+                if show_fig:
+                    plt.show()
 
 
         return figs
