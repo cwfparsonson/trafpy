@@ -1,6 +1,7 @@
 from trafpy.generator.src.dists import val_dists, node_dists
 from trafpy.generator.src import tools
-from trafpy.generator.src.flowcentric import FlowPacker, duplicate_demands_in_demand_data_dict
+from trafpy.generator.src.flowcentric import duplicate_demands_in_demand_data_dict
+from trafpy.utils import get_class_from_path
 
 import numpy as np
 import networkx as nx
@@ -35,7 +36,10 @@ class JobGenerator:
                  min_last_demand_arrival_time=None,
                  auto_node_dist_correction=False,
                  check_dont_exceed_one_ep_load=True,
-                 print_data=False):
+                 flow_packer_cls='trafpy.generator.src.packers.flow_packer_v2.FlowPackerV2',
+                 flow_packer_kwargs=None,
+                 print_data=False,
+                 **kwargs):
         '''
         Args:
             network_load_config (dict): Dict of form {'network_rate_capacity': <int/float>, 'target_load_fraction': <float>, 'disable_timeouts': <bool>, 'return_new_interarrival_time_dist': <bool>},
@@ -99,6 +103,11 @@ class JobGenerator:
         self.auto_node_dist_correction = auto_node_dist_correction
         self.jensen_shannon_distance_threshold = jensen_shannon_distance_threshold
         self.check_dont_exceed_one_ep_load = check_dont_exceed_one_ep_load
+        self.flow_packer_cls = flow_packer_cls
+        if flow_packer_kwargs is None:
+            self.flow_packer_kwargs = {}
+        else:
+            self.flow_packer_kwargs = flow_packer_kwargs
         self.print_data = print_data
 
         self.num_nodes, self.num_pairs, self.node_to_index, self.index_to_node = tools.get_network_params(self.eps)
@@ -110,7 +119,7 @@ class JobGenerator:
         if not self.check_dont_exceed_one_ep_load:
             print('WARNING: check_dont_exceed_one_ep_load is set to False. This may result in end point loads going above 1.0, which for some users might be detrimental to the systems they want to test.')
 
-    def create_job_centric_demand_data(self):
+    def create_job_centric_demand_data(self, return_packing_time=False, return_packing_jensen_shannon_distance=False):
         '''
         N.B. Currently only applying jensen_shannon_distance_threshold requirement
         to num_ops, not to flow size or interarrival time etc. Do this because
@@ -189,16 +198,26 @@ class JobGenerator:
             last_flow_idx += job.graph['num_data_deps']
 
         # pack the flows into src-dst pairs to meet src-dst pair load config requirements of node_dist
-        packer = FlowPacker(self,
-                            self.eps,
-                            self.node_dist,
-                            flow_ids,
-                            flow_sizes,
-                            interarrival_times,
-                            network_load_config=self.network_load_config,
-                            auto_node_dist_correction=self.auto_node_dist_correction,
-                            check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load)
+        if isinstance(self.flow_packer_cls, str):
+            # load packer class from string path
+            flow_packer_cls = get_class_from_path(self.flow_packer_cls)
+        else:
+            flow_packer_cls = self.flow_packer_cls
+        packer = flow_packer_cls(self,
+                                 self.eps,
+                                 self.node_dist,
+                                 flow_ids,
+                                 flow_sizes,
+                                 interarrival_times,
+                                 network_load_config=self.network_load_config,
+                                 auto_node_dist_correction=self.auto_node_dist_correction,
+                                 check_dont_exceed_one_ep_load=self.check_dont_exceed_one_ep_load,
+                                 **self.flow_packer_kwargs,
+                                 )
+        packer.reset()
         packed_flows = packer.pack_the_flows()
+        self.packing_time = packer.packing_time
+        self.packing_jensen_shannon_distance = packer.packing_jensen_shannon_distance
 
 
         
@@ -289,7 +308,15 @@ class JobGenerator:
                                                                     num_processes=10,
                                                                     maxtasksperchild=1)
 
-        return demand_data
+        if not return_packing_time and not return_packing_jensen_shannon_distance:
+            returns = demand_data
+        else:
+            returns = [demand_data]
+            if return_packing_time:
+                returns.append(self.packing_time)
+            if return_packing_jensen_shannon_distance:
+                returns.append(self.packing_jensen_shannon_distance)
+        return returns
 
 
     def _set_job_op_run_times(self,

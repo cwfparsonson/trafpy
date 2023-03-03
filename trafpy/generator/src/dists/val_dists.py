@@ -67,14 +67,24 @@ def convert_data_to_key_occurrences(data):
 
 def x_round(x, round_to_nearest=1, num_decimal_places=2, print_data=False, min_val=None):
     '''Rounds variable to nearest specified value.'''
-    factor = round(1/round_to_nearest, num_decimal_places)
+
+    if print_data:
+        print('\nOriginal val: {}'.format(x))
+        print(f'Round to nearest: {round_to_nearest}')
+        print(f'Num decimal places: {num_decimal_places}')
+        print(f'Min val: {min_val}')
+
+    # factor = round(1/round_to_nearest, num_decimal_places)
+    factor = 1/round_to_nearest
+
+    if print_data:
+        print(f'Factor: {factor}')
+
     rounded = round(round(x*factor)/factor, num_decimal_places)
     if min_val is not None:
         rounded = max(rounded, min_val)
 
     if print_data:
-        print('\nOriginal val: {}'.format(x))
-        print('Round to nearest: {}'.format(round_to_nearest))
         print('Rounded val: {}'.format(rounded))
 
     return rounded

@@ -259,6 +259,7 @@ def gen_multimodal_node_dist(eps,
                              path_to_save=None,
                              plot_fig=False,
                              show_fig=False,
+                             plot_chord=True,
                              print_data=False):
     '''Generates a multimodal node distribution.
 
@@ -327,8 +328,8 @@ def gen_multimodal_node_dist(eps,
                 max_skews = 2
             num_skewed_nodes = np.random.randint(min_skews, max_skews+1)
         # randomly choose a node
-        # skewed_nodes = list(np.random.choice(eps, size=num_skewed_nodes))
-        skewed_nodes = [random.choice(eps) for _ in range(num_skewed_nodes)]
+        skewed_nodes = list(np.random.choice(eps, size=num_skewed_nodes, replace=False))
+        # skewed_nodes = [random.choice(eps) for _ in range(num_skewed_nodes)]
 
     if len(skewed_node_probs) == 0:
         # randomly choose skew between range
@@ -416,6 +417,7 @@ def gen_multimodal_node_dist(eps,
     if plot_fig or show_fig:
         fig = plot_dists.plot_node_dist(node_dist=node_dist, 
                                         eps=eps,
+                                        plot_chord=plot_chord,
                                         show_fig=show_fig)
         return node_dist, fig
 
@@ -1725,9 +1727,6 @@ def get_pair_prob_dict_of_node_dist_matrix(node_dist, eps, all_combinations=Fals
                     pair_prob_dict[pair] = node_dist[src_idx, dst_idx]
                     if bidirectional:
                         pair_prob_dict[pair] += node_dist[dst_idx, src_idx]
-
-
-
 
     return pair_prob_dict
 
