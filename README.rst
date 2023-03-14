@@ -21,7 +21,7 @@ to have your work added to the below list!
 
 * `Y. Liu et al., 'A Hybrid Beam Steering Free-Space and Fiber Based Optical Data Center Network', Journal of Lightwave Technology, 2023 <https://ieeexplore.ieee.org/abstract/document/10064081>`_
 
-* `C. W. F. Parsonson, 'A Vectorised Packing Algorithm for Efficient Generation of Custom Traffic Matrices', OFC'23: Optical Fiber Communications Conference and Exhibition, 2023 <https://arxiv.org/abs/2302.09970>`_
+* `C. W. F. Parsonson et al., 'A Vectorised Packing Algorithm for Efficient Generation of Custom Traffic Matrices', OFC'23: Optical Fiber Communications Conference and Exhibition, 2023 <https://arxiv.org/abs/2302.09970>`_
 
 * `C. W. F. Parsonson et al., 'Traffic Generation for Benchmarking Data Centre Networks', Optical Switching and Networking, 2022 <https://www.sciencedirect.com/science/article/pii/S1573427722000315>`_
 
