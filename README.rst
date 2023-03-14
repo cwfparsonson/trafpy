@@ -13,6 +13,20 @@ TrafPy is a Python package for the generation, management, and standardisation o
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
+Projects which have used TrafPy
+===============================
+
+If you have used TrafPy in your project, please send an email with a link to cwfparsonson@gmail.com
+to have your work added to the below list!
+
+* `C. W. F. Parsonson et al., *Traffic Generation for Benchmarking Data Centre Networks*, Optical Switching and Networking, 2022 <https://www.sciencedirect.com/science/article/pii/S1573427722000315>`_
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
 
 
 Example
