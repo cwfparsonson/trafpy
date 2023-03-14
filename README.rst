@@ -19,8 +19,15 @@ Projects which have used TrafPy
 If you have used TrafPy in your project, please send an email with a link to cwfparsonson@gmail.com
 to have your work added to the below list!
 
-* `C. W. F. Parsonson et al., *Traffic Generation for Benchmarking Data Centre Networks*, Optical Switching and Networking, 2022 <https://www.sciencedirect.com/science/article/pii/S1573427722000315>`_
+* `Y. Liu et al., 'A Hybrid Beam Steering Free-Space and Fiber Based Optical Data Center Network', Journal of Lightwave Technology, 2023 <https://ieeexplore.ieee.org/abstract/document/10064081>`_
 
+* `C. W. F. Parsonson, 'A Vectorised Packing Algorithm for Efficient Generation of Custom Traffic Matrices', OFC'23: Optical Fiber Communications Conference and Exhibition, 2023 <https://arxiv.org/abs/2302.09970>`_
+
+* `C. W. F. Parsonson et al., 'Traffic Generation for Benchmarking Data Centre Networks', Optical Switching and Networking, 2022 <https://www.sciencedirect.com/science/article/pii/S1573427722000315>`_
+
+* `J. L. Benjamin et al., 'Traffic Tolerance of Nanosecond Scheduling on Optical Circuit Switched Data Centre Network', OFC'22: Optical Fiber Communications Conference and Exhibition, 2022 <https://ieeexplore.ieee.org/abstract/document/9748332>`_
+
+* `J. L. Benjamin et al., 'Benchmarking Packet-Granular OCS Network Scheduling for Data Center Traffic Traces', Photonic Networks and Devices, 2021 <https://opg.optica.org/abstract.cfm?uri=Networks-2021-NeW3B.3>`_
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
