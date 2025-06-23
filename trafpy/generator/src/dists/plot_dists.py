@@ -16,8 +16,9 @@ from statsmodels.distributions.empirical_distribution import ECDF
 from scipy import stats
 from scipy import interpolate
 import networkx as nx
-from nxviz.plots import CircosPlot
+# from nxviz.plots import CircosPlot
 import json
+import nxviz as nv
 
 # import warnings # for catching warnings rather than just exceptions
 # warnings.filterwarnings('error')
@@ -301,14 +302,24 @@ def plot_node_dist(node_dist,
 
             plt.set_cmap('YlOrBr')
             plt.style.use('default')
-            chord_diagram = CircosPlot(graph2, 
-                                       node_labels=True,
-                                       edge_width='weight',
-                                       figsize=figsize,
+            # chord_diagram = CircosPlot(graph2, 
+            #                            node_labels=True,
+            #                            edge_width='weight',
+            #                            figsize=figsize,
+            #                            # edge_color='weight',
+            #                            # node_size='load',
+            #                            node_grouping='load',
+            #                            node_color='load')
+
+            chord_diagram = nv.circos(graph2, 
+                                    #    node_labels=True,
+                                    #    edge_width='weight',
+                                    #    figsize=figsize,
                                        # edge_color='weight',
                                        # node_size='load',
-                                       node_grouping='load',
-                                       node_color='load')
+                                       group_by='load',
+                                       node_color_by='load')
+
             chord_diagram.draw()
             figs.append(chord_diagram)
         else:
